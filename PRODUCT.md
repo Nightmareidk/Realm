@@ -43,7 +43,8 @@ The only place where a friend group's private chat, its public communities, and 
 - Later: voice/video rooms, short-form video feed, stories, recommendations, OAuth, native apps.
 - **Encryption truth (binding):** DMs and small group DMs become end-to-end encrypted (MLS) in Phase 2, before public launch. Until then DMs are labelled "not end-to-end encrypted yet". Public/large communities, posts, and feeds are **not** E2EE and must never be described as such. No fake security.
 - Download buttons are placeholders ("coming soon") until native apps exist; the structure must be ready for real links.
-- Terminology: the codebase calls servers "communities". **Open decision:** the user-facing name for a community/server.
+- **Sign-up (user-confirmed):** open sign-up, presented honestly as *early access*. Primary CTA: use Realm in the browser now.
+- **Terminology (user-confirmed):** a community/server is called a **Space** in all user-facing copy ("create a space", "join a space"). The codebase and API call them `communities`. Avoid "realms" for communities (collides with Minecraft Realms and the product name).
 
 ## Brand Commitments
 
@@ -53,6 +54,8 @@ The only place where a friend group's private chat, its public communities, and 
 - **Dark mode is a first-class experience**, not an inverted afterthought; light mode also supported.
 - Landing site and web app must feel like one coherent product.
 - Honest claims only, especially about privacy and security.
+- **Headline belief (user-confirmed):** "one app instead of four" — a visitor should leave the first screen understanding that servers/chat, the feed, profiles, and discussion boards live together in Realm.
+- **Anti-references (user-confirmed):** must not read as (1) Discord with a new logo, (2) a generic SaaS template (gradient hero, three feature cards, logo cloud), (3) try-hard gamer aesthetic (RGB neon, aggressive angles, energy-drink esports), or (4) cold corporate collaboration software.
 
 ## Evidence on Hand
 

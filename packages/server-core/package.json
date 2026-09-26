@@ -1,0 +1,30 @@
+{
+  "name": "@realm/server-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Server-only shared code: config, logging, IDs, crypto, key-value store, rate limits, event bus, mail.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "2.2.1",
+    "@realm/contracts": "workspace:*",
+    "@realm/db": "workspace:*",
+    "ioredis": "6.0.0",
+    "nodemailer": "10.0.10",
+    "pino": "10.3.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@realm/tsconfig": "workspace:*",
+    "@types/node": "26.6.3",
+    "@types/nodemailer": "8.0.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.2"
+  }
+}

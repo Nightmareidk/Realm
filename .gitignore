@@ -28,3 +28,8 @@ coverage/
 playwright-report/
 test-results/
 .playwright-mcp/
+
+# Impeccable runtime state (decision pages, reviews)
+.impeccable/questions/
+.impeccable/review/
+.impeccable/build/
