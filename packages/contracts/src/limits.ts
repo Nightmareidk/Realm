@@ -1,0 +1,22 @@
+/** Field limits shared by validation on every client and the server. */
+export const Limits = {
+  username: { min: 3, max: 32 },
+  displayName: { min: 1, max: 48 },
+  password: { min: 10, max: 256 },
+  bio: { max: 300 },
+  pronouns: { max: 40 },
+  minimumAgeYears: 13,
+  communityName: { min: 2, max: 64 },
+  communitySlug: { min: 3, max: 32 },
+  communityDescription: { max: 500 },
+  channelName: { min: 1, max: 64 },
+  channelTopic: { max: 1024 },
+  roleName: { min: 1, max: 64 },
+  message: { max: 4000 },
+  messageAttachments: { max: 10 },
+  postTitle: { min: 1, max: 300 },
+  postBody: { max: 40_000 },
+  comment: { max: 10_000 },
+  groupDmRecipients: { max: 25 },
+  pageSize: { default: 50, max: 100 },
+} as const;

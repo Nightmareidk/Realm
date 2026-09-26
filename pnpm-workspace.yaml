@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Only these dependencies may run install scripts (pnpm blocks all others by default).
+allowBuilds:
+  esbuild: true
+  sharp: true
+  "@biomejs/biome": true
+
+# pnpm holds back very fresh releases (supply-chain safety); explicit exceptions only.
+minimumReleaseAgeExclude:
+  - "@types/node@26.6.3"
