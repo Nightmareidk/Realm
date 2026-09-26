@@ -1,6 +1,6 @@
 # Realm — API & Realtime Contract
 
-> Base URL `/v1`. JSON only. Every schema is defined once in `packages/contracts` (Zod) and exported as OpenAPI 3.1 at `/v1/openapi.json`.
+> Base URL `/v1`. JSON only. Every schema is defined once in `shared/contracts` (Zod) and exported as OpenAPI 3.1 at `/v1/openapi.json`.
 > **P1** = Phase 1. Endpoints marked later are listed so the shape is stable.
 
 ## Conventions

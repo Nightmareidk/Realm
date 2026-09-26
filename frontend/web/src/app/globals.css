@@ -1,0 +1,116 @@
+@import "tailwindcss";
+@import "@realm/design-tokens/tokens.css";
+
+/* Only Realm's tokens exist as colors — no stray Tailwind palette values. */
+@theme {
+  --color-*: initial;
+}
+
+@theme inline {
+  --color-ground: var(--r-ground);
+  --color-panel: var(--r-panel);
+  --color-panel-raised: var(--r-panel-raised);
+  --color-land: var(--r-land);
+  --color-rule: var(--r-rule);
+  --color-rule-strong: var(--r-rule-strong);
+  --color-ink: var(--r-ink);
+  --color-ink-soft: var(--r-ink-soft);
+  --color-ink-muted: var(--r-ink-muted);
+  --color-overprint: var(--r-overprint);
+  --color-overprint-fill: var(--r-overprint-fill);
+  --color-overprint-fill-hover: var(--r-overprint-fill-hover);
+  --color-on-overprint: var(--r-on-overprint);
+  --color-focus: var(--r-focus);
+  --color-danger: var(--r-danger);
+  --color-success: var(--r-success);
+
+  --color-spaces-fill: var(--r-spaces-fill);
+  --color-spaces-line: var(--r-spaces-line);
+  --color-spaces-solid: var(--r-spaces-solid);
+  --color-spaces-text: var(--r-spaces-text);
+  --color-feed-fill: var(--r-feed-fill);
+  --color-feed-line: var(--r-feed-line);
+  --color-feed-solid: var(--r-feed-solid);
+  --color-feed-text: var(--r-feed-text);
+  --color-profiles-fill: var(--r-profiles-fill);
+  --color-profiles-line: var(--r-profiles-line);
+  --color-profiles-solid: var(--r-profiles-solid);
+  --color-profiles-text: var(--r-profiles-text);
+  --color-boards-fill: var(--r-boards-fill);
+  --color-boards-line: var(--r-boards-line);
+  --color-boards-solid: var(--r-boards-solid);
+  --color-boards-text: var(--r-boards-text);
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: var(--r-radius-sm);
+  --radius-md: var(--r-radius-md);
+  --ease-out: var(--r-ease-out);
+  --ease-in-out: var(--r-ease-in-out);
+  --ease-drawer: var(--r-ease-drawer);
+}
+
+/* Archivo's width axis carries the cartographic label hierarchy. */
+@utility stretch-condensed {
+  font-stretch: 78%;
+}
+@utility stretch-semi-expanded {
+  font-stretch: 112%;
+}
+@utility stretch-expanded {
+  font-stretch: 125%;
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+/* Map lettering: expanded capitals with open tracking. Used on map labels only. */
+@utility map-lettering {
+  font-stretch: 125%;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+@layer base {
+  html {
+    background: var(--r-ground);
+    color: var(--r-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scrollbar-color: var(--r-rule-strong) transparent;
+    scrollbar-width: thin;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    min-height: 100dvh;
+    caret-color: var(--r-overprint);
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--r-overprint-fill) 55%, transparent);
+    color: var(--r-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--r-focus);
+    outline-offset: 3px;
+    border-radius: var(--r-radius-sm);
+  }
+
+  a {
+    text-underline-offset: 0.22em;
+    text-decoration-thickness: 1px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}

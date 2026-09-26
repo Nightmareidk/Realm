@@ -9,14 +9,17 @@ Communities, real-time chat, posts, and clips — one place for your people.
 
 | Path | What |
 |---|---|
-| `apps/web` | Next.js — landing page, download portal, and the web app |
-| `apps/api` | Fastify REST API (`/v1`) |
-| `apps/gateway` | WebSocket realtime gateway |
-| `apps/worker` | Background jobs |
-| `packages/contracts` | Shared Zod schemas, permissions, gateway protocol — used by every client |
-| `packages/db` | Drizzle schema, migrations, seed |
-| `packages/server-core` | Server-only shared code |
-| `packages/design-tokens` | Design tokens → CSS variables (web) and TS (native, later) |
+| **`frontend/`** | Everything people see |
+| `frontend/web` | Next.js: landing page, download portal, and the web app |
+| `frontend/design-tokens` | Design tokens → CSS variables (web) and TS (native, later) |
+| **`backend/`** | Everything that runs on servers |
+| `backend/api` | Fastify REST API (`/v1`) |
+| `backend/db` | Drizzle schema, migrations, seed |
+| `backend/server-core` | Server-only shared code (config, IDs, crypto, rate limits, events, mail) |
+| `backend/gateway`, `backend/worker` | Realtime gateway and background jobs (coming next) |
+| **`shared/`** | Used by both sides |
+| `shared/contracts` | Zod schemas, permissions, gateway protocol: the contract every client and server follows |
+| `shared/tsconfig` | Shared TypeScript settings |
 | `docs/` | Architecture, data model, API, E2EE design, roadmap |
 
 ## Local development

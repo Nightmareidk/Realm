@@ -49,7 +49,7 @@
   },
   "overrides": [
     {
-      "includes": ["apps/web/**"],
+      "includes": ["frontend/web/**"],
       "linter": {
         "domains": {
           "next": "recommended",
@@ -58,7 +58,7 @@
       }
     },
     {
-      "includes": ["packages/contracts/**", "packages/sdk/**"],
+      "includes": ["shared/**", "frontend/**"],
       "linter": {
         "rules": {
           "style": {
@@ -66,8 +66,8 @@
               "level": "error",
               "options": {
                 "paths": {
-                  "@realm/db": "Client-safe packages must not import server code.",
-                  "@realm/server-core": "Client-safe packages must not import server code."
+                  "@realm/db": "Frontend and shared code must never import backend code.",
+                  "@realm/server-core": "Frontend and shared code must never import backend code."
                 }
               }
             }

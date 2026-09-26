@@ -176,7 +176,7 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
 
-  apps/api:
+  backend/api:
     dependencies:
       '@fastify/cookie':
         specifier: 11.1.2
@@ -189,13 +189,13 @@ importers:
         version: 9.9.0
       '@realm/contracts':
         specifier: workspace:*
-        version: link:../../packages/contracts
+        version: link:../../shared/contracts
       '@realm/db':
         specifier: workspace:*
-        version: link:../../packages/db
+        version: link:../db
       '@realm/server-core':
         specifier: workspace:*
-        version: link:../../packages/server-core
+        version: link:../server-core
       fastify:
         specifier: 5.12.5
         version: 5.12.5
@@ -208,7 +208,7 @@ importers:
     devDependencies:
       '@realm/tsconfig':
         specifier: workspace:*
-        version: link:../../packages/tsconfig
+        version: link:../../shared/tsconfig
       '@types/node':
         specifier: 26.6.3
         version: 26.6.3
@@ -228,11 +228,106 @@ importers:
         specifier: 5.0.2
         version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  apps/web:
+  backend/db:
     dependencies:
+      drizzle-orm:
+        specifier: 0.45.3
+        version: 0.45.3(@electric-sql/pglite@0.5.8)(postgres@3.4.9)
+      postgres:
+        specifier: 3.4.9
+        version: 3.4.9
+    devDependencies:
+      '@electric-sql/pglite':
+        specifier: 0.5.8
+        version: 0.5.8
+      '@realm/tsconfig':
+        specifier: workspace:*
+        version: link:../../shared/tsconfig
+      '@types/node':
+        specifier: 26.6.3
+        version: 26.6.3
+      drizzle-kit:
+        specifier: 0.31.11
+        version: 0.31.11
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 5.0.2
+        version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  backend/server-core:
+    dependencies:
+      '@node-rs/argon2':
+        specifier: 2.2.1
+        version: 2.2.1
       '@realm/contracts':
         specifier: workspace:*
-        version: link:../../packages/contracts
+        version: link:../../shared/contracts
+      '@realm/db':
+        specifier: workspace:*
+        version: link:../db
+      ioredis:
+        specifier: 6.0.0
+        version: 6.0.0
+      nodemailer:
+        specifier: 10.0.10
+        version: 10.0.10
+      pino:
+        specifier: 10.3.1
+        version: 10.3.1
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@realm/tsconfig':
+        specifier: workspace:*
+        version: link:../../shared/tsconfig
+      '@types/node':
+        specifier: 26.6.3
+        version: 26.6.3
+      '@types/nodemailer':
+        specifier: 8.0.2
+        version: 8.0.2
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 5.0.2
+        version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  frontend/design-tokens:
+    devDependencies:
+      '@realm/tsconfig':
+        specifier: workspace:*
+        version: link:../../shared/tsconfig
+      '@types/node':
+        specifier: 26.6.3
+        version: 26.6.3
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 5.0.2
+        version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  frontend/web:
+    dependencies:
+      '@phosphor-icons/react':
+        specifier: 2.1.10
+        version: 2.1.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@realm/contracts':
+        specifier: workspace:*
+        version: link:../../shared/contracts
+      '@realm/design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
       next:
         specifier: 16.3.6
         version: 16.3.6(@types/node@26.6.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -265,7 +360,7 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
 
-  packages/contracts:
+  shared/contracts:
     dependencies:
       zod:
         specifier: 4.6.5
@@ -281,78 +376,7 @@ importers:
         specifier: 5.0.2
         version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  packages/db:
-    dependencies:
-      drizzle-orm:
-        specifier: 0.45.3
-        version: 0.45.3(@electric-sql/pglite@0.5.8)(postgres@3.4.9)
-      postgres:
-        specifier: 3.4.9
-        version: 3.4.9
-    devDependencies:
-      '@electric-sql/pglite':
-        specifier: 0.5.8
-        version: 0.5.8
-      '@realm/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
-      '@types/node':
-        specifier: 26.6.3
-        version: 26.6.3
-      drizzle-kit:
-        specifier: 0.31.11
-        version: 0.31.11
-      tsx:
-        specifier: 4.23.15
-        version: 4.23.15
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 5.0.2
-        version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
-
-  packages/server-core:
-    dependencies:
-      '@node-rs/argon2':
-        specifier: 2.2.1
-        version: 2.2.1
-      '@realm/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@realm/db':
-        specifier: workspace:*
-        version: link:../db
-      ioredis:
-        specifier: 6.0.0
-        version: 6.0.0
-      nodemailer:
-        specifier: 10.0.10
-        version: 10.0.10
-      pino:
-        specifier: 10.3.1
-        version: 10.3.1
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
-    devDependencies:
-      '@realm/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
-      '@types/node':
-        specifier: 26.6.3
-        version: 26.6.3
-      '@types/nodemailer':
-        specifier: 8.0.2
-        version: 8.0.2
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 5.0.2
-        version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
-
-  packages/tsconfig: {}
+  shared/tsconfig: {}
 
 packages:
 
@@ -1404,6 +1428,13 @@ packages:
 
   '@oxc-project/types@0.151.0':
     resolution: {integrity: sha512-J1yXrIlNDZVzE3ada310xeAw7nH8yCAyLPuUIsjKatFPmfn5bS1oW+cM+QsGOtVWd5nhSpbwZWx/rue+r5Z+PA==}
+
+  '@phosphor-icons/react@2.1.10':
+    resolution: {integrity: sha512-vt8Tvq8GLjheAZZYa+YG/pW7HDbov8El/MANW8pOAz4eGxrwhnbfrQZq0Cp4q8zBEu8NIhHdnr+r8thnfRSNYA==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: '>= 16.8'
+      react-dom: '>= 16.8'
 
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
@@ -3412,6 +3443,11 @@ snapshots:
       '@node-rs/argon2-win32-x64-msvc': 2.2.1
 
   '@oxc-project/types@0.151.0': {}
+
+  '@phosphor-icons/react@2.1.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
 
   '@pinojs/redact@0.4.0': {}
 

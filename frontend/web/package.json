@@ -9,7 +9,9 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@phosphor-icons/react": "2.1.10",
     "@realm/contracts": "workspace:*",
+    "@realm/design-tokens": "workspace:*",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"

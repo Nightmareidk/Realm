@@ -45,10 +45,10 @@ flowchart LR
 
 | Deployable | Responsibility | Scales by |
 |---|---|---|
-| `apps/web` | Landing, download portal, the web app UI. SSR only for public pages (SEO, link previews). **No business logic.** | CDN + stateless Node |
-| `apps/api` | All reads/writes, validation, permissions, auth. REST `/v1` + OpenAPI. | Stateless, horizontal |
-| `apps/gateway` | Persistent WebSocket connections: dispatch events, presence, typing, resume. | Horizontal; sticky only per-connection |
-| `apps/worker` | Async jobs: email, media processing, notification fan-out, counters, cleanup. | Queue depth |
+| `frontend/web` | Landing, download portal, the web app UI. SSR only for public pages (SEO, link previews). **No business logic.** | CDN + stateless Node |
+| `backend/api` | All reads/writes, validation, permissions, auth. REST `/v1` + OpenAPI. | Stateless, horizontal |
+| `backend/gateway` | Persistent WebSocket connections: dispatch events, presence, typing, resume. | Horizontal; sticky only per-connection |
+| `backend/worker` | Async jobs: email, media processing, notification fan-out, counters, cleanup. | Queue depth |
 
 This is a **modular monolith**: one API codebase split into domain modules (`auth`, `users`, `communities`, `messages`, …) with clear boundaries. It is deliberately *not* microservices — a small team shipping microservices ships nothing. Module boundaries mean any hot module (messages, feed) can be carved into its own service later without a rewrite.
 
@@ -64,7 +64,7 @@ Chosen for: a small team moving fast, one language end to end, mature/boring inf
 |---|---|---|
 | Framework | **Next.js 16 (App Router) + React 19** | SSR/SSG for public pages (landing, public profiles, public posts need SEO and share previews); client-heavy app routes. One codebase → landing and app feel like one product. |
 | Language | **TypeScript 6.0** (strict) | TS 7 (native compiler) is out, but typescript-eslint and parts of the toolchain don't support it yet. Revisit Q1 2027. |
-| Styling | **Tailwind CSS 4** over a **CSS-variable token layer** | Tokens live in `packages/design-tokens` and compile to CSS vars (web) and TS objects (React Native later). Tailwind consumes the vars; no hard-coded colors in components. |
+| Styling | **Tailwind CSS 4** over a **CSS-variable token layer** | Tokens live in `frontend/design-tokens` and compile to CSS vars (web) and TS objects (React Native later). Tailwind consumes the vars; no hard-coded colors in components. |
 | Primitives | **Base UI** (headless, accessible) | Unstyled, a11y-correct popovers/menus/dialogs with `--transform-origin` support for origin-aware motion. We own 100% of the look. |
 | Server state | **TanStack Query** + `@realm/sdk` | Cache, pagination, optimistic updates. Gateway events patch the query cache directly. |
 | Client state | **Zustand** | Small, for UI-only state (drafts, panels, voice state later). |
@@ -111,8 +111,8 @@ Everything ships as an OCI image and reads config from env (12-factor), so movin
 The rule that makes this work: **the web app is just a client.** Concretely:
 
 1. **No business logic in Next.js.** No Server Actions or Route Handlers that write data. Next.js renders UI and, for public pages, fetches from the same `/v1` API any other client uses. *If this rule is broken, every feature has to be rebuilt for mobile.*
-2. **Contract-first.** `packages/contracts` holds Zod schemas for every request, response, gateway event, permission bit and error code. The API validates with them; the SDK is typed by them; OpenAPI is generated from them for non-TS clients.
-3. **`packages/sdk`** is a platform-agnostic TypeScript client (REST + gateway + reconnect/resume logic) with zero DOM dependencies. Web, React Native and Electron all import it.
+2. **Contract-first.** `shared/contracts` holds Zod schemas for every request, response, gateway event, permission bit and error code. The API validates with them; the SDK is typed by them; OpenAPI is generated from them for non-TS clients.
+3. **`shared/sdk`** (next) is a platform-agnostic TypeScript client (REST + gateway + reconnect/resume logic) with zero DOM dependencies. Web, React Native and Electron all import it.
 4. **Auth works for both cookies and tokens.** Web uses an HttpOnly cookie; native uses `Authorization: Bearer`. Same `sessions` table, `platform` column, same revocation.
 5. **Realtime protocol is documented and versioned** (`/gateway?v=1&encoding=json`), with resume + incremental sync, because mobile connections drop constantly.
 6. **Push-ready from day one**: `push_subscriptions` table covers Web Push, APNs and FCM. Notification payloads never assume a browser.
@@ -129,47 +129,47 @@ The rule that makes this work: **the web app is just a client.** Concretely:
 
 ```
 realm/
-├─ apps/
-│  ├─ web/                        Next.js — landing + download portal + web app
+├─ frontend/                      everything people see
+│  ├─ web/                        Next.js: landing + download portal + web app
 │  │  └─ src/
 │  │     ├─ app/
 │  │     │  ├─ (marketing)/       /, /download, /privacy, /terms, /help
 │  │     │  ├─ (auth)/            /login, /signup, /verify, /forgot, /reset
-│  │     │  └─ (app)/             authenticated shell: /home, /c/[community]/[channel],
+│  │     │  └─ (app)/             authenticated shell: /home, /s/[space]/[channel],
 │  │     │                        /messages/[channel], /u/[username], /settings/*
-│  │     ├─ features/             one folder per domain: auth, feed, communities,
+│  │     ├─ features/             one folder per domain: landing, auth, feed, spaces,
 │  │     │                        messaging, profiles, notifications, settings…
-│  │     │                        (components + hooks + local state for that domain)
-│  │     ├─ components/           shared composites (app shell, nav rail, avatars…)
+│  │     ├─ components/           shared composites (app shell, rail, avatars…)
 │  │     │  └─ ui/                primitives styled with tokens (Button, Dialog, Menu…)
-│  │     ├─ lib/                  sdk instance, query client, gateway binding, utils
-│  │     └─ styles/               global CSS, token import, Tailwind entry
+│  │     └─ lib/                  sdk instance, query client, gateway binding, utils
+│  ├─ design-tokens/              colour/type/space/motion tokens → CSS vars + TS
+│  ├─ mobile/                     (Phase 4) Expo app
+│  └─ desktop/                    (Phase 4) Electron shell
+├─ backend/                       everything that runs on servers
 │  ├─ api/                        Fastify REST API
 │  │  └─ src/
-│  │     ├─ modules/<domain>/     routes.ts · service.ts · repo.ts · *.test.ts
-│  │     ├─ plugins/              auth, rate-limit, errors, openapi, request-context
+│  │     ├─ modules/<domain>/     routes.ts · service.ts · *.test.ts
+│  │     ├─ plugins/              auth context, security, errors
+│  │     ├─ lib/                  sessions, serializers, errors
 │  │     └─ server.ts
 │  ├─ gateway/                    WebSocket gateway (connections, dispatch, presence)
-│  └─ worker/                     BullMQ processors (email, media, notifications)
-├─ packages/
+│  ├─ worker/                     BullMQ processors (email, media, notifications)
+│  ├─ db/                         Drizzle schema, migrations, seed, PGlite test harness
+│  └─ server-core/                config, logger, snowflake IDs, crypto, KV store,
+│                                 rate limits, event bus, mailer
+├─ shared/                        used by both sides
 │  ├─ contracts/                  Zod schemas: DTOs, gateway ops/events, permissions,
-│  │                              error codes, limits. Shared by every client + server.
-│  ├─ sdk/                        Typed REST + gateway client (no DOM deps)
-│  ├─ db/                         Drizzle schema, migrations, seed scripts
-│  ├─ server-core/                Server-only shared code: config, logger, snowflake IDs,
-│  │                              session validation, permission resolution, event bus,
-│  │                              redis, rate-limit helpers
-│  ├─ design-tokens/              Color/type/space/motion tokens → CSS vars + TS
+│  │                              error codes, limits
+│  ├─ sdk/                        (next) typed REST + gateway client, no DOM deps
 │  ├─ crypto/                     (Phase 2) OpenMLS WASM wrapper, attachment crypto
-│  └─ tsconfig/                   Shared TS configs
+│  └─ tsconfig/                   shared TypeScript configs
 ├─ infra/
 │  └─ docker-compose.yml          postgres, valkey, minio, mailpit
 ├─ docs/                          this folder
-├─ PRODUCT.md                     product truth (design process input)
-└─ DESIGN.md                      design system (written after the first build)
+└─ PRODUCT.md                     product truth (design process input)
 ```
 
-**Import rules** (enforced by lint): `apps/*` may import `packages/*`; packages never import apps; `server-core` and `db` are never imported by `web` or `sdk`; `contracts` imports nothing but Zod.
+**Import rules** (enforced by lint): `frontend/*` may import `shared/*` but never `backend/*`; `backend/*` may import `shared/*`; `shared/*` imports nothing from either side (only Zod). `db` and `server-core` stay server-only.
 
 ---
 

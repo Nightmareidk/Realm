@@ -1,0 +1,4 @@
+{
+  "extends": "@realm/tsconfig/node.json",
+  "include": ["src"]
+}
