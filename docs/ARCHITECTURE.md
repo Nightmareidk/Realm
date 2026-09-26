@@ -93,7 +93,7 @@ Chosen for: a small team moving fast, one language end to end, mature/boring inf
 
 ### Tooling
 
-pnpm workspaces · Turborepo · Biome (lint + format) · Vitest · Playwright (e2e + visual checks) · GitHub Actions · Docker Compose for local infra.
+pnpm workspaces (recursive scripts; add Turborepo later if build caching is needed) · Biome (lint + format) · Vitest · Playwright (e2e + visual checks) · GitHub Actions · Docker Compose for local infra.
 
 ### Deployment (recommended path)
 

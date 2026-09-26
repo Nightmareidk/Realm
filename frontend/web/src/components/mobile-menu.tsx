@@ -1,0 +1,57 @@
+"use client";
+
+import { List, X } from "@phosphor-icons/react";
+import Link from "next/link";
+import { useEffect, useId, useState } from "react";
+import { cx } from "@/lib/cx";
+
+export function MobileMenu({ items }: { items: { href: string; label: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <div className="lg:hidden">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-label={open ? "Close menu" : "Open menu"}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex size-10 items-center justify-center rounded-md border border-rule text-ink transition-colors duration-160 ease-out hover:border-rule-strong"
+      >
+        {open ? <X size={18} /> : <List size={18} />}
+      </button>
+      <div
+        id={id}
+        className={cx(
+          "fixed inset-x-0 top-16 border-b border-rule bg-ground px-4 pb-6 pt-2 transition-[opacity,transform] duration-200 ease-out md:px-8",
+          open ? "opacity-100" : "pointer-events-none -translate-y-2 opacity-0",
+        )}
+        inert={!open}
+      >
+        <nav aria-label="Mobile">
+          <ul className="grid">
+            {[...items, { href: "/login", label: "Sign in" }].map((item) => (
+              <li key={item.href} className="border-b border-rule last:border-0">
+                <Link
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="flex h-12 items-center text-base text-ink"
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </div>
+  );
+}

@@ -6,7 +6,12 @@ import { cx } from "@/lib/cx";
  */
 export function AvailabilityKey({ className }: { className?: string }) {
   return (
-    <p className={cx("flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-ink-muted", className)}>
+    <p
+      className={cx(
+        "flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-ink-muted",
+        className,
+      )}
+    >
       <span className="inline-flex items-center gap-2">
         <Road status="now" /> Available now
       </span>

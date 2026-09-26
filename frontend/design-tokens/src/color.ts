@@ -7,7 +7,12 @@ export interface Oklch {
   alpha?: number;
 }
 
-export const oklch = (l: number, c: number, h: number, alpha?: number): Oklch => ({ l, c, h, alpha });
+export const oklch = (l: number, c: number, h: number, alpha?: number): Oklch => ({
+  l,
+  c,
+  h,
+  alpha,
+});
 
 export function toCss({ l, c, h, alpha }: Oklch): string {
   const base = `${round(l, 4)} ${round(c, 4)} ${round(h, 2)}`;

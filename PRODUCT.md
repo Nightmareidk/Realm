@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Delegated (user asked for a recommendation): Next.js 16 + React 19 + TypeScript web app (landing, download portal, and full web app in one codebase), Tailwind CSS 4 over a CSS-variable token layer, Base UI primitives, Motion for springs/gestures. Backend: Fastify API, dedicated WebSocket gateway, BullMQ workers, PostgreSQL, Valkey/Redis, S3-compatible storage. pnpm + Turborepo monorepo. Full rationale in `docs/ARCHITECTURE.md`.
+Delegated (user asked for a recommendation): Next.js 16 + React 19 + TypeScript web app (landing, download portal, and full web app in one codebase), Tailwind CSS 4 over a CSS-variable token layer, Base UI primitives, Motion for springs/gestures. Backend: Fastify API, dedicated WebSocket gateway, BullMQ workers, PostgreSQL, Valkey/Redis, S3-compatible storage. pnpm workspace monorepo split into frontend/, backend/ and shared/. Full rationale in `docs/ARCHITECTURE.md`.
 
 ## Users
 
@@ -49,6 +49,7 @@ The only place where a friend group's private chat, its public communities, and 
 ## Brand Commitments
 
 - Name: **Realm** (trademark search pending before public launch).
+- **Logo (user-supplied, 2026-09-27, binding):** an app-icon tile showing a glowing arch/gateway with a winding lit path running through night hills toward the horizon, under stars. The colors are deep indigo sky, a violet-magenta path, pink-white light and an electric-violet edge. The master files are `frontend/web/brand/` (source PNG plus a 1024 px square), with derived icons in `public/brand/` and `src/app/icon.png` / `apple-icon.png`. The palette is keyed to it: a night ground from its sky and the accent from its path.
 - Original identity — must not look or read like Discord, TikTok, Instagram, or Reddit.
 - Modern, premium, polished; fast and responsive; smooth animations that don't make the site heavy.
 - **Dark mode is a first-class experience**, not an inverted afterthought; light mode also supported.

@@ -44,6 +44,8 @@
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --radius-sm: var(--r-radius-sm);
   --radius-md: var(--r-radius-md);
+  --radius-lg: var(--r-radius-lg);
+  --radius-xl: var(--r-radius-xl);
   --ease-out: var(--r-ease-out);
   --ease-in-out: var(--r-ease-in-out);
   --ease-drawer: var(--r-ease-drawer);
@@ -62,6 +64,72 @@
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
+/* Display voice: extended capitals, the page's confident headline register. */
+@utility display-caps {
+  font-stretch: 125%;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.005em;
+  line-height: 0.95;
+}
+
+/* Gentle hover in place for floating fragments. Off under reduced motion. */
+@utility float-slow {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: realm-float 7s ease-in-out infinite;
+    animation-delay: var(--float-delay, 0s);
+  }
+}
+
+@utility twinkle {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: realm-twinkle var(--twinkle-dur, 5s) ease-in-out infinite;
+    animation-delay: var(--twinkle-delay, 0s);
+  }
+}
+
+/* Scroll-linked entrance where supported; content is fully visible everywhere else. */
+@utility reveal {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: realm-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}
+
+@keyframes realm-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+@keyframes realm-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes realm-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Map lettering: expanded capitals with open tracking. Used on map labels only. */
 @utility map-lettering {
   font-stretch: 125%;
@@ -86,6 +154,29 @@
   body {
     min-height: 100dvh;
     caret-color: var(--r-overprint);
+    overflow-x: clip;
+  }
+
+  /* A quiet starfield behind the whole night edition: fixed, non-interactive, no repaint on scroll. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, oklch(0.95 0.02 290 / 0.55), transparent 60%),
+      radial-gradient(1px 1px at 68% 9%, oklch(0.95 0.02 290 / 0.4), transparent 60%),
+      radial-gradient(1.4px 1.4px at 83% 41%, oklch(0.95 0.02 290 / 0.45), transparent 60%),
+      radial-gradient(1px 1px at 37% 63%, oklch(0.95 0.02 290 / 0.3), transparent 60%),
+      radial-gradient(1.2px 1.2px at 56% 82%, oklch(0.95 0.02 290 / 0.35), transparent 60%),
+      radial-gradient(1px 1px at 7% 91%, oklch(0.95 0.02 290 / 0.3), transparent 60%),
+      radial-gradient(1px 1px at 91% 74%, oklch(0.95 0.02 290 / 0.35), transparent 60%);
+    background-size: 420px 420px;
+  }
+
+  :root[data-theme="day"] body::before {
+    display: none;
   }
 
   ::selection {

@@ -6,7 +6,7 @@
 ---
 
 ## Phase 0 — Foundations *(~1 week)*
-- Monorepo (pnpm, Turborepo, Biome, TS strict), shared tsconfig, CI (typecheck · lint · test · build).
+- Monorepo (pnpm workspaces, Biome, TS strict), shared tsconfig, CI (typecheck · lint · test · build).
 - Docker Compose: Postgres, Valkey, MinIO, Mailpit.
 - `contracts` (IDs, permissions, errors, gateway protocol), `db` (Drizzle schema + migrations + seed), `server-core` (config, logger, snowflake, event bus).
 - Product truth (`PRODUCT.md`) and the visual direction for Realm; design tokens.

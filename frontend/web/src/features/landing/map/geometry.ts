@@ -109,19 +109,66 @@ function blob(
   const freqs = [2, 3, 5, 7];
   return Array.from({ length: steps }, (_, i) => {
     const t = (i / steps) * Math.PI * 2;
-    const k = amps.reduce((acc, a, j) => acc + a * Math.sin((freqs[j] as number) * t + (phases[j] as number)), 1);
-    return { x: center.x + Math.cos(t) * radius * k * aspect, y: center.y + Math.sin(t) * radius * k };
+    const k = amps.reduce(
+      (acc, a, j) => acc + a * Math.sin((freqs[j] as number) * t + (phases[j] as number)),
+      1,
+    );
+    return {
+      x: center.x + Math.cos(t) * radius * k * aspect,
+      y: center.y + Math.sin(t) * radius * k,
+    };
   });
 }
 
 // ── The map ─────────────────────────────────────────────────────────────────
 
-const REGION_ORDER: { id: RegionId; from: number; to: number; activity: number }[] = [
-  // Angles in SVG degrees (0 = east, 90 = south). Borders at -98, -8, 84, 172.
-  { id: "spaces", from: 172, to: 262, activity: 7 },
-  { id: "feed", from: 262, to: 352, activity: 8 },
-  { id: "profiles", from: 352, to: 444, activity: 5 },
-  { id: "boards", from: 84, to: 172, activity: 6 },
+interface RegionSpec {
+  id: RegionId;
+  from: number;
+  to: number;
+  activity: number;
+  /** Map lettering position (inland, clear of the course). */
+  label: Point;
+  /** Course control position (near the coast, so legs run along the rim). */
+  control: Point;
+}
+
+// Angles in SVG degrees (0 = east, 90 = south). Borders at -98, -8, 84, 172.
+// The course follows the north and east coasts, crosses the south, then finishes at the hub;
+// lettering sits inland, clear of every leg (checked by geometry.check.ts).
+const REGION_ORDER: RegionSpec[] = [
+  {
+    id: "spaces",
+    from: 172,
+    to: 262,
+    activity: 7,
+    label: { x: 352, y: 318 },
+    control: { x: 330, y: 196 },
+  },
+  {
+    id: "feed",
+    from: 262,
+    to: 352,
+    activity: 8,
+    label: { x: 668, y: 312 },
+    control: { x: 700, y: 182 },
+  },
+  {
+    id: "profiles",
+    from: 352,
+    to: 444,
+    activity: 5,
+    label: { x: 700, y: 552 },
+    control: { x: 858, y: 432 },
+  },
+  {
+    id: "boards",
+    from: 84,
+    to: 172,
+    activity: 6,
+    label: { x: 252, y: 470 },
+    control: { x: 318, y: 566 },
+  },
 ];
 
 export function buildMapGeometry(seed = 20260926): MapGeometry {
@@ -135,8 +182,14 @@ export function buildMapGeometry(seed = 20260926): MapGeometry {
   // Coordinate grid: A–D across, 1–4 down.
   const colW = frame.w / 4;
   const rowH = frame.h / 4;
-  const columns = ["A", "B", "C", "D"].map((label, i) => ({ label, x: r1(frame.x + colW * (i + 0.5)) }));
-  const rows = ["1", "2", "3", "4"].map((label, i) => ({ label, y: r1(frame.y + rowH * (i + 0.5)) }));
+  const columns = ["A", "B", "C", "D"].map((label, i) => ({
+    label,
+    x: r1(frame.x + colW * (i + 0.5)),
+  }));
+  const rows = ["1", "2", "3", "4"].map((label, i) => ({
+    label,
+    y: r1(frame.y + rowH * (i + 0.5)),
+  }));
   const gridRef = (p: Point) => {
     const c = Math.min(3, Math.max(0, Math.floor((p.x - frame.x) / colW)));
     const r = Math.min(3, Math.max(0, Math.floor((p.y - frame.y) / rowH)));
@@ -193,41 +246,57 @@ export function buildMapGeometry(seed = 20260926): MapGeometry {
   }
   const borders = borderAngles.map((a) => openSpline(borderPoints.get(a % 360) as Point[]));
 
-  const regions: RegionGeometry[] = REGION_ORDER.map(({ id, from, to, activity }) => {
-    const out = borderPoints.get(from % 360) as Point[];
-    const back = [...(borderPoints.get(to % 360) as Point[])].reverse();
-    const arc: Point[] = [];
-    for (let a = from; a <= to; a += 6) {
-      arc.push({ x: hub.x + Math.cos(deg(a)) * 900, y: hub.y + Math.sin(deg(a)) * 900 });
-    }
-    const wedge = [hub, ...out.slice(1), ...arc, ...back.slice(0, -1)];
-    const area = `M${wedge.map((p) => `${r1(p.x)},${r1(p.y)}`).join("L")}Z`;
+  const regions: RegionGeometry[] = REGION_ORDER.map(
+    ({ id, from, to, activity, label, control }) => {
+      const out = borderPoints.get(from % 360) as Point[];
+      const back = [...(borderPoints.get(to % 360) as Point[])].reverse();
+      const arc: Point[] = [];
+      for (let a = from; a <= to; a += 6) {
+        arc.push({ x: hub.x + Math.cos(deg(a)) * 900, y: hub.y + Math.sin(deg(a)) * 900 });
+      }
+      const wedge = [hub, ...out.slice(1), ...arc, ...back.slice(0, -1)];
+      const area = `M${wedge.map((p) => `${r1(p.x)},${r1(p.y)}`).join("L")}Z`;
 
-    const mid = deg((from + to) / 2);
-    const peak = { x: hub.x + Math.cos(mid) * 190 * 1.18, y: hub.y + Math.sin(mid) * 150 };
-    const maxRadius = 150;
-    const ring = (k: number) =>
-      closedSpline(blob(peak, (maxRadius * k) / activity, rand, { steps: 48, aspect: 1.3, wobble: 0.14 }));
-    const contours = Array.from({ length: activity }, (_, i) => ring(i + 1));
-    const activeContours = Array.from({ length: activity - 1 }, (_, i) => ring(i + 1.5));
+      const mid = deg((from + to) / 2);
+      const peak = { x: hub.x + Math.cos(mid) * 190 * 1.18, y: hub.y + Math.sin(mid) * 150 };
+      const maxRadius = 150;
+      const ring = (k: number) =>
+        closedSpline(
+          blob(peak, (maxRadius * k) / activity, rand, { steps: 48, aspect: 1.3, wobble: 0.14 }),
+        );
+      const contours = Array.from({ length: activity }, (_, i) => ring(i + 1));
+      const activeContours = Array.from({ length: activity - 1 }, (_, i) => ring(i + 1.5));
 
-    const label = { x: hub.x + Math.cos(mid) * 150 * 1.25, y: hub.y + Math.sin(mid) * 118 };
-    const control = { x: hub.x + Math.cos(mid) * 268 * 1.12, y: hub.y + Math.sin(mid) * 196 };
-    return { id, area, contours, activeContours, label, control, gridRef: gridRef(peak) };
-  });
+      return {
+        id,
+        area,
+        contours,
+        activeContours,
+        label,
+        control,
+        gridRef: gridRef(peak),
+      };
+    },
+  );
 
   // Course: start on the Spaces coast, then Spaces → Feed → Profiles → Boards → hub.
-  const startAt = coastPoint(deg(200), 0.9);
+  const startAt = { x: 150, y: 300 };
   const tri = 17;
   const start = {
     at: startAt,
     points: [0, 120, 240]
-      .map((a) => `${r1(startAt.x + Math.cos(deg(a - 90)) * tri)},${r1(startAt.y + Math.sin(deg(a - 90)) * tri)}`)
+      .map(
+        (a) =>
+          `${r1(startAt.x + Math.cos(deg(a - 90)) * tri)},${r1(startAt.y + Math.sin(deg(a - 90)) * tri)}`,
+      )
       .join(" "),
   };
   const stops: { p: Point; r: number }[] = [
     { p: startAt, r: tri * 0.9 },
-    ...REGION_ORDER.map(({ id }) => ({ p: (regions.find((g) => g.id === id) as RegionGeometry).control, r: 15 })),
+    ...REGION_ORDER.map(({ id }) => ({
+      p: (regions.find((g) => g.id === id) as RegionGeometry).control,
+      r: 15,
+    })),
     { p: hub, r: 18 },
   ];
   const legsRaw = stops.slice(0, -1).map((s, i) => {
@@ -239,7 +308,10 @@ export function buildMapGeometry(seed = 20260926): MapGeometry {
     const uy = dy / len;
     const a = { x: s.p.x + ux * (s.r + 4), y: s.p.y + uy * (s.r + 4) };
     const b = { x: e.p.x - ux * (e.r + 4), y: e.p.y - uy * (e.r + 4) };
-    return { d: `M${r1(a.x)},${r1(a.y)}L${r1(b.x)},${r1(b.y)}`, length: Math.hypot(b.x - a.x, b.y - a.y) };
+    return {
+      d: `M${r1(a.x)},${r1(a.y)}L${r1(b.x)},${r1(b.y)}`,
+      length: Math.hypot(b.x - a.x, b.y - a.y),
+    };
   });
   const courseLength = legsRaw.reduce((acc, l) => acc + l.length, 0);
   let run = 0;

@@ -7,10 +7,10 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "turbo run dev --parallel",
-    "build": "turbo run build",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
+    "dev": "pnpm --recursive --parallel --stream run dev",
+    "build": "pnpm --recursive run build",
+    "typecheck": "pnpm --recursive run typecheck",
+    "test": "pnpm --recursive run test",
     "lint": "biome check .",
     "format": "biome check --write .",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
@@ -21,7 +21,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
-    "turbo": "2.11.4",
     "typescript": "6.0.3"
   }
 }

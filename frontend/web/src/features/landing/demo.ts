@@ -36,7 +36,9 @@ export const space = {
     },
     {
       name: "Boards",
-      channels: [{ name: "builds-and-guides", kind: "board" as const, unread: true, active: false }],
+      channels: [
+        { name: "builds-and-guides", kind: "board" as const, unread: true, active: false },
+      ],
     },
     {
       name: "Voice",
@@ -47,9 +49,22 @@ export const space = {
 
 export const chat = [
   { who: people.tomas, time: "9:02 PM", text: "anyone up for ranked after 9?" },
-  { who: people.amara, time: "9:03 PM", text: "only if kenji stops picking healer and then roaming off" },
-  { who: people.kenji, time: "9:03 PM", text: "I was scouting. there's a difference", reactions: [{ emoji: "💀", count: 4 }] },
-  { who: people.noor, time: "9:05 PM", text: "posting last night's clip in #clips. it's too good not to" },
+  {
+    who: people.amara,
+    time: "9:03 PM",
+    text: "only if kenji stops picking healer and then roaming off",
+  },
+  {
+    who: people.kenji,
+    time: "9:03 PM",
+    text: "I was scouting. there's a difference",
+    reactions: [{ emoji: "💀", count: 4 }],
+  },
+  {
+    who: people.noor,
+    time: "9:05 PM",
+    text: "posting last night's clip in #clips. it's too good not to",
+  },
 ];
 
 export const clip = {
@@ -62,7 +77,7 @@ export const clip = {
 export const post = {
   by: people.ilya,
   time: "2h",
-  text: "Finished the campaign map for our group. Every region hand-drawn, three weekends, zero regrets.",
+  text: "Planning the next arc of our campaign. Three weekends of notes, zero regrets.",
   image: "https://picsum.photos/seed/realm-post-map/960/600",
   likes: 214,
   comments: 31,

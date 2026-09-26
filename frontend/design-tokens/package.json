@@ -4,7 +4,9 @@
   "private": true,
   "description": "Realm design tokens (The Atlas). Source of truth in TS; compiled to CSS variables for web, consumed as data by native later.",
   "type": "module",
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./tokens.css": "./tokens.css"

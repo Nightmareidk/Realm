@@ -1,10 +1,11 @@
 import { inGamut, type Oklch, oklch } from "./color";
 
 /**
- * THE ATLAS — Realm's visual world.
- * Modern cartography: flat map inks, contour lines, a coordinate grid, and one magenta
- * orienteering overprint that only ever marks something you can act on.
- * Dark and light are the night and day editions of the same map.
+ * THE ATLAS — Realm's visual world, keyed to the Realm logo (a lit gateway and a path into
+ * a night landscape). A night map: deep indigo ground from the logo's sky, four region inks
+ * (mint, amber, sky, coral) that sit against violet without competing, and one violet-magenta
+ * overprint (the logo's path) that only ever marks something you can act on.
+ * Dark and light are the night and day editions of the same map; night is the default.
  */
 
 export type Edition = "night" | "day";
@@ -12,10 +13,10 @@ export type RegionName = "spaces" | "feed" | "profiles" | "boards";
 
 /** Each region owns one ink hue across both editions. */
 export const REGION_HUES: Record<RegionName, number> = {
-  spaces: 152, // vegetation green
-  feed: 84, // open-land yellow
-  profiles: 238, // water blue
-  boards: 48, // landform brown
+  spaces: 168, // mint
+  feed: 78, // amber
+  profiles: 226, // sky
+  boards: 30, // coral
 };
 
 export interface RegionInks {
@@ -84,7 +85,7 @@ const region = (
 };
 
 /** Reduce chroma until the colour fits sRGB, so every token renders as specified. */
-function fit(color: Oklch): Oklch {
+function fitToGamut(color: Oklch): Oklch {
   if (inGamut(color)) return color;
   let lo = 0;
   let hi = color.c;
@@ -99,15 +100,15 @@ function fit(color: Oklch): Oklch {
 function fitEdition(e: EditionTokens): EditionTokens {
   const out = { ...e, regions: { ...e.regions } } as EditionTokens;
   for (const key of Object.keys(e) as (keyof EditionTokens)[]) {
-    if (key !== "regions") (out[key] as Oklch) = fit(e[key] as Oklch);
+    if (key !== "regions") (out[key] as Oklch) = fitToGamut(e[key] as Oklch);
   }
   for (const name of Object.keys(e.regions) as RegionName[]) {
     const inks = e.regions[name];
     out.regions[name] = {
-      fill: fit(inks.fill),
-      line: fit(inks.line),
-      solid: fit(inks.solid),
-      text: fit(inks.text),
+      fill: fitToGamut(inks.fill),
+      line: fitToGamut(inks.line),
+      solid: fitToGamut(inks.solid),
+      text: fitToGamut(inks.text),
     };
   }
   return out;
@@ -115,48 +116,48 @@ function fitEdition(e: EditionTokens): EditionTokens {
 
 const rawEditions: Record<Edition, EditionTokens> = {
   night: {
-    ground: oklch(0.235, 0.032, 222),
-    panel: oklch(0.268, 0.032, 222),
-    panelRaised: oklch(0.305, 0.032, 222),
-    land: oklch(0.3, 0.026, 205),
-    rule: oklch(0.385, 0.028, 215),
-    ruleStrong: oklch(0.56, 0.028, 212),
-    ink: oklch(0.955, 0.01, 200),
-    inkSoft: oklch(0.83, 0.02, 205),
-    inkMuted: oklch(0.7, 0.025, 210),
-    overprint: oklch(0.74, 0.16, 356),
-    overprintFill: oklch(0.575, 0.215, 356),
-    overprintFillHover: oklch(0.535, 0.21, 356),
-    onOverprint: oklch(0.99, 0.005, 356),
-    focus: oklch(0.82, 0.13, 356),
-    danger: oklch(0.72, 0.17, 25),
-    success: oklch(0.8, 0.14, 152),
-    shadow: oklch(0.1, 0.03, 222),
+    ground: oklch(0.19, 0.045, 279),
+    panel: oklch(0.222, 0.047, 279),
+    panelRaised: oklch(0.258, 0.05, 279),
+    land: oklch(0.255, 0.055, 283),
+    rule: oklch(0.34, 0.05, 280),
+    ruleStrong: oklch(0.54, 0.045, 282),
+    ink: oklch(0.955, 0.012, 290),
+    inkSoft: oklch(0.83, 0.03, 288),
+    inkMuted: oklch(0.7, 0.04, 286),
+    overprint: oklch(0.76, 0.16, 316),
+    overprintFill: oklch(0.56, 0.23, 308),
+    overprintFillHover: oklch(0.515, 0.23, 306),
+    onOverprint: oklch(0.99, 0.006, 316),
+    focus: oklch(0.82, 0.13, 316),
+    danger: oklch(0.72, 0.17, 22),
+    success: oklch(0.82, 0.13, 165),
+    shadow: oklch(0.08, 0.045, 279),
     regions: {
       spaces: region("night", REGION_HUES.spaces),
-      feed: region("night", REGION_HUES.feed, { fill: { l: 0.36, c: 0.065 }, line: { l: 0.86 } }),
+      feed: region("night", REGION_HUES.feed, { fill: { l: 0.36, c: 0.07 }, line: { l: 0.86 } }),
       profiles: region("night", REGION_HUES.profiles),
-      boards: region("night", REGION_HUES.boards, { fill: { c: 0.06 } }),
+      boards: region("night", REGION_HUES.boards, { fill: { c: 0.075 } }),
     },
   },
   day: {
-    ground: oklch(0.975, 0.007, 205),
-    panel: oklch(0.992, 0.004, 205),
-    panelRaised: oklch(0.998, 0.002, 205),
-    land: oklch(0.945, 0.014, 190),
-    rule: oklch(0.87, 0.015, 210),
-    ruleStrong: oklch(0.63, 0.022, 212),
-    ink: oklch(0.235, 0.035, 232),
-    inkSoft: oklch(0.38, 0.035, 228),
-    inkMuted: oklch(0.49, 0.03, 222),
-    overprint: oklch(0.555, 0.225, 356),
-    overprintFill: oklch(0.555, 0.225, 356),
-    overprintFillHover: oklch(0.5, 0.215, 356),
-    onOverprint: oklch(0.99, 0.005, 356),
-    focus: oklch(0.555, 0.225, 356),
-    danger: oklch(0.54, 0.19, 25),
-    success: oklch(0.5, 0.12, 152),
-    shadow: oklch(0.3, 0.04, 232),
+    ground: oklch(0.975, 0.008, 286),
+    panel: oklch(0.99, 0.005, 286),
+    panelRaised: oklch(0.998, 0.002, 286),
+    land: oklch(0.945, 0.018, 286),
+    rule: oklch(0.875, 0.02, 286),
+    ruleStrong: oklch(0.63, 0.035, 284),
+    ink: oklch(0.24, 0.07, 280),
+    inkSoft: oklch(0.38, 0.055, 281),
+    inkMuted: oklch(0.49, 0.045, 283),
+    overprint: oklch(0.52, 0.23, 308),
+    overprintFill: oklch(0.52, 0.23, 308),
+    overprintFillHover: oklch(0.47, 0.22, 306),
+    onOverprint: oklch(0.99, 0.006, 316),
+    focus: oklch(0.52, 0.23, 308),
+    danger: oklch(0.54, 0.19, 22),
+    success: oklch(0.5, 0.12, 165),
+    shadow: oklch(0.3, 0.07, 280),
     regions: {
       spaces: region("day", REGION_HUES.spaces),
       feed: region("day", REGION_HUES.feed, {
@@ -188,8 +189,11 @@ export const motion = {
   course: "1600ms",
 } as const;
 
-/** One corner language: 4px everywhere; circles only for things that are circles (pins, avatars). */
-export const radius = { sm: "3px", md: "4px", round: "999px" } as const;
+/**
+ * Corner language: controls 6px, panels 12px, stages 28px (the stage echoes the logo tile).
+ * Circles only for things that are circles (pins, avatars, presence).
+ */
+export const radius = { sm: "4px", md: "6px", lg: "12px", xl: "28px", round: "999px" } as const;
 
 /** 4px spacing grid. */
 export const space = [0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128] as const;

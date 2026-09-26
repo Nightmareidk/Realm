@@ -5,6 +5,7 @@ const API_URL = process.env.REALM_API_URL ?? "http://localhost:4000";
 const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
+  devIndicators: false,
   images: {
     // Illustrative photography on the landing page until real product media exists.
     remotePatterns: [
