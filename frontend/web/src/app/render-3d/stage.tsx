@@ -21,7 +21,6 @@ type Item = {
   look: [number, number, number];
   size?: [number, number];
   fov?: number;
-  day?: boolean;
 };
 
 /**
@@ -36,15 +35,14 @@ const planet = (world: "spaces" | "feed" | "profiles" | "boards"): Item => ({
   size: [512, 512],
 });
 
-/** The hero scene without its sky, as the loading poster for one edition. */
-const poster = (day: boolean): Item => ({
-  node: () => <HeroCast mix={{ current: day ? 1 : 0 }} still />,
+/** The night hero scene without its sky, as its loading poster. */
+const heroPoster: Item = {
+  node: () => <HeroCast ignite={{ current: 0 }} still />,
   camera: [0, 0.4, 14],
   look: [0, 0, 0],
   size: [1200, 960],
   fov: 36,
-  day,
-});
+};
 
 /** Every renderable asset: one object, framed on a transparent background. */
 const ITEMS: Record<string, Item> = {
@@ -83,8 +81,7 @@ const ITEMS: Record<string, Item> = {
   "planet-feed": planet("feed"),
   "planet-profiles": planet("profiles"),
   "planet-boards": planet("boards"),
-  "hero-poster-night": poster(false),
-  "hero-poster-day": poster(true),
+  "hero-poster-night": heroPoster,
 };
 
 export function RenderStage({ item }: { item: string }) {
@@ -96,12 +93,12 @@ export function RenderStage({ item }: { item: string }) {
     <div id="stage" style={{ width: w, height: h }}>
       <Canvas
         dpr={1}
-        shadows="soft"
+        shadows="percentage"
         gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
         camera={{ position: it.camera, fov: it.fov ?? 32 }}
         onCreated={({ camera }) => camera.lookAt(...it.look)}
       >
-        <Studio mix={{ current: it.day ? 1 : 0 }} />
+        <Studio />
         <Suspense fallback={null}>{it.node()}</Suspense>
       </Canvas>
     </div>

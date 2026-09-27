@@ -1,12 +1,11 @@
 "use client";
 
 import { Float } from "@react-three/drei";
-import { type ThreeElements, useFrame } from "@react-three/fiber";
+import { type ThreeElements, useFrame, useThree } from "@react-three/fiber";
 import { type RefObject, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { CastMember, type CastName } from "./cast3d";
+import { CastMember, type CastName, preloadCast } from "./cast3d";
 import { Planet, type World } from "./planets";
-import type { DayMix } from "./theme";
 
 export { Planet };
 
@@ -52,15 +51,14 @@ export const PLANETS: {
   },
 ];
 
-const orbitPoint = (a: number, orbit: number, tilt: number) =>
-  new THREE.Vector3(
+const orbitPoint = (a: number, orbit: number, tilt: number, out = new THREE.Vector3()) =>
+  out.set(
     Math.cos(a) * orbit,
     Math.sin(a) * orbit * Math.sin(tilt),
     Math.sin(a) * orbit * Math.cos(tilt) * 0.6,
   );
 
-const ORBIT_NIGHT = new THREE.Color("#9fb6d8");
-const ORBIT_DAY = new THREE.Color("#ffffff");
+const ORBIT = new THREE.Color("#9fb6d8");
 
 /** The exact path a planet travels, as a faint line. */
 function orbitLine(orbit: number, tilt: number) {
@@ -70,7 +68,7 @@ function orbitLine(orbit: number, tilt: number) {
   return new THREE.LineLoop(
     new THREE.BufferGeometry().setFromPoints(pts),
     new THREE.LineBasicMaterial({
-      color: ORBIT_NIGHT,
+      color: ORBIT,
       transparent: true,
       opacity: 0.22,
       depthWrite: false,
@@ -84,12 +82,10 @@ function orbitLine(orbit: number, tilt: number) {
  */
 function AsteroidBelt({
   still,
-  mix,
   radius = 6.9,
   count = 160,
 }: {
   still: boolean;
-  mix?: DayMix;
   radius?: number;
   count?: number;
 }) {
@@ -130,14 +126,13 @@ function AsteroidBelt({
     // fades in as the camera pulls back.
     const m = material.current;
     if (m) {
-      m.opacity =
-        THREE.MathUtils.smoothstep(camera.position.z, 10.5, 13) * (1 - (mix?.current ?? 0));
+      m.opacity = THREE.MathUtils.smoothstep(camera.position.z, 10.5, 13);
       if (mesh.current) mesh.current.visible = m.opacity > 0.01;
     }
   });
 
   return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, count]} castShadow receiveShadow>
+    <instancedMesh ref={mesh} args={[undefined, undefined, count]} receiveShadow>
       <dodecahedronGeometry args={[1, 0]} />
       <meshStandardMaterial
         ref={material}
@@ -154,34 +149,19 @@ function AsteroidBelt({
 export function Orbits({
   still,
   anchors,
-  mix,
   ...props
 }: {
   still: boolean;
   anchors?: RefObject<(THREE.Object3D | null)[]>;
-  mix?: DayMix;
 } & ThreeElements["group"]) {
   const planets = useRef<(THREE.Group | null)[]>([]);
   const lines = useMemo(() => PLANETS.map((p) => orbitLine(p.orbit, p.tilt)), []);
-  useFrame(({ clock, camera }) => {
-    const m = mix?.current ?? 0;
-    for (const line of lines) {
-      const mat = line.material as THREE.LineBasicMaterial;
-      mat.color.lerpColors(ORBIT_NIGHT, ORBIT_DAY, m);
-      // By day there's nothing at the centre to orbit, so the paths fade away.
-      mat.opacity = 0.22 * (1 - m);
-      line.visible = mat.opacity > 0.005;
-    }
-    // By day the worlds wait out the portal shot and drift in as the camera pulls back.
-    const k = THREE.MathUtils.smoothstep(camera.position.z, 9.5, 12.5);
-    const s = THREE.MathUtils.lerp(1, k, m);
+  useFrame(({ clock }) => {
     const t = still ? 0 : clock.elapsedTime;
     PLANETS.forEach((p, i) => {
       const g = planets.current[i];
       if (!g) return;
-      g.position.copy(orbitPoint(p.start + t * p.speed, p.orbit, p.tilt));
-      g.scale.setScalar(Math.max(0.001, s));
-      g.visible = s > 0.01;
+      orbitPoint(p.start + t * p.speed, p.orbit, p.tilt, g.position);
     });
   });
   return (
@@ -190,7 +170,7 @@ export function Orbits({
         <primitive key={PLANETS[i]?.id} object={line} />
       ))}
       <group rotation={[0.08, 0, 0]}>
-        <AsteroidBelt still={still} mix={mix} />
+        <AsteroidBelt still={still} />
       </group>
       {PLANETS.map((p, i) => (
         <group
@@ -212,7 +192,17 @@ export function Orbits({
   );
 }
 
-/** The four explorers, one per region colour, drifting in zero-g. */
+const CREW: CastName[] = ["astro-teal", "alien-zib", "monster-gloop", "human-maya"];
+// Fetch and decode the crew as soon as this module loads (it's loaded ahead of time by day, so the
+// switch to night doesn't wait on the network).
+if (typeof window !== "undefined") preloadCast(CREW);
+
+/**
+ * The four explorers, drifting in zero-g.
+ *
+ * Their materials are compiled in the background (KHR_parallel_shader_compile) before they are
+ * shown: compiling them on first draw froze the page for seconds on some Windows GPUs.
+ */
 export function Explorers({
   still,
   anchors,
@@ -234,6 +224,24 @@ export function Explorers({
     { who: "human-maya", pos: [-4.1, 1.2, 0.4], rot: 0.45, s: 0.72, wave: false, phase: 3.1 },
   ];
   const groups = useRef<(THREE.Group | null)[]>([]);
+  const crewRoot = useRef<THREE.Group>(null);
+  const { gl, scene, camera, invalidate } = useThree();
+  useLayoutEffect(() => {
+    const root = crewRoot.current;
+    if (!root) return;
+    let live = true;
+    root.visible = false;
+    gl.compileAsync(root, camera, scene)
+      .catch(() => {})
+      .then(() => {
+        if (!live) return;
+        root.visible = true;
+        invalidate();
+      });
+    return () => {
+      live = false;
+    };
+  }, [gl, scene, camera, invalidate]);
   // During the scroll intro the crew waits outside the frame and drifts in as the camera pulls
   // back, so the opening shot is just the eclipse and the title.
   useFrame(({ camera }) => {
@@ -247,7 +255,7 @@ export function Explorers({
     });
   });
   return (
-    <>
+    <group ref={crewRoot}>
       {crew.map((c, i) => (
         <Float key={c.who} speed={still ? 0 : 0.9} rotationIntensity={0.25} floatIntensity={0.6}>
           <group
@@ -268,6 +276,6 @@ export function Explorers({
           </group>
         </Float>
       ))}
-    </>
+    </group>
   );
 }

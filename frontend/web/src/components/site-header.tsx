@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ButtonLink } from "./button";
+import { HeaderBar } from "./header-bar";
 import { MobileMenu } from "./mobile-menu";
 import { MotionToggle } from "./motion-toggle";
 import { EditionToggle } from "./theme-toggle";
@@ -16,7 +17,7 @@ export const NAV = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-[oklch(0.85_0.05_220/0.1)] bg-[color-mix(in_oklch,var(--r-ground)_72%,transparent)] backdrop-blur-md">
+    <HeaderBar className="sticky top-0 z-40 border-b border-[oklch(0.85_0.05_220/0.1)] bg-[color-mix(in_oklch,var(--r-ground)_72%,transparent)] text-ink backdrop-blur-md transition-[background-color,border-color] duration-300 ease-out">
       <div className="mx-auto flex h-16 max-w-[90rem] items-center gap-8 px-4 md:px-8">
         <Link href="/" aria-label="Realm home" className="rounded-sm">
           <Wordmark />
@@ -45,6 +46,6 @@ export function SiteHeader() {
           <MobileMenu items={NAV} />
         </div>
       </div>
-    </header>
+    </HeaderBar>
   );
 }

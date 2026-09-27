@@ -1,76 +1,90 @@
 "use client";
 
-import { Environment, Lightformer } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useThree } from "@react-three/fiber";
+import { useLayoutEffect } from "react";
 import * as THREE from "three";
-import { type DayMix, ease } from "./theme";
 
-const night = {
-  sky: new THREE.Color("#c9d6ff"),
-  ground: new THREE.Color("#241a6b"),
+const light = {
+  sky: "#c9d6ff",
+  ground: "#241a6b",
   hemi: 1.05,
-  key: new THREE.Color("#f4f0ff"),
+  key: "#f4f0ff",
   keyI: 2.3,
-  rim: new THREE.Color("#ff8ad0"),
+  rim: "#ff8ad0",
   rimI: 1.5,
-  fill: new THREE.Color("#7fe3ff"),
+  fill: "#7fe3ff",
   fillI: 0.9,
 };
-const day = {
-  sky: new THREE.Color("#dcefff"),
-  ground: new THREE.Color("#ffd9b0"),
-  hemi: 1.35,
-  key: new THREE.Color("#fff1dc"),
-  keyI: 2.8,
-  rim: new THREE.Color("#ffb45c"),
-  rimI: 2.4,
-  fill: new THREE.Color("#9fd2ff"),
-  fillI: 0.8,
-};
+
+/** Soft light panels around the scene, reflected in the cast's clearcoat. */
+const PANELS: {
+  form: "rect" | "ring";
+  color: string;
+  intensity: number;
+  position: [number, number, number];
+  scale: [number, number, number];
+}[] = [
+  { form: "rect", color: "#ffffff", intensity: 2.2, position: [0, 5, 6], scale: [10, 4, 1] },
+  { form: "rect", color: "#b8a4ff", intensity: 1.3, position: [-6, 2, 2], scale: [4, 6, 1] },
+  { form: "ring", color: "#ff8ad0", intensity: 1.2, position: [6, 3, -3], scale: [3, 3, 3] },
+  { form: "rect", color: "#7fe3ff", intensity: 0.9, position: [4, -3, 4], scale: [6, 2, 1] },
+];
 
 /**
- * Shared lighting for every Realm 3D scene: a key light from the front right that casts soft
- * shadows, a coloured rim from behind, a cool fill, a sky/ground hemisphere, and a tiny
- * procedural environment for the clearcoat reflections (no HDR downloads). With `mix`, it
- * eases between the night look (cool key, pink rim) and daylight (warm key, sunlit rim).
+ * The reflection environment, built once from the light panels and set on the scene as the
+ * scene mounts, before anything is compiled or drawn. (Attaching it on the first frame instead,
+ * as a render-time environment does, changes every lit material's shader after the scene has been
+ * compiled in the background, so they all recompile on the spot; on a cold shader cache that froze
+ * the page for seconds.)
  */
-export function Studio({ mix, shadows = true }: { mix?: DayMix; shadows?: boolean }) {
-  const hemi = useRef<THREE.HemisphereLight>(null);
-  const key = useRef<THREE.DirectionalLight>(null);
-  const rim = useRef<THREE.DirectionalLight>(null);
-  const fill = useRef<THREE.DirectionalLight>(null);
+function StudioEnvironment() {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
 
-  useFrame(() => {
-    const m = ease(mix?.current ?? 0);
-    if (hemi.current) {
-      hemi.current.color.lerpColors(night.sky, day.sky, m);
-      hemi.current.groundColor.lerpColors(night.ground, day.ground, m);
-      hemi.current.intensity = night.hemi + (day.hemi - night.hemi) * m;
+  useLayoutEffect(() => {
+    const room = new THREE.Scene();
+    const disposables: { dispose: () => void }[] = [];
+    for (const p of PANELS) {
+      const geometry =
+        p.form === "ring" ? new THREE.RingGeometry(0.25, 0.5, 64) : new THREE.PlaneGeometry(1, 1);
+      const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, toneMapped: false });
+      material.color.set(p.color).multiplyScalar(p.intensity);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...p.position);
+      mesh.scale.set(...p.scale);
+      mesh.lookAt(0, 0, 0);
+      room.add(mesh);
+      disposables.push(geometry, material);
     }
-    if (key.current) {
-      key.current.color.lerpColors(night.key, day.key, m);
-      key.current.intensity = night.keyI + (day.keyI - night.keyI) * m;
-    }
-    if (rim.current) {
-      rim.current.color.lerpColors(night.rim, day.rim, m);
-      rim.current.intensity = night.rimI + (day.rimI - night.rimI) * m;
-    }
-    if (fill.current) {
-      fill.current.color.lerpColors(night.fill, day.fill, m);
-      fill.current.intensity = night.fillI + (day.fillI - night.fillI) * m;
-    }
-  });
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const target = pmrem.fromScene(room, 0, 0.1, 100, { size: 128 });
+    pmrem.dispose();
+    for (const d of disposables) d.dispose();
+    const before = scene.environment;
+    scene.environment = target.texture;
+    return () => {
+      if (scene.environment === target.texture) scene.environment = before;
+      target.dispose();
+    };
+  }, [gl, scene]);
 
+  return null;
+}
+
+/**
+ * Shared lighting for every Realm 3D scene: a cool key light from the front right that casts soft
+ * shadows, a pink rim from behind, a cyan fill, a sky/ground hemisphere, and a tiny procedural
+ * environment for the clearcoat reflections (no HDR downloads).
+ */
+export function Studio({ shadows = true }: { shadows?: boolean }) {
   return (
     <>
-      <hemisphereLight ref={hemi} args={[night.sky, night.ground, night.hemi]} />
+      <hemisphereLight args={[light.sky, light.ground, light.hemi]} />
       <ambientLight intensity={0.18} />
       <directionalLight
-        ref={key}
         position={[5, 9, 8]}
-        intensity={night.keyI}
-        color={night.key}
+        intensity={light.keyI}
+        color={light.key}
         castShadow={shadows}
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
@@ -83,37 +97,9 @@ export function Studio({ mix, shadows = true }: { mix?: DayMix; shadows?: boolea
         shadow-camera-near={1}
         shadow-camera-far={40}
       />
-      <directionalLight ref={rim} position={[-7, 4, -6]} intensity={night.rimI} color={night.rim} />
-      <directionalLight
-        ref={fill}
-        position={[6, 1, -6]}
-        intensity={night.fillI}
-        color={night.fill}
-      />
-      <Environment resolution={128} frames={1}>
-        <Lightformer
-          form="rect"
-          intensity={2.2}
-          color="#ffffff"
-          position={[0, 5, 6]}
-          scale={[10, 4, 1]}
-        />
-        <Lightformer
-          form="rect"
-          intensity={1.3}
-          color="#b8a4ff"
-          position={[-6, 2, 2]}
-          scale={[4, 6, 1]}
-        />
-        <Lightformer form="ring" intensity={1.2} color="#ff8ad0" position={[6, 3, -3]} scale={3} />
-        <Lightformer
-          form="rect"
-          intensity={0.9}
-          color="#7fe3ff"
-          position={[4, -3, 4]}
-          scale={[6, 2, 1]}
-        />
-      </Environment>
+      <directionalLight position={[-7, 4, -6]} intensity={light.rimI} color={light.rim} />
+      <directionalLight position={[6, 1, -6]} intensity={light.fillI} color={light.fill} />
+      <StudioEnvironment />
     </>
   );
 }

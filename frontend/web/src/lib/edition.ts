@@ -5,21 +5,32 @@ import { useEffect, useState } from "react";
 /**
  * Night and day editions, and the switch between them.
  *
- * Switching is a small sequence rather than a cut: bring the hero's sky into view, let the sky
- * start to change (by day the moon slides off the sun and it flares; by night the moon returns
- * and the aurora rises), then reveal the rest of the page in the new edition, spreading out from
- * the sun. People who ask for reduced motion, or who paused motion, get the switch instantly.
+ * Switching is a small sequence rather than a cut: bring the hero into view, let its centrepiece
+ * react (by night the black hole flares; by day the sun swells), then reveal the page in the new
+ * edition, spreading out from that point. People who ask for reduced motion, or who paused
+ * motion, get the switch instantly.
  */
 export type Edition = "night" | "day";
 
-/** Where the hero publishes the sun's position on screen (viewport pixels), for the reveal. */
-declare global {
-  interface Window {
-    __realmSun?: { x: number; y: number };
-  }
+type Point = { x: number; y: number };
+const locators: Partial<Record<Edition, () => Point | null>> = {};
+
+/**
+ * Each edition's hero registers where its centrepiece (the black hole, the sun) is on screen, in
+ * viewport pixels, so the switch can open the new edition from it. A function, so the position is
+ * only measured when a switch actually asks. Returns the unregister function.
+ */
+export function registerSunLocator(edition: Edition, where: () => Point | null) {
+  locators[edition] = where;
+  return () => {
+    if (locators[edition] === where) delete locators[edition];
+  };
 }
 
 export const SKY_EVENT = "realm:sky";
+
+/** How long the hero gets to react before the new edition is revealed. */
+export const SKY_LEAD_MS = 650;
 
 export function currentEdition(): Edition {
   return document.documentElement.dataset.theme === "day" ? "day" : "night";
@@ -59,7 +70,7 @@ function scrollToTop(): Promise<void> {
 
 let running = false;
 
-export async function switchEdition(next: Edition, from?: { x: number; y: number }) {
+export async function switchEdition(next: Edition, from?: Point) {
   if (running || next === currentEdition()) return;
   const root = document.documentElement;
   const still =
@@ -77,9 +88,9 @@ export async function switchEdition(next: Edition, from?: { x: number; y: number
   try {
     await scrollToTop();
     window.dispatchEvent(new CustomEvent(SKY_EVENT, { detail: next }));
-    await wait(650);
+    await wait(SKY_LEAD_MS);
 
-    const origin = window.__realmSun ?? from ?? { x: window.innerWidth * 0.7, y: 200 };
+    const origin = locators[currentEdition()]?.() ?? from ?? { x: window.innerWidth * 0.7, y: 200 };
     root.style.setProperty("--vt-x", `${Math.round(origin.x)}px`);
     root.style.setProperty("--vt-y", `${Math.round(origin.y)}px`);
 

@@ -92,10 +92,38 @@ export function StarChartMap({
       }}
     >
       <div className="relative">
+        {/* The stars twinkle in their own layer, so the chart above (with its blurred glows) isn't
+            repainted every time one of them changes. */}
+        <svg
+          viewBox={`0 0 ${g.width} ${g.height}`}
+          className="pointer-events-none absolute inset-0 block size-full"
+          aria-hidden="true"
+        >
+          <g fill="#dbe8ff" className={styles.stars} aria-hidden="true">
+            {g.stars.map((s) => (
+              <circle
+                key={`${s.x},${s.y}`}
+                cx={s.x}
+                cy={s.y}
+                r={s.r}
+                opacity={s.twinkle ? 1 : 0.5}
+                className={s.twinkle ? "twinkle" : undefined}
+                style={
+                  s.twinkle
+                    ? ({
+                        "--twinkle-delay": `${(s.x % 40) / 10}s`,
+                        "--twinkle-dur": `${3 + (s.y % 30) / 10}s`,
+                      } as CSSProperties)
+                    : undefined
+                }
+              />
+            ))}
+          </g>
+        </svg>
         {/* biome-ignore lint/a11y/useSemanticElements: an SVG chart can't be a <fieldset>; role="group" names the interactive planet set. */}
         <svg
           viewBox={`0 0 ${g.width} ${g.height}`}
-          className="block h-auto w-full select-none"
+          className="relative block h-auto w-full select-none will-change-transform"
           role="group"
           aria-label="Star chart of Realm: Spaces, Feed, Profiles and Boards are four planets orbiting one eclipse"
         >
@@ -131,28 +159,6 @@ export function StarChartMap({
               <feGaussianBlur stdDeviation="5" />
             </filter>
           </defs>
-
-          {/* Stars */}
-          <g fill="#dbe8ff" className={styles.stars} aria-hidden="true">
-            {g.stars.map((s) => (
-              <circle
-                key={`${s.x},${s.y}`}
-                cx={s.x}
-                cy={s.y}
-                r={s.r}
-                opacity={s.twinkle ? 1 : 0.5}
-                className={s.twinkle ? "twinkle" : undefined}
-                style={
-                  s.twinkle
-                    ? ({
-                        "--twinkle-delay": `${(s.x % 40) / 10}s`,
-                        "--twinkle-dur": `${3 + (s.y % 30) / 10}s`,
-                      } as CSSProperties)
-                    : undefined
-                }
-              />
-            ))}
-          </g>
 
           {/* Orbits */}
           <g fill="none" transform={`rotate(${g.tilt} ${cx0} ${cy0})`} aria-hidden="true">

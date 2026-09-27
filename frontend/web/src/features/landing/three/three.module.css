@@ -6,59 +6,6 @@
     linear-gradient(180deg, #04041a 0%, #0c0a2c 60%, var(--r-ground) 100%);
 }
 
-:global(:root[data-theme="day"]) .hero {
-  background: #f3c08a url("/video/day-portal.jpg") center / cover no-repeat;
-}
-
-/* ── Day sky: the portal at golden hour, dissolving into the meadow as you scroll through ── */
-.dayBackdrop {
-  visibility: hidden;
-}
-:global(:root[data-theme="day"]) .dayBackdrop,
-:global(:root[data-vt]) .dayBackdrop {
-  visibility: visible;
-}
-.dayClip {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.portal {
-  object-position: 50% 62%;
-  opacity: calc(1 - clamp(0, (var(--p) - 0.22) * 2.8, 1));
-  transform: scale(calc(1 + var(--p) * 0.35));
-  transform-origin: 50% 48%;
-}
-.meadow {
-  object-position: 50% 70%;
-  opacity: clamp(0, (var(--p) - 0.22) * 2.8, 1);
-  transform: scale(calc(1.12 - var(--p) * 0.12));
-}
-/* A warm wash on the left so the headline reads over the meadow. */
-.dayScrim {
-  position: absolute;
-  inset: 0;
-  opacity: clamp(0, (var(--p) - 0.3) * 3, 1);
-  background: linear-gradient(
-    90deg,
-    color-mix(in oklch, var(--r-ground) 82%, transparent) 0%,
-    color-mix(in oklch, var(--r-ground) 55%, transparent) 30%,
-    transparent 58%
-  );
-}
-@media (width < 64rem) {
-  .dayScrim {
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklch, var(--r-ground) 80%, transparent) 0%,
-      color-mix(in oklch, var(--r-ground) 55%, transparent) 45%,
-      transparent 70%
-    );
-  }
-}
-
 /* ── Scroll intro: the stage stays pinned while --p (0 → 1) plays the pull-back ───────── */
 .pin {
   height: 260svh;
@@ -99,16 +46,6 @@
     color-mix(in oklch, var(--r-ground) 62%, transparent),
     transparent 75%
   );
-}
-:global(:root[data-theme="day"]) .titleCard {
-  color: #fffaf2;
-}
-:global(:root[data-theme="day"]) .titleCard :is(p, span) {
-  color: #fffaf2;
-  text-shadow: 0 2px 24px rgb(40 16 0 / 0.55);
-}
-:global(:root[data-theme="day"]) .titleCard::before {
-  background: radial-gradient(50% 55% at 50% 55%, rgb(30 12 0 / 0.42), transparent 75%);
 }
 .titleWord {
   font-size: clamp(3.75rem, 14vw, 10.5rem);
@@ -197,11 +134,6 @@
   }
 }
 
-/* The copy changes colour at the pace the sky changes, instead of flipping ahead of it. */
-.hero :is(h1, p) {
-  transition: color 1.2s ease-in-out;
-}
-
 .dayOnly {
   display: none;
 }
@@ -214,7 +146,8 @@
   display: block;
 }
 
-/* Chat bubbles pinned to the explorers: glassy, aurora-edged, not cartoon stickers. */
+/* Chat bubbles pinned to the explorers: dark glass, aurora-edged, not cartoon stickers. No
+   backdrop blur: they move every frame, and re-blurring the canvas under them costs too much. */
 .say {
   position: relative;
   white-space: nowrap;
@@ -225,19 +158,12 @@
   color: #eaf6ff;
   padding: 0.6rem 0.9rem;
   border-radius: 14px 14px 14px 4px;
-  background: rgb(10 20 34 / 0.72);
+  background: rgb(10 14 36 / 0.86);
   border: 1px solid var(--tone, #29d7d9);
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 0.04) inset,
     0 10px 30px -8px color-mix(in oklch, var(--tone, #29d7d9) 55%, transparent);
-  backdrop-filter: blur(8px);
   transform-origin: 0% 100%;
-}
-
-:global(:root[data-theme="day"]) .say {
-  color: #0f1b2d;
-  background: rgb(255 255 255 / 0.82);
-  box-shadow: 0 10px 28px -10px rgb(20 40 80 / 0.35);
 }
 
 .teal {
@@ -261,10 +187,9 @@
   letter-spacing: 0.04em;
   padding: 0.3rem 0.55rem;
   border-radius: 999px;
-  background: color-mix(in oklch, var(--r-ground) 65%, transparent);
+  background: color-mix(in oklch, var(--r-ground) 84%, transparent);
   border: 1px solid currentColor;
   white-space: nowrap;
-  backdrop-filter: blur(6px);
   transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 

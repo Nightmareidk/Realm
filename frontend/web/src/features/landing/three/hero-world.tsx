@@ -1,20 +1,21 @@
 "use client";
 
 import { ArrowFatUp } from "@phosphor-icons/react";
+import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { type ReactNode, type RefObject, Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { cx } from "@/lib/cx";
+import { BlackHole, HOLE_RADIUS } from "./black-hole";
+import type { LayoutRef } from "./layout";
 import { SkyBackdrop } from "./sky";
 import { Studio } from "./studio";
-import { Eclipse, MOON_RADIUS } from "./sun";
-import { type DayMix, ease, lerp, useDayMix, useIsDay } from "./theme";
+import { ease, lerp, type Pulse, useIgnite } from "./theme";
 import styles from "./three.module.css";
 import { Explorers, Orbits, PLANETS } from "./universe";
 
 type Anchors = RefObject<(THREE.Object3D | null)[]>;
 type Targets = RefObject<(HTMLElement | null)[]>;
-type El = RefObject<HTMLElement | null>;
 
 const SUN_AT = new THREE.Vector3(1.2, 0.9, -3);
 
@@ -32,53 +33,35 @@ function Rig({ children, still }: { children: ReactNode; still: boolean }) {
   return <group ref={ref}>{children}</group>;
 }
 
-/** Box of `el` in canvas pixels. */
-function boxIn(canvas: HTMLCanvasElement, el: HTMLElement) {
-  const c = canvas.getBoundingClientRect();
-  const r = el.getBoundingClientRect();
-  return {
-    x: r.left - c.left,
-    y: r.top - c.top,
-    w: r.width,
-    h: r.height,
-    cw: c.width,
-    ch: c.height,
-  };
-}
-
 const CAM_NEAR = new THREE.Vector3(SUN_AT.x, SUN_AT.y, 6.2);
 const CAM_FAR = new THREE.Vector3(0, 0.4, 14);
 const LOOK_FAR = new THREE.Vector3(0, 0, 0);
 
 /**
- * The camera. The canvas fills the whole hero; a view offset frames the 3D world inside `box`
- * (the right column on desktop, below the copy on phones), so the sky carries on behind the
- * headline. During the scroll intro (`intro` 0 → 1) it starts close on the eclipse, centred in
+ * The camera. The canvas fills the whole hero; a view offset frames the 3D world inside the scene
+ * box (the right column on desktop, below the copy on phones), so the sky carries on behind the
+ * headline. During the scroll intro (`intro` 0 → 1) it starts close on the black hole, centred in
  * the whole view, and pulls back through space into that framing.
  */
-function Camera({ box, intro }: { box: El; intro: RefObject<number> }) {
+function Camera({ layout, intro }: { layout: LayoutRef; intro: RefObject<number> }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
-  const gl = useThree((s) => s.gl);
   const eased = useRef(intro.current ?? 1);
   const look = useRef(new THREE.Vector3());
   const near = useRef(CAM_NEAR.clone());
   useFrame((_, delta) => {
-    const el = box.current;
-    if (!el) return;
+    const { box: b, cw, ch } = layout.current;
+    if (b.w < 10 || b.h < 10) return;
     eased.current += ((intro.current ?? 1) - eased.current) * Math.min(1, delta * 5);
     const t = ease(eased.current / 0.72);
-    const b = boxIn(gl.domElement, el);
-    if (b.w < 10 || b.h < 10) return;
-    // Near the start the sun sits a little above centre, so the title card has room below it.
+    // Near the start the hole sits a little above centre, so the title card has room below it.
     const x = lerp(0, b.x, t);
-    const y = lerp(-b.ch * 0.1, b.y, t);
-    const w = lerp(b.cw, b.w, t);
-    const h = lerp(b.ch, b.h, t);
+    const y = lerp(-ch * 0.1, b.y, t);
+    const w = lerp(cw, b.w, t);
+    const h = lerp(ch, b.h, t);
     camera.aspect = w / h;
-    camera.setViewOffset(w, h, -x, -y, b.cw, b.ch);
-    // Narrow screens start further back, or the moon alone would fill a phone.
-    const aspect = b.cw / b.ch;
-    near.current.z = lerp(9.6, CAM_NEAR.z, THREE.MathUtils.clamp((aspect - 0.45) / 0.8, 0, 1));
+    camera.setViewOffset(w, h, -x, -y, cw, ch);
+    // Narrow screens start further back, or the hole alone would fill a phone.
+    near.current.z = lerp(9.6, CAM_NEAR.z, THREE.MathUtils.clamp((cw / ch - 0.45) / 0.8, 0, 1));
     camera.position.lerpVectors(near.current, CAM_FAR, t);
     look.current.lerpVectors(SUN_AT, LOOK_FAR, t);
     camera.lookAt(look.current);
@@ -87,57 +70,104 @@ function Camera({ box, intro }: { box: El; intro: RefObject<number> }) {
   return null;
 }
 
-type Occluder = { object: RefObject<THREE.Object3D | null>; radius: () => number };
+type Occluder = { object: RefObject<THREE.Object3D | null>; radius: number };
 
 /**
  * Projects 3D anchors to the screen every frame and moves the matching DOM labels, keeping them
  * inside the scene's box. A label fades out while its anchor is behind one of the `occluders`
- * (a planet passing behind the moon or the sun shouldn't keep its name tag floating in front).
+ * (a planet passing behind the black hole shouldn't keep its name tag floating in front).
+ *
+ * It only writes to the DOM: label sizes are read when the layout changes, not every frame, and
+ * styles are only touched when they change, so the browser never has to redo layout mid-frame.
  */
 function Track({
   anchors,
   targets,
-  box,
+  layout,
   occluders = [],
 }: {
   anchors: Anchors;
   targets: Targets;
-  box: El;
+  layout: LayoutRef;
   occluders?: Occluder[];
 }) {
   const v = useRef(new THREE.Vector3());
+  const dir = useRef(new THREE.Vector3());
   const ray = useRef(new THREE.Ray());
   const sphere = useRef(new THREE.Sphere());
   const hit = useRef(new THREE.Vector3());
-  const gl = useThree((s) => s.gl);
+  const sizes = useRef<{ w: number; h: number }[]>([]);
+  const seen = useRef(-1);
+  const written = useRef<string[]>([]);
+  const placed = useRef<
+    { i: number; x: number; y: number; w: number; h: number; hidden: boolean }[]
+  >([]);
   useFrame(({ camera, size }) => {
-    const b = box.current
-      ? boxIn(gl.domElement, box.current)
-      : { x: 0, y: 0, w: size.width, h: size.height };
+    const L = layout.current;
+    if (L.version !== seen.current) {
+      seen.current = L.version;
+      sizes.current = (targets.current ?? []).map((el) => ({
+        w: el?.offsetWidth ?? 0,
+        h: el?.offsetHeight ?? 0,
+      }));
+    }
+    const b = L.box.w > 0 ? L.box : { x: 0, y: 0, w: size.width, h: size.height };
+    // Where each label wants to be (its anchor, kept inside the box), then nudged apart so two
+    // labels never sit on top of each other.
+    const spots = placed.current;
+    spots.length = 0;
     anchors.current?.forEach((a, i) => {
-      const el = targets.current?.[i];
-      if (!a || !el) return;
+      const box = sizes.current[i];
+      if (!a || !targets.current?.[i] || !box) return;
       a.getWorldPosition(v.current);
       const far = camera.position.distanceTo(v.current);
-      ray.current.set(camera.position, v.current.clone().sub(camera.position).normalize());
+      ray.current.set(
+        camera.position,
+        dir.current.subVectors(v.current, camera.position).normalize(),
+      );
       let hidden = occluders.some(({ object, radius }) => {
         if (!object.current) return false;
         object.current.getWorldPosition(sphere.current.center);
-        sphere.current.radius = radius();
-        if (sphere.current.radius <= 0) return false;
+        sphere.current.radius = radius;
         const p = ray.current.intersectSphere(sphere.current, hit.current);
         return Boolean(p && camera.position.distanceTo(p) < far);
       });
       v.current.project(camera);
       hidden ||= v.current.z > 1;
-      const half = el.offsetWidth / 2 + 6;
+      const half = box.w / 2 + 6;
       const px = (v.current.x * 0.5 + 0.5) * size.width;
       const py = (-v.current.y * 0.5 + 0.5) * size.height;
-      const x = Math.min(Math.max(px, b.x + half), b.x + b.w - half);
-      const y = Math.max(py, b.y + el.offsetHeight + 6);
-      el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%)`;
-      el.style.opacity = hidden ? "0" : "1";
+      spots.push({
+        i,
+        x: Math.min(Math.max(px, b.x + half), b.x + b.w - half),
+        y: Math.max(py, b.y + box.h + 6),
+        w: box.w,
+        h: box.h,
+        hidden,
+      });
     });
+    const shown = spots.filter((s) => !s.hidden).sort((p, q) => p.y - q.y);
+    for (let k = 1; k < shown.length; k++) {
+      const s = shown[k];
+      if (!s) continue;
+      for (let j = 0; j < k; j++) {
+        const o = shown[j];
+        if (!o) continue;
+        const overlapX = (s.w + o.w) / 2 + 4 - Math.abs(s.x - o.x);
+        const overlapY = s.h + 4 - Math.abs(s.y - o.y);
+        if (overlapX > 0 && overlapY > 0) s.y = o.y + s.h + 4;
+      }
+    }
+    for (const s of spots) {
+      const el = targets.current?.[s.i];
+      if (!el) continue;
+      const transform = `translate(${s.x.toFixed(1)}px, ${s.y.toFixed(1)}px) translate(-50%, -100%)`;
+      const key = `${transform}|${s.hidden}`;
+      if (written.current[s.i] === key) continue;
+      written.current[s.i] = key;
+      el.style.transform = transform;
+      el.style.opacity = s.hidden ? "0" : "1";
+    }
   });
   return null;
 }
@@ -150,31 +180,27 @@ const BUBBLES = [
 ] as const;
 
 /**
- * Everything in the hero that isn't sky: the eclipse (or the sun), the four worlds in orbit with
- * their moons and an asteroid belt, and the explorer crew. Shared with the render stage, so the
- * poster matches.
+ * Everything in the hero that isn't sky: the black hole, the four worlds in orbit with their moons
+ * and an asteroid belt, and the explorer crew. Shared with the render stage, so the poster matches.
  */
 export function HeroCast({
-  mix,
+  ignite,
   still,
-  moon,
-  sun,
+  hole,
   planetAnchors,
   crewAnchors,
 }: {
-  mix: DayMix;
+  ignite: Pulse;
   still: boolean;
-  moon?: RefObject<THREE.Object3D | null>;
-  sun?: RefObject<THREE.Object3D | null>;
+  hole?: RefObject<THREE.Object3D | null>;
   planetAnchors?: Anchors;
   crewAnchors?: Anchors;
 }) {
   return (
     <>
-      <Eclipse mix={mix} still={still} moon={moon} sunAnchor={sun} position={SUN_AT.toArray()} />
+      <BlackHole ignite={ignite} still={still} anchor={hole} position={SUN_AT.toArray()} />
       <Orbits
         still={still}
-        mix={mix}
         position={SUN_AT.toArray()}
         rotation={[0.25, 0, -0.12]}
         anchors={planetAnchors}
@@ -186,11 +212,27 @@ export function HeroCast({
   );
 }
 
+/** Compiles the scene's shaders in the background (no frozen page), then says it's ready. */
+function Warmup({ onWarm }: { onWarm: () => void }) {
+  const { gl, scene, camera } = useThree();
+  useEffect(() => {
+    let live = true;
+    gl.compileAsync(scene, camera)
+      .catch(() => {})
+      .then(() => {
+        if (live) onWarm();
+      });
+    return () => {
+      live = false;
+    };
+  }, [gl, scene, camera, onWarm]);
+  return null;
+}
+
 function World({
   still,
-  day,
-  box,
-  text,
+  warm,
+  layout,
   intro,
   planetAnchors,
   crewAnchors,
@@ -198,18 +240,16 @@ function World({
   crewBubbles,
 }: {
   still: boolean;
-  day: boolean;
-  box: El;
-  text: El;
+  warm: boolean;
+  layout: LayoutRef;
   intro: RefObject<number>;
   planetAnchors: Anchors;
   crewAnchors: Anchors;
   planetLabels: Targets;
   crewBubbles: Targets;
 }) {
-  const mix: DayMix = useDayMix(day, still);
-  const moon = useRef<THREE.Object3D>(null);
-  const sun = useRef<THREE.Object3D>(null);
+  const ignite = useIgnite();
+  const hole = useRef<THREE.Object3D>(null);
   const invalidate = useThree((s) => s.invalidate);
 
   // With motion stilled the canvas only draws on demand; the scroll intro still moves the camera.
@@ -219,18 +259,20 @@ function World({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [still, invalidate]);
+  useEffect(() => {
+    if (warm) invalidate();
+  }, [warm, invalidate]);
 
   return (
     <>
-      <Camera box={box} intro={intro} />
-      <SkyBackdrop mix={mix} still={still} sun={sun} text={text} scroll={intro} />
-      <Studio mix={mix} />
+      <Camera layout={layout} intro={intro} />
+      <SkyBackdrop ignite={ignite} still={still} hole={hole} layout={layout} scroll={intro} />
+      <Studio />
       <Rig still={still}>
         <HeroCast
-          mix={mix}
+          ignite={ignite}
           still={still}
-          moon={moon}
-          sun={sun}
+          hole={hole}
           planetAnchors={planetAnchors}
           crewAnchors={crewAnchors}
         />
@@ -238,43 +280,49 @@ function World({
       <Track
         anchors={planetAnchors}
         targets={planetLabels}
-        box={box}
-        occluders={[{ object: moon, radius: () => (mix.current < 0.5 ? MOON_RADIUS : 0) }]}
+        layout={layout}
+        occluders={[{ object: hole, radius: HOLE_RADIUS }]}
       />
-      <Track anchors={crewAnchors} targets={crewBubbles} box={box} />
+      <Track anchors={crewAnchors} targets={crewBubbles} layout={layout} />
     </>
   );
 }
 
 /**
- * The live 3D hero, filling the whole hero stage: the sky (aurora and stars at night, a bright sky
- * by day), the eclipse or the sun, four worlds and the explorer crew. Rendering pauses off screen
- * or in a hidden tab; reduced motion / Pause motion renders single frames.
+ * The live 3D hero, filling the whole hero stage: the night sky (aurora, stars, the cosmic river),
+ * the black hole, four worlds and the explorer crew. Shaders compile in the background before the
+ * first frame. Rendering pauses off screen, in a hidden tab, or while the day edition is showing;
+ * reduced motion / Pause motion renders single frames. On a GPU that can't keep up, the canvas
+ * drops to a lower pixel ratio rather than stutter.
+ *
+ * Shadows are asked for as PCF by name: three r186 dropped "soft" shadow maps and switches the type
+ * on the first frame, which made every shader compiled in the background compile again, blocking.
  */
 export default function HeroWorld({
   stage,
-  box,
-  text,
+  layout,
   intro,
   onReady,
 }: {
-  stage: El;
-  box: El;
-  text: El;
+  stage: RefObject<HTMLElement | null>;
+  layout: LayoutRef;
   intro: RefObject<number>;
   onReady?: () => void;
 }) {
   const [visible, setVisible] = useState(true);
   const [still, setStill] = useState(false);
-  const day = useIsDay();
+  const [warm, setWarm] = useState(false);
+  const [dpr, setDpr] = useState(1.5);
   const planetAnchors = useRef<(THREE.Object3D | null)[]>([]);
   const crewAnchors = useRef<(THREE.Object3D | null)[]>([]);
   const planetLabels = useRef<(HTMLElement | null)[]>([]);
   const crewBubbles = useRef<(HTMLElement | null)[]>([]);
+  const onWarm = useRef(() => setWarm(true)).current;
 
   useEffect(() => {
     const el = stage.current;
     if (!el) return;
+    // Also reports hidden while the stage is display: none (the day edition).
     const io = new IntersectionObserver(([e]) => setVisible(Boolean(e?.isIntersecting)), {
       rootMargin: "100px",
     });
@@ -293,24 +341,38 @@ export default function HeroWorld({
     };
   }, [stage]);
 
+  // Reveal once the first compiled frame is on screen.
+  useEffect(() => {
+    if (!warm) return;
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => onReady?.());
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [warm, onReady]);
+
   return (
     <>
       <Canvas
         className="!absolute inset-0"
-        shadows="soft"
-        dpr={[1, 1.5]}
+        shadows="percentage"
+        dpr={[1, dpr]}
         camera={{ position: [0, 0.4, 14], fov: 36, manual: true }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         eventSource={stage as RefObject<HTMLElement>}
         eventPrefix="client"
-        frameloop={!visible ? "never" : still ? "demand" : "always"}
-        onCreated={() => onReady?.()}
+        frameloop={!warm || !visible ? "never" : still ? "demand" : "always"}
       >
+        <PerformanceMonitor
+          flipflops={3}
+          onDecline={() => setDpr(1)}
+          onIncline={() => setDpr(1.5)}
+          onFallback={() => setDpr(1)}
+        />
+        <Warmup onWarm={onWarm} />
         <World
           still={still}
-          day={day}
-          box={box}
-          text={text}
+          warm={warm}
+          layout={layout}
           intro={intro}
           planetAnchors={planetAnchors}
           crewAnchors={crewAnchors}

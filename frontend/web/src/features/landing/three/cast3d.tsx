@@ -4,6 +4,7 @@ import { useGLTF } from "@react-three/drei";
 import { type ThreeElements, useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 /**
  * A member of Realm's cast, live in 3D: the model is built and exported by Blender
@@ -30,6 +31,57 @@ const RAISE = THREE.MathUtils.degToRad(128 - 15);
 const BEND = THREE.MathUtils.degToRad(48 + 12);
 const Z = new THREE.Vector3(0, 0, 1);
 
+/**
+ * The exported models keep every part as its own mesh, about 55 per character. Parts that hang
+ * from the same joint and share a material are merged into one mesh here, so a character costs a
+ * dozen or so draw calls instead of fifty (twice over, counting the shadow pass). Nothing moves
+ * relative to its joint, so the merge can't be seen.
+ */
+function mergeParts(root: THREE.Object3D) {
+  const groups = new Map<string, THREE.Mesh[]>();
+  root.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || !o.parent || o.children.length) return;
+    if (Array.isArray(o.material)) return;
+    const g = o.geometry as THREE.BufferGeometry;
+    const key = [
+      o.parent.uuid,
+      o.material.uuid,
+      Object.keys(g.attributes).sort().join(","),
+      g.index ? "i" : "",
+    ].join("|");
+    groups.set(key, [...(groups.get(key) ?? []), o]);
+  });
+  for (const meshes of groups.values()) {
+    const first = meshes[0];
+    const parent = first?.parent;
+    if (!first || !parent || meshes.length < 2) continue;
+    const merged = mergeGeometries(
+      meshes.map((m) => {
+        m.updateMatrix();
+        return m.geometry.clone().applyMatrix4(m.matrix);
+      }),
+    );
+    if (!merged) continue;
+    const mesh = new THREE.Mesh(merged, first.material);
+    mesh.name = first.name;
+    parent.add(mesh);
+    for (const m of meshes) parent.remove(m);
+  }
+}
+
+/**
+ * Glass and jelly parts are exported with transmission, which makes three render the whole scene a
+ * second time, every frame, just to see through them. Blending gives the same see-through read at
+ * the size the cast appears, without that pass.
+ */
+function softenGlass(m: THREE.Material) {
+  if (!(m instanceof THREE.MeshPhysicalMaterial) || m.transmission <= 0) return;
+  m.opacity = 1 - m.transmission * 0.55;
+  m.transmission = 0;
+  m.transparent = true;
+  m.needsUpdate = true;
+}
+
 function waveAt(t: number) {
   const p = t % 3.2;
   const env =
@@ -50,7 +102,11 @@ export function CastMember({
   phase?: number;
 } & ThreeElements["group"]) {
   const { scene } = useGLTF(url(who), DRACO);
-  const model = useMemo(() => scene.clone(true), [scene]);
+  const model = useMemo(() => {
+    const m = scene.clone(true);
+    mergeParts(m);
+    return m;
+  }, [scene]);
   const joints = useMemo(() => {
     const get = (name: string) => model.getObjectByName(name) ?? null;
     const shoulder = get("ShoulderR");
@@ -69,6 +125,7 @@ export function CastMember({
   }, [model]);
   const root = useRef<THREE.Group>(null);
   const q = useMemo(() => new THREE.Quaternion(), []);
+  const euler = useMemo(() => new THREE.Euler(), []);
 
   useLayoutEffect(() => {
     model.traverse((o) => {
@@ -77,6 +134,7 @@ export function CastMember({
         o.receiveShadow = true;
         const m = o.material as THREE.MeshStandardMaterial;
         if (m.emissiveIntensity > 1) m.toneMapped = false;
+        softenGlass(m);
       }
     });
   }, [model]);
@@ -93,7 +151,7 @@ export function CastMember({
       const tilt = still ? 0 : Math.sin(t * 0.7 + 2) * 0.05;
       head.quaternion
         .copy(q0.head)
-        .multiply(q.setFromEuler(new THREE.Euler(-state.pointer.y * 0.08, yaw, tilt)));
+        .multiply(q.setFromEuler(euler.set(-state.pointer.y * 0.08, yaw, tilt)));
     }
     if (!wave || !shoulder || !elbow) return;
     const { env, swing } = still ? { env: 0, swing: 0 } : waveAt(t);

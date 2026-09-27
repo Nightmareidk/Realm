@@ -27,7 +27,7 @@ const CHROME = process.env.CHROME_PATH ?? "C:/Program Files/Google/Chrome/Applic
 const PROPS = ["lock"];
 const PLANETS = ["planet-spaces", "planet-feed", "planet-profiles", "planet-boards"];
 // The cast (explorers, aliens, monsters, humans) is rendered in Blender: scripts/render-cast.mjs.
-const ALL = [...PROPS, ...PLANETS, "hero-poster-night", "hero-poster-day"];
+const ALL = [...PROPS, ...PLANETS, "hero-poster-night"];
 
 const wanted = process.argv.slice(2);
 const items = wanted.length ? wanted : ALL;
@@ -49,7 +49,8 @@ for (const item of items) {
     timeout: 120_000,
   });
   await page.waitForSelector("#stage canvas");
-  await new Promise((r) => setTimeout(r, 2500));
+  // The hero poster's crew compiles its shaders in the background before appearing: allow for it.
+  await new Promise((r) => setTimeout(r, item.startsWith("hero-poster") ? 7000 : 2500));
   const stage = await page.$("#stage");
   await stage.screenshot({ path: join(MASTERS, `${item}.png`), omitBackground: true });
   console.log("rendered", item);

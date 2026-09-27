@@ -1,9 +1,12 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { type RefObject, useMemo } from "react";
+import { type RefObject, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { auroraPhase, type DayMix } from "./theme";
+import { registerSunLocator } from "@/lib/edition";
+import { HOLE_RADIUS } from "./black-hole";
+import type { LayoutRef } from "./layout";
+import { auroraPhase, type Pulse } from "./theme";
 
 /**
  * The hero's sky, drawn by one full-screen shader behind everything else.
@@ -12,9 +15,12 @@ import { auroraPhase, type DayMix } from "./theme";
  * that twinkle (some scintillating through colours), shooting stars, and aurora curtains: a sharp
  * bright lower edge, rays shimmering along the curtain, waves rolling through it in both
  * directions, and colours that cycle from green through cyan and magenta to pink and violet
- * (in step with the page's nebula, via the wall clock).
- * Day: transparent, so the filmed day sky (day-backdrop.tsx) shows through. Changing edition
- * sweeps day up from the horizon (or night down from the top) with a warm flare.
+ * (in step with the page's nebula, via the wall clock). Around the black hole the sky is bent by
+ * its gravity, like a real lens: stars and cloud near it are pulled into arcs around the shadow.
+ * When the page switches to day, the hole flares and its light floods the sky.
+ *
+ * The heavy parts return early where they can't show (mountains high in the sky, the river away
+ * from its band, a curtain far below its edge), so the shader costs only what's on screen.
  *
  * Colours are authored in display space (no tone mapping or colour-space conversion).
  */
@@ -30,7 +36,8 @@ const fragment = /* glsl */ `
 precision highp float;
 varying vec2 vUv;
 uniform float uTime;
-uniform float uDay;
+uniform float uIgnite;
+uniform float uHoleR;
 uniform float uPhase;
 uniform float uScroll;
 uniform vec2 uRes;
@@ -160,6 +167,8 @@ vec3 curtain(vec2 p, float seed, float y0, float amp, float spd, float height, f
               + 0.015 * sin(x * 11.0 - t * 1.6 + seed * 3.0);
   float edge = y0 + amp * (fbm3(vec2(x * 0.85 + t * spd, seed)) - 0.5) * 2.0 + waves;
   float d = p.y - edge;
+  // Well below the lower edge the curtain has faded to nothing.
+  if (d < -0.1) return vec3(0.0);
   float h = height * (0.8 + 0.4 * (0.5 + 0.5 * sin(x * 1.7 - t * 0.4 + seed)));
   float below = exp(min(d, 0.0) * 70.0);
   float above = exp(-max(d, 0.0) / h) * 0.72 + exp(-max(d, 0.0) / (h * 3.0)) * 0.28;
@@ -202,6 +211,9 @@ vec4 cosmicRiver(vec2 q, vec2 px, float aspect) {
   vec2 r = q - o;
   float s = dot(r, dir);
   float u = dot(r, nrm) + 0.13 * sin(s * 3.1 - 0.5) + 0.04 * sin(s * 7.0 + uTime * 0.06);
+  float span = smoothstep(-0.02, 0.28, s) * smoothstep(1.5, 1.0, s);
+  // Outside its band (and past the far shore's cloud banks) the river adds nothing.
+  if (span <= 0.0 || u < -0.8 || u > 0.7) return vec4(0.0);
 
   float t = uTime * 0.03;
   vec2 fp = vec2(s * 2.2 - t, u * 4.6);
@@ -210,7 +222,6 @@ vec4 cosmicRiver(vec2 q, vec2 px, float aspect) {
   float n2 = fbm(fp * 2.1 + warp * 2.4 + 11.0);
 
   float width = 0.2 + 0.07 * sin(s * 2.1 + 1.0);
-  float span = smoothstep(-0.02, 0.28, s) * smoothstep(1.5, 1.0, s);
   float body = exp(-(u * u) / (width * width)) * span;
   // Billows with layered, stepped edges, like smoke painted in strokes.
   float billow = smoothstep(0.34, 0.6, n) * body;
@@ -275,7 +286,7 @@ float nearRange(float x) { return 0.025 + 0.15 * pow(ridgeLine(x * 1.8 + 9.0), 2
 
 // Two mountain ranges on the horizon, like the silhouettes in a matte painting: sharp peaks, faces
 // turned toward the light catching it (snow on the tallest), a hazy far range and a dark near one.
-vec3 mountains(vec2 uv, float aspect, vec3 col, float dm) {
+vec3 mountains(vec2 uv, float aspect, vec3 col) {
   float x = uv.x * aspect;
   float aa = 1.5 / uRes.y;
   float e = 0.004;
@@ -289,12 +300,10 @@ vec3 mountains(vec2 uv, float aspect, vec3 col, float dm) {
   // Light catches the faces near the crest only; below that the range falls into haze.
   float litF = smoothstep(0.1, 1.2, -farSlope) * exp(-(farH - uv.y) * 26.0) + fbm3(vec2(x * 5.0, uv.y * 9.0)) * 0.25 * (1.0 - depthF);
   float snowF = smoothstep(0.22, 0.3, farH) * smoothstep(0.05, 0.0, farH - uv.y) * (0.5 + 0.5 * litF);
-  vec3 farNight = mix(vec3(0.05, 0.06, 0.16), vec3(0.24, 0.23, 0.55), litF * 0.9 + rock * 0.12);
-  farNight = mix(farNight, vec3(0.5, 0.52, 0.85), snowF * 0.6);
-  vec3 farDay = mix(vec3(0.5, 0.6, 0.8), vec3(0.86, 0.9, 0.98), litF * 0.8 + rock * 0.1);
-  farDay = mix(farDay, vec3(0.97, 0.98, 1.0), snowF * 0.8);
-  col = mix(col, mix(farNight, farDay, dm), far * 0.96);
-  col += mix(vec3(0.3, 0.26, 0.7), vec3(1.0, 0.85, 0.65), dm) * exp(-abs(uv.y - farH) * 110.0) * 0.16;
+  vec3 farCol = mix(vec3(0.05, 0.06, 0.16), vec3(0.24, 0.23, 0.55), litF * 0.9 + rock * 0.12);
+  farCol = mix(farCol, vec3(0.5, 0.52, 0.85), snowF * 0.6);
+  col = mix(col, farCol, far * 0.96);
+  col += vec3(0.3, 0.26, 0.7) * exp(-abs(uv.y - farH) * 110.0) * 0.16;
 
   float nx = x + uPointer.x * 0.08;
   float nearH = nearRange(nx);
@@ -302,9 +311,8 @@ vec3 mountains(vec2 uv, float aspect, vec3 col, float dm) {
   float near = smoothstep(nearH + aa, nearH - aa, uv.y);
   float depthN = clamp((nearH - uv.y) * 9.0, 0.0, 1.0);
   float litN = smoothstep(0.1, 1.4, -nearSlope) * exp(-(nearH - uv.y) * 34.0) + fbm3(vec2(x * 6.0, uv.y * 11.0)) * 0.2 * (1.0 - depthN);
-  vec3 nearNight = mix(vec3(0.015, 0.02, 0.05), vec3(0.13, 0.12, 0.33), litN * 0.9 + rock * 0.1);
-  vec3 nearDay = mix(vec3(0.3, 0.38, 0.58), vec3(0.62, 0.7, 0.88), litN * 0.8 + rock * 0.1);
-  return mix(col, mix(nearNight, nearDay, dm), near);
+  vec3 nearCol = mix(vec3(0.015, 0.02, 0.05), vec3(0.13, 0.12, 0.33), litN * 0.9 + rock * 0.1);
+  return mix(col, nearCol, near);
 }
 
 float rectMask(vec2 uv, vec4 r, float soft) {
@@ -349,52 +357,60 @@ vec3 nightSky(vec2 uv, vec2 px, float aspect, float textMask) {
 }
 
 
+// Gravitational lensing by the black hole, as a thin point-mass lens: each pixel shows the sky
+// from where its light really started. Near the Einstein radius that stretches stars into arcs
+// hugging the shadow; further out the bend fades away.
+vec2 lens(vec2 px) {
+  vec2 hole = uSun * uRes;
+  vec2 d = px - hole;
+  float r2 = max(dot(d, d), 1.0);
+  float re = uHoleR * 1.75;
+  float k = re * re / r2 * smoothstep(re * 7.0, re * 2.2, sqrt(r2));
+  return hole + d * (1.0 - k);
+}
+
 void main() {
   vec2 uv = vUv;
   vec2 px = uv * uRes;
   float aspect = uRes.x / uRes.y;
   float textMask = rectMask(uv, uText, 0.22);
 
-  // Day rises from the horizon: the lower sky gives way first, then the rest. By day this canvas
-  // is transparent and the filmed day sky behind it shows through.
-  float dm = smoothstep(0.0, 1.0, clamp(uDay * 1.7 - 0.35 - (uv.y - 0.5) * 0.7, 0.0, 1.0));
+  vec2 lp = uHoleR > 0.0 ? lens(px) : px;
+  vec3 col = nightSky(lp / uRes, lp, aspect, textMask);
+  // The mountains never reach this high: skip them above their tallest peak.
+  if (uv.y < 0.42) col = mountains(uv, aspect, col);
 
-  vec3 col = vec3(0.0);
-  if (dm < 0.999) col = mountains(uv, aspect, nightSky(uv, px, aspect, textMask), 0.0);
-  float alpha = 1.0 - dm;
-
-  // While the edition changes: a warm sunrise band and a flare bursting from the centre.
-  float change = sin(clamp(uDay, 0.0, 1.0) * 3.14159);
-  if (change > 0.001) {
+  // Switching to day: the hole flares, a streak of light flashes across it, and the glow floods
+  // the sky just as the day page is revealed from this point.
+  if (uIgnite > 0.001) {
     vec2 sd = (uv - uSun) * vec2(aspect, 1.0);
-    float flare = exp(-length(sd) * 2.4) * change * change * 1.1;
-    float band = exp(-uv.y * 3.5) * change * 0.45;
-    col = col * alpha + vec3(1.0, 0.5, 0.2) * band + vec3(1.0, 0.86, 0.62) * flare;
-    alpha = clamp(alpha + band + flare, 0.0, 1.0);
-    col /= max(alpha, 0.001);
+    float r = length(sd);
+    col += vec3(1.0, 0.78, 0.5) * exp(-r * mix(10.0, 1.4, uIgnite)) * uIgnite * 1.8;
+    col += vec3(1.0, 0.92, 0.8) * exp(-abs(sd.y) * 90.0) * exp(-abs(sd.x) * 1.2) * uIgnite * 1.4;
   }
 
   col += (hash21(gl_FragCoord.xy + fract(uTime)) - 0.5) / 255.0;
-  gl_FragColor = vec4(col * alpha, alpha);
+  gl_FragColor = vec4(col, 1.0);
 }
 `;
 
 /**
- * Full-screen sky behind the hero scene. `sun` is the object whose screen position the day sky's
- * glare follows; `text` is the headline column, where the sky quietens so the copy stays readable;
- * `scroll` is the intro's progress, for a little parallax.
+ * Full-screen sky behind the hero scene. `hole` is the black hole, which the sky bends around and
+ * which flares with `ignite`; `layout` says where the headline sits, so the sky quietens there;
+ * `scroll` is the intro's progress, for a little parallax. It also tells the edition switch where
+ * the hole is on screen, so the day page can open from it.
  */
 export function SkyBackdrop({
-  mix,
+  ignite,
   still,
-  sun,
-  text,
+  hole,
+  layout,
   scroll,
 }: {
-  mix: DayMix;
+  ignite: Pulse;
   still: boolean;
-  sun: RefObject<THREE.Object3D | null>;
-  text: RefObject<HTMLElement | null>;
+  hole: RefObject<THREE.Object3D | null>;
+  layout: LayoutRef;
   scroll?: RefObject<number>;
 }) {
   const material = useMemo(
@@ -402,8 +418,7 @@ export function SkyBackdrop({
       new THREE.ShaderMaterial({
         vertexShader: vertex,
         fragmentShader: fragment,
-        // Drawn first, as an opaque pass (so it never lands on top of the scene), writing
-        // premultiplied colour and alpha straight into the transparent canvas.
+        // Drawn first, as an opaque pass, so it never lands on top of the scene.
         depthTest: false,
         depthWrite: false,
         toneMapped: false,
@@ -411,7 +426,8 @@ export function SkyBackdrop({
         blending: THREE.NoBlending,
         uniforms: {
           uTime: { value: 0 },
-          uDay: { value: 0 },
+          uIgnite: { value: 0 },
+          uHoleR: { value: 0 },
           uPhase: { value: 0 },
           uScroll: { value: 0 },
           uRes: { value: new THREE.Vector2(1, 1) },
@@ -424,37 +440,52 @@ export function SkyBackdrop({
   );
   const gl = useThree((s) => s.gl);
   const v = useMemo(() => new THREE.Vector3(), []);
+  const edge = useMemo(() => new THREE.Vector3(), []);
+  const seen = useRef(-1);
+  // The hole's position on the canvas (0..1, y up), for the edition switch's reveal.
+  const onCanvas = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(
+    () =>
+      registerSunLocator("night", () => {
+        const p = onCanvas.current;
+        if (!p) return null;
+        const c = gl.domElement.getBoundingClientRect();
+        return { x: c.left + p.x * c.width, y: c.top + (1 - p.y) * c.height };
+      }),
+    [gl],
+  );
 
   useFrame((state) => {
     const u = material.uniforms as Record<string, THREE.IUniform>;
     if (!still) u.uTime.value = state.clock.elapsedTime + 40;
-    u.uDay.value = mix.current;
+    u.uIgnite.value = ignite.current;
     u.uPhase.value = auroraPhase();
     u.uScroll.value = scroll?.current ?? 0;
     (u.uRes.value as THREE.Vector2).set(state.size.width, state.size.height);
     (u.uPointer.value as THREE.Vector2).lerp(state.pointer, 0.04);
 
-    const canvas = gl.domElement.getBoundingClientRect();
-    if (sun.current) {
-      sun.current.getWorldPosition(v).project(state.camera);
+    const h = hole.current;
+    if (h) {
+      h.getWorldPosition(v);
+      // The shadow's radius on screen: project a point on its rim, sideways from the camera.
+      edge.setFromMatrixColumn(state.camera.matrixWorld, 0).multiplyScalar(HOLE_RADIUS).add(v);
+      v.project(state.camera);
+      edge.project(state.camera);
       const sx = v.x * 0.5 + 0.5;
       const sy = v.y * 0.5 + 0.5;
       (u.uSun.value as THREE.Vector2).set(sx, sy);
-      // Published for the edition switch, which reveals the page from the sun outward.
-      window.__realmSun = {
-        x: canvas.left + sx * canvas.width,
-        y: canvas.top + (1 - sy) * canvas.height,
-      };
-    }
-    const el = text.current;
-    if (el) {
-      const r = el.getBoundingClientRect();
-      (u.uText.value as THREE.Vector4).set(
-        (r.left - canvas.left) / canvas.width,
-        1 - (r.bottom - canvas.top) / canvas.height,
-        (r.right - canvas.left) / canvas.width,
-        1 - (r.top - canvas.top) / canvas.height,
+      u.uHoleR.value = Math.hypot(
+        ((edge.x - v.x) * state.size.width) / 2,
+        ((edge.y - v.y) * state.size.height) / 2,
       );
+      onCanvas.current = { x: sx, y: sy };
+    }
+
+    const L = layout.current;
+    if (L && L.version !== seen.current) {
+      seen.current = L.version;
+      (u.uText.value as THREE.Vector4).set(L.text.x0, L.text.y0, L.text.x1, L.text.y1);
     }
   });
 

@@ -27,10 +27,15 @@ Masters are kept in `brand/renders/cast/`.
 
 ## Day video (`public/video/`)
 
-`day-portal.mp4` (golden hour, the arch) and `day-meadow.mp4` (midday, mirrored) are the product
-owner's own Higgsfield clips, made seamless and web-sized with Blender's sequencer
-(`scripts/blender/video_loop.py`: tail crossfaded over head, H.264, neutral colour). Posters are
-their first frames.
+`day-sun.mp4` (an explorer on a coral world) is the product owner's own Higgsfield clip, made
+seamless and web-sized with Blender's sequencer (`scripts/blender/video_loop.py`: trimmed to source
+frames 15 to 135, where the explorer's pose matches, then a 0.3 s tail crossfade; H.264, neutral
+colour). `day-sun.jpg` is its first frame.
+
+`day-sun-mask.webp` (the foreground mask: rocks and coral in front of the sky) and
+`day-sky-patch.webp` (sky painted over the film's red planet) come from the poster frame via
+`scripts/video/day-sun-plates.mjs`; the film's camera never moves, so they fit every frame. The live
+sun (`src/features/landing/day/day-sun.tsx`) stands in the patched sky, behind the mask.
 
 ## Other 3D renders (`public/art/*.webp`)
 

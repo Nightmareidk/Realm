@@ -2,11 +2,12 @@
 
 The last `--fade` seconds of the clip are cross-faded over its first seconds, so the output
 (clip length minus the fade) loops with no visible seam. Output is H.264 MP4 (plays everywhere),
-plus a poster image of the first frame.
+plus a poster image of the first frame. `--start` / `--end` (source frames, from 1) trim the clip
+first: pick two frames that look alike (a character in the same pose) and the fade can be short.
 
     blender -b --factory-startup --python video_loop.py -- \
         --in day1.mp4 --out public/video/day-portal.mp4 --poster public/video/day-portal.jpg \
-        --width 1600 --fade 1.2 --crf high [--mirror]
+        --width 1600 --fade 1.2 --crf high [--mirror] [--start 15 --end 135]
 """
 
 import argparse
@@ -25,6 +26,8 @@ def parse():
     p.add_argument("--fade", type=float, default=1.2)
     p.add_argument("--crf", default="HIGH", help="LOSSLESS, PERC_LOSSLESS, HIGH, MEDIUM, LOW")
     p.add_argument("--mirror", action="store_true", help="flip horizontally")
+    p.add_argument("--start", type=int, default=1, help="first source frame")
+    p.add_argument("--end", type=int, default=0, help="last source frame (0: the clip's end)")
     return p.parse_args(argv)
 
 
@@ -34,14 +37,16 @@ def main():
     scene.sequence_editor_create()
     strips = scene.sequence_editor.strips
 
-    base = strips.new_movie("base", a.src, 1, 1)
+    # Source frame `start` lands on output frame 1.
+    base = strips.new_movie("base", a.src, 1, 2 - a.start)
     fps = base.fps
-    length = base.frame_final_end - base.frame_final_start
+    end = a.end or (base.frame_final_end - base.frame_final_start)
+    length = end - a.start + 1
     fade = max(1, round(a.fade * fps))
     out_len = length - fade
 
     # The tail of the clip, placed so its last `fade` frames sit over the output's first frames.
-    tail = strips.new_movie("tail", a.src, 2, 1 - out_len)
+    tail = strips.new_movie("tail", a.src, 2, 1 - (end - fade))
 
     src_w = base.elements[0].orig_width
     src_h = base.elements[0].orig_height

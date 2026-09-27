@@ -2,51 +2,48 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { type RefObject, useEffect, useRef } from "react";
-import { useSkyIsDay } from "@/lib/edition";
+import { SKY_EVENT, SKY_LEAD_MS } from "@/lib/edition";
 
-/** Whether the sky is day (see lib/edition). */
-export const useIsDay = useSkyIsDay;
-
-/** 0 at night, 1 by day, and every value in between while the scene changes over. */
-export type DayMix = RefObject<number>;
-
-const DURATION = 2.8;
-const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+/** A 0..1 value that components read as `.current` inside useFrame. */
+export type Pulse = RefObject<number>;
 
 /**
- * A night-to-day value that plays the change as one eased move (about three seconds): the moon
- * slides off the sun, the sky brightens from the horizon up, the aurora and stars fade. Components
- * read `.current` inside useFrame. With motion stilled it jumps straight to the new value.
+ * The black hole's flare when the page switches to day: 0 at rest, then rising to 1 over the
+ * moment between the switch being asked for and the day page being revealed (spreading out from
+ * the hole). The night scene is hidden by day, so switching back to night simply rests it again.
  */
-export function useDayMix(day: boolean, still: boolean): DayMix {
-  const mix = useRef(day ? 1 : 0);
-  const tween = useRef<{ from: number; to: number; start: number } | null>(null);
-  const invalidate = useThree((s) => s.invalidate);
+export function useIgnite(): Pulse {
+  const value = useRef(0);
+  const start = useRef<number | null>(null);
   const clock = useThree((s) => s.clock);
+  const invalidate = useThree((s) => s.invalidate);
 
   useEffect(() => {
-    const to = day ? 1 : 0;
-    if (still) {
-      mix.current = to;
-      tween.current = null;
+    const onSky = (e: Event) => {
+      if ((e as CustomEvent<string>).detail === "day") {
+        start.current = clock.elapsedTime;
+      } else {
+        start.current = null;
+        value.current = 0;
+      }
       invalidate();
-      return;
-    }
-    if (mix.current !== to) tween.current = { from: mix.current, to, start: clock.elapsedTime };
-  }, [day, still, invalidate, clock]);
+    };
+    window.addEventListener(SKY_EVENT, onSky);
+    return () => window.removeEventListener(SKY_EVENT, onSky);
+  }, [clock, invalidate]);
 
   useFrame((state) => {
-    const tw = tween.current;
-    if (!tw) return;
-    const p = Math.min(1, (state.clock.elapsedTime - tw.start) / DURATION);
-    mix.current = tw.from + (tw.to - tw.from) * easeInOut(p);
-    if (p >= 1) tween.current = null;
+    if (start.current === null) return;
+    const p = Math.min(1, (state.clock.elapsedTime - start.current) / (SKY_LEAD_MS / 1000));
+    // Accelerating into the reveal, so the flash peaks as the new page opens from the hole.
+    value.current = p * p;
+    if (p < 1) state.invalidate();
   });
 
-  return mix;
+  return value;
 }
 
-/** Smoothstep, for easing positions and intensities off the day mix. */
+/** Smoothstep, for easing positions and intensities. */
 export const ease = (x: number) => {
   const t = Math.min(1, Math.max(0, x));
   return t * t * (3 - 2 * t);
