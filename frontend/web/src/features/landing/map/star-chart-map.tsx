@@ -100,6 +100,15 @@ export function StarChartMap({
           aria-label="Star chart of Realm: Spaces, Feed, Profiles and Boards are four planets orbiting one eclipse"
         >
           <defs>
+            <radialGradient id="chart-sun" cx="0.42" cy="0.4" r="0.62">
+              <stop offset="0" stopColor="#fff7dc" />
+              <stop offset="0.45" stopColor="#ffd35c" />
+              <stop offset="1" stopColor="#ff8a1f" />
+            </radialGradient>
+            <radialGradient id="chart-sun-glow">
+              <stop offset="0.45" stopColor="#ffb84a" stopOpacity="0.55" />
+              <stop offset="1" stopColor="#ffb84a" stopOpacity="0" />
+            </radialGradient>
             <radialGradient id="chart-corona">
               <stop offset="0.5" stopColor={AURORA.lime} stopOpacity="0" />
               <stop offset="0.6" stopColor={AURORA.lime} stopOpacity="0.9" />
@@ -124,7 +133,7 @@ export function StarChartMap({
           </defs>
 
           {/* Stars */}
-          <g fill="#dbe8ff" aria-hidden="true">
+          <g fill="#dbe8ff" className={styles.stars} aria-hidden="true">
             {g.stars.map((s) => (
               <circle
                 key={`${s.x},${s.y}`}
@@ -163,8 +172,14 @@ export function StarChartMap({
             ))}
           </g>
 
+          {/* By day the centre is the sun itself */}
+          <g className={styles.dayOnly} aria-hidden="true">
+            <circle cx={cx0} cy={cy0} r={g.eclipse * 2.1} fill="url(#chart-sun-glow)" />
+            <circle cx={cx0} cy={cy0} r={g.eclipse} fill="url(#chart-sun)" />
+          </g>
+
           {/* The eclipse at the centre: the logo, as the sun this system turns around */}
-          <g aria-hidden="true">
+          <g className={styles.nightOnly} aria-hidden="true">
             <circle cx={cx0} cy={cy0} r={g.eclipse * 1.9} fill="url(#chart-corona)" />
             <circle
               cx={cx0 - 5}

@@ -10,11 +10,7 @@ export function ClosingSection() {
   return (
     <section
       aria-labelledby="closing-title"
-      className="relative isolate mt-12 overflow-clip lg:mt-20"
-      style={{
-        background:
-          "radial-gradient(70% 60% at 50% 100%, rgb(45 212 191 / 0.24), transparent 70%), radial-gradient(45% 50% at 15% 40%, rgb(177 239 74 / 0.1), transparent 70%), radial-gradient(45% 50% at 88% 30%, rgb(167 139 250 / 0.18), transparent 70%), linear-gradient(180deg, var(--r-ground), #07111d 60%, var(--r-ground))",
-      }}
+      className={cx(styles.closing, "relative isolate mt-12 overflow-clip lg:mt-20")}
     >
       <div className="relative mx-auto flex max-w-[90rem] flex-col items-center px-4 pt-24 pb-10 text-center md:px-8 lg:pt-32">
         <Art name="spark" motion="spin" className="top-16 left-[12%] w-14 md:w-20" />

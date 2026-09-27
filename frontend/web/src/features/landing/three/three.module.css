@@ -1,3 +1,34 @@
+/* The hero's CSS sky: shown before the 3D sky's first frame and on devices without WebGL. */
+.hero {
+  background:
+    radial-gradient(45% 55% at 70% 20%, rgb(80 255 150 / 0.16), transparent 70%),
+    radial-gradient(35% 45% at 85% 35%, rgb(150 110 255 / 0.14), transparent 70%),
+    linear-gradient(180deg, #03070e 0%, #07111f 60%, var(--r-ground) 100%);
+}
+
+:global(:root[data-theme="day"]) .hero {
+  background:
+    radial-gradient(30% 40% at 72% 30%, rgb(255 236 200 / 0.8), transparent 70%),
+    linear-gradient(0deg, var(--r-ground) 0%, #fff0dc 12%, #9fd0ff 55%, #3f86ee 100%);
+}
+
+/* The copy changes colour at the pace the sky changes, instead of flipping ahead of it. */
+.hero :is(h1, p) {
+  transition: color 1.2s ease-in-out;
+}
+
+.dayOnly {
+  display: none;
+}
+
+:global(:root[data-theme="day"]) .nightOnly {
+  display: none;
+}
+
+:global(:root[data-theme="day"]) .dayOnly {
+  display: block;
+}
+
 /* Chat bubbles pinned to the explorers: glassy, aurora-edged, not cartoon stickers. */
 .say {
   position: relative;
@@ -18,6 +49,12 @@
   transform-origin: 0% 100%;
 }
 
+:global(:root[data-theme="day"]) .say {
+  color: #0f1b2d;
+  background: rgb(255 255 255 / 0.82);
+  box-shadow: 0 10px 28px -10px rgb(20 40 80 / 0.35);
+}
+
 .teal {
   --tone: #2dd4bf;
 }
@@ -31,23 +68,7 @@
   --tone: #f472b6;
 }
 
-/* Fades the scene's left, top and bottom edges into the page (the right runs off the viewport). */
-.fade {
-  mask-image:
-    linear-gradient(to right, transparent, #000 14%),
-    linear-gradient(to bottom, transparent, #000 8%, #000 86%, transparent);
-  mask-composite: intersect;
-}
-
-@media (width < 64rem) {
-  .fade {
-    mask-image:
-      linear-gradient(to right, transparent, #000 8%, #000 92%, transparent),
-      linear-gradient(to bottom, transparent, #000 6%, #000 88%, transparent);
-  }
-}
-
-/* Planet name tags */
+/* Planet name tags, in each world's ink for the current edition. */
 .planetLabel {
   font-family: var(--font-display);
   font-weight: 600;
@@ -55,11 +76,24 @@
   letter-spacing: 0.04em;
   padding: 0.3rem 0.55rem;
   border-radius: 999px;
-  background: rgb(6 13 22 / 0.6);
+  background: color-mix(in oklch, var(--r-ground) 65%, transparent);
   border: 1px solid currentColor;
   white-space: nowrap;
   backdrop-filter: blur(6px);
   transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.spaces {
+  color: var(--r-spaces-text);
+}
+.feed {
+  color: var(--r-feed-text);
+}
+.profiles {
+  color: var(--r-profiles-text);
+}
+.boards {
+  color: var(--r-boards-text);
 }
 
 @media (prefers-reduced-motion: no-preference) {

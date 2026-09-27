@@ -1,8 +1,10 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
-import type { ReactNode } from "react";
-import { Astronaut3D } from "@/features/landing/three/astronaut3d";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { type ReactNode, type RefObject, useRef } from "react";
+import type * as THREE from "three";
+import { Astronaut3D, type AstronautTone } from "@/features/landing/three/astronaut3d";
+import { HeroCast } from "@/features/landing/three/hero-world";
 import {
   Bubble3D,
   Controller3D,
@@ -14,18 +16,34 @@ import {
 } from "@/features/landing/three/props3d";
 import { Studio } from "@/features/landing/three/studio";
 import { C } from "@/features/landing/three/toy";
-import { Aurora, Eclipse, Explorers, Orbits, Planet, Sky } from "@/features/landing/three/universe";
+import { Planet } from "@/features/landing/three/universe";
 
 type Item = {
-  node: ReactNode;
+  node: (elbow: RefObject<THREE.Object3D | null>) => ReactNode;
   camera: [number, number, number];
   look: [number, number, number];
   size?: [number, number];
   fov?: number;
+  day?: boolean;
 };
 
-const astro = (tone: "teal" | "blue" | "violet" | "pink", wave: boolean, turn: number): Item => ({
-  node: <Astronaut3D tone={tone} wave={wave} still rotation={[0, turn, 0]} />,
+const TURN: Record<AstronautTone, number> = { teal: 0.25, blue: -0.3, violet: 0.2, pink: -0.25 };
+
+/**
+ * Explorers. `rest` is the standing pose; `body` and `forearm` are the two layers of the waving
+ * pose (the page rotates the forearm about the elbow, which this stage reports as the pivot).
+ */
+const astro = (tone: AstronautTone, part: "rest" | "body" | "forearm"): Item => ({
+  node: (elbow) => (
+    <Astronaut3D
+      tone={tone}
+      wave={part !== "rest"}
+      part={part === "rest" ? "all" : part}
+      elbow={elbow}
+      still
+      rotation={[0, TURN[tone], 0]}
+    />
+  ),
   camera: [0.4, 1.7, 6.6],
   look: [0, 1.3, 0],
 });
@@ -36,61 +54,92 @@ const astro = (tone: "teal" | "blue" | "violet" | "pink", wave: boolean, turn: n
  * half-height. star-chart-map.tsx relies on that ratio (PLANET_FRAME).
  */
 const planet = (color: string, ring?: string): Item => ({
-  node: <Planet color={color} radius={1} ring={ring} />,
+  node: () => <Planet color={color} radius={1} ring={ring} />,
   camera: [0, 0, 7.5],
   look: [0, 0, 0],
   size: [512, 512],
 });
 
+/** The hero scene without its sky, as the loading poster for one edition. */
+const poster = (day: boolean): Item => ({
+  node: () => <HeroCast mix={{ current: day ? 1 : 0 }} still />,
+  camera: [0, 0.4, 14],
+  look: [0, 0, 0],
+  size: [1200, 960],
+  fov: 36,
+  day,
+});
+
+const TONES: AstronautTone[] = ["teal", "blue", "violet", "pink"];
+
 /** Every renderable asset: one object, framed on a transparent background. */
 const ITEMS: Record<string, Item> = {
-  "astro-teal": astro("teal", false, 0.25),
-  "astro-teal-wave": astro("teal", true, 0.25),
-  "astro-blue": astro("blue", false, -0.3),
-  "astro-blue-wave": astro("blue", true, -0.3),
-  "astro-violet": astro("violet", false, 0.2),
-  "astro-violet-wave": astro("violet", true, 0.2),
-  "astro-pink": astro("pink", false, -0.25),
-  "astro-pink-wave": astro("pink", true, -0.25),
-  heart: { node: <Heart3D rotation={[0.1, 0.35, 0.1]} />, camera: [0, 0, 4], look: [0, 0.1, 0] },
+  ...Object.fromEntries(
+    TONES.flatMap((t) => [
+      [`astro-${t}`, astro(t, "rest")],
+      [`astro-${t}-body`, astro(t, "body")],
+      [`astro-${t}-forearm`, astro(t, "forearm")],
+    ]),
+  ),
+  heart: {
+    node: () => <Heart3D rotation={[0.1, 0.35, 0.1]} />,
+    camera: [0, 0, 4],
+    look: [0, 0.1, 0],
+  },
   bubble: {
-    node: <Bubble3D rotation={[0.1, -0.35, 0.05]} />,
+    node: () => <Bubble3D rotation={[0.1, -0.35, 0.05]} />,
     camera: [0, 0, 4],
     look: [0, -0.1, 0],
   },
-  spark: { node: <Spark3D rotation={[0.15, 0.4, 0]} />, camera: [0, 0, 3.6], look: [0, 0, 0] },
-  lock: { node: <Lock3D rotation={[0.15, -0.4, 0]} />, camera: [0, 0.2, 4.2], look: [0, 0.05, 0] },
+  spark: {
+    node: () => <Spark3D rotation={[0.15, 0.4, 0]} />,
+    camera: [0, 0, 4.2],
+    look: [0, 0, 0],
+  },
+  lock: {
+    node: () => <Lock3D rotation={[0.15, -0.4, 0]} />,
+    camera: [0, 0.2, 4.2],
+    look: [0, 0.05, 0],
+  },
   controller: {
-    node: <Controller3D rotation={[0.35, -0.4, 0.15]} />,
+    node: () => <Controller3D rotation={[0.35, -0.4, 0.15]} />,
     camera: [0, 0, 4.4],
     look: [0, -0.1, 0],
   },
-  play: { node: <Play3D rotation={[0.1, 0.4, 0]} />, camera: [0, 0, 3.6], look: [0, 0, 0] },
-  upvote: { node: <Upvote3D rotation={[0.1, -0.4, 0]} />, camera: [0, 0, 3.8], look: [0, 0.05, 0] },
-  eclipse: { node: <Eclipse />, camera: [0, 0, 11], look: [0, 0, 0] },
+  play: { node: () => <Play3D rotation={[0.1, 0.4, 0]} />, camera: [0, 0, 3.6], look: [0, 0, 0] },
+  upvote: {
+    node: () => <Upvote3D rotation={[0.1, -0.4, 0]} />,
+    camera: [0, 0, 3.8],
+    look: [0, 0.05, 0],
+  },
   "planet-spaces": planet(C.teal),
   "planet-feed": planet(C.blue, C.lime),
   "planet-profiles": planet(C.violet),
   "planet-boards": planet(C.pink),
-  "hero-poster": {
-    node: (
-      <>
-        <Sky still />
-        <Aurora still position={[0, 2.4, -9]} rotation={[0.15, 0, 0]} />
-        <Eclipse position={[1.2, 0.9, -3]} />
-        <Orbits still position={[1.2, 0.9, -3]} rotation={[0.25, 0, -0.12]} />
-        <Explorers still />
-      </>
-    ),
-    camera: [0, 0.4, 14],
-    look: [0, 0.4, 0],
-    size: [1200, 960],
-    fov: 36,
-  },
+  "hero-poster-night": poster(false),
+  "hero-poster-day": poster(true),
 };
+
+declare global {
+  interface Window {
+    __pivot?: { x: number; y: number };
+  }
+}
+
+/** Reports where the elbow lands on screen, in canvas pixels, for the render script. */
+function PivotProbe({ elbow }: { elbow: RefObject<THREE.Object3D | null> }) {
+  useFrame(({ camera, size }) => {
+    const o = elbow.current;
+    if (!o) return;
+    const v = o.getWorldPosition(o.position.clone().set(0, 0, 0)).project(camera);
+    window.__pivot = { x: (v.x * 0.5 + 0.5) * size.width, y: (-v.y * 0.5 + 0.5) * size.height };
+  });
+  return null;
+}
 
 export function RenderStage({ item }: { item: string }) {
   const it = ITEMS[item];
+  const elbow = useRef<THREE.Object3D>(null);
   if (!it)
     return <p style={{ color: "white" }}>Unknown item. Try: {Object.keys(ITEMS).join(", ")}</p>;
   const [w, h] = it.size ?? [640, 640];
@@ -98,12 +147,14 @@ export function RenderStage({ item }: { item: string }) {
     <div id="stage" style={{ width: w, height: h }}>
       <Canvas
         dpr={1}
+        shadows="soft"
         gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
         camera={{ position: it.camera, fov: it.fov ?? 32 }}
         onCreated={({ camera }) => camera.lookAt(...it.look)}
       >
-        <Studio />
-        {it.node}
+        <Studio mix={{ current: it.day ? 1 : 0 }} />
+        {it.node(elbow)}
+        <PivotProbe elbow={elbow} />
       </Canvas>
     </div>
   );

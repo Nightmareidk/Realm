@@ -1,52 +1,57 @@
 import type { CSSProperties } from "react";
 import { cx } from "@/lib/cx";
+import { people } from "../demo";
 import styles from "../fun.module.css";
 
-const TONES = ["#b1ef4a", "#2dd4bf", "#60a5fa", "#a78bfa", "#f472b6"];
+type Ink = "spaces" | "feed" | "profiles" | "boards";
+type Message = { who: { name: string; ink: Ink }; text: string };
 
-const ROW_A = [
-  "lfg?",
-  "gg!!",
-  "who's on tonight?",
-  "new clip dropped 🔥",
-  "128 upvotes!!",
-  "raid at 9?",
-  "brb snacks",
-  "that was insane",
-  "welcome to the Space!",
+const { noor, tomas, kenji, amara, priya, ilya, mateo, saoirse } = people;
+
+const ROW_A: Message[] = [
+  { who: tomas, text: "who's on tonight?" },
+  { who: noor, text: "new clip dropped 🔥" },
+  { who: kenji, text: "gg!!" },
+  { who: amara, text: "raid at 9?" },
+  { who: priya, text: "brb snacks" },
+  { who: ilya, text: "that was insane" },
+  { who: saoirse, text: "welcome to the Space!" },
+  { who: mateo, text: "lfg?" },
 ];
-const ROW_B = [
-  "meme review 😂",
-  "patch notes are out",
-  "same time tomorrow?",
-  "pinned it 📌",
-  "who made this",
-  "vc in 5",
-  "saved for later",
-  "new pfp who dis",
-  "best thread ever",
+const ROW_B: Message[] = [
+  { who: amara, text: "meme review 😂" },
+  { who: kenji, text: "patch notes are out" },
+  { who: noor, text: "same time tomorrow?" },
+  { who: ilya, text: "pinned it 📌" },
+  { who: tomas, text: "128 upvotes!!" },
+  { who: priya, text: "vc in 5" },
+  { who: mateo, text: "saved for later" },
+  { who: saoirse, text: "new pfp who dis" },
 ];
 
-function Row({ items, reverse, speed }: { items: string[]; reverse?: boolean; speed: number }) {
+const initials = (name: string) =>
+  name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2);
+
+function Row({ items, reverse, speed }: { items: Message[]; reverse?: boolean; speed: number }) {
   // Two copies back to back so the loop is seamless; the copy number keeps keys unique.
-  const doubled = [0, 1].flatMap((copy) => items.map((text) => ({ copy, text })));
+  const doubled = [0, 1].flatMap((copy) => items.map((m) => ({ copy, ...m })));
   return (
     <div className={styles.marqueeWrap}>
       <div
         className={cx(styles.marquee, reverse && styles.reverse)}
         style={{ "--speed": `${speed}s` } as CSSProperties}
       >
-        {doubled.map(({ copy, text }, i) => (
+        {doubled.map(({ copy, who, text }) => (
           <span
             key={`${copy}-${text}`}
             className={styles.sticker}
-            style={
-              {
-                "--tone": TONES[i % TONES.length],
-                "--tilt": `${((i * 37) % 7) - 3}deg`,
-              } as CSSProperties
-            }
+            style={{ "--tone": `var(--r-${who.ink}-solid)` } as CSSProperties}
           >
+            <span className={styles.stickerAvatar}>{initials(who.name)}</span>
             {text}
           </span>
         ))}
@@ -55,13 +60,13 @@ function Row({ items, reverse, speed }: { items: string[]; reverse?: boolean; sp
   );
 }
 
-/** Two rows of chat stickers drifting past: the sound of a busy Realm. Decorative. */
+/** Two rows of chat messages drifting past: the sound of a busy Realm. Decorative. */
 export function StickerMarquee() {
   return (
-    <section aria-hidden="true" className="relative overflow-clip py-10">
-      <div className="grid gap-4 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
-        <Row items={ROW_A} speed={52} />
-        <Row items={ROW_B} speed={60} reverse />
+    <section aria-hidden="true" className="relative overflow-clip py-8">
+      <div className="grid gap-3 [mask-image:linear-gradient(90deg,transparent,#000_10%,#000_90%,transparent)]">
+        <Row items={ROW_A} speed={70} />
+        <Row items={ROW_B} speed={80} reverse />
       </div>
     </section>
   );

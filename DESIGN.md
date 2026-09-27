@@ -102,7 +102,7 @@ components:
 
 Realm is the moment a midnight world lights up at its rim: the Eclipse mark, a dark planet edged in aurora, the instant before you arrive somewhere new. Everything is built from that one image. The ground is deep midnight, never black. Light comes from the edges, as aurora (lime, teal, ice blue, violet, pink), and it gathers where something matters: the primary action, the world you are in, the person who needs you.
 
-The public face is a spectacle and the app is calm. The landing page is a universe: a live 3D eclipse with four planets in orbit, astronaut explorers floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.
+The public face is a spectacle and the app is calm. The landing page is a universe: a live 3D eclipse with four planets in orbit, astronaut explorers floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. The two editions are two different skies. At night the eclipse hangs in an aurora (curtains with a bright green lower edge, rays, violet above) over stars that twinkle and scintillate in colour. By day the moon slides off the sun: a bright sky, a golden granulated sun with flares, warm light on the crew. Switching editions plays that change out, like the eclipse ending. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.
 
 It is semi-cartoon, not a cartoon. The 3D is glossy clearcoat plastic with iridescent visors, cute in form and precise in finish. Colours are modern and luminous rather than pastel.
 
@@ -211,7 +211,7 @@ The container for a world's feature section: Panel with a 28px radius, lit from 
 A sticky, blurred midnight header: the Eclipse wordmark, text links in Ink Soft (Ink on hover), a Pause motion button, Sign in (quiet) and Open Realm (primary). On phones the links move into a menu and Pause motion moves to the footer. In the app, a dock of five destinations replaces any server-icon rail (see docs/UX-ARCHITECTURE.md).
 
 ### Signature: the Eclipse and the explorers
-The Eclipse mark (a midnight disc over an aurora rim with a small star) appears as the logo, the app icon, the hero's 3D centrepiece and the star chart's sun. The four astronaut explorers, one per world ink, are Realm's characters: glossy white suits, iridescent visors with glowing eyes, accent gloves and boots. They wave by flipping between rest and wave renders.
+The Eclipse mark (a midnight disc over an aurora rim with a small star) appears as the logo, the app icon, the hero's 3D centrepiece (a real moon in front of a real sun) and the star chart's centre (the sun itself by day). The four astronaut explorers, one per world ink, are Realm's characters: glossy white suits with panels, belt, knee pads and cuffs, iridescent visors with a coloured rim and glowing eyes that follow the pointer, helmet lamps, twin tanks, a Realm mission patch, all casting soft shadows. They wave from the elbow: live in the hero, and on the page as two layers (body and forearm) with the forearm swinging about the elbow's measured pivot, eased at each end of the swing.
 
 ## Do's and Don'ts
 
@@ -231,3 +231,5 @@ The Eclipse mark (a midnight disc over an aurora rim with a small star) appears 
 - **Don't** fake material with CSS (gradient spheres, bevels, embossing) where a real render exists.
 - **Don't** let floating art cover text, or hang past the viewport edge on phones.
 - **Don't** use gradient text, or glass behind reading copy.
+- **Don't** show the aurora or stars by day, or a daytime sky at night: each edition has its own sky.
+- **Don't** animate a character by flipping between two poses; move a joint about its pivot.

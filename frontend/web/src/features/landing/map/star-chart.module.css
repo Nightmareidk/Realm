@@ -5,6 +5,18 @@
   --dim: 0.3;
 }
 
+/* Night shows the eclipse and the stars; by day the centre is the sun and the sky is clear. */
+.dayOnly {
+  display: none;
+}
+:global(:root[data-theme="day"]) .dayOnly {
+  display: inline;
+}
+:global(:root[data-theme="day"]) .nightOnly,
+:global(:root[data-theme="day"]) .stars {
+  display: none;
+}
+
 /* ── Planets ─────────────────────────────────────────────────────────── */
 
 .planet {

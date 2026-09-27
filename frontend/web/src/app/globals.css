@@ -110,6 +110,15 @@
   }
 }
 
+@keyframes realm-starlight {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+
 @keyframes realm-twinkle {
   0%,
   100% {
@@ -189,7 +198,31 @@
     background-size: 420px 420px;
   }
 
-  :root[data-theme="day"] body::before {
+  /* A second, sparser layer of coloured stars that twinkles (opacity only, so it stays cheap). */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1.6px 1.6px at 22% 30%, oklch(0.9 0.12 200 / 0.8), transparent 60%),
+      radial-gradient(1.4px 1.4px at 74% 22%, oklch(0.88 0.12 330 / 0.7), transparent 60%),
+      radial-gradient(1.8px 1.8px at 48% 72%, oklch(0.93 0.1 90 / 0.75), transparent 60%),
+      radial-gradient(1.3px 1.3px at 88% 86%, oklch(0.88 0.14 290 / 0.7), transparent 60%),
+      radial-gradient(1.5px 1.5px at 8% 64%, oklch(0.9 0.14 140 / 0.7), transparent 60%);
+    background-size: 560px 560px;
+    opacity: 0.8;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    body::after {
+      animation: realm-starlight 4.5s ease-in-out infinite alternate;
+    }
+  }
+
+  :root[data-theme="day"] body::before,
+  :root[data-theme="day"] body::after {
     display: none;
   }
 

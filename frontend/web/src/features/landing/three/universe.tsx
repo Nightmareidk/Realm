@@ -1,10 +1,11 @@
 "use client";
 
-import { Float, Sparkles, Stars } from "@react-three/drei";
+import { Float } from "@react-three/drei";
 import { type ThreeElements, useFrame } from "@react-three/fiber";
 import { type RefObject, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Astronaut3D } from "./astronaut3d";
+import type { DayMix } from "./theme";
 import { banded, C, glow } from "./toy";
 
 /** A soft radial glow texture drawn on a canvas (no image downloads). */
@@ -27,47 +28,50 @@ function useGlowTexture(stops: [number, string][]) {
   }, [stops]);
 }
 
-// The plane is 7.4 units wide and the disc's radius is 2.35, so its edge sits at ~0.64 of the
-// gradient radius: the bright rim has to start there or the disc hides it.
-const CORONA: [number, string][] = [
-  [0, "rgba(177,239,74,0)"],
-  [0.56, "rgba(177,239,74,0)"],
-  [0.63, "rgba(177,239,74,1)"],
-  [0.68, "rgba(45,212,191,0.75)"],
-  [0.8, "rgba(96,165,250,0.3)"],
-  [1, "rgba(96,165,250,0)"],
-];
-
-export const ECLIPSE_RADIUS = 2.35;
-
 const HALO: [number, string][] = [
   [0, "rgba(255,255,255,0.9)"],
   [0.25, "rgba(255,255,255,0.35)"],
   [1, "rgba(255,255,255,0)"],
 ];
 
-/** The eclipse: a midnight world with an aurora corona blazing around its edge (the logo, in 3D). */
-export function Eclipse({
-  disc,
-  ...props
-}: { disc?: RefObject<THREE.Mesh | null> } & ThreeElements["group"]) {
-  const corona = useGlowTexture(CORONA);
-  const ring = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (ring.current) ring.current.rotation.z = clock.elapsedTime * 0.05;
-  });
-  return (
-    <group {...props}>
-      <mesh ref={ring} scale={7.4}>
-        <planeGeometry />
-        <meshBasicMaterial map={corona} transparent depthWrite={false} toneMapped={false} />
-      </mesh>
-      <mesh ref={disc} position={[0.28, 0.28, 0.2]}>
-        <sphereGeometry args={[ECLIPSE_RADIUS, 64, 48]} />
-        <meshStandardMaterial color={C.midnight} roughness={0.9} />
-      </mesh>
-    </group>
-  );
+const atmosphereVertex = /* glsl */ `
+varying vec3 vN;
+varying vec3 vView;
+void main() {
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  vN = normalize(normalMatrix * normal);
+  vView = normalize(-mv.xyz);
+  gl_Position = projectionMatrix * mv;
+}
+`;
+
+const atmosphereFragment = /* glsl */ `
+uniform vec3 uColor;
+varying vec3 vN;
+varying vec3 vView;
+void main() {
+  float f = 1.0 - clamp(dot(normalize(vN), normalize(vView)), 0.0, 1.0);
+  float a = pow(f, 2.6) * 0.95;
+  gl_FragColor = vec4(mix(uColor, vec3(1.0), 0.25), a);
+}
+`;
+
+const atmospheres = new Map<string, THREE.ShaderMaterial>();
+/** A thin atmosphere: a fresnel rim of the planet's own colour, brightest at the edge. */
+function atmosphere(color: string) {
+  let m = atmospheres.get(color);
+  if (!m) {
+    m = new THREE.ShaderMaterial({
+      vertexShader: atmosphereVertex,
+      fragmentShader: atmosphereFragment,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+      uniforms: { uColor: { value: new THREE.Color(color) } },
+    });
+    atmospheres.set(color, m);
+  }
+  return m;
 }
 
 /** One planet: a glossy world with an optional soft atmosphere glow and ring. */
@@ -85,7 +89,10 @@ export function Planet({
 } & ThreeElements["group"]) {
   return (
     <group {...props}>
-      <mesh material={banded(color)} rotation={[0.18, 0, -0.3]}>
+      <mesh material={banded(color)} rotation={[0.18, 0, -0.3]} castShadow receiveShadow>
+        <sphereGeometry args={[radius, 64, 48]} />
+      </mesh>
+      <mesh material={atmosphere(color)} scale={1.14}>
         <sphereGeometry args={[radius, 48, 32]} />
       </mesh>
       {halo && (
@@ -94,8 +101,8 @@ export function Planet({
         </sprite>
       )}
       {ring && (
-        <mesh rotation={[Math.PI / 2.4, 0.2, 0]}>
-          <torusGeometry args={[radius * 1.7, radius * 0.08, 8, 64]} />
+        <mesh rotation={[Math.PI / 2.4, 0.2, 0]} castShadow receiveShadow>
+          <torusGeometry args={[radius * 1.7, radius * 0.08, 16, 96]} />
           <meshStandardMaterial
             color={ring}
             roughness={0.4}
@@ -159,6 +166,9 @@ const orbitPoint = (a: number, orbit: number, tilt: number) =>
     Math.sin(a) * orbit * Math.cos(tilt) * 0.6,
   );
 
+const ORBIT_NIGHT = new THREE.Color("#9fb6d8");
+const ORBIT_DAY = new THREE.Color("#ffffff");
+
 /** The exact path a planet travels, as a faint line. */
 function orbitLine(orbit: number, tilt: number) {
   const pts = Array.from({ length: 160 }, (_, i) =>
@@ -179,12 +189,23 @@ function orbitLine(orbit: number, tilt: number) {
 export function Orbits({
   still,
   anchors,
+  mix,
   ...props
-}: { still: boolean; anchors?: RefObject<(THREE.Object3D | null)[]> } & ThreeElements["group"]) {
+}: {
+  still: boolean;
+  anchors?: RefObject<(THREE.Object3D | null)[]>;
+  mix?: DayMix;
+} & ThreeElements["group"]) {
   const halo = useGlowTexture(HALO);
   const planets = useRef<(THREE.Group | null)[]>([]);
   const lines = useMemo(() => PLANETS.map((p) => orbitLine(p.orbit, p.tilt)), []);
   useFrame(({ clock }) => {
+    const m = mix?.current ?? 0;
+    for (const line of lines) {
+      const mat = line.material as THREE.LineBasicMaterial;
+      mat.color.lerpColors(ORBIT_NIGHT, ORBIT_DAY, m);
+      mat.opacity = 0.25 + m * 0.2;
+    }
     const t = still ? 0 : clock.elapsedTime;
     PLANETS.forEach((p, i) => {
       const g = planets.current[i];
@@ -223,66 +244,6 @@ export function Orbits({
   );
 }
 
-/**
- * Rippling aurora curtains: vertex-coloured ribbons swaying behind everything. Colour and alpha
- * fade together (straight alpha, not additive), so the curtain composites cleanly over the page
- * and in transparent PNG exports instead of leaving a dark rectangle.
- */
-export function Aurora({ still, ...props }: { still: boolean } & ThreeElements["group"]) {
-  const geo = useMemo(() => {
-    const g = new THREE.PlaneGeometry(26, 7, 90, 12);
-    const colors: number[] = [];
-    const pos = g.attributes.position as THREE.BufferAttribute;
-    const lime = new THREE.Color(C.lime);
-    const teal = new THREE.Color(C.teal);
-    const violet = new THREE.Color(C.violet);
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const h = (y + 3.5) / 7; // 0 bottom → 1 top
-      const along = (x + 13) / 26;
-      const c = lime
-        .clone()
-        .lerp(teal, h * 0.9)
-        .lerp(violet, Math.max(0, along - 0.6) * 1.2);
-      const fade = Math.sin(h * Math.PI) ** 1.4 * (0.35 + 0.65 * Math.sin(along * Math.PI));
-      colors.push(c.r, c.g, c.b, fade * 0.7);
-    }
-    g.setAttribute("color", new THREE.Float32BufferAttribute(colors, 4));
-    return g;
-  }, []);
-  const base = useMemo(
-    () => Float32Array.from((geo.attributes.position as THREE.BufferAttribute).array),
-    [geo],
-  );
-  const mesh = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (still || !mesh.current) return;
-    const t = clock.elapsedTime;
-    const pos = geo.attributes.position as THREE.BufferAttribute;
-    for (let i = 0; i < pos.count; i++) {
-      const x = base[i * 3] as number;
-      const y = base[i * 3 + 1] as number;
-      pos.setZ(i, Math.sin(x * 0.35 + t * 0.6) * 0.9 + Math.sin(x * 0.9 - t * 0.9) * 0.25);
-      pos.setY(i, y + Math.sin(x * 0.25 + t * 0.4) * 0.45);
-    }
-    pos.needsUpdate = true;
-  });
-  return (
-    <group {...props}>
-      <mesh ref={mesh} geometry={geo}>
-        <meshBasicMaterial
-          vertexColors
-          transparent
-          depthWrite={false}
-          side={THREE.DoubleSide}
-          toneMapped={false}
-        />
-      </mesh>
-    </group>
-  );
-}
-
 /** The four explorers, one per region colour, drifting in zero-g. */
 export function Explorers({
   still,
@@ -316,38 +277,6 @@ export function Explorers({
           </group>
         </Float>
       ))}
-    </>
-  );
-}
-
-export function Sky({ still }: { still: boolean }) {
-  return (
-    <>
-      <Stars
-        radius={60}
-        depth={40}
-        count={2600}
-        factor={3.2}
-        saturation={0.4}
-        fade
-        speed={still ? 0 : 0.6}
-      />
-      <Sparkles
-        count={60}
-        scale={[18, 10, 8]}
-        size={2.6}
-        speed={still ? 0 : 0.3}
-        color={C.lime}
-        opacity={0.7}
-      />
-      <Sparkles
-        count={40}
-        scale={[18, 10, 8]}
-        size={2.2}
-        speed={still ? 0 : 0.25}
-        color={C.teal}
-        opacity={0.6}
-      />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import { cx } from "@/lib/cx";
+import pivots from "./explorer-pivots.json";
 import styles from "./fun.module.css";
 
 /**
@@ -46,8 +47,9 @@ export function Art({
 }
 
 /**
- * One of the explorers as a 3D render. Drifts gently, hops when pointed at, and (with `waving`)
- * waves hello by flipping between the rest and wave poses like a flipbook.
+ * One of the explorers as a 3D render. Drifts gently and hops when pointed at. With `waving`, it
+ * waves hello: the body and the forearm are separate layers from the same render, and the forearm
+ * swings about the elbow (its pivot is measured when the art is rendered), so the wave is smooth.
  */
 export function Explorer({
   tone,
@@ -63,33 +65,38 @@ export function Explorer({
   /** Accessible description when the character carries meaning; omit when decorative. */
   label?: string;
 }) {
+  const wave = pivots.wave[tone];
+  const rest = pivots.rest[tone];
   return (
     <span
       className={cx(
         styles.crew,
         "inline-block",
         !className?.includes("absolute") && "relative",
-        waving && styles.waving,
         className,
       )}
-      style={{ "--delay": `${delay}s` } as CSSProperties}
+      style={
+        {
+          "--delay": `${delay}s`,
+          "--px": `${wave.x}%`,
+          "--py": `${wave.y}%`,
+        } as CSSProperties
+      }
       {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}
     >
-      <Image
-        src={`/art/astro-${tone}.webp`}
-        alt=""
-        width={340}
-        height={480}
-        className={styles.restFrame}
-      />
-      {waving && (
-        <Image
-          src={`/art/astro-${tone}-wave.webp`}
-          alt=""
-          width={340}
-          height={480}
-          className={styles.waveFrame}
-        />
+      {waving ? (
+        <>
+          <Image src={`/art/astro-${tone}-body.webp`} alt="" width={wave.w} height={wave.h} />
+          <Image
+            src={`/art/astro-${tone}-forearm.webp`}
+            alt=""
+            width={wave.w}
+            height={wave.h}
+            className={styles.forearm}
+          />
+        </>
+      ) : (
+        <Image src={`/art/astro-${tone}.webp`} alt="" width={rest.w} height={rest.h} />
       )}
     </span>
   );
