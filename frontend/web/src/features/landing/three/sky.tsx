@@ -177,6 +177,135 @@ vec3 curtain(vec2 p, float seed, float y0, float amp, float spd, float height, f
   return col * body * rays * pulse * gain * (0.22 + 0.98 * folds);
 }
 
+// Bioluminescent sparks: small blue-white points, twinkling as they drift.
+vec3 sparks(vec2 px, float cell, float chance) {
+  vec2 g = px / cell;
+  vec2 id = floor(g);
+  float h = hash21(id + 31.7);
+  if (h > chance) return vec3(0.0);
+  vec2 pos = vec2(hash21(id + 5.1), hash21(id + 9.3)) * 0.7 + 0.15;
+  vec2 d = (fract(g) - pos) * cell;
+  float size = mix(0.6, 1.8, pow(hash21(id + 2.2), 3.0));
+  float core = exp(-dot(d, d) / (size * size));
+  float halo = exp(-length(d) / (size * 4.0)) * 0.35;
+  float tw = 0.55 + 0.45 * sin(uTime * (1.5 + 3.0 * h) + h * 40.0);
+  return mix(vec3(0.35, 0.7, 1.0), vec3(0.85, 0.95, 1.0), hash21(id + 7.7)) * (core + halo) * tw;
+}
+
+// The cosmic river: a diagonal storm of cloud rising from the mountains to the top right, violet
+// and indigo billows around a molten amber core, rust cloud banks on its far shore, blue sparks
+// carried along it, and now and then a star igniting mid-stream. Returns colour and coverage.
+vec4 cosmicRiver(vec2 q, vec2 px, float aspect) {
+  vec2 o = vec2(0.5 * aspect, -0.08);
+  vec2 dir = normalize(vec2(0.62, 1.0));
+  vec2 nrm = vec2(-dir.y, dir.x);
+  vec2 r = q - o;
+  float s = dot(r, dir);
+  float u = dot(r, nrm) + 0.13 * sin(s * 3.1 - 0.5) + 0.04 * sin(s * 7.0 + uTime * 0.06);
+
+  float t = uTime * 0.03;
+  vec2 fp = vec2(s * 2.2 - t, u * 4.6);
+  vec2 warp = vec2(fbm3(fp * 0.7 + vec2(3.0, t)), fbm3(fp * 0.7 - vec2(5.0, t * 0.7)));
+  float n = fbm(fp + warp * 1.7);
+  float n2 = fbm(fp * 2.1 + warp * 2.4 + 11.0);
+
+  float width = 0.2 + 0.07 * sin(s * 2.1 + 1.0);
+  float span = smoothstep(-0.02, 0.28, s) * smoothstep(1.5, 1.0, s);
+  float body = exp(-(u * u) / (width * width)) * span;
+  // Billows with layered, stepped edges, like smoke painted in strokes.
+  float billow = smoothstep(0.34, 0.6, n) * body;
+  float strokes = smoothstep(0.48, 0.52, fract(n2 * 3.0)) * 0.25 + 0.75;
+  float coreLine = u + (n - 0.5) * 0.1;
+  float core = exp(-(coreLine * coreLine) / 0.0022) * smoothstep(0.4, 0.72, n)
+             * smoothstep(0.15, 0.45, s) * smoothstep(1.15, 0.7, s);
+
+  vec3 indigo = vec3(0.16, 0.13, 0.45);
+  vec3 violet = vec3(0.46, 0.3, 0.9);
+  vec3 lilac = vec3(0.72, 0.5, 1.0);
+  vec3 amber = vec3(1.0, 0.56, 0.14);
+  vec3 rust = vec3(0.36, 0.15, 0.08);
+  vec3 col = mix(indigo, violet, smoothstep(0.42, 0.7, n));
+  col = mix(col, lilac, smoothstep(0.66, 0.82, n2) * 0.5);
+  col *= billow * strokes * 1.25;
+
+  // Rust cloud banks on the far shore.
+  float shore = smoothstep(0.08, 0.3, u) * (1.0 - smoothstep(0.34, 0.62, u)) * span;
+  float bank = smoothstep(0.42, 0.66, fbm(vec2(s * 3.0 + t * 0.6, u * 6.0) + warp + 20.0)) * shore;
+  col += rust * bank * 1.1;
+
+  col += amber * core * 1.7 + vec3(1.0, 0.82, 0.5) * core * core * 0.8;
+
+  // Sparks carried downstream.
+  vec2 flow = dir * uTime * 16.0 * uRes.y / 900.0;
+  vec3 sp = (sparks(px - flow, 13.0, 0.28) + sparks(px - flow * 1.6 + 400.0, 29.0, 0.4) * 1.4)
+          * smoothstep(0.3, 0.65, n) * body;
+
+  // A star ignites mid-stream every 14 seconds, then scatters into sparks.
+  float cycleT = mod(uTime, 14.0);
+  float life = cycleT / 2.6;
+  vec3 burst = vec3(0.0);
+  if (life < 1.0) {
+    vec2 bc = o + dir * 0.86 + nrm * 0.02;
+    float d = length(q - bc);
+    float rise = smoothstep(0.0, 0.25, life) * (1.0 - smoothstep(0.35, 1.0, life));
+    float radius = 0.05 + life * 0.22;
+    burst = vec3(0.4, 0.75, 1.0) * exp(-d * d / (radius * radius)) * rise * 1.4
+          + vec3(0.85, 0.95, 1.0) * exp(-d * d / 0.0012) * rise * 1.2;
+    burst += sparks(px + vec2(uTime * 7.0), 9.0, 0.5) * exp(-d / radius) * rise * 2.0;
+  }
+
+  float cover = clamp(billow * 0.85 + bank * 0.6 + core, 0.0, 1.0);
+  return vec4(col + sp * 1.3 + burst, cover);
+}
+
+// Ridged noise for mountain crests.
+float ridged(float x) {
+  return 1.0 - abs(noise(vec2(x, 0.37)) * 2.0 - 1.0);
+}
+float ridgeLine(float x) {
+  float h = 0.0;
+  float a = 0.5;
+  float f = 1.0;
+  for (int i = 0; i < 5; i++) { h += a * ridged(x * f); f *= 2.13; a *= 0.48; }
+  return h;
+}
+
+float farRange(float x) { return 0.07 + 0.27 * pow(ridgeLine(x * 1.05 + 2.0), 2.3); }
+float nearRange(float x) { return 0.025 + 0.15 * pow(ridgeLine(x * 1.8 + 9.0), 2.6); }
+
+// Two mountain ranges on the horizon, like the silhouettes in a matte painting: sharp peaks, faces
+// turned toward the light catching it (snow on the tallest), a hazy far range and a dark near one.
+vec3 mountains(vec2 uv, float aspect, vec3 col, float dm) {
+  float x = uv.x * aspect;
+  float aa = 1.5 / uRes.y;
+  float e = 0.004;
+  float rock = fbm3(vec2(x * 11.0, uv.y * 22.0));
+
+  float fx = x + uPointer.x * 0.03;
+  float farH = farRange(fx);
+  float farSlope = (farRange(fx + e) - farRange(fx - e)) / (2.0 * e);
+  float far = smoothstep(farH + aa, farH - aa, uv.y);
+  float depthF = clamp((farH - uv.y) * 7.0, 0.0, 1.0);
+  float litF = smoothstep(0.1, 1.2, -farSlope) * (1.0 - depthF * 0.8);
+  float snowF = smoothstep(0.22, 0.3, farH) * smoothstep(0.05, 0.0, farH - uv.y) * (0.5 + 0.5 * litF);
+  vec3 farNight = mix(vec3(0.05, 0.06, 0.16), vec3(0.24, 0.23, 0.55), litF * 0.9 + rock * 0.12);
+  farNight = mix(farNight, vec3(0.5, 0.52, 0.85), snowF * 0.6);
+  vec3 farDay = mix(vec3(0.5, 0.6, 0.8), vec3(0.86, 0.9, 0.98), litF * 0.8 + rock * 0.1);
+  farDay = mix(farDay, vec3(0.97, 0.98, 1.0), snowF * 0.8);
+  col = mix(col, mix(farNight, farDay, dm), far * 0.96);
+  col += mix(vec3(0.3, 0.26, 0.7), vec3(1.0, 0.85, 0.65), dm) * exp(-abs(uv.y - farH) * 110.0) * 0.16;
+
+  float nx = x + uPointer.x * 0.08;
+  float nearH = nearRange(nx);
+  float nearSlope = (nearRange(nx + e) - nearRange(nx - e)) / (2.0 * e);
+  float near = smoothstep(nearH + aa, nearH - aa, uv.y);
+  float depthN = clamp((nearH - uv.y) * 9.0, 0.0, 1.0);
+  float litN = smoothstep(0.1, 1.4, -nearSlope) * (1.0 - depthN * 0.85);
+  vec3 nearNight = mix(vec3(0.015, 0.02, 0.05), vec3(0.13, 0.12, 0.33), litN * 0.9 + rock * 0.1);
+  vec3 nearDay = mix(vec3(0.3, 0.38, 0.58), vec3(0.62, 0.7, 0.88), litN * 0.8 + rock * 0.1);
+  return mix(col, mix(nearNight, nearDay, dm), near);
+}
+
 float rectMask(vec2 uv, vec4 r, float soft) {
   vec2 lo = smoothstep(r.xy - soft, r.xy + soft, uv);
   vec2 hi = 1.0 - smoothstep(r.zw - soft, r.zw + soft, uv);
@@ -189,11 +318,11 @@ vec3 nightSky(vec2 uv, vec2 px, float aspect, float textMask) {
 
   vec2 q = vec2(uv.x * aspect, uv.y - uScroll * 0.06);
 
-  // Nebula clouds, tinted by the cycle.
-  float neb = fbm(q * 1.4 + vec2(uTime * 0.004, 0.0) + 10.0);
-  float neb2 = fbm(q * 3.0 - vec2(0.0, uTime * 0.003) + 3.0);
-  vec3 nebCol = mix(auroraMid(uPhase + 0.15), auroraHigh(uPhase + 0.3), smoothstep(0.3, 0.7, neb2));
-  col += nebCol * smoothstep(0.45, 0.85, neb) * 0.16 * (1.0 - textMask * 0.6);
+  // The cosmic river, kept away from the headline.
+  vec4 river = cosmicRiver(q, px, aspect);
+  float riverKeep = 1.0 - textMask * 0.75;
+  col = mix(col, col * 0.3, river.a * 0.6 * riverKeep);
+  col += river.rgb * riverKeep;
 
   // Milky Way: a faint diagonal band of dust with more stars in it.
   float band = abs(dot(q - vec2(0.2, 0.95), normalize(vec2(0.55, 1.0))));
@@ -214,7 +343,8 @@ vec3 nightSky(vec2 uv, vec2 px, float aspect, float textMask) {
   aur = 1.0 - exp(-aur * 1.35);
 
   float glow = dot(aur, vec3(0.3, 0.6, 0.1));
-  return col + (stars + meteors(px) * (1.0 - textMask * 0.7)) * (1.0 - clamp(glow * 1.6, 0.0, 0.85)) + aur;
+  float hide = clamp(glow * 1.6 + river.a * 0.8, 0.0, 0.9);
+  return col + (stars + meteors(px) * (1.0 - textMask * 0.7)) * (1.0 - hide) + aur * (1.0 - river.a * 0.7);
 }
 
 vec3 daySky(vec2 uv, float aspect, float textMask) {
@@ -251,6 +381,8 @@ void main() {
   if (dm < 0.001) col = nightSky(uv, px, aspect, textMask);
   else if (dm > 0.999) col = daySky(uv, aspect, textMask);
   else col = mix(nightSky(uv, px, aspect, textMask), daySky(uv, aspect, textMask), dm);
+
+  col = mountains(uv, aspect, col, dm);
 
   // While the edition changes: a warm sunrise band and a flare bursting from the sun.
   float change = sin(clamp(uDay, 0.0, 1.0) * 3.14159);
