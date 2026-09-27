@@ -30,3 +30,37 @@
     opacity: 1;
   }
 }
+
+/* A live dot that breathes, for presence and the voice room. */
+@media (prefers-reduced-motion: no-preference) {
+  .live {
+    animation: live 2.4s ease-in-out infinite;
+  }
+  .speaking {
+    animation: speaking 1.2s ease-out infinite;
+  }
+}
+.speaking {
+  box-shadow: 0 0 0 2px var(--r-success);
+}
+@keyframes live {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--r-success) 60%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--r-success) 0%, transparent);
+  }
+}
+@keyframes speaking {
+  0% {
+    box-shadow:
+      0 0 0 2px var(--r-success),
+      0 0 0 2px color-mix(in oklch, var(--r-success) 50%, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 2px var(--r-success),
+      0 0 0 8px color-mix(in oklch, var(--r-success) 0%, transparent);
+  }
+}

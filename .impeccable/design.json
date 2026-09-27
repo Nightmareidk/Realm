@@ -7,166 +7,166 @@
       "midnight-ground": {
         "role": "neutral",
         "displayName": "Midnight Ground",
-        "canonical": "oklch(0.155 0.024 256)",
+        "canonical": "oklch(0.15 0.045 278)",
         "tonalRamp": [
-          "oklch(0.15 0.024 256.0)",
-          "oklch(0.264 0.024 256.0)",
-          "oklch(0.379 0.024 256.0)",
-          "oklch(0.493 0.024 256.0)",
-          "oklch(0.607 0.024 256.0)",
-          "oklch(0.721 0.024 256.0)",
-          "oklch(0.836 0.024 256.0)",
-          "oklch(0.95 0.024 256.0)"
+          "oklch(0.15 0.045 278.0)",
+          "oklch(0.264 0.045 278.0)",
+          "oklch(0.379 0.045 278.0)",
+          "oklch(0.493 0.045 278.0)",
+          "oklch(0.607 0.045 278.0)",
+          "oklch(0.721 0.045 278.0)",
+          "oklch(0.836 0.045 278.0)",
+          "oklch(0.95 0.045 278.0)"
         ]
       },
       "panel": {
         "role": "neutral",
         "displayName": "Panel",
-        "canonical": "oklch(0.19 0.027 256)",
+        "canonical": "oklch(0.19 0.05 280)",
         "tonalRamp": [
-          "oklch(0.15 0.027 256.0)",
-          "oklch(0.264 0.027 256.0)",
-          "oklch(0.379 0.027 256.0)",
-          "oklch(0.493 0.027 256.0)",
-          "oklch(0.607 0.027 256.0)",
-          "oklch(0.721 0.027 256.0)",
-          "oklch(0.836 0.027 256.0)",
-          "oklch(0.95 0.027 256.0)"
+          "oklch(0.15 0.05 280.0)",
+          "oklch(0.264 0.05 280.0)",
+          "oklch(0.379 0.05 280.0)",
+          "oklch(0.493 0.05 280.0)",
+          "oklch(0.607 0.05 280.0)",
+          "oklch(0.721 0.05 280.0)",
+          "oklch(0.836 0.05 280.0)",
+          "oklch(0.95 0.05 280.0)"
         ]
       },
       "panel-raised": {
         "role": "neutral",
         "displayName": "Panel Raised",
-        "canonical": "oklch(0.228 0.03 256)",
+        "canonical": "oklch(0.232 0.055 282)",
         "tonalRamp": [
-          "oklch(0.15 0.03 256.0)",
-          "oklch(0.264 0.03 256.0)",
-          "oklch(0.379 0.03 256.0)",
-          "oklch(0.493 0.03 256.0)",
-          "oklch(0.607 0.03 256.0)",
-          "oklch(0.721 0.03 256.0)",
-          "oklch(0.836 0.03 256.0)",
-          "oklch(0.95 0.03 256.0)"
+          "oklch(0.15 0.055 282.0)",
+          "oklch(0.264 0.055 282.0)",
+          "oklch(0.379 0.055 282.0)",
+          "oklch(0.493 0.055 282.0)",
+          "oklch(0.607 0.055 282.0)",
+          "oklch(0.721 0.055 282.0)",
+          "oklch(0.836 0.055 282.0)",
+          "oklch(0.95 0.055 282.0)"
         ]
       },
       "rule": {
         "role": "neutral",
         "displayName": "Rule",
-        "canonical": "oklch(0.31 0.03 256)",
+        "canonical": "oklch(0.32 0.05 282)",
         "tonalRamp": [
-          "oklch(0.15 0.03 256.0)",
-          "oklch(0.264 0.03 256.0)",
-          "oklch(0.379 0.03 256.0)",
-          "oklch(0.493 0.03 256.0)",
-          "oklch(0.607 0.03 256.0)",
-          "oklch(0.721 0.03 256.0)",
-          "oklch(0.836 0.03 256.0)",
-          "oklch(0.95 0.03 256.0)"
+          "oklch(0.15 0.05 282.0)",
+          "oklch(0.264 0.05 282.0)",
+          "oklch(0.379 0.05 282.0)",
+          "oklch(0.493 0.05 282.0)",
+          "oklch(0.607 0.05 282.0)",
+          "oklch(0.721 0.05 282.0)",
+          "oklch(0.836 0.05 282.0)",
+          "oklch(0.95 0.05 282.0)"
         ]
       },
       "rule-strong": {
         "role": "neutral",
         "displayName": "Rule Strong",
-        "canonical": "oklch(0.52 0.03 256)",
+        "canonical": "oklch(0.55 0.05 285)",
         "tonalRamp": [
-          "oklch(0.15 0.03 256.0)",
-          "oklch(0.264 0.03 256.0)",
-          "oklch(0.379 0.03 256.0)",
-          "oklch(0.493 0.03 256.0)",
-          "oklch(0.607 0.03 256.0)",
-          "oklch(0.721 0.03 256.0)",
-          "oklch(0.836 0.03 256.0)",
-          "oklch(0.95 0.03 256.0)"
+          "oklch(0.15 0.05 285.0)",
+          "oklch(0.264 0.05 285.0)",
+          "oklch(0.379 0.05 285.0)",
+          "oklch(0.493 0.05 285.0)",
+          "oklch(0.607 0.05 285.0)",
+          "oklch(0.721 0.05 285.0)",
+          "oklch(0.836 0.05 285.0)",
+          "oklch(0.95 0.05 285.0)"
         ]
       },
       "starlight-ink": {
         "role": "neutral",
         "displayName": "Starlight Ink",
-        "canonical": "oklch(0.965 0.008 240)",
+        "canonical": "oklch(0.97 0.012 285)",
         "tonalRamp": [
-          "oklch(0.15 0.008 240.0)",
-          "oklch(0.264 0.008 240.0)",
-          "oklch(0.379 0.008 240.0)",
-          "oklch(0.493 0.008 240.0)",
-          "oklch(0.607 0.008 240.0)",
-          "oklch(0.721 0.008 240.0)",
-          "oklch(0.836 0.008 240.0)",
-          "oklch(0.95 0.008 240.0)"
+          "oklch(0.15 0.012 285.0)",
+          "oklch(0.264 0.012 285.0)",
+          "oklch(0.379 0.012 285.0)",
+          "oklch(0.493 0.012 285.0)",
+          "oklch(0.607 0.012 285.0)",
+          "oklch(0.721 0.012 285.0)",
+          "oklch(0.836 0.012 285.0)",
+          "oklch(0.95 0.012 285.0)"
         ]
       },
       "ink-soft": {
         "role": "neutral",
         "displayName": "Ink Soft",
-        "canonical": "oklch(0.84 0.02 245)",
+        "canonical": "oklch(0.85 0.028 285)",
         "tonalRamp": [
-          "oklch(0.15 0.02 245.0)",
-          "oklch(0.264 0.02 245.0)",
-          "oklch(0.379 0.02 245.0)",
-          "oklch(0.493 0.02 245.0)",
-          "oklch(0.607 0.02 245.0)",
-          "oklch(0.721 0.02 245.0)",
-          "oklch(0.836 0.02 245.0)",
-          "oklch(0.95 0.02 245.0)"
+          "oklch(0.15 0.028 285.0)",
+          "oklch(0.264 0.028 285.0)",
+          "oklch(0.379 0.028 285.0)",
+          "oklch(0.493 0.028 285.0)",
+          "oklch(0.607 0.028 285.0)",
+          "oklch(0.721 0.028 285.0)",
+          "oklch(0.836 0.028 285.0)",
+          "oklch(0.95 0.028 285.0)"
         ]
       },
       "ink-muted": {
         "role": "neutral",
         "displayName": "Ink Muted",
-        "canonical": "oklch(0.71 0.025 248)",
+        "canonical": "oklch(0.73 0.038 285)",
         "tonalRamp": [
-          "oklch(0.15 0.025 248.0)",
-          "oklch(0.264 0.025 248.0)",
-          "oklch(0.379 0.025 248.0)",
-          "oklch(0.493 0.025 248.0)",
-          "oklch(0.607 0.025 248.0)",
-          "oklch(0.721 0.025 248.0)",
-          "oklch(0.836 0.025 248.0)",
-          "oklch(0.95 0.025 248.0)"
+          "oklch(0.15 0.038 285.0)",
+          "oklch(0.264 0.038 285.0)",
+          "oklch(0.379 0.038 285.0)",
+          "oklch(0.493 0.038 285.0)",
+          "oklch(0.607 0.038 285.0)",
+          "oklch(0.721 0.038 285.0)",
+          "oklch(0.836 0.038 285.0)",
+          "oklch(0.95 0.038 285.0)"
         ]
       },
-      "aurora-lime": {
+      "molten-amber": {
         "role": "primary",
-        "displayName": "Aurora Lime",
-        "canonical": "oklch(0.88 0.2 128)",
+        "displayName": "Molten Amber",
+        "canonical": "oklch(0.8 0.16 68)",
         "tonalRamp": [
-          "oklch(0.15 0.2 128.0)",
-          "oklch(0.264 0.2 128.0)",
-          "oklch(0.379 0.2 128.0)",
-          "oklch(0.493 0.2 128.0)",
-          "oklch(0.607 0.2 128.0)",
-          "oklch(0.721 0.2 128.0)",
-          "oklch(0.836 0.2 128.0)",
-          "oklch(0.95 0.2 128.0)"
+          "oklch(0.15 0.16 68.0)",
+          "oklch(0.264 0.16 68.0)",
+          "oklch(0.379 0.16 68.0)",
+          "oklch(0.493 0.16 68.0)",
+          "oklch(0.607 0.16 68.0)",
+          "oklch(0.721 0.16 68.0)",
+          "oklch(0.836 0.16 68.0)",
+          "oklch(0.95 0.16 68.0)"
         ]
       },
-      "aurora-lime-hover": {
+      "molten-amber-hover": {
         "role": "primary",
-        "displayName": "Aurora Lime (hover)",
-        "canonical": "oklch(0.93 0.17 128)",
+        "displayName": "Molten Amber (hover)",
+        "canonical": "oklch(0.86 0.14 76)",
         "tonalRamp": [
-          "oklch(0.15 0.17 128.0)",
-          "oklch(0.264 0.17 128.0)",
-          "oklch(0.379 0.17 128.0)",
-          "oklch(0.493 0.17 128.0)",
-          "oklch(0.607 0.17 128.0)",
-          "oklch(0.721 0.17 128.0)",
-          "oklch(0.836 0.17 128.0)",
-          "oklch(0.95 0.17 128.0)"
+          "oklch(0.15 0.14 76.0)",
+          "oklch(0.264 0.14 76.0)",
+          "oklch(0.379 0.14 76.0)",
+          "oklch(0.493 0.14 76.0)",
+          "oklch(0.607 0.14 76.0)",
+          "oklch(0.721 0.14 76.0)",
+          "oklch(0.836 0.14 76.0)",
+          "oklch(0.95 0.14 76.0)"
         ]
       },
-      "on-lime": {
+      "on-amber": {
         "role": "primary",
-        "displayName": "On Lime",
-        "canonical": "oklch(0.2 0.05 145)",
+        "displayName": "On Amber",
+        "canonical": "oklch(0.22 0.06 50)",
         "tonalRamp": [
-          "oklch(0.15 0.05 145.0)",
-          "oklch(0.264 0.05 145.0)",
-          "oklch(0.379 0.05 145.0)",
-          "oklch(0.493 0.05 145.0)",
-          "oklch(0.607 0.05 145.0)",
-          "oklch(0.721 0.05 145.0)",
-          "oklch(0.836 0.05 145.0)",
-          "oklch(0.95 0.05 145.0)"
+          "oklch(0.15 0.06 50.0)",
+          "oklch(0.264 0.06 50.0)",
+          "oklch(0.379 0.06 50.0)",
+          "oklch(0.493 0.06 50.0)",
+          "oklch(0.607 0.06 50.0)",
+          "oklch(0.721 0.06 50.0)",
+          "oklch(0.836 0.06 50.0)",
+          "oklch(0.95 0.06 50.0)"
         ]
       },
       "solar-orange": {
@@ -214,64 +214,64 @@
           "oklch(0.95 0.05 40.0)"
         ]
       },
-      "spaces-teal": {
+      "spaces-cyan": {
         "role": "secondary",
-        "displayName": "Spaces Teal",
-        "canonical": "oklch(0.72 0.1291 182)",
+        "displayName": "Spaces Cyan",
+        "canonical": "oklch(0.72 0.13 196)",
         "tonalRamp": [
-          "oklch(0.15 0.1291 182.0)",
-          "oklch(0.264 0.1291 182.0)",
-          "oklch(0.379 0.1291 182.0)",
-          "oklch(0.493 0.1291 182.0)",
-          "oklch(0.607 0.1291 182.0)",
-          "oklch(0.721 0.1291 182.0)",
-          "oklch(0.836 0.1291 182.0)",
-          "oklch(0.95 0.1291 182.0)"
+          "oklch(0.15 0.13 196.0)",
+          "oklch(0.264 0.13 196.0)",
+          "oklch(0.379 0.13 196.0)",
+          "oklch(0.493 0.13 196.0)",
+          "oklch(0.607 0.13 196.0)",
+          "oklch(0.721 0.13 196.0)",
+          "oklch(0.836 0.13 196.0)",
+          "oklch(0.95 0.13 196.0)"
         ]
       },
-      "feed-ice-blue": {
+      "feed-electric-blue": {
         "role": "secondary",
-        "displayName": "Feed Ice Blue",
-        "canonical": "oklch(0.72 0.14 252)",
+        "displayName": "Feed Electric Blue",
+        "canonical": "oklch(0.72 0.14 256)",
         "tonalRamp": [
-          "oklch(0.15 0.14 252.0)",
-          "oklch(0.264 0.14 252.0)",
-          "oklch(0.379 0.14 252.0)",
-          "oklch(0.493 0.14 252.0)",
-          "oklch(0.607 0.14 252.0)",
-          "oklch(0.721 0.14 252.0)",
-          "oklch(0.836 0.14 252.0)",
-          "oklch(0.95 0.14 252.0)"
+          "oklch(0.15 0.14 256.0)",
+          "oklch(0.264 0.14 256.0)",
+          "oklch(0.379 0.14 256.0)",
+          "oklch(0.493 0.14 256.0)",
+          "oklch(0.607 0.14 256.0)",
+          "oklch(0.721 0.14 256.0)",
+          "oklch(0.836 0.14 256.0)",
+          "oklch(0.95 0.14 256.0)"
         ]
       },
       "profiles-violet": {
         "role": "secondary",
         "displayName": "Profiles Violet",
-        "canonical": "oklch(0.72 0.14 296)",
+        "canonical": "oklch(0.72 0.14 300)",
         "tonalRamp": [
-          "oklch(0.15 0.14 296.0)",
-          "oklch(0.264 0.14 296.0)",
-          "oklch(0.379 0.14 296.0)",
-          "oklch(0.493 0.14 296.0)",
-          "oklch(0.607 0.14 296.0)",
-          "oklch(0.721 0.14 296.0)",
-          "oklch(0.836 0.14 296.0)",
-          "oklch(0.95 0.14 296.0)"
+          "oklch(0.15 0.14 300.0)",
+          "oklch(0.264 0.14 300.0)",
+          "oklch(0.379 0.14 300.0)",
+          "oklch(0.493 0.14 300.0)",
+          "oklch(0.607 0.14 300.0)",
+          "oklch(0.721 0.14 300.0)",
+          "oklch(0.836 0.14 300.0)",
+          "oklch(0.95 0.14 300.0)"
         ]
       },
-      "boards-pink": {
+      "boards-magenta": {
         "role": "secondary",
-        "displayName": "Boards Pink",
-        "canonical": "oklch(0.72 0.14 352)",
+        "displayName": "Boards Magenta",
+        "canonical": "oklch(0.72 0.14 350)",
         "tonalRamp": [
-          "oklch(0.15 0.14 352.0)",
-          "oklch(0.264 0.14 352.0)",
-          "oklch(0.379 0.14 352.0)",
-          "oklch(0.493 0.14 352.0)",
-          "oklch(0.607 0.14 352.0)",
-          "oklch(0.721 0.14 352.0)",
-          "oklch(0.836 0.14 352.0)",
-          "oklch(0.95 0.14 352.0)"
+          "oklch(0.15 0.14 350.0)",
+          "oklch(0.264 0.14 350.0)",
+          "oklch(0.379 0.14 350.0)",
+          "oklch(0.493 0.14 350.0)",
+          "oklch(0.607 0.14 350.0)",
+          "oklch(0.721 0.14 350.0)",
+          "oklch(0.836 0.14 350.0)",
+          "oklch(0.95 0.14 350.0)"
         ]
       },
       "danger": {
@@ -447,10 +447,10 @@
   ],
   "narrative": {
     "northStar": "The Eclipse Hour",
-    "overview": "**Creative North Star: \"The Eclipse Hour\"**\n\nRealm is the moment a midnight world lights up at its rim: the Eclipse mark, a dark planet edged in aurora, the instant before you arrive somewhere new. Everything is built from that one image. The ground is deep midnight, never black. Light comes from the edges, as aurora (lime, teal, ice blue, violet, pink), and it gathers where something matters: the primary action, the world you are in, the person who needs you.\n\nThe public face is a spectacle and the app is calm. The landing page is a universe: a live 3D eclipse with four planets in orbit, astronaut explorers floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. The two editions are two different skies. At night the eclipse hangs in an aurora (curtains with a bright green lower edge, rays, violet above) over stars that twinkle and scintillate in colour. By day the moon slides off the sun: a bright sky, a golden granulated sun with flares, warm light on the crew. Switching editions plays that change out, like the eclipse ending. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.\n\nIt is semi-cartoon, not a cartoon. The 3D is glossy clearcoat plastic with iridescent visors, cute in form and precise in finish. Colours are modern and luminous rather than pastel.",
+    "overview": "**Creative North Star: \"The Eclipse Hour\"**\n\nRealm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the sky is a cosmic storm: deep indigo, violet and electric-blue cloud around a black hole whose accretion disk burns molten amber. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you. By day it is golden hour: the same page, warm cream, with a sunset-orange action colour.\n\nThe public face is a spectacle and the app is calm. The landing page is a universe: a live 3D eclipse with four planets in orbit, astronaut explorers floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. The two editions are two different skies. At night the eclipse hangs in an aurora (curtains with a bright green lower edge, rays, violet above) over stars that twinkle and scintillate in colour. By day the moon slides off the sun: a bright sky, a golden granulated sun with flares, warm light on the crew. Switching editions plays that change out, like the eclipse ending. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.\n\nIt is semi-cartoon, not a cartoon. The 3D is glossy clearcoat plastic with iridescent visors, cute in form and precise in finish. Colours are modern and luminous rather than pastel.",
     "keyCharacteristics": [
       "Midnight ground with light arriving from the edges, as the eclipse does.",
-      "One action colour (aurora lime); four identity inks for the four worlds.",
+      "One action colour (molten amber by night, sunset orange by day); four identity inks for the four worlds.",
       "Real 3D, rendered live or pre-rendered to transparent WebP; never faked with CSS.",
       "Unbounded for display moments, Atkinson Hyperlegible Next for everything you read.",
       "Lots of motion on the landing page, all of it pausable, none of it required to understand anything."
@@ -463,7 +463,7 @@
       },
       {
         "name": "The Rim Light Rule",
-        "body": "Glows sit at edges and corners, the way the eclipse is lit, and are led by teal with at most a trace of lime. A lime wash at strength turns olive on midnight.",
+        "body": "Glows sit at edges and corners, the way the eclipse is lit, led by the world's own ink with at most a trace of amber. The action colour never washes a panel.",
         "section": "colors"
       },
       {
@@ -473,7 +473,7 @@
       },
       {
         "name": "The Four Worlds Rule",
-        "body": "Teal, ice blue, violet and pink are identities (a Space, a region), never ornament. A screen uses its own world's ink, plus lime for actions.",
+        "body": "Cyan, electric blue, violet and magenta are identities (a Space, a region), never ornament. A screen uses its own world's ink, plus the action colour for actions.",
         "section": "colors"
       },
       {
@@ -493,7 +493,7 @@
       }
     ],
     "dos": [
-      "Do keep lime for the primary action, send, focus and \"needs you\" counts only.",
+      "Do keep the action colour for the primary action, send, focus and \"needs you\" counts only.",
       "Do light surfaces from an edge or corner, teal-led, the way the eclipse is lit.",
       "Do render 3D for real (live React Three Fiber, or transparent WebP from `scripts/render-assets.mjs`) and record provenance in `frontend/web/brand/README.md`.",
       "Do set every paragraph in Atkinson Hyperlegible Next at 17px / 1.6 or larger.",
@@ -502,7 +502,7 @@
     ],
     "donts": [
       "Don't build a server-icon rail with a channel list; it reads as a Discord clone.",
-      "Don't wash a panel in lime, or use additive glow on a transparent canvas (it bands and clips).",
+      "Don't wash a panel in the action colour, or use additive glow on a transparent canvas (it bands and clips).",
       "Don't put a kicker or eyebrow label above a heading.",
       "Don't use Unicode glyphs or emoji as icons; icons come from Phosphor. Emoji are fine as chat content and reactions.",
       "Don't fake material with CSS (gradient spheres, bevels, embossing) where a real render exists.",
@@ -510,6 +510,7 @@
       "Don't use gradient text, or glass behind reading copy.",
       "Don't show the aurora or stars by day, or a daytime sky at night: each edition has its own sky.",
       "Don't animate a character by flipping between two poses; move a joint about its pivot.",
+      "Don't draw characters as flat illustrations or primitives in the browser; the cast comes from the Blender pipeline so it stays one family.",
       "Don't scatter cartoon props (hearts, controllers, stickers) around sections; the 3D world and the explorers carry the personality, the page stays composed."
     ]
   }

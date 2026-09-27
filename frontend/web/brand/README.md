@@ -9,14 +9,35 @@ Every image Realm ships is made in this repo; nothing is stock or downloaded.
 - **`src/app/icon.png`** (512 px) and **`src/app/apple-icon.png`** (180 px, full bleed): the mark's
   `tile` variant rasterised with sharp at high density. Regenerate them whenever the mark changes.
 
-## 3D renders (`public/art/*.webp`)
+## The cast (`public/art/cast/`, `public/models/`)
+
+Explorers (astronauts), aliens (Zib, Nova), monsters (Gloop, Bruno) and humans (Maya, Leo),
+modelled in code and rendered in **Blender 5.2** with Cycles on the GPU
+(`scripts/blender/cast.py`): metaball forms, subdivided primitives and physically based
+materials (clearcoat plastic, fabric sheen, subsurface skin, jelly transmission, thin-film visors).
+`node scripts/render-cast.mjs` renders each one and writes:
+
+- `public/art/cast/<who>.webp` standing, `<who>-body.webp` + `<who>-forearm.webp` the two wave
+  layers (one shared crop), `<who>-face.webp` a portrait used as avatars in the product previews;
+- `public/models/<who>.glb`, a decimated, Draco-compressed model with named arm joints
+  (ShoulderR, ElbowR) for the live hero (decoder served from `public/draco/`, copied from three);
+- `src/features/landing/cast.json`, image sizes and the elbow pivot for the page wave.
+
+Masters are kept in `brand/renders/cast/`.
+
+## Day video (`public/video/`)
+
+`day-portal.mp4` (golden hour, the arch) and `day-meadow.mp4` (midday, mirrored) are the product
+owner's own Higgsfield clips, made seamless and web-sized with Blender's sequencer
+(`scripts/blender/video_loop.py`: tail crossfaded over head, H.264, neutral colour). Posters are
+their first frames.
+
+## Other 3D renders (`public/art/*.webp`)
 
 All of them are React Three Fiber scenes, the same components the live hero uses:
 
 | Files | Scene |
 | --- | --- |
-| `astro-{teal,blue,violet,pink}.webp` | `Astronaut3D` (`src/features/landing/three/astronaut3d.tsx`), standing |
-| `astro-{tone}-body.webp`, `astro-{tone}-forearm.webp` | the waving pose split into two layers: the page rotates the forearm about the elbow, whose position is written to `src/features/landing/explorer-pivots.json` |
 | `lock` | `src/features/landing/three/props3d.tsx` (the other props live on the stage but aren't used on the page) |
 | `planet-{spaces,feed,profiles,boards}.webp` | `Planet` (`src/features/landing/three/planets.tsx`): procedural ocean, ringed gas giant, ice and cratered worlds, fixed framing for the star chart |
 | `hero-poster-night.webp`, `hero-poster-day.webp` | the hero's 3D cast (eclipse or sun, planets, crew, props) as one still frame per edition, shown while the live scene loads and on devices without WebGL |

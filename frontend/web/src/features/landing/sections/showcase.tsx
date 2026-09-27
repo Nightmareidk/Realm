@@ -27,12 +27,12 @@ export function ShowcaseSection() {
           }}
         >
           <Explorer
-            tone="teal"
+            who="astro-teal"
             waving
-            className="absolute -top-20 left-4 w-24 md:-top-24 md:left-10 md:w-32"
+            className="absolute bottom-full left-6 w-20 translate-y-8 md:left-12 md:w-28"
           />
           <Explorer
-            tone="pink"
+            who="monster-gloop"
             delay={0.8}
             className="absolute -bottom-10 -left-6 w-24 max-md:hidden md:w-28"
           />

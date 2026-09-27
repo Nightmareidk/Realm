@@ -375,7 +375,7 @@ void main() {
   }
 
   col += (hash21(gl_FragCoord.xy + fract(uTime)) - 0.5) / 255.0;
-  gl_FragColor = vec4(col, alpha);
+  gl_FragColor = vec4(col * alpha, alpha);
 }
 `;
 
@@ -402,10 +402,13 @@ export function SkyBackdrop({
       new THREE.ShaderMaterial({
         vertexShader: vertex,
         fragmentShader: fragment,
+        // Drawn first, as an opaque pass (so it never lands on top of the scene), writing
+        // premultiplied colour and alpha straight into the transparent canvas.
         depthTest: false,
         depthWrite: false,
         toneMapped: false,
-        transparent: true,
+        transparent: false,
+        blending: THREE.NoBlending,
         uniforms: {
           uTime: { value: 0 },
           uDay: { value: 0 },

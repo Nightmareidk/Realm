@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cx } from "@/lib/cx";
 
 export type Ink = "spaces" | "feed" | "profiles" | "boards";
@@ -17,15 +18,24 @@ const sizes = {
   xl: "size-24 text-2xl",
 } as const;
 
+const px = { xs: 24, sm: 32, md: 40, lg: 64, xl: 96 } as const;
+
+/**
+ * A person's avatar: their picture when they have one (Realm avatars are 3D characters), otherwise
+ * their initials on their colour. Pictures sit on a soft wash of the same colour.
+ */
 export function Avatar({
   name,
   ink,
+  src,
   size = "sm",
   online,
   className,
 }: {
   name: string;
   ink: Ink;
+  /** A portrait image; initials are used when there isn't one. */
+  src?: string;
   size?: keyof typeof sizes;
   online?: boolean;
   className?: string;
@@ -41,12 +51,23 @@ export function Avatar({
       <span
         aria-hidden="true"
         className={cx(
-          "inline-flex items-center justify-center rounded-full font-bold stretch-semi-expanded",
+          "inline-flex items-center justify-center overflow-hidden rounded-full font-bold stretch-semi-expanded",
           inks[ink],
           sizes[size],
+          src && "ring-1 ring-rule",
         )}
       >
-        {initials}
+        {src ? (
+          <Image
+            src={src}
+            alt=""
+            width={px[size] * 2}
+            height={px[size] * 2}
+            className="size-full scale-[1.18] object-cover object-[50%_30%]"
+          />
+        ) : (
+          initials
+        )}
       </span>
       {online !== undefined && (
         <span

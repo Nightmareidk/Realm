@@ -2,7 +2,7 @@
 
 import { ArrowFatUp } from "@phosphor-icons/react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
+import { type ReactNode, type RefObject, Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { cx } from "@/lib/cx";
 import { SkyBackdrop } from "./sky";
@@ -179,7 +179,9 @@ export function HeroCast({
         rotation={[0.25, 0, -0.12]}
         anchors={planetAnchors}
       />
-      <Explorers still={still} anchors={crewAnchors} />
+      <Suspense fallback={null}>
+        <Explorers still={still} anchors={crewAnchors} />
+      </Suspense>
     </>
   );
 }

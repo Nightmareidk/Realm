@@ -20,7 +20,7 @@ function ReplyItem({ reply, depth }: { reply: Reply; depth: number }) {
   return (
     <li className={cx("relative", depth > 0 && "mt-3 border-l border-rule pl-4")}>
       <p className="flex items-center gap-2 text-xs">
-        <Avatar name={reply.by.name} ink={reply.by.ink} size="xs" />
+        <Avatar name={reply.by.name} ink={reply.by.ink} src={reply.by.avatar} size="xs" />
         <span className="font-semibold text-ink">{reply.by.name.split(" ")[0]}</span>
       </p>
       <p className="mt-1.5 text-sm leading-snug text-ink-soft">{reply.text}</p>
@@ -55,7 +55,7 @@ export function BoardPreview({ variant = "full" }: { variant?: "full" | "compact
           </div>
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-xs text-ink-muted">
-              <Avatar name={thread.by.name} ink={thread.by.ink} size="xs" />
+              <Avatar name={thread.by.name} ink={thread.by.ink} src={thread.by.avatar} size="xs" />
               <span className="font-semibold text-ink-soft">{thread.by.name}</span>
               <span className="tabular">{thread.time}</span>
             </p>

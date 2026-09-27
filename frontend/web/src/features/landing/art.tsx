@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import { cx } from "@/lib/cx";
-import pivots from "./explorer-pivots.json";
+import cast from "./cast.json";
 import styles from "./fun.module.css";
 
 /**
@@ -10,7 +10,8 @@ import styles from "./fun.module.css";
  */
 export type ArtName = "lock";
 
-export type ExplorerTone = "teal" | "blue" | "violet" | "pink";
+/** Realm's cast: explorers, aliens, monsters and humans, rendered in Blender. */
+export type CastName = keyof typeof cast;
 
 const MOTION = { a: styles.floatA, b: styles.floatB, c: styles.floatC, spin: styles.spin } as const;
 
@@ -47,26 +48,26 @@ export function Art({
 }
 
 /**
- * One of the explorers as a 3D render. Drifts gently and hops when pointed at. With `waving`, it
- * waves hello: the body and the forearm are separate layers from the same render, and the forearm
- * swings about the elbow (its pivot is measured when the art is rendered), so the wave is smooth.
+ * A member of the cast as a Blender render. Drifts gently and hops when pointed at. With `waving`,
+ * it waves hello: the body and the forearm are separate layers from the same render, and the
+ * forearm swings about the elbow (its pivot is measured when the art is rendered), so the wave is
+ * smooth.
  */
 export function Explorer({
-  tone,
+  who,
   waving = false,
   delay = 0,
   className,
   label,
 }: {
-  tone: ExplorerTone;
+  who: CastName;
   waving?: boolean;
   delay?: number;
   className?: string;
   /** Accessible description when the character carries meaning; omit when decorative. */
   label?: string;
 }) {
-  const wave = pivots.wave[tone];
-  const rest = pivots.rest[tone];
+  const { wave, rest } = cast[who];
   return (
     <span
       className={cx(
@@ -86,9 +87,9 @@ export function Explorer({
     >
       {waving ? (
         <>
-          <Image src={`/art/astro-${tone}-body.webp`} alt="" width={wave.w} height={wave.h} />
+          <Image src={`/art/cast/${who}-body.webp`} alt="" width={wave.w} height={wave.h} />
           <Image
-            src={`/art/astro-${tone}-forearm.webp`}
+            src={`/art/cast/${who}-forearm.webp`}
             alt=""
             width={wave.w}
             height={wave.h}
@@ -96,7 +97,7 @@ export function Explorer({
           />
         </>
       ) : (
-        <Image src={`/art/astro-${tone}.webp`} alt="" width={rest.w} height={rest.h} />
+        <Image src={`/art/cast/${who}.webp`} alt="" width={rest.w} height={rest.h} />
       )}
     </span>
   );

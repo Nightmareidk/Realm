@@ -10,17 +10,69 @@ export interface DemoPerson {
   handle: string;
   ink: Ink;
   online: boolean;
+  /** Their Realm avatar: a portrait of a 3D character from the cast. */
+  avatar?: string;
 }
 
+const face = (who: string) => `/art/cast/${who}-face.webp`;
+
 export const people = {
-  noor: { name: "Noor Haddad", handle: "noor", ink: "feed", online: true },
-  tomas: { name: "Tomás Ruiz", handle: "tomasr", ink: "spaces", online: true },
-  kenji: { name: "Kenji Mori", handle: "kenji", ink: "profiles", online: true },
-  amara: { name: "Amara Okafor", handle: "amara.ok", ink: "boards", online: false },
-  priya: { name: "Priya Nair", handle: "priya", ink: "spaces", online: true },
-  mateo: { name: "Mateo Silva", handle: "mateo_s", ink: "profiles", online: false },
-  saoirse: { name: "Saoirse Doyle", handle: "saoirse", ink: "feed", online: true },
-  ilya: { name: "Ilya Petrov", handle: "ilya", ink: "boards", online: true },
+  noor: {
+    name: "Noor Haddad",
+    handle: "noor",
+    ink: "feed",
+    online: true,
+    avatar: face("astro-teal"),
+  },
+  tomas: {
+    name: "Tomás Ruiz",
+    handle: "tomasr",
+    ink: "spaces",
+    online: true,
+    avatar: face("alien-zib"),
+  },
+  kenji: {
+    name: "Kenji Mori",
+    handle: "kenji",
+    ink: "profiles",
+    online: true,
+    avatar: face("monster-bruno"),
+  },
+  amara: {
+    name: "Amara Okafor",
+    handle: "amara.ok",
+    ink: "boards",
+    online: false,
+    avatar: face("alien-nova"),
+  },
+  priya: {
+    name: "Priya Nair",
+    handle: "priya",
+    ink: "spaces",
+    online: true,
+    avatar: face("astro-violet"),
+  },
+  mateo: {
+    name: "Mateo Silva",
+    handle: "mateo_s",
+    ink: "profiles",
+    online: false,
+    avatar: face("monster-gloop"),
+  },
+  saoirse: {
+    name: "Saoirse Doyle",
+    handle: "saoirse",
+    ink: "feed",
+    online: true,
+    avatar: face("human-maya"),
+  },
+  ilya: {
+    name: "Ilya Petrov",
+    handle: "ilya",
+    ink: "boards",
+    online: true,
+    avatar: face("human-leo"),
+  },
 } satisfies Record<string, DemoPerson>;
 
 /** The viewer, for "your own message" bubbles. */
@@ -46,8 +98,21 @@ export const space = {
   ],
 };
 
-export const chat = [
-  { who: people.tomas, time: "9:02 PM", text: "anyone up for ranked after 9?" },
+export interface ChatMessage {
+  who: DemoPerson;
+  time: string;
+  text?: string;
+  mine?: boolean;
+  role?: string;
+  reactions?: { emoji: string; count: number; mine?: boolean }[];
+  replyTo?: { name: string; text: string };
+  clip?: { title: string; duration: string; image: string };
+  voice?: { duration: string };
+  seenBy?: DemoPerson[];
+}
+
+export const chat: ChatMessage[] = [
+  { who: people.tomas, time: "9:02 PM", role: "host", text: "anyone up for ranked after 9?" },
   {
     who: people.amara,
     time: "9:03 PM",
@@ -57,30 +122,71 @@ export const chat = [
     who: people.kenji,
     time: "9:03 PM",
     text: "I was scouting. there's a difference",
-    reactions: [{ emoji: "💀", count: 4 }],
+    reactions: [
+      { emoji: "💀", count: 4, mine: true },
+      { emoji: "😂", count: 2 },
+    ],
   },
+  { who: people.priya, time: "9:04 PM", voice: { duration: "0:12" } },
   {
     who: people.noor,
     time: "9:05 PM",
-    text: "posting last night's clip in #clips. it's too good not to",
+    text: "last night's clip. it's too good not to post",
+    clip: {
+      title: "the jump that should not have worked",
+      duration: "0:42",
+      image: "https://picsum.photos/seed/realm-clip-ridge/640/360",
+    },
   },
-  { who: me, time: "9:06 PM", text: "in for ranked. queue at 9:15?", mine: true },
+  {
+    who: me,
+    time: "9:06 PM",
+    text: "in for ranked. queue at 9:15?",
+    mine: true,
+    replyTo: { name: "Tomás", text: "anyone up for ranked after 9?" },
+    seenBy: [people.tomas, people.kenji, people.noor],
+  },
 ];
+
+/** The event pinned at the top of #general. */
+export const pinnedEvent = {
+  title: "Ranked night",
+  when: "Tonight, 9:15 PM",
+  going: [people.tomas, people.kenji, people.priya, people.noor],
+  count: 6,
+};
+
+/** Who's talking in the Space's voice room. */
+export const voiceRoom = {
+  name: "Squad room",
+  people: [
+    { who: people.kenji, speaking: true },
+    { who: people.tomas, speaking: false },
+    { who: people.priya, speaking: false },
+  ],
+};
 
 export const clip = {
   by: people.noor,
   caption: "the jump that should not have worked",
   duration: "0:42",
+  sound: "original sound · noor",
+  likes: "12.4k",
+  comments: 318,
   image: "https://picsum.photos/seed/realm-clip-ridge/540/960",
 };
 
 export const post = {
   by: people.ilya,
   time: "2h",
-  text: "Planning the next arc of our campaign. Three weekends of notes, zero regrets.",
+  space: "Late Night Lobby",
+  text: "Planning the next arc of our campaign with @noor. Three weekends of notes, zero regrets.",
+  tags: ["#tabletop", "#worldbuilding"],
   image: "https://picsum.photos/seed/realm-post-map/960/600",
   likes: 214,
   comments: 31,
+  likedBy: [people.noor, people.kenji, people.priya],
+  topComment: { who: people.kenji, text: "the map alone is worth three weekends" },
 };
 
 export const profile = {

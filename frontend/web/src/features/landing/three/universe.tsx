@@ -4,7 +4,7 @@ import { Float } from "@react-three/drei";
 import { type ThreeElements, useFrame } from "@react-three/fiber";
 import { type RefObject, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { Astronaut3D } from "./astronaut3d";
+import { CastMember, type CastName } from "./cast3d";
 import { Planet, type World } from "./planets";
 import type { DayMix } from "./theme";
 
@@ -220,12 +220,19 @@ export function Explorers({
   still: boolean;
   anchors?: RefObject<(THREE.Object3D | null)[]>;
 }) {
-  const crew = [
-    { tone: "teal", pos: [-3.1, -2.2, 2.2], rot: 0.35, s: 0.95, wave: true, phase: 0 },
-    { tone: "blue", pos: [4.4, 1.1, 1.0], rot: -0.4, s: 0.7, wave: false, phase: 1.2 },
-    { tone: "violet", pos: [1.9, -2.7, 2.6], rot: -0.25, s: 0.8, wave: false, phase: 2.3 },
-    { tone: "pink", pos: [-4.1, 1.4, 0.4], rot: 0.5, s: 0.62, wave: false, phase: 3.1 },
-  ] as const;
+  const crew: {
+    who: CastName;
+    pos: [number, number, number];
+    rot: number;
+    s: number;
+    wave: boolean;
+    phase: number;
+  }[] = [
+    { who: "astro-teal", pos: [-3.1, -2.4, 2.2], rot: 0.3, s: 1.0, wave: true, phase: 0 },
+    { who: "alien-zib", pos: [4.4, 0.9, 1.0], rot: -0.35, s: 0.78, wave: false, phase: 1.2 },
+    { who: "monster-gloop", pos: [1.9, -2.9, 2.6], rot: -0.25, s: 0.9, wave: false, phase: 2.3 },
+    { who: "human-maya", pos: [-4.1, 1.2, 0.4], rot: 0.45, s: 0.72, wave: false, phase: 3.1 },
+  ];
   const groups = useRef<(THREE.Group | null)[]>([]);
   // During the scroll intro the crew waits outside the frame and drifts in as the camera pulls
   // back, so the opening shot is just the eclipse and the title.
@@ -242,16 +249,16 @@ export function Explorers({
   return (
     <>
       {crew.map((c, i) => (
-        <Float key={c.tone} speed={still ? 0 : 0.9} rotationIntensity={0.25} floatIntensity={0.6}>
+        <Float key={c.who} speed={still ? 0 : 0.9} rotationIntensity={0.25} floatIntensity={0.6}>
           <group
             ref={(g) => {
               groups.current[i] = g;
             }}
-            position={c.pos as unknown as [number, number, number]}
+            position={c.pos}
             rotation={[0, c.rot, 0]}
             scale={c.s}
           >
-            <Astronaut3D tone={c.tone} wave={c.wave} still={still} phase={c.phase} />
+            <CastMember who={c.who} wave={c.wave} still={still} phase={c.phase} />
             <object3D
               position={[0.5, 3.1, 0]}
               ref={(o) => {

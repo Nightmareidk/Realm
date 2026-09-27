@@ -33,7 +33,12 @@ export function HeroFragments() {
       {/* A mention: someone needs you */}
       <Fragment className="-top-[9%] left-[22%] max-lg:hidden" delay={0}>
         <div className="flex items-center gap-3">
-          <Avatar name={people.kenji.name} ink={people.kenji.ink} size="md" />
+          <Avatar
+            name={people.kenji.name}
+            ink={people.kenji.ink}
+            src={people.kenji.avatar}
+            size="md"
+          />
           <div className="leading-tight">
             <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
               <At size={14} className="text-overprint" /> Kenji mentioned you

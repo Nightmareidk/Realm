@@ -5,7 +5,7 @@ import { Explorer } from "../art";
 import styles from "../fun.module.css";
 import { Words } from "../words";
 
-/** The send-off: the whole crew waving you through, under an aurora. */
+/** The send-off: the whole cast (explorers, aliens, monsters, people) waving you through. */
 export function ClosingSection() {
   return (
     <section
@@ -23,11 +23,44 @@ export function ClosingSection() {
           Open Realm
         </Link>
 
-        <div className="mt-14 flex items-end justify-center gap-1 sm:gap-4">
-          <Explorer tone="pink" waving delay={0.9} className="w-20 sm:w-28 md:w-36" />
-          <Explorer tone="teal" waving className="w-24 sm:w-36 md:w-44" />
-          <Explorer tone="violet" waving delay={0.45} className="w-24 sm:w-36 md:w-44" />
-          <Explorer tone="blue" waving delay={1.3} className="w-20 sm:w-28 md:w-36" />
+        <div className="mt-14 flex items-end justify-center gap-2 sm:gap-5">
+          <Explorer
+            who="monster-gloop"
+            waving
+            delay={1.1}
+            className="w-[4rem] max-md:hidden sm:w-[5.8rem] md:w-[8rem]"
+          />
+          <Explorer
+            who="human-maya"
+            waving
+            delay={0.3}
+            className="w-[2.7rem] sm:w-[3.9rem] md:w-[5.4rem]"
+          />
+          <Explorer
+            who="alien-zib"
+            waving
+            delay={0.8}
+            className="w-[2.7rem] sm:w-[3.9rem] md:w-[5.3rem]"
+          />
+          <Explorer who="astro-teal" waving className="w-[3.5rem] sm:w-[5.1rem] md:w-[7.1rem]" />
+          <Explorer
+            who="monster-bruno"
+            waving
+            delay={0.55}
+            className="w-[4.3rem] sm:w-[6.2rem] md:w-[8.6rem]"
+          />
+          <Explorer
+            who="alien-nova"
+            waving
+            delay={1.3}
+            className="w-[2.3rem] sm:w-[3.2rem] md:w-[4.5rem]"
+          />
+          <Explorer
+            who="human-leo"
+            waving
+            delay={0.15}
+            className="w-[2.6rem] max-md:hidden sm:w-[3.7rem] md:w-[5.2rem]"
+          />
         </div>
       </div>
     </section>

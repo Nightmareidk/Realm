@@ -35,7 +35,7 @@ export function Phone({ className }: { className?: string }) {
           </div>
           <article className="flex min-h-0 flex-1 flex-col gap-[0.7em] p-[1em]">
             <header className="flex items-center gap-[0.6em]">
-              <Avatar name={post.by.name} ink={post.by.ink} size="xs" />
+              <Avatar name={post.by.name} ink={post.by.ink} src={post.by.avatar} size="xs" />
               <p className="text-[0.85em] leading-tight">
                 <span className="font-semibold text-ink">{post.by.name}</span>
                 <span className="block text-ink-muted">@{post.by.handle}</span>

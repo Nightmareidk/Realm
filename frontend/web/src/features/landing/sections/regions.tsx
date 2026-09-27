@@ -16,9 +16,9 @@ export function SpacesSection({ chart }: { chart: StarChart }) {
     <section id="spaces" aria-labelledby="spaces-title" className="scroll-mt-20 py-12 lg:py-16">
       <div className={`${shell} relative`}>
         <Explorer
-          tone="teal"
+          who="human-leo"
           waving
-          className="absolute -top-16 left-[42%] z-10 w-24 max-lg:right-10 max-lg:left-auto md:-top-20 md:w-32"
+          className="absolute bottom-full left-[30%] z-10 w-20 translate-y-7 max-lg:right-10 max-lg:left-auto md:w-28"
         />
         <Stage tone="spaces" glow="10% 100%">
           <div className="grid grid-cols-1 gap-12 p-7 pt-16 md:p-12 md:pt-20 lg:grid-cols-12 lg:gap-10 lg:p-16 lg:pt-20">
@@ -59,9 +59,9 @@ export function FeedSection({ chart }: { chart: StarChart }) {
     <section id="feed" aria-labelledby="feed-title" className="scroll-mt-20 py-12 lg:py-16">
       <div className={`${shell} relative`}>
         <Explorer
-          tone="blue"
+          who="alien-nova"
           delay={0.5}
-          className="absolute -top-16 right-10 z-10 w-24 md:-top-20 md:w-32"
+          className="absolute right-12 bottom-full z-10 w-16 translate-y-7 md:w-24"
         />
         <Stage tone="feed" glow="95% 0%">
           <div className="grid grid-cols-1 items-center gap-12 p-7 md:p-12 lg:grid-cols-12 lg:gap-16 lg:p-16">
@@ -132,7 +132,7 @@ export function ProfilesSection({ chart }: { chart: StarChart }) {
           </ol>
           <div className="reveal relative min-w-0 lg:order-2">
             <Explorer
-              tone="violet"
+              who="human-maya"
               waving
               delay={0.3}
               className="absolute -right-24 bottom-16 z-10 w-28 max-lg:hidden"
@@ -172,9 +172,9 @@ export function BoardsSection({ chart }: { chart: StarChart }) {
     <section id="boards" aria-labelledby="boards-title" className="scroll-mt-20 py-12 lg:py-16">
       <div className={`${shell} relative`}>
         <Explorer
-          tone="pink"
+          who="monster-bruno"
           delay={1.1}
-          className="absolute -top-28 right-8 z-10 w-24 md:-top-36 md:right-16 md:w-32"
+          className="absolute right-10 bottom-full z-10 w-28 translate-y-6 md:right-16 md:w-40"
         />
         <Stage tone="boards" glow="0% 0%">
           <div className="grid grid-cols-1 gap-12 p-7 md:p-12 lg:grid-cols-12 lg:gap-10 lg:p-16">

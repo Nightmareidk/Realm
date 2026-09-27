@@ -25,6 +25,7 @@ export function ProfilePreview({ variant = "full" }: { variant?: "full" | "compa
           <Avatar
             name={person.name}
             ink={person.ink}
+            src={person.avatar}
             size={compact ? "lg" : "xl"}
             className="rounded-full ring-4 ring-panel"
           />
