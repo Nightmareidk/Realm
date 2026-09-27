@@ -79,9 +79,10 @@ vec3 cycle(vec3 a, vec3 b, vec3 c, float t) {
   return mix(c, a, smoothstep(0.0, 1.0, x - 2.0));
 }
 
-vec3 auroraLow(float t) { return cycle(vec3(0.34, 1.0, 0.58), vec3(0.28, 0.95, 1.0), vec3(1.0, 0.42, 0.78), t); }
-vec3 auroraMid(float t) { return cycle(vec3(0.3, 0.96, 0.78), vec3(0.6, 0.45, 1.0), vec3(0.62, 0.4, 1.0), t); }
-vec3 auroraHigh(float t) { return cycle(vec3(0.55, 0.42, 1.0), vec3(0.98, 0.36, 0.88), vec3(0.36, 0.55, 1.0), t); }
+// Cosmic storm colours: electric cyan and blue low, violet and magenta higher up.
+vec3 auroraLow(float t) { return cycle(vec3(0.25, 0.85, 0.95), vec3(0.35, 0.55, 1.0), vec3(1.0, 0.42, 0.75), t); }
+vec3 auroraMid(float t) { return cycle(vec3(0.42, 0.5, 1.0), vec3(0.66, 0.42, 1.0), vec3(0.9, 0.4, 0.95), t); }
+vec3 auroraHigh(float t) { return cycle(vec3(0.62, 0.38, 1.0), vec3(0.95, 0.38, 0.82), vec3(0.4, 0.5, 1.0), t); }
 
 // Star colour by temperature: blue-white, white, then warm yellow and orange.
 vec3 starTint(float h) {
@@ -286,7 +287,8 @@ vec3 mountains(vec2 uv, float aspect, vec3 col, float dm) {
   float farSlope = (farRange(fx + e) - farRange(fx - e)) / (2.0 * e);
   float far = smoothstep(farH + aa, farH - aa, uv.y);
   float depthF = clamp((farH - uv.y) * 7.0, 0.0, 1.0);
-  float litF = smoothstep(0.1, 1.2, -farSlope) * (1.0 - depthF * 0.8);
+  // Light catches the faces near the crest only; below that the range falls into haze.
+  float litF = smoothstep(0.1, 1.2, -farSlope) * exp(-(farH - uv.y) * 26.0) + fbm3(vec2(x * 5.0, uv.y * 9.0)) * 0.25 * (1.0 - depthF);
   float snowF = smoothstep(0.22, 0.3, farH) * smoothstep(0.05, 0.0, farH - uv.y) * (0.5 + 0.5 * litF);
   vec3 farNight = mix(vec3(0.05, 0.06, 0.16), vec3(0.24, 0.23, 0.55), litF * 0.9 + rock * 0.12);
   farNight = mix(farNight, vec3(0.5, 0.52, 0.85), snowF * 0.6);
@@ -300,7 +302,7 @@ vec3 mountains(vec2 uv, float aspect, vec3 col, float dm) {
   float nearSlope = (nearRange(nx + e) - nearRange(nx - e)) / (2.0 * e);
   float near = smoothstep(nearH + aa, nearH - aa, uv.y);
   float depthN = clamp((nearH - uv.y) * 9.0, 0.0, 1.0);
-  float litN = smoothstep(0.1, 1.4, -nearSlope) * (1.0 - depthN * 0.85);
+  float litN = smoothstep(0.1, 1.4, -nearSlope) * exp(-(nearH - uv.y) * 34.0) + fbm3(vec2(x * 6.0, uv.y * 11.0)) * 0.2 * (1.0 - depthN);
   vec3 nearNight = mix(vec3(0.015, 0.02, 0.05), vec3(0.13, 0.12, 0.33), litN * 0.9 + rock * 0.1);
   vec3 nearDay = mix(vec3(0.3, 0.38, 0.58), vec3(0.62, 0.7, 0.88), litN * 0.8 + rock * 0.1);
   return mix(col, mix(nearNight, nearDay, dm), near);
@@ -313,8 +315,8 @@ float rectMask(vec2 uv, vec4 r, float soft) {
 }
 
 vec3 nightSky(vec2 uv, vec2 px, float aspect, float textMask) {
-  vec3 col = mix(vec3(0.035, 0.07, 0.12), vec3(0.012, 0.024, 0.055), smoothstep(0.0, 1.0, uv.y));
-  col += vec3(0.05, 0.02, 0.08) * (1.0 - uv.y) * 0.7;
+  vec3 col = mix(vec3(0.05, 0.045, 0.14), vec3(0.018, 0.016, 0.06), smoothstep(0.0, 1.0, uv.y));
+  col += vec3(0.07, 0.03, 0.1) * (1.0 - uv.y) * 0.7;
 
   vec2 q = vec2(uv.x * aspect, uv.y - uScroll * 0.06);
 

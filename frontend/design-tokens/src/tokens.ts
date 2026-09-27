@@ -1,9 +1,10 @@
 import { inGamut, type Oklch, oklch } from "./color";
 
 /**
- * AURORA — Realm's visual world: another universe at night.
- * Midnight surfaces, northern-lights colour (lime, teal, ice blue, violet, pink), and one lime
- * accent that only ever marks something you can act on. Night is the default edition.
+ * Realm's visual world: another universe.
+ * Night is a cosmic storm: deep indigo surfaces, violet and electric-blue light, and one molten
+ * amber accent that only ever marks something you can act on. Day is golden hour: warm cream
+ * surfaces and a sunset-orange accent. Night is the default edition.
  */
 
 export type Edition = "night" | "day";
@@ -11,10 +12,10 @@ export type RegionName = "spaces" | "feed" | "profiles" | "boards";
 
 /** Each region owns one ink hue across both editions. */
 export const REGION_HUES: Record<RegionName, number> = {
-  spaces: 182, // aurora teal
-  feed: 252, // ice blue
-  profiles: 296, // aurora violet
-  boards: 352, // aurora pink
+  spaces: 196, // electric cyan
+  feed: 256, // electric blue
+  profiles: 300, // nebula violet
+  boards: 350, // magenta
 };
 
 export interface RegionInks {
@@ -43,7 +44,7 @@ export interface EditionTokens {
   ink: Oklch;
   inkSoft: Oklch;
   inkMuted: Oklch;
-  /** The action colour: aurora lime by night, solar orange by day. Actions only. */
+  /** The action colour: molten amber by night, sunset orange by day. Actions only. */
   overprint: Oklch;
   /** Overprint used as a fill behind text (buttons). */
   overprintFill: Oklch;
@@ -114,23 +115,24 @@ function fitEdition(e: EditionTokens): EditionTokens {
 
 const rawEditions: Record<Edition, EditionTokens> = {
   night: {
-    ground: oklch(0.155, 0.024, 256),
-    panel: oklch(0.19, 0.027, 256),
-    panelRaised: oklch(0.228, 0.03, 256),
-    land: oklch(0.21, 0.03, 256),
-    rule: oklch(0.31, 0.03, 256),
-    ruleStrong: oklch(0.52, 0.03, 256),
-    ink: oklch(0.965, 0.008, 240),
-    inkSoft: oklch(0.84, 0.02, 245),
-    inkMuted: oklch(0.71, 0.025, 248),
-    overprint: oklch(0.89, 0.2, 128),
-    overprintFill: oklch(0.88, 0.2, 128),
-    overprintFillHover: oklch(0.93, 0.17, 128),
-    onOverprint: oklch(0.2, 0.05, 145),
-    focus: oklch(0.89, 0.2, 128),
+    ground: oklch(0.15, 0.045, 278),
+    panel: oklch(0.19, 0.05, 280),
+    panelRaised: oklch(0.232, 0.055, 282),
+    land: oklch(0.21, 0.05, 280),
+    rule: oklch(0.32, 0.05, 282),
+    ruleStrong: oklch(0.55, 0.05, 285),
+    ink: oklch(0.97, 0.012, 285),
+    inkSoft: oklch(0.85, 0.028, 285),
+    inkMuted: oklch(0.73, 0.038, 285),
+    // Molten amber: the core of the storm. Actions, focus and "needs you" only.
+    overprint: oklch(0.82, 0.155, 72),
+    overprintFill: oklch(0.8, 0.16, 68),
+    overprintFillHover: oklch(0.86, 0.14, 76),
+    onOverprint: oklch(0.22, 0.06, 50),
+    focus: oklch(0.82, 0.155, 72),
     danger: oklch(0.72, 0.17, 22),
-    success: oklch(0.85, 0.15, 160),
-    shadow: oklch(0.06, 0.02, 256),
+    success: oklch(0.84, 0.14, 165),
+    shadow: oklch(0.06, 0.03, 280),
     regions: {
       spaces: region("night", REGION_HUES.spaces, { fill: { c: 0.06 } }),
       feed: region("night", REGION_HUES.feed),
@@ -139,17 +141,17 @@ const rawEditions: Record<Edition, EditionTokens> = {
     },
   },
   day: {
-    ground: oklch(0.975, 0.006, 240),
-    panel: oklch(0.99, 0.004, 240),
-    panelRaised: oklch(0.998, 0.002, 240),
-    land: oklch(0.945, 0.012, 240),
-    rule: oklch(0.875, 0.014, 245),
-    ruleStrong: oklch(0.62, 0.025, 250),
-    ink: oklch(0.2, 0.03, 256),
-    inkSoft: oklch(0.36, 0.03, 256),
-    inkMuted: oklch(0.47, 0.03, 252),
-    // Solar flare by day: the eclipse has ended and the sun is out. Burnt orange for text and
-    // focus, amber-orange buttons with dark text (white on orange can't reach 4.5:1).
+    ground: oklch(0.975, 0.014, 78),
+    panel: oklch(0.99, 0.009, 78),
+    panelRaised: oklch(0.998, 0.004, 78),
+    land: oklch(0.945, 0.022, 76),
+    rule: oklch(0.88, 0.022, 70),
+    ruleStrong: oklch(0.6, 0.035, 60),
+    ink: oklch(0.21, 0.035, 268),
+    inkSoft: oklch(0.36, 0.035, 268),
+    inkMuted: oklch(0.47, 0.035, 262),
+    // Golden hour by day: burnt orange for text and focus, sunset-orange buttons with dark text
+    // (white on orange can't reach 4.5:1).
     overprint: oklch(0.53, 0.18, 42),
     overprintFill: oklch(0.66, 0.19, 52),
     overprintFillHover: oklch(0.72, 0.17, 60),
@@ -157,7 +159,7 @@ const rawEditions: Record<Edition, EditionTokens> = {
     focus: oklch(0.53, 0.18, 42),
     danger: oklch(0.54, 0.19, 22),
     success: oklch(0.5, 0.12, 160),
-    shadow: oklch(0.3, 0.04, 256),
+    shadow: oklch(0.32, 0.05, 50),
     regions: {
       spaces: region("day", REGION_HUES.spaces),
       feed: region("day", REGION_HUES.feed),

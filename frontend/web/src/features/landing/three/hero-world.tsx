@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { cx } from "@/lib/cx";
 import { SkyBackdrop } from "./sky";
 import { Studio } from "./studio";
-import { Eclipse, MOON_RADIUS, SUN_RADIUS } from "./sun";
+import { Eclipse, MOON_RADIUS } from "./sun";
 import { type DayMix, ease, lerp, useDayMix, useIsDay } from "./theme";
 import styles from "./three.module.css";
 import { Explorers, Orbits, PLANETS } from "./universe";
@@ -87,7 +87,7 @@ function Camera({ box, intro }: { box: El; intro: RefObject<number> }) {
   return null;
 }
 
-type Occluder = { object: RefObject<THREE.Object3D | null>; radius: number };
+type Occluder = { object: RefObject<THREE.Object3D | null>; radius: () => number };
 
 /**
  * Projects 3D anchors to the screen every frame and moves the matching DOM labels, keeping them
@@ -123,7 +123,8 @@ function Track({
       let hidden = occluders.some(({ object, radius }) => {
         if (!object.current) return false;
         object.current.getWorldPosition(sphere.current.center);
-        sphere.current.radius = radius;
+        sphere.current.radius = radius();
+        if (sphere.current.radius <= 0) return false;
         const p = ray.current.intersectSphere(sphere.current, hit.current);
         return Boolean(p && camera.position.distanceTo(p) < far);
       });
@@ -163,7 +164,7 @@ export function HeroCast({
 }: {
   mix: DayMix;
   still: boolean;
-  moon?: RefObject<THREE.Mesh | null>;
+  moon?: RefObject<THREE.Object3D | null>;
   sun?: RefObject<THREE.Object3D | null>;
   planetAnchors?: Anchors;
   crewAnchors?: Anchors;
@@ -205,7 +206,7 @@ function World({
   crewBubbles: Targets;
 }) {
   const mix: DayMix = useDayMix(day, still);
-  const moon = useRef<THREE.Mesh>(null);
+  const moon = useRef<THREE.Object3D>(null);
   const sun = useRef<THREE.Object3D>(null);
   const invalidate = useThree((s) => s.invalidate);
 
@@ -236,10 +237,7 @@ function World({
         anchors={planetAnchors}
         targets={planetLabels}
         box={box}
-        occluders={[
-          { object: moon, radius: MOON_RADIUS },
-          { object: sun, radius: SUN_RADIUS },
-        ]}
+        occluders={[{ object: moon, radius: () => (mix.current < 0.5 ? MOON_RADIUS : 0) }]}
       />
       <Track anchors={crewAnchors} targets={crewBubbles} box={box} />
     </>

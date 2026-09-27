@@ -2,24 +2,19 @@ import * as THREE from "three";
 
 /** Aurora colours for the 3D world (fixed; the scene doesn't change with the theme). */
 export const C = {
-  ink: "#0a1220",
-  midnight: "#060d16",
-  suit: "#eef2f8",
-  suitShade: "#c9d2e3",
-  lime: "#b1ef4a",
-  teal: "#2dd4bf",
-  blue: "#60a5fa",
-  violet: "#a78bfa",
-  pink: "#f472b6",
-  white: "#f7fbff",
-  // Legacy names still used by props
-  mint: "#2dd4bf",
-  amber: "#b1ef4a",
-  sky: "#60a5fa",
-  coral: "#f472b6",
-  coralShade: "#db2777",
-  cream: "#e9eef7",
-  violetDeep: "#312e81",
+  ink: "#0c0b22",
+  midnight: "#08081e",
+  suit: "#f1f1f7",
+  suitShade: "#cfd0e2",
+  // The action accent (molten amber). Kept under its old key so existing parts pick it up.
+  lime: "#ffb23d",
+  amber: "#ffb23d",
+  orange: "#fa7c20",
+  teal: "#29d7d9",
+  blue: "#4998fe",
+  violet: "#a76ef8",
+  pink: "#fb55b1",
+  white: "#f7f7ff",
 } as const;
 
 const cache = new Map<string, THREE.Material>();

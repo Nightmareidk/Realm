@@ -142,14 +142,14 @@
 
 /* The mark's colours follow the edition: the eclipse by night, the sun by day. */
 :root {
-  --mark-a: #b1ef4a;
-  --mark-b: #2dd4bf;
-  --mark-c: #60a5fa;
+  --mark-a: #ffb23d;
+  --mark-b: #a76ef8;
+  --mark-c: #4998fe;
   --mark-disc-a: #0c1828;
-  --mark-disc-b: #060d16;
+  --mark-disc-b: #08081e;
   --mark-star: #f4fbff;
-  --mark-tile-a: #0f1d33;
-  --mark-tile-b: #04080f;
+  --mark-tile-a: #1d183e;
+  --mark-tile-b: #030312;
 }
 :root[data-theme="day"] {
   --mark-a: #ffd166;
@@ -182,21 +182,21 @@
 }
 .realm-nebula > i:nth-child(1) {
   background:
-    radial-gradient(38% 34% at 10% 6%, oklch(0.78 0.18 150 / 0.24), transparent 70%),
-    radial-gradient(34% 30% at 92% 48%, oklch(0.74 0.13 185 / 0.16), transparent 70%),
-    radial-gradient(40% 30% at 30% 96%, oklch(0.72 0.15 160 / 0.12), transparent 70%);
+    radial-gradient(38% 34% at 10% 6%, oklch(0.62 0.2 300 / 0.24), transparent 70%),
+    radial-gradient(34% 30% at 92% 48%, oklch(0.66 0.17 256 / 0.18), transparent 70%),
+    radial-gradient(40% 30% at 30% 96%, oklch(0.6 0.18 285 / 0.14), transparent 70%);
 }
 .realm-nebula > i:nth-child(2) {
   background:
-    radial-gradient(36% 32% at 88% 8%, oklch(0.78 0.13 210 / 0.2), transparent 70%),
-    radial-gradient(38% 34% at 8% 60%, oklch(0.62 0.22 330 / 0.17), transparent 70%),
-    radial-gradient(34% 30% at 70% 98%, oklch(0.66 0.18 280 / 0.14), transparent 70%);
+    radial-gradient(36% 32% at 88% 8%, oklch(0.72 0.16 240 / 0.2), transparent 70%),
+    radial-gradient(38% 34% at 8% 60%, oklch(0.62 0.22 345 / 0.16), transparent 70%),
+    radial-gradient(34% 30% at 70% 98%, oklch(0.5 0.16 275 / 0.2), transparent 70%);
 }
 .realm-nebula > i:nth-child(3) {
   background:
-    radial-gradient(40% 34% at 50% 0%, oklch(0.66 0.2 350 / 0.2), transparent 70%),
-    radial-gradient(34% 32% at 96% 72%, oklch(0.6 0.2 295 / 0.18), transparent 70%),
-    radial-gradient(36% 30% at 4% 30%, oklch(0.62 0.16 255 / 0.15), transparent 70%);
+    radial-gradient(40% 34% at 50% 0%, oklch(0.72 0.16 60 / 0.14), transparent 70%),
+    radial-gradient(34% 32% at 96% 72%, oklch(0.6 0.2 300 / 0.2), transparent 70%),
+    radial-gradient(36% 30% at 4% 30%, oklch(0.62 0.17 256 / 0.16), transparent 70%);
 }
 :root[data-theme="day"] .realm-nebula > i:nth-child(1) {
   background:

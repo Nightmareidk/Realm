@@ -1,9 +1,9 @@
 /* The hero's CSS sky: shown before the 3D sky's first frame and on devices without WebGL. */
 .hero {
   background:
-    radial-gradient(45% 55% at 70% 20%, rgb(80 255 150 / 0.16), transparent 70%),
-    radial-gradient(35% 45% at 85% 35%, rgb(150 110 255 / 0.14), transparent 70%),
-    linear-gradient(180deg, #03070e 0%, #07111f 60%, var(--r-ground) 100%);
+    radial-gradient(45% 55% at 70% 30%, rgb(167 110 248 / 0.22), transparent 70%),
+    radial-gradient(25% 30% at 72% 40%, rgb(255 150 60 / 0.16), transparent 70%),
+    linear-gradient(180deg, #04041a 0%, #0c0a2c 60%, var(--r-ground) 100%);
 }
 
 :global(:root[data-theme="day"]) .hero {
@@ -169,10 +169,10 @@
   padding: 0.6rem 0.9rem;
   border-radius: 14px 14px 14px 4px;
   background: rgb(10 20 34 / 0.72);
-  border: 1px solid var(--tone, #2dd4bf);
+  border: 1px solid var(--tone, #29d7d9);
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 0.04) inset,
-    0 10px 30px -8px color-mix(in oklch, var(--tone, #2dd4bf) 55%, transparent);
+    0 10px 30px -8px color-mix(in oklch, var(--tone, #29d7d9) 55%, transparent);
   backdrop-filter: blur(8px);
   transform-origin: 0% 100%;
 }
@@ -184,16 +184,16 @@
 }
 
 .teal {
-  --tone: #2dd4bf;
+  --tone: #29d7d9;
 }
 .blue {
-  --tone: #60a5fa;
+  --tone: #4998fe;
 }
 .violet {
-  --tone: #a78bfa;
+  --tone: #a76ef8;
 }
 .pink {
-  --tone: #f472b6;
+  --tone: #fb55b1;
 }
 
 /* Planet name tags, in each world's ink for the current edition. */

@@ -23,7 +23,7 @@ export function ShowcaseSection() {
           className="reveal relative mx-auto mt-14 max-w-[70rem] rounded-xl border border-rule p-4 md:p-10"
           style={{
             background:
-              "radial-gradient(70% 90% at 50% 0%, rgb(45 212 191 / 0.24), transparent 70%), radial-gradient(50% 60% at 100% 100%, rgb(167 139 250 / 0.22), transparent 70%), radial-gradient(40% 50% at 0% 100%, rgb(177 239 74 / 0.1), transparent 70%), var(--r-panel)",
+              "radial-gradient(70% 90% at 50% 0%, color-mix(in oklch, var(--r-profiles-solid) 26%, transparent), transparent 70%), radial-gradient(50% 60% at 100% 100%, color-mix(in oklch, var(--r-feed-solid) 22%, transparent), transparent 70%), radial-gradient(40% 50% at 0% 100%, color-mix(in oklch, var(--r-overprint-fill) 12%, transparent), transparent 70%), var(--r-panel)",
           }}
         >
           <Explorer

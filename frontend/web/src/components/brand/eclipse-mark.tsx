@@ -1,21 +1,23 @@
 import { cx } from "@/lib/cx";
 
 /**
- * Realm's mark, "Eclipse": a midnight world edged by aurora light, with a small star.
- * The moment just before you arrive somewhere new.
+ * Realm's mark, "Eclipse": a dark world edged by light, with a small star. The moment just
+ * before you arrive somewhere new.
  *
- * The mark follows the edition through CSS variables (set in globals.css): by night it is the
- * eclipse in aurora colours; by day the eclipse has ended, so the disc glows like the sun and the
- * rim burns in solar-flare gold, orange and rose. `AURORA` stays for code that needs fixed colours.
+ * The mark follows the edition through CSS variables (set in globals.css): by night the rim
+ * burns molten amber into violet and electric blue, like the storm around the black hole; by
+ * day the disc glows like the sun and the rim turns gold, orange and rose. `AURORA` stays for
+ * code that needs fixed colours.
  */
 export const AURORA = {
-  midnight: "#060d16",
-  lime: "#b1ef4a",
-  teal: "#2dd4bf",
-  blue: "#60a5fa",
-  violet: "#a78bfa",
-  pink: "#f472b6",
-  star: "#f4fbff",
+  midnight: "#08081e",
+  lime: "#ffb23d",
+  amber: "#ffb23d",
+  teal: "#29d7d9",
+  blue: "#4998fe",
+  violet: "#a76ef8",
+  pink: "#fb55b1",
+  star: "#f3f4ff",
 } as const;
 
 export function EclipseMark({

@@ -265,15 +265,15 @@
 /* ── Closing: the crew waving you through, under an aurora (or a warm sky by day) ─ */
 .closing {
   background:
-    radial-gradient(70% 60% at 50% 100%, rgb(45 212 191 / 0.24), transparent 70%),
-    radial-gradient(45% 50% at 15% 40%, rgb(177 239 74 / 0.1), transparent 70%),
-    radial-gradient(45% 50% at 88% 30%, rgb(167 139 250 / 0.18), transparent 70%),
-    linear-gradient(180deg, var(--r-ground), #07111d 60%, var(--r-ground));
+    radial-gradient(70% 60% at 50% 100%, rgb(167 110 248 / 0.26), transparent 70%),
+    radial-gradient(45% 50% at 15% 40%, rgb(255 178 61 / 0.1), transparent 70%),
+    radial-gradient(45% 50% at 88% 30%, rgb(73 152 254 / 0.18), transparent 70%),
+    linear-gradient(180deg, var(--r-ground), #0e0b2a 60%, var(--r-ground));
 }
 :global(:root[data-theme="day"]) .closing {
   background:
     radial-gradient(60% 55% at 50% 100%, rgb(255 196 120 / 0.35), transparent 70%),
-    radial-gradient(45% 50% at 12% 30%, rgb(45 212 191 / 0.14), transparent 70%),
-    radial-gradient(45% 50% at 90% 25%, rgb(96 165 250 / 0.2), transparent 70%),
+    radial-gradient(45% 50% at 12% 30%, rgb(255 178 61 / 0.16), transparent 70%),
+    radial-gradient(45% 50% at 90% 25%, rgb(120 170 255 / 0.18), transparent 70%),
     linear-gradient(180deg, var(--r-ground), #dcecff 60%, var(--r-ground));
 }
