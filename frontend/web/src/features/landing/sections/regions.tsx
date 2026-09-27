@@ -1,5 +1,5 @@
 import { AvailabilityKey, FeatureList } from "@/components/availability";
-import { Art, Explorer } from "../art";
+import { Explorer } from "../art";
 import type { StarChart } from "../map/star-chart";
 import { BoardPreview } from "../previews/board-preview";
 import { FeedPreview } from "../previews/feed-preview";
@@ -19,17 +19,6 @@ export function SpacesSection({ chart }: { chart: StarChart }) {
           tone="teal"
           waving
           className="absolute -top-16 left-[42%] z-10 w-24 max-lg:right-10 max-lg:left-auto md:-top-20 md:w-32"
-        />
-        <Art
-          name="bubble"
-          motion="c"
-          className="-top-10 right-8 z-10 w-16 max-lg:hidden md:right-16 md:w-24"
-        />
-        <Art
-          name="heart"
-          motion="b"
-          delay={1.2}
-          className="-bottom-6 right-1/3 z-10 w-14 max-md:hidden md:w-20"
         />
         <Stage tone="spaces" glow="10% 100%">
           <div className="grid grid-cols-1 gap-12 p-7 pt-16 md:p-12 md:pt-20 lg:grid-cols-12 lg:gap-10 lg:p-16 lg:pt-20">
@@ -73,13 +62,6 @@ export function FeedSection({ chart }: { chart: StarChart }) {
           tone="blue"
           delay={0.5}
           className="absolute -top-16 right-10 z-10 w-24 md:-top-20 md:w-32"
-        />
-        <Art name="play" motion="spin" className="-bottom-8 left-6 z-10 w-16 md:w-24" />
-        <Art
-          name="heart"
-          motion="a"
-          delay={0.6}
-          className="-top-8 left-1/3 z-10 w-12 max-md:hidden md:w-16"
         />
         <Stage tone="feed" glow="95% 0%">
           <div className="grid grid-cols-1 items-center gap-12 p-7 md:p-12 lg:grid-cols-12 lg:gap-16 lg:p-16">
@@ -155,11 +137,6 @@ export function ProfilesSection({ chart }: { chart: StarChart }) {
               delay={0.3}
               className="absolute -right-24 bottom-16 z-10 w-28 max-lg:hidden"
             />
-            <Art
-              name="spark"
-              motion="spin"
-              className="-top-10 -right-2 z-10 w-14 md:-right-8 md:w-20"
-            />
             <ProfilePreview />
           </div>
           <ol className="grid gap-8 lg:order-3">
@@ -198,11 +175,6 @@ export function BoardsSection({ chart }: { chart: StarChart }) {
           tone="pink"
           delay={1.1}
           className="absolute -top-28 right-8 z-10 w-24 md:-top-36 md:right-16 md:w-32"
-        />
-        <Art
-          name="upvote"
-          motion="c"
-          className="-bottom-8 right-8 z-10 w-14 md:right-auto md:left-10 md:w-20"
         />
         <Stage tone="boards" glow="0% 0%">
           <div className="grid grid-cols-1 gap-12 p-7 md:p-12 lg:grid-cols-12 lg:gap-10 lg:p-16">

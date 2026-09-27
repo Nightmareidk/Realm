@@ -15,7 +15,6 @@ import {
   Upvote3D,
 } from "@/features/landing/three/props3d";
 import { Studio } from "@/features/landing/three/studio";
-import { C } from "@/features/landing/three/toy";
 import { Planet } from "@/features/landing/three/universe";
 
 type Item = {
@@ -50,12 +49,12 @@ const astro = (tone: AstronautTone, part: "rest" | "body" | "forearm"): Item => 
 
 /**
  * Star-chart planets share one fixed framing (not trimmed on export), so the sphere always spans
- * the same fraction of the image: radius 1 at distance 7.5 with a 32° fov fills 1 / 2.15 of the
+ * the same fraction of the image: radius 1 at distance 9.5 with a 32° fov fills 1 / 2.72 of the
  * half-height. star-chart-map.tsx relies on that ratio (PLANET_FRAME).
  */
-const planet = (color: string, ring?: string): Item => ({
-  node: () => <Planet color={color} radius={1} ring={ring} />,
-  camera: [0, 0, 7.5],
+const planet = (world: "spaces" | "feed" | "profiles" | "boards"): Item => ({
+  node: () => <Planet world={world} radius={1} still />,
+  camera: [0, 0, 9.5],
   look: [0, 0, 0],
   size: [512, 512],
 });
@@ -112,10 +111,10 @@ const ITEMS: Record<string, Item> = {
     camera: [0, 0, 3.8],
     look: [0, 0.05, 0],
   },
-  "planet-spaces": planet(C.teal),
-  "planet-feed": planet(C.blue, C.lime),
-  "planet-profiles": planet(C.violet),
-  "planet-boards": planet(C.pink),
+  "planet-spaces": planet("spaces"),
+  "planet-feed": planet("feed"),
+  "planet-profiles": planet("profiles"),
+  "planet-boards": planet("boards"),
   "hero-poster-night": poster(false),
   "hero-poster-day": poster(true),
 };

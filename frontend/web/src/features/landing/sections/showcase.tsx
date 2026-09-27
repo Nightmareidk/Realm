@@ -1,4 +1,4 @@
-import { Art, Explorer } from "../art";
+import { Explorer } from "../art";
 import { AppWindow } from "../hero/app-window";
 import { HeroFragments } from "../hero/fragments";
 import { Phone } from "../hero/phone";
@@ -35,19 +35,6 @@ export function ShowcaseSection() {
             tone="pink"
             delay={0.8}
             className="absolute -bottom-10 -left-6 w-24 max-md:hidden md:w-28"
-          />
-          <Art name="heart" motion="b" className="-top-10 right-10 w-16 md:w-20" />
-          <Art
-            name="bubble"
-            motion="c"
-            delay={1}
-            className="top-1/3 -right-8 w-20 max-md:hidden md:w-24"
-          />
-          <Art
-            name="controller"
-            motion="spin"
-            delay={0.5}
-            className="-bottom-12 right-1/4 w-24 max-md:hidden md:w-28"
           />
 
           <div className="relative mx-auto max-w-[56rem]">

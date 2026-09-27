@@ -169,6 +169,51 @@
           "oklch(0.95 0.05 145.0)"
         ]
       },
+      "solar-orange": {
+        "role": "primary",
+        "displayName": "Solar Orange",
+        "canonical": "oklch(0.66 0.19 52)",
+        "tonalRamp": [
+          "oklch(0.15 0.19 52.0)",
+          "oklch(0.264 0.19 52.0)",
+          "oklch(0.379 0.19 52.0)",
+          "oklch(0.493 0.19 52.0)",
+          "oklch(0.607 0.19 52.0)",
+          "oklch(0.721 0.19 52.0)",
+          "oklch(0.836 0.19 52.0)",
+          "oklch(0.95 0.19 52.0)"
+        ]
+      },
+      "solar-ember": {
+        "role": "primary",
+        "displayName": "Solar Ember",
+        "canonical": "oklch(0.53 0.18 42)",
+        "tonalRamp": [
+          "oklch(0.15 0.18 42.0)",
+          "oklch(0.264 0.18 42.0)",
+          "oklch(0.379 0.18 42.0)",
+          "oklch(0.493 0.18 42.0)",
+          "oklch(0.607 0.18 42.0)",
+          "oklch(0.721 0.18 42.0)",
+          "oklch(0.836 0.18 42.0)",
+          "oklch(0.95 0.18 42.0)"
+        ]
+      },
+      "on-solar": {
+        "role": "primary",
+        "displayName": "On Solar",
+        "canonical": "oklch(0.2 0.05 40)",
+        "tonalRamp": [
+          "oklch(0.15 0.05 40.0)",
+          "oklch(0.264 0.05 40.0)",
+          "oklch(0.379 0.05 40.0)",
+          "oklch(0.493 0.05 40.0)",
+          "oklch(0.607 0.05 40.0)",
+          "oklch(0.721 0.05 40.0)",
+          "oklch(0.836 0.05 40.0)",
+          "oklch(0.95 0.05 40.0)"
+        ]
+      },
       "spaces-teal": {
         "role": "secondary",
         "displayName": "Spaces Teal",
@@ -422,6 +467,11 @@
         "section": "colors"
       },
       {
+        "name": "The Living Sky Rule",
+        "body": "Colour behind the page moves with the aurora: a fixed nebula of three soft colour fields crossfades on a 48-second cycle (aurora green, then cyan and magenta, then a pink and violet nebula by night; gold, orange and rose by day), in step with the hero's aurora through the wall clock. It is ambient only: text, surfaces and actions keep their fixed tokens.",
+        "section": "colors"
+      },
+      {
         "name": "The Four Worlds Rule",
         "body": "Teal, ice blue, violet and pink are identities (a Space, a region), never ornament. A screen uses its own world's ink, plus lime for actions.",
         "section": "colors"
@@ -459,7 +509,8 @@
       "Don't let floating art cover text, or hang past the viewport edge on phones.",
       "Don't use gradient text, or glass behind reading copy.",
       "Don't show the aurora or stars by day, or a daytime sky at night: each edition has its own sky.",
-      "Don't animate a character by flipping between two poses; move a joint about its pivot."
+      "Don't animate a character by flipping between two poses; move a joint about its pivot.",
+      "Don't scatter cartoon props (hearts, controllers, stickers) around sections; the 3D world and the explorers carry the personality, the page stays composed."
     ]
   }
 }

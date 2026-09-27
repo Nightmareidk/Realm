@@ -39,7 +39,7 @@ export const viewport: Viewport = {
  * Dark is the default. The day edition and paused motion are personal choices remembered on
  * this device and applied before first paint, so nothing flashes or moves unexpectedly.
  */
-const bootScript = `try{var d=document.documentElement,t=localStorage.getItem("realm:theme");if(t==="day"||t==="night")d.dataset.theme=t;if(localStorage.getItem("realm:motion")==="paused")d.dataset.motion="paused"}catch(e){}`;
+const bootScript = `try{var d=document.documentElement;d.style.setProperty("--aurora-t",(Date.now()/1e3%48).toFixed(2));var t=localStorage.getItem("realm:theme");if(t==="day"||t==="night")d.dataset.theme=t;if(localStorage.getItem("realm:motion")==="paused")d.dataset.motion="paused"}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -52,7 +52,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static, first-party preferences bootstrap */}
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <div className="realm-nebula" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }

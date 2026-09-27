@@ -1,22 +1,22 @@
 "use client";
 
 import { ArrowFatUp } from "@phosphor-icons/react";
-import { Float } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { cx } from "@/lib/cx";
-import { Bubble3D, Controller3D, Heart3D, Play3D } from "./props3d";
 import { SkyBackdrop } from "./sky";
 import { Studio } from "./studio";
 import { Eclipse, MOON_RADIUS, SUN_RADIUS } from "./sun";
-import { type DayMix, useDayMix, useIsDay } from "./theme";
+import { type DayMix, ease, lerp, useDayMix, useIsDay } from "./theme";
 import styles from "./three.module.css";
 import { Explorers, Orbits, PLANETS } from "./universe";
 
 type Anchors = RefObject<(THREE.Object3D | null)[]>;
 type Targets = RefObject<(HTMLElement | null)[]>;
 type El = RefObject<HTMLElement | null>;
+
+const SUN_AT = new THREE.Vector3(1.2, 0.9, -3);
 
 /** Sways the universe toward the pointer, with a slow idle drift. */
 function Rig({ children, still }: { children: ReactNode; still: boolean }) {
@@ -26,8 +26,8 @@ function Rig({ children, still }: { children: ReactNode; still: boolean }) {
     const t = state.clock.elapsedTime;
     const k = Math.min(1, delta * 2.2);
     ref.current.rotation.y +=
-      (state.pointer.x * 0.18 + Math.sin(t * 0.2) * 0.05 - ref.current.rotation.y) * k;
-    ref.current.rotation.x += (-state.pointer.y * 0.08 - ref.current.rotation.x) * k;
+      (state.pointer.x * 0.16 + Math.sin(t * 0.2) * 0.04 - ref.current.rotation.y) * k;
+    ref.current.rotation.x += (-state.pointer.y * 0.07 - ref.current.rotation.x) * k;
   });
   return <group ref={ref}>{children}</group>;
 }
@@ -46,24 +46,42 @@ function boxIn(canvas: HTMLCanvasElement, el: HTMLElement) {
   };
 }
 
+const CAM_NEAR = new THREE.Vector3(SUN_AT.x, SUN_AT.y, 6.2);
+const CAM_FAR = new THREE.Vector3(0, 0.4, 14);
+const LOOK_FAR = new THREE.Vector3(0, 0, 0);
+
 /**
- * The canvas fills the whole hero, but the camera frames the 3D world inside `box` (the right
- * column on desktop, below the copy on phones): a view offset shifts the projection so the scene
- * sits in the box while the sky carries on behind the headline.
+ * The camera. The canvas fills the whole hero; a view offset frames the 3D world inside `box`
+ * (the right column on desktop, below the copy on phones), so the sky carries on behind the
+ * headline. During the scroll intro (`intro` 0 → 1) it starts close on the eclipse, centred in
+ * the whole view, and pulls back through space into that framing.
  */
-function Frame({ box }: { box: El }) {
+function Camera({ box, intro }: { box: El; intro: RefObject<number> }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const gl = useThree((s) => s.gl);
-  const last = useRef("");
-  useFrame(() => {
+  const eased = useRef(intro.current ?? 1);
+  const look = useRef(new THREE.Vector3());
+  const near = useRef(CAM_NEAR.clone());
+  useFrame((_, delta) => {
     const el = box.current;
     if (!el) return;
+    eased.current += ((intro.current ?? 1) - eased.current) * Math.min(1, delta * 5);
+    const t = ease(eased.current / 0.72);
     const b = boxIn(gl.domElement, el);
-    const key = [b.x, b.y, b.w, b.h, b.cw, b.ch].map(Math.round).join();
-    if (key === last.current || b.w < 10 || b.h < 10) return;
-    last.current = key;
-    camera.aspect = b.w / b.h;
-    camera.setViewOffset(b.w, b.h, -b.x, -b.y, b.cw, b.ch);
+    if (b.w < 10 || b.h < 10) return;
+    // Near the start the sun sits a little above centre, so the title card has room below it.
+    const x = lerp(0, b.x, t);
+    const y = lerp(-b.ch * 0.1, b.y, t);
+    const w = lerp(b.cw, b.w, t);
+    const h = lerp(b.ch, b.h, t);
+    camera.aspect = w / h;
+    camera.setViewOffset(w, h, -x, -y, b.cw, b.ch);
+    // Narrow screens start further back, or the moon alone would fill a phone.
+    const aspect = b.cw / b.ch;
+    near.current.z = lerp(9.6, CAM_NEAR.z, THREE.MathUtils.clamp((aspect - 0.45) / 0.8, 0, 1));
+    camera.position.lerpVectors(near.current, CAM_FAR, t);
+    look.current.lerpVectors(SUN_AT, LOOK_FAR, t);
+    camera.lookAt(look.current);
     camera.updateProjectionMatrix();
   });
   return null;
@@ -131,8 +149,9 @@ const BUBBLES = [
 ] as const;
 
 /**
- * Everything in the hero that isn't sky: the eclipse (or the sun), the four planets in orbit, the
- * explorer crew and the floating props. Shared with the render stage, so the poster matches.
+ * Everything in the hero that isn't sky: the eclipse (or the sun), the four worlds in orbit with
+ * their moons and an asteroid belt, and the explorer crew. Shared with the render stage, so the
+ * poster matches.
  */
 export function HeroCast({
   mix,
@@ -151,27 +170,15 @@ export function HeroCast({
 }) {
   return (
     <>
-      <Eclipse mix={mix} still={still} moon={moon} sunAnchor={sun} position={[1.2, 0.9, -3]} />
+      <Eclipse mix={mix} still={still} moon={moon} sunAnchor={sun} position={SUN_AT.toArray()} />
       <Orbits
         still={still}
         mix={mix}
-        position={[1.2, 0.9, -3]}
+        position={SUN_AT.toArray()}
         rotation={[0.25, 0, -0.12]}
         anchors={planetAnchors}
       />
       <Explorers still={still} anchors={crewAnchors} />
-      <Float speed={still ? 0 : 2} rotationIntensity={1} floatIntensity={1.2}>
-        <Heart3D position={[-0.9, -3.3, 1]} scale={0.4} rotation={[0, 0.4, 0.2]} />
-      </Float>
-      <Float speed={still ? 0 : 1.6} rotationIntensity={0.8} floatIntensity={1}>
-        <Bubble3D position={[4.2, -2.6, 0.8]} scale={0.45} rotation={[0, -0.5, 0.1]} />
-      </Float>
-      <Float speed={still ? 0 : 1.4} rotationIntensity={0.9} floatIntensity={1}>
-        <Controller3D position={[-2.6, 3.4, -1.5]} scale={0.4} rotation={[0.3, 0.6, -0.2]} />
-      </Float>
-      <Float speed={still ? 0 : 1.7} rotationIntensity={1} floatIntensity={1.2}>
-        <Play3D position={[5.4, 3.1, -1.5]} scale={0.36} rotation={[0.1, -0.6, 0.1]} />
-      </Float>
     </>
   );
 }
@@ -181,6 +188,7 @@ function World({
   day,
   box,
   text,
+  intro,
   planetAnchors,
   crewAnchors,
   planetLabels,
@@ -190,6 +198,7 @@ function World({
   day: boolean;
   box: El;
   text: El;
+  intro: RefObject<number>;
   planetAnchors: Anchors;
   crewAnchors: Anchors;
   planetLabels: Targets;
@@ -198,10 +207,20 @@ function World({
   const mix: DayMix = useDayMix(day, still);
   const moon = useRef<THREE.Mesh>(null);
   const sun = useRef<THREE.Object3D>(null);
+  const invalidate = useThree((s) => s.invalidate);
+
+  // With motion stilled the canvas only draws on demand; the scroll intro still moves the camera.
+  useEffect(() => {
+    if (!still) return;
+    const onScroll = () => invalidate();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [still, invalidate]);
+
   return (
     <>
-      <Frame box={box} />
-      <SkyBackdrop mix={mix} still={still} sun={sun} text={text} />
+      <Camera box={box} intro={intro} />
+      <SkyBackdrop mix={mix} still={still} sun={sun} text={text} scroll={intro} />
       <Studio mix={mix} />
       <Rig still={still}>
         <HeroCast
@@ -228,19 +247,21 @@ function World({
 }
 
 /**
- * The live 3D hero, filling the whole hero section: the sky (aurora and stars at night, a bright
- * sky by day), the eclipse or the sun, four region planets and the explorer crew. Rendering
- * pauses off screen or in a hidden tab; reduced motion / Pause motion renders single frames.
+ * The live 3D hero, filling the whole hero stage: the sky (aurora and stars at night, a bright sky
+ * by day), the eclipse or the sun, four worlds and the explorer crew. Rendering pauses off screen
+ * or in a hidden tab; reduced motion / Pause motion renders single frames.
  */
 export default function HeroWorld({
-  section,
+  stage,
   box,
   text,
+  intro,
   onReady,
 }: {
-  section: El;
+  stage: El;
   box: El;
   text: El;
+  intro: RefObject<number>;
   onReady?: () => void;
 }) {
   const [visible, setVisible] = useState(true);
@@ -252,7 +273,7 @@ export default function HeroWorld({
   const crewBubbles = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
-    const el = section.current;
+    const el = stage.current;
     if (!el) return;
     const io = new IntersectionObserver(([e]) => setVisible(Boolean(e?.isIntersecting)), {
       rootMargin: "100px",
@@ -270,7 +291,7 @@ export default function HeroWorld({
       reduce.removeEventListener("change", sync);
       mo.disconnect();
     };
-  }, [section]);
+  }, [stage]);
 
   return (
     <>
@@ -280,7 +301,7 @@ export default function HeroWorld({
         dpr={[1, 1.5]}
         camera={{ position: [0, 0.4, 14], fov: 36, manual: true }}
         gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-        eventSource={section as RefObject<HTMLElement>}
+        eventSource={stage as RefObject<HTMLElement>}
         eventPrefix="client"
         frameloop={!visible ? "never" : still ? "demand" : "always"}
         onCreated={() => onReady?.()}
@@ -290,13 +311,17 @@ export default function HeroWorld({
           day={day}
           box={box}
           text={text}
+          intro={intro}
           planetAnchors={planetAnchors}
           crewAnchors={crewAnchors}
           planetLabels={planetLabels}
           crewBubbles={crewBubbles}
         />
       </Canvas>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+      <div
+        className={cx(styles.tags, "pointer-events-none absolute inset-0 overflow-hidden")}
+        aria-hidden="true"
+      >
         {PLANETS.map((p, i) => (
           <span
             key={p.id}

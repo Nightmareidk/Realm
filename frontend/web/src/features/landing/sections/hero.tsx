@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { buttonClass } from "@/components/button";
 import { cx } from "@/lib/cx";
-import styles from "../fun.module.css";
 import { RotatingWord } from "../rotating-word";
 import { HeroScene } from "../three/hero-3d";
 
@@ -9,7 +8,7 @@ import { HeroScene } from "../three/hero-3d";
 const WORDS = [
   { word: "chat", color: "var(--r-spaces-text)" },
   { word: "post", color: "var(--r-feed-text)" },
-  { word: "show off", color: "var(--r-profiles-text)" },
+  { word: "share clips", color: "var(--r-profiles-text)" },
   { word: "vote", color: "var(--r-boards-text)" },
   { word: "hang out", color: "var(--r-overprint)" },
 ];
@@ -25,7 +24,7 @@ export function Hero() {
         <>
           <h1 id="hero-title" className="display text-[clamp(2.4rem,4.6vw,4.5rem)] text-ink">
             <span className="sr-only">
-              One place to chat, post, show off, vote and hang out with your crew.
+              One place to chat, post, share clips, vote and hang out with your crew.
             </span>
             <span aria-hidden="true" className="block">
               One place to
@@ -40,16 +39,12 @@ export function Hero() {
             open in your browser.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/signup" className={cx(buttonClass("primary", "lg"), styles.bouncy)}>
+            <Link href="/signup" className={buttonClass("primary", "lg")}>
               Open Realm
             </Link>
             <Link
               href="#download"
-              className={cx(
-                buttonClass("secondary", "lg"),
-                styles.bouncy,
-                "bg-ground/30 backdrop-blur-sm",
-              )}
+              className={cx(buttonClass("secondary", "lg"), "bg-ground/30 backdrop-blur-sm")}
             >
               Download
             </Link>

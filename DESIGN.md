@@ -13,6 +13,9 @@ colors:
   aurora-lime: "oklch(0.88 0.2 128)"
   aurora-lime-hover: "oklch(0.93 0.17 128)"
   on-lime: "oklch(0.2 0.05 145)"
+  solar-orange: "oklch(0.66 0.19 52)"
+  solar-ember: "oklch(0.53 0.18 42)"
+  on-solar: "oklch(0.2 0.05 40)"
   spaces-teal: "oklch(0.72 0.1291 182)"
   feed-ice-blue: "oklch(0.72 0.14 252)"
   profiles-violet: "oklch(0.72 0.14 296)"
@@ -118,7 +121,8 @@ It is semi-cartoon, not a cartoon. The 3D is glossy clearcoat plastic with iride
 Midnight neutrals tinted toward blue (hue 256), one luminous lime for actions, and four aurora inks that name the worlds. All values are OKLCH, generated and contrast-tested in `frontend/design-tokens`.
 
 ### Primary
-- **Aurora Lime**: the rim light of the eclipse. It marks the primary action (Open Realm, send), "needs you" counts, focus rings, the flight path on the star chart, and nothing else. Text on it is the deep green **On Lime**, never white.
+- **Aurora Lime** (night): the rim light of the eclipse. It marks the primary action (Open Realm, send), "needs you" counts, focus rings, the flight path on the star chart, and nothing else. Text on it is the deep green **On Lime**, never white.
+- **Solar Orange** (day): the same role by day, when the eclipse has ended and the sun is out. Buttons are Solar Orange with deep brown **On Solar** text (white can't reach 4.5:1 on orange); text links and focus rings use the darker **Solar Ember**. The mark follows: by day its disc glows gold and its rim burns gold, orange and rose.
 
 ### Secondary
 - **Spaces Teal**: the Spaces world and your own chat bubbles. Also the lead colour of the brand glow when a surface needs light without meaning "act".
@@ -138,6 +142,8 @@ Each world ink has four roles in the token set: `fill` (a dark tinted surface), 
 **The One Action Rule.** Lime means "do this" or "this needs you". It never decorates, never washes a panel, and never marks plain unread.
 
 **The Rim Light Rule.** Glows sit at edges and corners, the way the eclipse is lit, and are led by teal with at most a trace of lime. A lime wash at strength turns olive on midnight.
+
+**The Living Sky Rule.** Colour behind the page moves with the aurora: a fixed nebula of three soft colour fields crossfades on a 48-second cycle (aurora green, then cyan and magenta, then a pink and violet nebula by night; gold, orange and rose by day), in step with the hero's aurora through the wall clock. It is ambient only: text, surfaces and actions keep their fixed tokens.
 
 **The Four Worlds Rule.** Teal, ice blue, violet and pink are identities (a Space, a region), never ornament. A screen uses its own world's ink, plus lime for actions.
 
@@ -210,6 +216,9 @@ The container for a world's feature section: Panel with a 28px radius, lit from 
 ### Navigation
 A sticky, blurred midnight header: the Eclipse wordmark, text links in Ink Soft (Ink on hover), a Pause motion button, Sign in (quiet) and Open Realm (primary). On phones the links move into a menu and Pause motion moves to the footer. In the app, a dock of five destinations replaces any server-icon rail (see docs/UX-ARCHITECTURE.md).
 
+### Signature: the scroll intro and the edition switch
+The landing page opens on a title card under a close-up of the eclipse; scrolling pulls the camera back through space while the stage stays pinned, the worlds and asteroid belt come into frame, the crew drifts in, and the headline arrives. Switching editions scrolls back to the sky, lets the sky change first (the moon slides off the sun, day rises from the horizon with a flare; or night falls and the aurora returns), then reveals the whole page in the new edition as a soft-edged circle spreading from the sun. Reduced motion and Pause motion skip both.
+
 ### Signature: the Eclipse and the explorers
 The Eclipse mark (a midnight disc over an aurora rim with a small star) appears as the logo, the app icon, the hero's 3D centrepiece (a real moon in front of a real sun) and the star chart's centre (the sun itself by day). The four astronaut explorers, one per world ink, are Realm's characters: glossy white suits with panels, belt, knee pads and cuffs, iridescent visors with a coloured rim and glowing eyes that follow the pointer, helmet lamps, twin tanks, a Realm mission patch, all casting soft shadows. They wave from the elbow: live in the hero, and on the page as two layers (body and forearm) with the forearm swinging about the elbow's measured pivot, eased at each end of the swing.
 
@@ -233,3 +242,4 @@ The Eclipse mark (a midnight disc over an aurora rim with a small star) appears 
 - **Don't** use gradient text, or glass behind reading copy.
 - **Don't** show the aurora or stars by day, or a daytime sky at night: each edition has its own sky.
 - **Don't** animate a character by flipping between two poses; move a joint about its pivot.
+- **Don't** scatter cartoon props (hearts, controllers, stickers) around sections; the 3D world and the explorers carry the personality, the page stays composed.

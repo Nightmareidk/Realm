@@ -32,7 +32,6 @@ export function RotatingWord({
   }, [items.length, interval]);
 
   const longest = items.reduce((a, b) => (b.word.length > a.word.length ? b : a)).word;
-  const current = items[i] ?? items[0];
 
   return (
     <span className={styles.rotator} aria-hidden="true">
@@ -47,21 +46,6 @@ export function RotatingWord({
           {it.word}
         </span>
       ))}
-      <svg
-        className={styles.squiggle}
-        viewBox="0 0 200 20"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <path
-          key={current?.word}
-          d="M2,12C22,2 38,20 58,10S96,2 116,11 156,19 176,9 196,8 198,10"
-          fill="none"
-          stroke={current?.color}
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-      </svg>
     </span>
   );
 }

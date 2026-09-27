@@ -8,7 +8,7 @@ import styles from "./fun.module.css";
  * 3D-rendered assets (drawn at /render-3d; sources in brand/renders). They're decorative,
  * so they carry empty alt text and never take pointer events.
  */
-export type ArtName = "heart" | "bubble" | "spark" | "lock" | "controller" | "play" | "upvote";
+export type ArtName = "lock";
 
 export type ExplorerTone = "teal" | "blue" | "violet" | "pink";
 

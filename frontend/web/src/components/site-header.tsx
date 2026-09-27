@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ButtonLink } from "./button";
 import { MobileMenu } from "./mobile-menu";
 import { MotionToggle } from "./motion-toggle";
+import { EditionToggle } from "./theme-toggle";
 import { Wordmark } from "./wordmark";
 
 export const NAV = [
@@ -35,6 +36,7 @@ export function SiteHeader() {
           </ul>
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <EditionToggle />
           <MotionToggle className="max-sm:hidden" />
           <ButtonLink href="/login" variant="quiet" className="max-sm:hidden">
             Sign in

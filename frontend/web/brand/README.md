@@ -17,8 +17,8 @@ All of them are React Three Fiber scenes, the same components the live hero uses
 | --- | --- |
 | `astro-{teal,blue,violet,pink}.webp` | `Astronaut3D` (`src/features/landing/three/astronaut3d.tsx`), standing |
 | `astro-{tone}-body.webp`, `astro-{tone}-forearm.webp` | the waving pose split into two layers: the page rotates the forearm about the elbow, whose position is written to `src/features/landing/explorer-pivots.json` |
-| `heart`, `bubble`, `spark`, `lock`, `controller`, `play`, `upvote` | `src/features/landing/three/props3d.tsx` |
-| `planet-{spaces,feed,profiles,boards}.webp` | `Planet` (`src/features/landing/three/universe.tsx`), fixed framing for the star chart |
+| `lock` | `src/features/landing/three/props3d.tsx` (the other props live on the stage but aren't used on the page) |
+| `planet-{spaces,feed,profiles,boards}.webp` | `Planet` (`src/features/landing/three/planets.tsx`): procedural ocean, ringed gas giant, ice and cratered worlds, fixed framing for the star chart |
 | `hero-poster-night.webp`, `hero-poster-day.webp` | the hero's 3D cast (eclipse or sun, planets, crew, props) as one still frame per edition, shown while the live scene loads and on devices without WebGL |
 
 Each scene is staged on the dev-only route `/render-3d?item=<name>` (`src/app/render-3d/stage.tsx`)
@@ -36,7 +36,8 @@ an explorer's body and forearm layers share one crop so they line up exactly, pl
 frame (the star chart sizes them by it), and everything else is trimmed and fitted to 480 px.
 
 The hero's sky (aurora, stars, the day sky) is not an image: it's a shader drawn live
-(`src/features/landing/three/sky.tsx`), as are the sun and its corona (`sun.tsx`).
+(`src/features/landing/three/sky.tsx`), as are the sun, its corona and prominences (`sun.tsx`), the
+planets' surfaces (`planets.tsx`) and the page's nebula (`globals.css`).
 
 ## Illustrative photos
 

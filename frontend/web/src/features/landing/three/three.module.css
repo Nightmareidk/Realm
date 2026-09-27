@@ -12,6 +12,134 @@
     linear-gradient(0deg, var(--r-ground) 0%, #fff0dc 12%, #9fd0ff 55%, #3f86ee 100%);
 }
 
+/* ── Scroll intro: the stage stays pinned while --p (0 → 1) plays the pull-back ───────── */
+.pin {
+  height: 260svh;
+}
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+}
+@media (width < 64rem) {
+  .pin {
+    height: 210svh;
+  }
+}
+
+/* The title card: the brand, big, under the eclipse. It lifts away as the camera pulls back. */
+.titleCard {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 8svh;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-inline: 1rem;
+  pointer-events: none;
+  opacity: clamp(0, calc(1 - var(--p) * 5), 1);
+  transform: translateY(calc(var(--p) * -140px)) scale(calc(1 - var(--p) * 0.5));
+}
+/* A soft scrim behind the title card so it reads over the brightest corona. */
+.titleCard::before {
+  content: "";
+  position: absolute;
+  inset: -3rem -10% -2rem;
+  z-index: -1;
+  background: radial-gradient(
+    50% 55% at 50% 55%,
+    color-mix(in oklch, var(--r-ground) 62%, transparent),
+    transparent 75%
+  );
+}
+.titleWord {
+  font-size: clamp(3.75rem, 14vw, 10.5rem);
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+}
+.scrollCue {
+  margin-top: 1.75rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--r-ink-muted);
+}
+.scrollCue i {
+  width: 1px;
+  height: 44px;
+  background: linear-gradient(var(--r-ink-soft), transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scrollCue i {
+    animation: cue 2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+}
+@keyframes cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  50.1% {
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+/* The headline arrives once the camera has pulled back; the name tags follow. */
+.copy {
+  --q: clamp(0, calc((var(--p) - 0.3) * 3.2), 1);
+  opacity: var(--q);
+  transform: translateY(calc((1 - var(--q)) * 36px));
+}
+.tags {
+  opacity: clamp(0, calc((var(--p) - 0.5) * 4), 1);
+}
+
+/* No intro for reduced motion, or if scripts don't run: the finished hero, straight away. */
+@media (prefers-reduced-motion: reduce) {
+  .pin {
+    height: auto;
+  }
+  .stage {
+    position: relative;
+    height: auto;
+    min-height: 100svh;
+  }
+  .titleCard {
+    display: none;
+  }
+}
+@media (scripting: none) {
+  .pin {
+    height: auto;
+  }
+  .stage {
+    position: relative;
+    height: auto;
+  }
+  .titleCard {
+    display: none;
+  }
+  .copy,
+  .tags {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* The copy changes colour at the pace the sky changes, instead of flipping ahead of it. */
 .hero :is(h1, p) {
   transition: color 1.2s ease-in-out;

@@ -9,7 +9,9 @@ export default async function Render3D({ searchParams }: PageProps<"/render-3d">
   return (
     <>
       <style>
-        {"html,body{background:transparent!important}body::before{display:none!important}"}
+        {
+          "html,body{background:transparent!important}body::before,body::after,.realm-nebula{display:none!important}"
+        }
       </style>
       <RenderStage item={typeof item === "string" ? item : "astro-teal"} />
     </>

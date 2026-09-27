@@ -25,7 +25,8 @@ const BASE = process.env.RENDER_URL ?? "http://localhost:3000";
 const CHROME = process.env.CHROME_PATH ?? "C:/Program Files/Google/Chrome/Application/chrome.exe";
 
 const TONES = ["teal", "blue", "violet", "pink"];
-const PROPS = ["heart", "bubble", "spark", "lock", "controller", "play", "upvote"];
+// The page uses one prop render (the privacy lock); the other props stay on the stage for reuse.
+const PROPS = ["lock"];
 const PLANETS = ["planet-spaces", "planet-feed", "planet-profiles", "planet-boards"];
 const EXPLORERS = TONES.flatMap((t) => [`astro-${t}`, `astro-${t}-body`, `astro-${t}-forearm`]);
 const ALL = [...EXPLORERS, ...PROPS, ...PLANETS, "hero-poster-night", "hero-poster-day"];

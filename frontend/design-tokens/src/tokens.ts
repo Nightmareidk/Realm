@@ -43,7 +43,7 @@ export interface EditionTokens {
   ink: Oklch;
   inkSoft: Oklch;
   inkMuted: Oklch;
-  /** Magenta overprint: actions only. */
+  /** The action colour: aurora lime by night, solar orange by day. Actions only. */
   overprint: Oklch;
   /** Overprint used as a fill behind text (buttons). */
   overprintFill: Oklch;
@@ -148,11 +148,13 @@ const rawEditions: Record<Edition, EditionTokens> = {
     ink: oklch(0.2, 0.03, 256),
     inkSoft: oklch(0.36, 0.03, 256),
     inkMuted: oklch(0.47, 0.03, 252),
-    overprint: oklch(0.47, 0.15, 142),
-    overprintFill: oklch(0.5, 0.16, 145),
-    overprintFillHover: oklch(0.45, 0.15, 145),
-    onOverprint: oklch(0.99, 0.005, 140),
-    focus: oklch(0.47, 0.15, 142),
+    // Solar flare by day: the eclipse has ended and the sun is out. Burnt orange for text and
+    // focus, amber-orange buttons with dark text (white on orange can't reach 4.5:1).
+    overprint: oklch(0.53, 0.18, 42),
+    overprintFill: oklch(0.66, 0.19, 52),
+    overprintFillHover: oklch(0.72, 0.17, 60),
+    onOverprint: oklch(0.2, 0.05, 40),
+    focus: oklch(0.53, 0.18, 42),
     danger: oklch(0.54, 0.19, 22),
     success: oklch(0.5, 0.12, 160),
     shadow: oklch(0.3, 0.04, 256),

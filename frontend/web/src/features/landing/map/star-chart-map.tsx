@@ -24,9 +24,9 @@ const FLIGHT_DELAY_MS = 350;
 const WAYPOINT = 14;
 /**
  * The planet renders (scripts/render-assets.mjs, planet-*) share one fixed framing: the sphere's
- * radius is 1 / 2.15 of the image's half-width, so a planet of radius r gets an image 4.3r wide.
+ * radius is 1 / 2.72 of the image's half-width (room for Feed's rings), so a planet of radius r gets an image 5.44r wide.
  */
-const PLANET_FRAME = 2.15;
+const PLANET_FRAME = 2.72;
 
 export function StarChartMap({
   chart: g,

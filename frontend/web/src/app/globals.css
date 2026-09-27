@@ -140,6 +140,136 @@
   }
 }
 
+/* The mark's colours follow the edition: the eclipse by night, the sun by day. */
+:root {
+  --mark-a: #b1ef4a;
+  --mark-b: #2dd4bf;
+  --mark-c: #60a5fa;
+  --mark-disc-a: #0c1828;
+  --mark-disc-b: #060d16;
+  --mark-star: #f4fbff;
+  --mark-tile-a: #0f1d33;
+  --mark-tile-b: #04080f;
+}
+:root[data-theme="day"] {
+  --mark-a: #ffd166;
+  --mark-b: #ff8a3d;
+  --mark-c: #ff4d6d;
+  --mark-disc-a: #fff6d8;
+  --mark-disc-b: #ffb03f;
+  --mark-star: #ff7a2f;
+  --mark-tile-a: #fff4e0;
+  --mark-tile-b: #ffd6a3;
+}
+
+/*
+ * The page's nebula: three soft colour fields behind everything that crossfade on a 48 s cycle,
+ * in step with the hero's aurora (both are keyed to the wall clock via --aurora-t, set before
+ * first paint). Aurora greens, cyan and magenta, then a pink and violet nebula by night; gold,
+ * orange and rose by day. Opacity-only animation, so it stays on the compositor.
+ */
+.realm-nebula {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+}
+.realm-nebula > i {
+  position: absolute;
+  inset: -10%;
+  opacity: 0.34;
+}
+.realm-nebula > i:nth-child(1) {
+  background:
+    radial-gradient(38% 34% at 10% 6%, oklch(0.78 0.18 150 / 0.24), transparent 70%),
+    radial-gradient(34% 30% at 92% 48%, oklch(0.74 0.13 185 / 0.16), transparent 70%),
+    radial-gradient(40% 30% at 30% 96%, oklch(0.72 0.15 160 / 0.12), transparent 70%);
+}
+.realm-nebula > i:nth-child(2) {
+  background:
+    radial-gradient(36% 32% at 88% 8%, oklch(0.78 0.13 210 / 0.2), transparent 70%),
+    radial-gradient(38% 34% at 8% 60%, oklch(0.62 0.22 330 / 0.17), transparent 70%),
+    radial-gradient(34% 30% at 70% 98%, oklch(0.66 0.18 280 / 0.14), transparent 70%);
+}
+.realm-nebula > i:nth-child(3) {
+  background:
+    radial-gradient(40% 34% at 50% 0%, oklch(0.66 0.2 350 / 0.2), transparent 70%),
+    radial-gradient(34% 32% at 96% 72%, oklch(0.6 0.2 295 / 0.18), transparent 70%),
+    radial-gradient(36% 30% at 4% 30%, oklch(0.62 0.16 255 / 0.15), transparent 70%);
+}
+:root[data-theme="day"] .realm-nebula > i:nth-child(1) {
+  background:
+    radial-gradient(38% 34% at 90% 4%, oklch(0.88 0.14 85 / 0.32), transparent 70%),
+    radial-gradient(34% 30% at 6% 55%, oklch(0.85 0.1 60 / 0.2), transparent 70%);
+}
+:root[data-theme="day"] .realm-nebula > i:nth-child(2) {
+  background:
+    radial-gradient(38% 34% at 12% 6%, oklch(0.82 0.14 55 / 0.28), transparent 70%),
+    radial-gradient(34% 30% at 94% 64%, oklch(0.8 0.12 35 / 0.18), transparent 70%);
+}
+:root[data-theme="day"] .realm-nebula > i:nth-child(3) {
+  background:
+    radial-gradient(40% 34% at 55% 0%, oklch(0.8 0.12 20 / 0.24), transparent 70%),
+    radial-gradient(34% 32% at 4% 80%, oklch(0.86 0.12 75 / 0.2), transparent 70%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .realm-nebula > i {
+    opacity: 0;
+    animation: realm-nebula 48s linear infinite;
+  }
+  .realm-nebula > i:nth-child(1) {
+    animation-delay: calc(var(--aurora-t, 0) * -1s);
+  }
+  .realm-nebula > i:nth-child(2) {
+    animation-delay: calc((var(--aurora-t, 0) + 32) * -1s);
+  }
+  .realm-nebula > i:nth-child(3) {
+    animation-delay: calc((var(--aurora-t, 0) + 16) * -1s);
+  }
+}
+@keyframes realm-nebula {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  33.33%,
+  66.67% {
+    opacity: 0;
+  }
+}
+
+/*
+ * Switching editions: the new page is revealed from the sun outward with a soft, glowing edge
+ * (lib/edition.ts sets --vt-x/--vt-y to the sun's position and data-vt while it runs).
+ */
+@property --vt-r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+:root[data-vt] ::view-transition-new(root) {
+  mask-image: radial-gradient(
+    circle at var(--vt-x, 70%) var(--vt-y, 30%),
+    #000 var(--vt-r),
+    transparent calc(var(--vt-r) + 180px)
+  );
+  animation: realm-reveal 1.5s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes realm-reveal {
+  from {
+    --vt-r: 0px;
+  }
+  to {
+    --vt-r: 160vmax;
+  }
+}
+
 /* Map lettering: expanded capitals with open tracking. Short labels only. */
 @utility map-lettering {
   font-family: var(--font-display);

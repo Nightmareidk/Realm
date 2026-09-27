@@ -215,51 +215,27 @@
 .rotator > span {
   grid-area: 1 / 1;
   transition:
-    transform 520ms cubic-bezier(0.23, 1, 0.32, 1),
-    opacity 380ms cubic-bezier(0.23, 1, 0.32, 1);
+    transform 560ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 420ms cubic-bezier(0.23, 1, 0.32, 1),
+    filter 420ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .rotator > span[data-state="in"] {
-  transform: translateY(0) rotate(0);
+  transform: translateY(0);
   opacity: 1;
+  filter: blur(0);
 }
 .rotator > span[data-state="out"] {
-  transform: translateY(-0.6em) rotate(-4deg);
+  transform: translateY(-0.45em);
   opacity: 0;
+  filter: blur(6px);
 }
 .rotator > span[data-state="next"] {
-  transform: translateY(0.7em) rotate(4deg);
+  transform: translateY(0.45em);
   opacity: 0;
+  filter: blur(6px);
 }
 .rotator > span[data-state="ghost"] {
   visibility: hidden;
-}
-
-/* Hand-drawn squiggle under the active word. */
-.squiggle {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -0.12em;
-  height: 0.28em;
-  overflow: visible;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .squiggle path {
-    stroke-dasharray: 260;
-    animation: squiggle-draw 2.6s cubic-bezier(0.23, 1, 0.32, 1) infinite;
-  }
-}
-@keyframes squiggle-draw {
-  0% {
-    stroke-dashoffset: 260;
-  }
-  35%,
-  80% {
-    stroke-dashoffset: 0;
-  }
-  100% {
-    stroke-dashoffset: -260;
-  }
 }
 
 /* ── Headline words rising in as a section scrolls into view ─────────── */
@@ -283,27 +259,6 @@
   to {
     opacity: 1;
     transform: none;
-  }
-}
-
-/* ── Buttons get a bit of bounce ──────────────────────────────────────── */
-@media (prefers-reduced-motion: no-preference) {
-  .bouncy:hover {
-    animation: wiggle 420ms cubic-bezier(0.23, 1, 0.32, 1);
-  }
-}
-@keyframes wiggle {
-  0% {
-    transform: rotate(0) scale(1);
-  }
-  30% {
-    transform: rotate(-3deg) scale(1.04);
-  }
-  60% {
-    transform: rotate(2deg) scale(1.02);
-  }
-  100% {
-    transform: rotate(0) scale(1);
   }
 }
 
