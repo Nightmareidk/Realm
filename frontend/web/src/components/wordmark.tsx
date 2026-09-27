@@ -1,26 +1,22 @@
-import Image from "next/image";
 import { cx } from "@/lib/cx";
+import { EclipseMark } from "./brand/eclipse-mark";
 
-/** The Realm logo tile (user-supplied brand mark). */
+/** The Realm mark on its app tile. */
 export function RealmLogo({ size = 32, className }: { size?: number; className?: string }) {
-  return (
-    <Image
-      src={size > 48 ? "/brand/realm-icon-192.png" : "/brand/realm-icon-96.png"}
-      alt=""
-      width={size}
-      height={size}
-      className={cx("shrink-0", className)}
-      priority
-    />
-  );
+  return <EclipseMark variant="tile" size={size} className={className} />;
 }
 
-export function Wordmark({ className, size = 32 }: { className?: string; size?: number }) {
+export function Wordmark({ className, size = 30 }: { className?: string; size?: number }) {
   return (
-    <span className={cx("inline-flex items-center gap-2.5", className)}>
-      <RealmLogo size={size} />
-      <span className="stretch-expanded text-[1.05rem] font-extrabold uppercase tracking-[0.2em] text-ink">
-        Realm
+    <span className={cx("group/wordmark inline-flex items-center gap-2.5", className)}>
+      <span
+        className="inline-flex transition-transform duration-500 ease-out group-hover/wordmark:rotate-[-18deg]"
+        style={{ width: size, height: size }}
+      >
+        <EclipseMark className="size-full" />
+      </span>
+      <span className="font-display text-[1.3rem] font-semibold leading-none tracking-[-0.04em] text-ink">
+        realm
       </span>
     </span>
   );

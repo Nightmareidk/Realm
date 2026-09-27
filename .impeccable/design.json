@@ -1,0 +1,463 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-27T03:30:00Z",
+  "title": "Design System: Realm",
+  "extensions": {
+    "colorMeta": {
+      "midnight-ground": {
+        "role": "neutral",
+        "displayName": "Midnight Ground",
+        "canonical": "oklch(0.155 0.024 256)",
+        "tonalRamp": [
+          "oklch(0.15 0.024 256.0)",
+          "oklch(0.264 0.024 256.0)",
+          "oklch(0.379 0.024 256.0)",
+          "oklch(0.493 0.024 256.0)",
+          "oklch(0.607 0.024 256.0)",
+          "oklch(0.721 0.024 256.0)",
+          "oklch(0.836 0.024 256.0)",
+          "oklch(0.95 0.024 256.0)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "canonical": "oklch(0.19 0.027 256)",
+        "tonalRamp": [
+          "oklch(0.15 0.027 256.0)",
+          "oklch(0.264 0.027 256.0)",
+          "oklch(0.379 0.027 256.0)",
+          "oklch(0.493 0.027 256.0)",
+          "oklch(0.607 0.027 256.0)",
+          "oklch(0.721 0.027 256.0)",
+          "oklch(0.836 0.027 256.0)",
+          "oklch(0.95 0.027 256.0)"
+        ]
+      },
+      "panel-raised": {
+        "role": "neutral",
+        "displayName": "Panel Raised",
+        "canonical": "oklch(0.228 0.03 256)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 256.0)",
+          "oklch(0.264 0.03 256.0)",
+          "oklch(0.379 0.03 256.0)",
+          "oklch(0.493 0.03 256.0)",
+          "oklch(0.607 0.03 256.0)",
+          "oklch(0.721 0.03 256.0)",
+          "oklch(0.836 0.03 256.0)",
+          "oklch(0.95 0.03 256.0)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "oklch(0.31 0.03 256)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 256.0)",
+          "oklch(0.264 0.03 256.0)",
+          "oklch(0.379 0.03 256.0)",
+          "oklch(0.493 0.03 256.0)",
+          "oklch(0.607 0.03 256.0)",
+          "oklch(0.721 0.03 256.0)",
+          "oklch(0.836 0.03 256.0)",
+          "oklch(0.95 0.03 256.0)"
+        ]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Rule Strong",
+        "canonical": "oklch(0.52 0.03 256)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 256.0)",
+          "oklch(0.264 0.03 256.0)",
+          "oklch(0.379 0.03 256.0)",
+          "oklch(0.493 0.03 256.0)",
+          "oklch(0.607 0.03 256.0)",
+          "oklch(0.721 0.03 256.0)",
+          "oklch(0.836 0.03 256.0)",
+          "oklch(0.95 0.03 256.0)"
+        ]
+      },
+      "starlight-ink": {
+        "role": "neutral",
+        "displayName": "Starlight Ink",
+        "canonical": "oklch(0.965 0.008 240)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 240.0)",
+          "oklch(0.264 0.008 240.0)",
+          "oklch(0.379 0.008 240.0)",
+          "oklch(0.493 0.008 240.0)",
+          "oklch(0.607 0.008 240.0)",
+          "oklch(0.721 0.008 240.0)",
+          "oklch(0.836 0.008 240.0)",
+          "oklch(0.95 0.008 240.0)"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Ink Soft",
+        "canonical": "oklch(0.84 0.02 245)",
+        "tonalRamp": [
+          "oklch(0.15 0.02 245.0)",
+          "oklch(0.264 0.02 245.0)",
+          "oklch(0.379 0.02 245.0)",
+          "oklch(0.493 0.02 245.0)",
+          "oklch(0.607 0.02 245.0)",
+          "oklch(0.721 0.02 245.0)",
+          "oklch(0.836 0.02 245.0)",
+          "oklch(0.95 0.02 245.0)"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "oklch(0.71 0.025 248)",
+        "tonalRamp": [
+          "oklch(0.15 0.025 248.0)",
+          "oklch(0.264 0.025 248.0)",
+          "oklch(0.379 0.025 248.0)",
+          "oklch(0.493 0.025 248.0)",
+          "oklch(0.607 0.025 248.0)",
+          "oklch(0.721 0.025 248.0)",
+          "oklch(0.836 0.025 248.0)",
+          "oklch(0.95 0.025 248.0)"
+        ]
+      },
+      "aurora-lime": {
+        "role": "primary",
+        "displayName": "Aurora Lime",
+        "canonical": "oklch(0.88 0.2 128)",
+        "tonalRamp": [
+          "oklch(0.15 0.2 128.0)",
+          "oklch(0.264 0.2 128.0)",
+          "oklch(0.379 0.2 128.0)",
+          "oklch(0.493 0.2 128.0)",
+          "oklch(0.607 0.2 128.0)",
+          "oklch(0.721 0.2 128.0)",
+          "oklch(0.836 0.2 128.0)",
+          "oklch(0.95 0.2 128.0)"
+        ]
+      },
+      "aurora-lime-hover": {
+        "role": "primary",
+        "displayName": "Aurora Lime (hover)",
+        "canonical": "oklch(0.93 0.17 128)",
+        "tonalRamp": [
+          "oklch(0.15 0.17 128.0)",
+          "oklch(0.264 0.17 128.0)",
+          "oklch(0.379 0.17 128.0)",
+          "oklch(0.493 0.17 128.0)",
+          "oklch(0.607 0.17 128.0)",
+          "oklch(0.721 0.17 128.0)",
+          "oklch(0.836 0.17 128.0)",
+          "oklch(0.95 0.17 128.0)"
+        ]
+      },
+      "on-lime": {
+        "role": "primary",
+        "displayName": "On Lime",
+        "canonical": "oklch(0.2 0.05 145)",
+        "tonalRamp": [
+          "oklch(0.15 0.05 145.0)",
+          "oklch(0.264 0.05 145.0)",
+          "oklch(0.379 0.05 145.0)",
+          "oklch(0.493 0.05 145.0)",
+          "oklch(0.607 0.05 145.0)",
+          "oklch(0.721 0.05 145.0)",
+          "oklch(0.836 0.05 145.0)",
+          "oklch(0.95 0.05 145.0)"
+        ]
+      },
+      "spaces-teal": {
+        "role": "secondary",
+        "displayName": "Spaces Teal",
+        "canonical": "oklch(0.72 0.1291 182)",
+        "tonalRamp": [
+          "oklch(0.15 0.1291 182.0)",
+          "oklch(0.264 0.1291 182.0)",
+          "oklch(0.379 0.1291 182.0)",
+          "oklch(0.493 0.1291 182.0)",
+          "oklch(0.607 0.1291 182.0)",
+          "oklch(0.721 0.1291 182.0)",
+          "oklch(0.836 0.1291 182.0)",
+          "oklch(0.95 0.1291 182.0)"
+        ]
+      },
+      "feed-ice-blue": {
+        "role": "secondary",
+        "displayName": "Feed Ice Blue",
+        "canonical": "oklch(0.72 0.14 252)",
+        "tonalRamp": [
+          "oklch(0.15 0.14 252.0)",
+          "oklch(0.264 0.14 252.0)",
+          "oklch(0.379 0.14 252.0)",
+          "oklch(0.493 0.14 252.0)",
+          "oklch(0.607 0.14 252.0)",
+          "oklch(0.721 0.14 252.0)",
+          "oklch(0.836 0.14 252.0)",
+          "oklch(0.95 0.14 252.0)"
+        ]
+      },
+      "profiles-violet": {
+        "role": "secondary",
+        "displayName": "Profiles Violet",
+        "canonical": "oklch(0.72 0.14 296)",
+        "tonalRamp": [
+          "oklch(0.15 0.14 296.0)",
+          "oklch(0.264 0.14 296.0)",
+          "oklch(0.379 0.14 296.0)",
+          "oklch(0.493 0.14 296.0)",
+          "oklch(0.607 0.14 296.0)",
+          "oklch(0.721 0.14 296.0)",
+          "oklch(0.836 0.14 296.0)",
+          "oklch(0.95 0.14 296.0)"
+        ]
+      },
+      "boards-pink": {
+        "role": "secondary",
+        "displayName": "Boards Pink",
+        "canonical": "oklch(0.72 0.14 352)",
+        "tonalRamp": [
+          "oklch(0.15 0.14 352.0)",
+          "oklch(0.264 0.14 352.0)",
+          "oklch(0.379 0.14 352.0)",
+          "oklch(0.493 0.14 352.0)",
+          "oklch(0.607 0.14 352.0)",
+          "oklch(0.721 0.14 352.0)",
+          "oklch(0.836 0.14 352.0)",
+          "oklch(0.95 0.14 352.0)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger",
+        "canonical": "oklch(0.72 0.17 22)",
+        "tonalRamp": [
+          "oklch(0.15 0.17 22.0)",
+          "oklch(0.264 0.17 22.0)",
+          "oklch(0.379 0.17 22.0)",
+          "oklch(0.493 0.17 22.0)",
+          "oklch(0.607 0.17 22.0)",
+          "oklch(0.721 0.17 22.0)",
+          "oklch(0.836 0.17 22.0)",
+          "oklch(0.95 0.17 22.0)"
+        ]
+      },
+      "success": {
+        "role": "neutral",
+        "displayName": "Success",
+        "canonical": "oklch(0.85 0.15 160)",
+        "tonalRamp": [
+          "oklch(0.15 0.15 160.0)",
+          "oklch(0.264 0.15 160.0)",
+          "oklch(0.379 0.15 160.0)",
+          "oklch(0.493 0.15 160.0)",
+          "oklch(0.607 0.15 160.0)",
+          "oklch(0.721 0.15 160.0)",
+          "oklch(0.836 0.15 160.0)",
+          "oklch(0.95 0.15 160.0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero and closing headlines only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings, words rising in on scroll."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and panel titles, names in chat."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All reading copy, 40 to 52ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Planet names on the star chart and in the 3D hero."
+      }
+    },
+    "shadows": [
+      {
+        "name": "float",
+        "value": "drop-shadow(0 18px 24px rgb(2 8 18 / 0.5))",
+        "purpose": "Under every floating 3D render."
+      },
+      {
+        "name": "window",
+        "value": "0 40px 80px -30px rgb(2 8 18 / 0.9)",
+        "purpose": "Showcase app window and phone."
+      },
+      {
+        "name": "bubble-glow",
+        "value": "0 10px 30px -8px color-mix(in oklch, var(--tone) 55%, transparent)",
+        "purpose": "Speech bubbles and stickers, in their own tone."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Default for UI transitions."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
+        "purpose": "On-screen movement."
+      },
+      {
+        "name": "ease-drawer",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Sheets and drawers."
+      },
+      {
+        "name": "dur-fast",
+        "value": "160ms",
+        "purpose": "Hover and press feedback."
+      },
+      {
+        "name": "dur-base",
+        "value": "220ms",
+        "purpose": "Panels, fold-outs, dimming."
+      },
+      {
+        "name": "flight",
+        "value": "1800ms",
+        "purpose": "The star chart's flight path draw, once."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action per view (Open Realm). Lime with deep green text.",
+      "html": "<button class=\"ds-btn-primary\">Open Realm</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;height:48px;padding:0 20px;border:0;border-radius:var(--r-radius-md,6px);background:var(--r-overprint-fill,oklch(0.88 0.2 128));color:var(--r-on-overprint,oklch(0.2 0.05 145));font:600 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:background-color 160ms cubic-bezier(0.23,1,0.32,1),transform 160ms cubic-bezier(0.23,1,0.32,1)}.ds-btn-primary:hover{background:var(--r-overprint-fill-hover,oklch(0.93 0.17 128))}.ds-btn-primary:active{transform:scale(0.97)}.ds-btn-primary:focus-visible{outline:2px solid var(--r-focus,oklch(0.89 0.2 128));outline-offset:3px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outline button for the second choice (Download).",
+      "html": "<button class=\"ds-btn-secondary\">Download</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;height:48px;padding:0 20px;border:1px solid var(--r-rule-strong,oklch(0.52 0.03 256));border-radius:var(--r-radius-md,6px);background:transparent;color:var(--r-ink,oklch(0.965 0.008 240));font:600 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:background-color 160ms cubic-bezier(0.23,1,0.32,1),border-color 160ms}.ds-btn-secondary:hover{border-color:var(--r-ink-soft,oklch(0.84 0.02 245));background:var(--r-panel,oklch(0.19 0.027 256))}.ds-btn-secondary:active{transform:scale(0.97)}.ds-btn-secondary:focus-visible{outline:2px solid var(--r-focus,oklch(0.89 0.2 128));outline-offset:3px}"
+    },
+    {
+      "name": "Room Tabs",
+      "kind": "nav",
+      "refersTo": "chip-room",
+      "description": "A Space's rooms as pills along the top; a lime count only when something needs you.",
+      "html": "<nav class=\"ds-rooms\"><span class=\"ds-room ds-room-on\"># general</span><span class=\"ds-room\"># clips <b class=\"ds-count\">3</b></span><span class=\"ds-room\"># lfg</span></nav>",
+      "css": ".ds-rooms{display:flex;gap:6px}.ds-room{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--r-rule,oklch(0.31 0.03 256));border-radius:999px;color:var(--r-ink-soft,oklch(0.84 0.02 245));font:400 0.75rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:border-color 160ms}.ds-room:hover{border-color:var(--r-rule-strong,oklch(0.52 0.03 256))}.ds-room-on{background:var(--r-spaces-fill,oklch(0.33 0.06 182));border-color:var(--r-spaces-line,oklch(0.8 0.12 182));color:var(--r-spaces-text,oklch(0.84 0.11 182));font-weight:700}.ds-count{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--r-overprint-fill,oklch(0.88 0.2 128));color:var(--r-on-overprint,oklch(0.2 0.05 145));font-size:0.6rem}"
+    },
+    {
+      "name": "Chat Bubbles",
+      "kind": "custom",
+      "refersTo": "bubble-mine",
+      "description": "Friends on the left in Panel Raised; you on the right in Spaces Teal.",
+      "html": "<div class=\"ds-chat\"><p class=\"ds-bubble ds-theirs\">anyone up for ranked after 9?</p><p class=\"ds-bubble ds-mine\">in. queue at 9:15?</p></div>",
+      "css": ".ds-chat{display:flex;flex-direction:column;gap:8px;width:280px}.ds-bubble{margin:0;max-width:78%;padding:6px 12px;border-radius:16px;font:400 0.875rem/1.35 'Atkinson Hyperlegible Next',system-ui,sans-serif}.ds-theirs{align-self:flex-start;border-bottom-left-radius:6px;background:var(--r-panel-raised,oklch(0.228 0.03 256));color:var(--r-ink,oklch(0.965 0.008 240))}.ds-mine{align-self:flex-end;border-bottom-right-radius:6px;background:var(--r-spaces-solid,oklch(0.72 0.13 182));color:var(--r-ground,oklch(0.155 0.024 256))}"
+    },
+    {
+      "name": "Composer",
+      "kind": "input",
+      "refersTo": "chip-room",
+      "description": "Floating pill composer with a round lime send button.",
+      "html": "<label class=\"ds-composer\"><input class=\"ds-composer-input\" placeholder=\"Say something in #general\"><button class=\"ds-send\" aria-label=\"Send\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M227.3 28.7a16 16 0 0 0-15.8-4L19.6 83.1a16 16 0 0 0-2.5 29.8l85.5 40.5 40.5 85.5a15.9 15.9 0 0 0 14.4 9.1h1.3a16 16 0 0 0 14.1-11.6l58.4-191.9a16 16 0 0 0-4-15.8Z\"/></svg></button></label>",
+      "css": ".ds-composer{display:flex;align-items:center;gap:8px;width:320px;height:40px;padding:0 4px 0 14px;border:1px solid var(--r-rule-strong,oklch(0.52 0.03 256));border-radius:999px;background:color-mix(in oklch,var(--r-ground,oklch(0.155 0.024 256)) 60%,transparent)}.ds-composer:focus-within{border-color:var(--r-focus,oklch(0.89 0.2 128))}.ds-composer-input{flex:1;min-width:0;border:0;background:transparent;color:var(--r-ink,oklch(0.965 0.008 240));font:400 0.875rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;outline:none}.ds-composer-input::placeholder{color:var(--r-ink-muted,oklch(0.71 0.025 248))}.ds-send{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;border-radius:999px;background:var(--r-overprint-fill,oklch(0.88 0.2 128));color:var(--r-on-overprint,oklch(0.2 0.05 145));cursor:pointer}.ds-send:hover{background:var(--r-overprint-fill-hover,oklch(0.93 0.17 128))}"
+    },
+    {
+      "name": "Speech Bubble",
+      "kind": "custom",
+      "refersTo": "bubble-theirs",
+      "description": "Glassy aurora-edged bubbles pinned to the explorers in the 3D hero, and the marquee stickers.",
+      "html": "<div class=\"ds-say\">who&#39;s on tonight?</div>",
+      "css": ".ds-say{display:inline-block;padding:10px 14px;border:1px solid #2dd4bf;border-radius:14px 14px 14px 4px;background:rgb(10 20 34 / 0.72);color:#eaf6ff;font:700 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;box-shadow:0 10px 30px -8px color-mix(in oklch,#2dd4bf 55%,transparent);backdrop-filter:blur(8px)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Eclipse Hour",
+    "overview": "**Creative North Star: \"The Eclipse Hour\"**\n\nRealm is the moment a midnight world lights up at its rim: the Eclipse mark, a dark planet edged in aurora, the instant before you arrive somewhere new. Everything is built from that one image. The ground is deep midnight, never black. Light comes from the edges, as aurora (lime, teal, ice blue, violet, pink), and it gathers where something matters: the primary action, the world you are in, the person who needs you.\n\nThe public face is a spectacle and the app is calm. The landing page is a universe: a live 3D eclipse with four planets in orbit, astronaut explorers floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.\n\nIt is semi-cartoon, not a cartoon. The 3D is glossy clearcoat plastic with iridescent visors, cute in form and precise in finish. Colours are modern and luminous rather than pastel.",
+    "keyCharacteristics": [
+      "Midnight ground with light arriving from the edges, as the eclipse does.",
+      "One action colour (aurora lime); four identity inks for the four worlds.",
+      "Real 3D, rendered live or pre-rendered to transparent WebP; never faked with CSS.",
+      "Unbounded for display moments, Atkinson Hyperlegible Next for everything you read.",
+      "Lots of motion on the landing page, all of it pausable, none of it required to understand anything."
+    ],
+    "rules": [
+      {
+        "name": "The One Action Rule",
+        "body": "Lime means \"do this\" or \"this needs you\". It never decorates, never washes a panel, and never marks plain unread.",
+        "section": "colors"
+      },
+      {
+        "name": "The Rim Light Rule",
+        "body": "Glows sit at edges and corners, the way the eclipse is lit, and are led by teal with at most a trace of lime. A lime wash at strength turns olive on midnight.",
+        "section": "colors"
+      },
+      {
+        "name": "The Four Worlds Rule",
+        "body": "Teal, ice blue, violet and pink are identities (a Space, a region), never ornament. A screen uses its own world's ink, plus lime for actions.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable First Rule",
+        "body": "Anything longer than a headline is set in Atkinson Hyperlegible Next. Unbounded never sets a paragraph, a button label or a UI list.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Eyebrow Rule",
+        "body": "No kicker or label above a heading. A section locates itself with a star-chart locator graphic, or not at all.",
+        "section": "typography"
+      },
+      {
+        "name": "The Light Source Rule",
+        "body": "Only things that emit light glow. Cards, text and buttons never glow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep lime for the primary action, send, focus and \"needs you\" counts only.",
+      "Do light surfaces from an edge or corner, teal-led, the way the eclipse is lit.",
+      "Do render 3D for real (live React Three Fiber, or transparent WebP from `scripts/render-assets.mjs`) and record provenance in `frontend/web/brand/README.md`.",
+      "Do set every paragraph in Atkinson Hyperlegible Next at 17px / 1.6 or larger.",
+      "Do make every animation pausable (Pause motion, reduced motion) and never required for understanding.",
+      "Do show Spaces as one place with room tabs, bubble chat and a \"Here now\" panel."
+    ],
+    "donts": [
+      "Don't build a server-icon rail with a channel list; it reads as a Discord clone.",
+      "Don't wash a panel in lime, or use additive glow on a transparent canvas (it bands and clips).",
+      "Don't put a kicker or eyebrow label above a heading.",
+      "Don't use Unicode glyphs or emoji as icons; icons come from Phosphor. Emoji are fine as chat content and reactions.",
+      "Don't fake material with CSS (gradient spheres, bevels, embossing) where a real render exists.",
+      "Don't let floating art cover text, or hang past the viewport edge on phones.",
+      "Don't use gradient text, or glass behind reading copy."
+    ]
+  }
+}

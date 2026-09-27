@@ -1,5 +1,6 @@
 import { AvailabilityKey, FeatureList } from "@/components/availability";
-import type { MapGeometry } from "../map/geometry";
+import { Art, Explorer } from "../art";
+import type { StarChart } from "../map/star-chart";
 import { BoardPreview } from "../previews/board-preview";
 import { FeedPreview } from "../previews/feed-preview";
 import { ProfilePreview } from "../previews/profile-preview";
@@ -9,27 +10,43 @@ import { Stage } from "./stage";
 
 const shell = "mx-auto max-w-[90rem] px-4 md:px-8";
 
-/** Spaces: a mint-lit stage, copy inside on the left, the app on the right. */
-export function SpacesSection({ geometry }: { geometry: MapGeometry }) {
+/** Spaces: a teal-lit stage, copy inside on the left, the app on the right. */
+export function SpacesSection({ chart }: { chart: StarChart }) {
   return (
     <section id="spaces" aria-labelledby="spaces-title" className="scroll-mt-20 py-12 lg:py-16">
-      <div className={shell}>
-        <Stage tone="spaces" geometry={geometry} glow="10% 100%">
-          <div className="grid grid-cols-1 gap-12 p-7 md:p-12 lg:grid-cols-12 lg:gap-10 lg:p-16">
+      <div className={`${shell} relative`}>
+        <Explorer
+          tone="teal"
+          waving
+          className="absolute -top-16 left-[42%] z-10 w-24 max-lg:right-10 max-lg:left-auto md:-top-20 md:w-32"
+        />
+        <Art
+          name="bubble"
+          motion="c"
+          className="-top-10 right-8 z-10 w-16 max-lg:hidden md:right-16 md:w-24"
+        />
+        <Art
+          name="heart"
+          motion="b"
+          delay={1.2}
+          className="-bottom-6 right-1/3 z-10 w-14 max-md:hidden md:w-20"
+        />
+        <Stage tone="spaces" glow="10% 100%">
+          <div className="grid grid-cols-1 gap-12 p-7 pt-16 md:p-12 md:pt-20 lg:grid-cols-12 lg:gap-10 lg:p-16 lg:pt-20">
             <div className="lg:col-span-5">
               <RegionHeading
-                geometry={geometry}
+                chart={chart}
                 region="spaces"
                 id="spaces-title"
                 title="Spaces are where your group lives."
               >
-                Text channels for every topic, boards for longer threads, and roles that decide who
-                can do what.
+                Rooms for every topic, boards for longer threads, and roles that decide who can do
+                what. Open it and see who's around and what they're up to.
               </RegionHeading>
               <FeatureList
                 className="mt-8"
                 items={[
-                  { label: "Text channels and categories", status: "now" },
+                  { label: "Text rooms and boards", status: "now" },
                   { label: "Roles, permissions and invites", status: "now" },
                   { label: "Moderation and audit log", status: "now" },
                   { label: "Voice rooms and screen share", status: "soon" },
@@ -47,19 +64,31 @@ export function SpacesSection({ geometry }: { geometry: MapGeometry }) {
   );
 }
 
-/** Feed: an amber-lit stage, the feed leads on the left. */
-export function FeedSection({ geometry }: { geometry: MapGeometry }) {
+/** Feed: an ice-blue stage, the feed leads on the left. */
+export function FeedSection({ chart }: { chart: StarChart }) {
   return (
     <section id="feed" aria-labelledby="feed-title" className="scroll-mt-20 py-12 lg:py-16">
-      <div className={shell}>
-        <Stage tone="feed" geometry={geometry} glow="95% 0%">
+      <div className={`${shell} relative`}>
+        <Explorer
+          tone="blue"
+          delay={0.5}
+          className="absolute -top-16 right-10 z-10 w-24 md:-top-20 md:w-32"
+        />
+        <Art name="play" motion="spin" className="-bottom-8 left-6 z-10 w-16 md:w-24" />
+        <Art
+          name="heart"
+          motion="a"
+          delay={0.6}
+          className="-top-8 left-1/3 z-10 w-12 max-md:hidden md:w-16"
+        />
+        <Stage tone="feed" glow="95% 0%">
           <div className="grid grid-cols-1 items-center gap-12 p-7 md:p-12 lg:grid-cols-12 lg:gap-16 lg:p-16">
             <div className="order-2 min-w-0 lg:order-1 lg:col-span-7">
               <FeedPreview />
             </div>
             <div className="order-1 lg:order-2 lg:col-span-5">
               <RegionHeading
-                geometry={geometry}
+                chart={chart}
                 region="feed"
                 id="feed-title"
                 title="A feed of people you chose."
@@ -83,8 +112,8 @@ export function FeedSection({ geometry }: { geometry: MapGeometry }) {
   );
 }
 
-/** Profiles: open composition (no stage), an annotated specimen like a map figure. */
-export function ProfilesSection({ geometry }: { geometry: MapGeometry }) {
+/** Profiles: open composition (no stage), an annotated specimen like a chart figure. */
+export function ProfilesSection({ chart }: { chart: StarChart }) {
   const callouts = [
     {
       title: "One handle everywhere",
@@ -102,9 +131,9 @@ export function ProfilesSection({ geometry }: { geometry: MapGeometry }) {
   return (
     <section id="profiles" aria-labelledby="profiles-title" className="scroll-mt-20 py-20 lg:py-28">
       <div className={shell}>
-        <div className="mx-auto max-w-[44rem] text-center [&_p]:mx-auto [&>div>div:first-child]:justify-center">
+        <div className="mx-auto max-w-[44rem] text-center [&_p]:mx-auto [&_svg]:mx-auto">
           <RegionHeading
-            geometry={geometry}
+            chart={chart}
             region="profiles"
             id="profiles-title"
             title="One profile across all of it."
@@ -119,7 +148,18 @@ export function ProfilesSection({ geometry }: { geometry: MapGeometry }) {
               <Callout key={c.title} {...c} side="left" />
             ))}
           </ol>
-          <div className="reveal min-w-0 lg:order-2">
+          <div className="reveal relative min-w-0 lg:order-2">
+            <Explorer
+              tone="violet"
+              waving
+              delay={0.3}
+              className="absolute -right-24 bottom-16 z-10 w-28 max-lg:hidden"
+            />
+            <Art
+              name="spark"
+              motion="spin"
+              className="-top-10 -right-2 z-10 w-14 md:-right-8 md:w-20"
+            />
             <ProfilePreview />
           </div>
           <ol className="grid gap-8 lg:order-3">
@@ -149,22 +189,32 @@ function Callout({ title, body, side }: { title: string; body: string; side: "le
   );
 }
 
-/** Boards: a coral-lit stage with a reading column, because boards are for reading. */
-export function BoardsSection({ geometry }: { geometry: MapGeometry }) {
+/** Boards: a pink-lit stage with a reading column, because boards are for reading. */
+export function BoardsSection({ chart }: { chart: StarChart }) {
   return (
     <section id="boards" aria-labelledby="boards-title" className="scroll-mt-20 py-12 lg:py-16">
-      <div className={shell}>
-        <Stage tone="boards" geometry={geometry} glow="0% 0%">
+      <div className={`${shell} relative`}>
+        <Explorer
+          tone="pink"
+          delay={1.1}
+          className="absolute -top-28 right-8 z-10 w-24 md:-top-36 md:right-16 md:w-32"
+        />
+        <Art
+          name="upvote"
+          motion="c"
+          className="-bottom-8 right-8 z-10 w-14 md:right-auto md:left-10 md:w-20"
+        />
+        <Stage tone="boards" glow="0% 0%">
           <div className="grid grid-cols-1 gap-12 p-7 md:p-12 lg:grid-cols-12 lg:gap-10 lg:p-16">
             <div className="lg:col-span-5">
               <RegionHeading
-                geometry={geometry}
+                chart={chart}
                 region="boards"
                 id="boards-title"
                 title="Discussions that don't scroll away."
               >
-                Board channels give every Space threaded posts with nested replies and votes, so
-                good answers stay findable.
+                Board rooms give every Space threaded posts with nested replies and votes, so good
+                answers stay findable.
               </RegionHeading>
               <FeatureList
                 className="mt-8"

@@ -1,4 +1,4 @@
-import type { RegionId } from "./map/geometry";
+import type { RegionId } from "./map/star-chart";
 
 export interface RegionMeta {
   id: RegionId;
@@ -10,7 +10,12 @@ export interface RegionMeta {
 }
 
 export const REGIONS: RegionMeta[] = [
-  { id: "spaces", name: "Spaces", tagline: "Servers, channels and group chat", href: "#spaces" },
+  {
+    id: "spaces",
+    name: "Spaces",
+    tagline: "Group chat with a room for every topic",
+    href: "#spaces",
+  },
   { id: "feed", name: "Feed", tagline: "Posts and clips from your people", href: "#feed" },
   { id: "profiles", name: "Profiles", tagline: "One identity across all of it", href: "#profiles" },
   { id: "boards", name: "Boards", tagline: "Threaded discussion that lasts", href: "#boards" },

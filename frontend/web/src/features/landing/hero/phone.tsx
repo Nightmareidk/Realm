@@ -20,11 +20,11 @@ import { post } from "../demo";
 export function Phone({ className }: { className?: string }) {
   return (
     <div inert className={cx("@container", className)}>
-      <div className="aspect-[9/19] overflow-hidden rounded-[2.2em] border-[0.45em] border-[oklch(0.12_0.04_282)] bg-panel text-[4.6cqw]">
+      <div className="aspect-[9/19] overflow-hidden rounded-[2.2em] border-[0.45em] border-[oklch(0.14_0.03_250)] bg-panel text-[4.6cqw]">
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between px-[1.1em] pt-[0.9em] text-[0.8em] font-semibold text-ink">
             <span className="tabular">9:41</span>
-            <span className="h-[1.1em] w-[4.5em] rounded-full bg-[oklch(0.12_0.04_282)]" />
+            <span className="h-[1.1em] w-[4.5em] rounded-full bg-[oklch(0.14_0.03_250)]" />
             <span className="tabular">5G</span>
           </div>
           <div className="mt-[0.9em] flex gap-[1.1em] border-b border-rule px-[1.1em] text-[0.9em]">

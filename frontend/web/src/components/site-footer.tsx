@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MotionToggle } from "./motion-toggle";
 import { ThemeToggle } from "./theme-toggle";
 import { Wordmark } from "./wordmark";
 
@@ -33,7 +34,10 @@ export function SiteFooter() {
           <p className="max-w-[36ch] text-sm text-ink-muted">
             Early access. Built in the open: we say what works today and what is still on its way.
           </p>
-          <ThemeToggle />
+          <div className="flex flex-wrap items-center gap-2">
+            <ThemeToggle />
+            <MotionToggle label />
+          </div>
         </div>
         {COLUMNS.map((col) => (
           <nav key={col.title} aria-label={col.title} className="md:col-span-3">

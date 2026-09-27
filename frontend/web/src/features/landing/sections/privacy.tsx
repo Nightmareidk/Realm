@@ -1,4 +1,7 @@
 import { GlobeHemisphereWest, Info, LockKey } from "@phosphor-icons/react/dist/ssr";
+import Image from "next/image";
+import styles from "../fun.module.css";
+import { Words } from "../words";
 import { Stage } from "./stage";
 
 const E2EE = [
@@ -8,7 +11,7 @@ const E2EE = [
   "Small voice and video calls, later on",
 ];
 
-const PROTECTED = ["Public Spaces and their channels", "Posts, comments and the feed", "Profiles"];
+const PROTECTED = ["Public Spaces and their rooms", "Posts, comments and the feed", "Profiles"];
 
 const CONTROLS = [
   "Choose who can message you",
@@ -24,14 +27,20 @@ export function PrivacySection() {
         <Stage tone="realm" glow="50% 0%">
           <div className="p-7 md:p-12 lg:p-16">
             <div className="mx-auto max-w-[46rem] text-center">
-              <span className="mx-auto flex size-16 items-center justify-center rounded-xl border border-[color-mix(in_oklch,var(--r-overprint)_40%,transparent)] bg-[color-mix(in_oklch,var(--r-overprint-fill)_18%,transparent)] text-overprint">
-                <LockKey size={30} weight="duotone" />
+              <span className={`${styles.floatA} mx-auto block w-20 md:w-24`} aria-hidden="true">
+                <Image
+                  src="/art/lock.webp"
+                  alt=""
+                  width={240}
+                  height={340}
+                  className="h-auto w-full"
+                />
               </span>
               <h2
                 id="privacy-title"
-                className="display-caps mt-7 text-[clamp(1.9rem,3.2vw,3rem)] text-ink"
+                className="display mt-7 text-[clamp(1.9rem,3.2vw,3rem)] text-ink"
               >
-                Private where it counts. Honest about the rest.
+                <Words>Private where it counts. Honest about the rest.</Words>
               </h2>
               <p className="mx-auto mt-5 max-w-[50ch] text-lg leading-relaxed text-ink-soft">
                 Realm tells you exactly how each part of the app is protected, and never calls

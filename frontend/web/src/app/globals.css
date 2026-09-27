@@ -41,7 +41,8 @@
   --color-boards-solid: var(--r-boards-solid);
   --color-boards-text: var(--r-boards-text);
 
-  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-unbounded), var(--font-atkinson), system-ui, sans-serif;
   --radius-sm: var(--r-radius-sm);
   --radius-md: var(--r-radius-md);
   --radius-lg: var(--r-radius-lg);
@@ -51,29 +52,29 @@
   --ease-drawer: var(--r-ease-drawer);
 }
 
-/* Archivo's width axis carries the cartographic label hierarchy. */
+/* Names, titles and labels inside product UI use the legible body face at a heavier weight. */
 @utility stretch-condensed {
-  font-stretch: 78%;
+  font-family: var(--font-sans);
+  letter-spacing: 0.01em;
 }
 @utility stretch-semi-expanded {
-  font-stretch: 112%;
+  font-family: var(--font-sans);
 }
 @utility stretch-expanded {
-  font-stretch: 125%;
+  font-family: var(--font-display);
 }
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
-/* Display voice: extended capitals, the page's confident headline register. */
-@utility display-caps {
-  font-stretch: 125%;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: -0.005em;
-  line-height: 0.95;
+/* Display voice: wide and modern, sentence case (all caps is harder to read for many people). */
+@utility display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
 }
 
-/* Gentle hover in place for floating fragments. Off under reduced motion. */
+/* Gentle hover in place for floating things. Off under reduced motion. */
 @utility float-slow {
   @media (prefers-reduced-motion: no-preference) {
     animation: realm-float 7s ease-in-out infinite;
@@ -130,16 +131,19 @@
   }
 }
 
-/* Map lettering: expanded capitals with open tracking. Used on map labels only. */
+/* Map lettering: expanded capitals with open tracking. Short labels only. */
 @utility map-lettering {
-  font-stretch: 125%;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.08em;
 }
 
 @layer base {
   html {
+    /* Set here too: otherwise body's clip propagates to the viewport, and mobile browsers still
+       widen the layout viewport to fit floating decorations that hang past the edge. */
+    overflow-x: clip;
     background: var(--r-ground);
     color: var(--r-ink);
     font-family: var(--font-sans);
@@ -155,6 +159,16 @@
     min-height: 100dvh;
     caret-color: var(--r-overprint);
     overflow-x: clip;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+
+  /* Anyone can stop the page moving (Pause motion). Reduced-motion users get it automatically. */
+  :root[data-motion="paused"] *,
+  :root[data-motion="paused"] *::before,
+  :root[data-motion="paused"] *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: must beat every component's own animation shorthand, which resets play-state. */
+    animation-play-state: paused !important;
   }
 
   /* A quiet starfield behind the whole night edition: fixed, non-interactive, no repaint on scroll. */

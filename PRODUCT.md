@@ -49,7 +49,13 @@ The only place where a friend group's private chat, its public communities, and 
 ## Brand Commitments
 
 - Name: **Realm** (trademark search pending before public launch).
-- **Logo (user-supplied, 2026-09-27, binding):** an app-icon tile showing a glowing arch/gateway with a winding lit path running through night hills toward the horizon, under stars. The colors are deep indigo sky, a violet-magenta path, pink-white light and an electric-violet edge. The master files are `frontend/web/brand/` (source PNG plus a 1024 px square), with derived icons in `public/brand/` and `src/app/icon.png` / `apple-icon.png`. The palette is keyed to it: a night ground from its sky and the accent from its path.
+- **Brand direction (user decisions, 2026-09-27, latest):** "another universe". The look is spacey (deep space, portals, planets, aurora light), modern, and only partly cartoonish. The user rejected both the original gateway logo and "The Huddle".
+  - **Logo:** **Eclipse**, a dark world with a glowing aurora rim and a small star.
+  - **Palette:** **Aurora**, lime, teal and ice blue on midnight, plus aurora violet and pink for the four regions.
+  - **Characters:** **astronaut explorers**, stylized semi-cartoon astronauts with glossy suits and iridescent visors that float in zero-g and wave.
+  - **Motion and assets:** keep all the informational content, but add lots of motion (moving text, floating objects, waving characters) and rich 3D assets.
+  - **Accessibility:** stays a priority for dyslexic readers and people with short attention spans (legible body face, clear hierarchy, Pause motion).
+  - **Spaces UI:** must NOT look like Discord. No server-icon rail plus channel list. Rooms appear as tabs, chat as bubbles, with a presence panel.
 - Original identity — must not look or read like Discord, TikTok, Instagram, or Reddit.
 - Modern, premium, polished; fast and responsive; smooth animations that don't make the site heavy.
 - **Dark mode is a first-class experience**, not an inverted afterthought; light mode also supported.

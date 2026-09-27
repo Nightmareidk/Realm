@@ -23,27 +23,26 @@ export const people = {
   ilya: { name: "Ilya Petrov", handle: "ilya", ink: "boards", online: true },
 } satisfies Record<string, DemoPerson>;
 
+/** The viewer, for "your own message" bubbles. */
+export const me = { name: "You", handle: "you", ink: "spaces", online: true } satisfies DemoPerson;
+
 export const space = {
   name: "Late Night Lobby",
-  categories: [
-    {
-      name: "Chat",
-      channels: [
-        { name: "general", kind: "text" as const, unread: false, active: true },
-        { name: "clips", kind: "text" as const, unread: true, active: false },
-        { name: "lfg", kind: "text" as const, unread: false, active: false },
-      ],
-    },
-    {
-      name: "Boards",
-      channels: [
-        { name: "builds-and-guides", kind: "board" as const, unread: true, active: false },
-      ],
-    },
-    {
-      name: "Voice",
-      channels: [{ name: "Squad room", kind: "voice" as const, unread: false, active: false }],
-    },
+  members: 24,
+  /** Rooms as the Space's tabs, in order. */
+  rooms: [
+    { name: "general", kind: "text" as const, unread: 0, active: true },
+    { name: "clips", kind: "text" as const, unread: 3, active: false },
+    { name: "lfg", kind: "text" as const, unread: 0, active: false },
+    { name: "builds-and-guides", kind: "board" as const, unread: 1, active: false },
+    { name: "Squad room", kind: "voice" as const, unread: 0, active: false },
+  ],
+  /** Who's around right now, and what they're up to. */
+  here: [
+    { who: people.noor, doing: "Cutting a clip" },
+    { who: people.kenji, doing: "In a match, 12m" },
+    { who: people.priya, doing: "In #general" },
+    { who: people.tomas, doing: "Queued for ranked" },
   ],
 };
 
@@ -65,6 +64,7 @@ export const chat = [
     time: "9:05 PM",
     text: "posting last night's clip in #clips. it's too good not to",
   },
+  { who: me, time: "9:06 PM", text: "in for ranked. queue at 9:15?", mine: true },
 ];
 
 export const clip = {

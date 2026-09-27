@@ -1,41 +1,51 @@
 import Link from "next/link";
 import { buttonClass } from "@/components/button";
 import { cx } from "@/lib/cx";
-import { GatewayScene } from "../hero/gateway-scene";
-import styles from "../hero/hero.module.css";
+import { Art, Explorer } from "../art";
+import styles from "../fun.module.css";
+import { Words } from "../words";
 
-/**
- * The bookend: the whole gateway, unobstructed this time, with the way in placed inside the
- * arch. The course that started in the hero finishes here.
- */
+/** The send-off: the whole crew waving you through, under an aurora. */
 export function ClosingSection() {
   return (
-    <section aria-labelledby="closing-title" className={cx(styles.hero, "mt-12 lg:mt-20")}>
-      <div
-        className={cx(
-          styles.copy,
-          "relative z-10 mx-auto max-w-[90rem] px-4 pt-24 text-center md:px-8 lg:pt-28",
-        )}
-      >
-        <h2 id="closing-title" className="display-caps text-[clamp(2.2rem,4.6vw,4.25rem)]">
-          Bring your group over.
+    <section
+      aria-labelledby="closing-title"
+      className="relative isolate mt-12 overflow-clip lg:mt-20"
+      style={{
+        background:
+          "radial-gradient(70% 60% at 50% 100%, rgb(45 212 191 / 0.24), transparent 70%), radial-gradient(45% 50% at 15% 40%, rgb(177 239 74 / 0.1), transparent 70%), radial-gradient(45% 50% at 88% 30%, rgb(167 139 250 / 0.18), transparent 70%), linear-gradient(180deg, var(--r-ground), #07111d 60%, var(--r-ground))",
+      }}
+    >
+      <div className="relative mx-auto flex max-w-[90rem] flex-col items-center px-4 pt-24 pb-10 text-center md:px-8 lg:pt-32">
+        <Art name="spark" motion="spin" className="top-16 left-[12%] w-14 md:w-20" />
+        <Art name="heart" motion="b" delay={0.7} className="top-24 right-[14%] w-14 md:w-20" />
+        <Art
+          name="controller"
+          delay={1.3}
+          className="bottom-40 left-[6%] w-20 max-md:hidden md:w-28"
+        />
+        <Art
+          name="bubble"
+          motion="c"
+          delay={0.4}
+          className="right-[6%] bottom-48 w-20 max-md:hidden md:w-24"
+        />
+
+        <h2 id="closing-title" className="display text-[clamp(2.3rem,5vw,4.4rem)] text-ink">
+          <Words>Bring your group over.</Words>
         </h2>
-        <p className="mx-auto mt-5 max-w-[42ch] text-lg leading-relaxed">
-          Create a Space, share one invite link, and everyone lands in the same place.
+        <p className="mt-5 max-w-[46ch] text-lg leading-relaxed text-ink-soft">
+          Create a Space, share one invite link, and everyone lands in the same universe.
         </p>
-      </div>
-      <div className={cx(styles.stage, styles.closingStage)}>
-        <GatewayScene className={styles.scene} />
-        <div className={cx(styles.at, styles.doorway)}>
-          <Link
-            href="/signup"
-            className={cx(
-              buttonClass("primary", "lg"),
-              "shadow-[0_12px_40px_-8px_var(--r-overprint-fill)]",
-            )}
-          >
-            Open Realm
-          </Link>
+        <Link href="/signup" className={cx(buttonClass("primary", "lg"), styles.bouncy, "mt-9")}>
+          Open Realm
+        </Link>
+
+        <div className="mt-14 flex items-end justify-center gap-1 sm:gap-4">
+          <Explorer tone="pink" waving delay={0.9} className="w-20 sm:w-28 md:w-36" />
+          <Explorer tone="teal" waving className="w-24 sm:w-36 md:w-44" />
+          <Explorer tone="violet" waving delay={0.45} className="w-24 sm:w-36 md:w-44" />
+          <Explorer tone="blue" waving delay={1.3} className="w-20 sm:w-28 md:w-36" />
         </div>
       </div>
     </section>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ButtonLink } from "./button";
 import { MobileMenu } from "./mobile-menu";
+import { MotionToggle } from "./motion-toggle";
 import { Wordmark } from "./wordmark";
 
 export const NAV = [
@@ -14,7 +15,7 @@ export const NAV = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-[oklch(0.8_0.06_300/0.12)] bg-[color-mix(in_oklch,var(--r-ground)_72%,transparent)] backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-[oklch(0.85_0.05_220/0.1)] bg-[color-mix(in_oklch,var(--r-ground)_72%,transparent)] backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[90rem] items-center gap-8 px-4 md:px-8">
         <Link href="/" aria-label="Realm home" className="rounded-sm">
           <Wordmark />
@@ -34,6 +35,7 @@ export function SiteHeader() {
           </ul>
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <MotionToggle className="max-sm:hidden" />
           <ButtonLink href="/login" variant="quiet" className="max-sm:hidden">
             Sign in
           </ButtonLink>

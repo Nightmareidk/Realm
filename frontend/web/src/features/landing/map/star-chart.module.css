@@ -1,0 +1,147 @@
+/* The star chart. Motion rules: ease-out, ≤ 240ms for interaction; the flight draw is the
+   section's one authored moment and is skipped entirely under reduced motion. */
+
+.chart {
+  --dim: 0.3;
+}
+
+/* ── Planets ─────────────────────────────────────────────────────────── */
+
+.planet {
+  transition: opacity 220ms var(--r-ease-out);
+}
+
+.chart[data-active] .planet:not([data-on]) {
+  opacity: var(--dim);
+}
+
+.hit {
+  cursor: pointer;
+  outline: none;
+}
+
+.hit:focus-visible {
+  stroke: var(--r-focus);
+  stroke-width: 3px;
+}
+
+.halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 240ms var(--r-ease-out);
+}
+
+.planet[data-on] .halo {
+  transform: scale(1.3);
+}
+
+.label {
+  pointer-events: none;
+}
+
+/* On a phone the chart renders at about a third of its drawn size: letter it larger so the
+   planet names stay readable (≈12px on screen). */
+@media (width < 48rem) {
+  .label {
+    font-size: 34px;
+  }
+}
+
+.orbit {
+  opacity: 0.55;
+  transition:
+    opacity 220ms var(--r-ease-out),
+    stroke 220ms var(--r-ease-out);
+}
+
+.orbit[data-on] {
+  opacity: 1;
+}
+
+/* ── Flight (the logo's rim light, as a route between worlds) ────────── */
+
+.leg {
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: 0;
+}
+
+.waypoint {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .leg {
+    stroke-dashoffset: var(--len);
+    animation: draw var(--dur) linear var(--delay) forwards;
+  }
+
+  .waypoint {
+    opacity: 0;
+    animation: arrive 240ms var(--r-ease-out) var(--delay) forwards;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── Fold-out previews ───────────────────────────────────────────────── */
+
+.panel {
+  position: absolute;
+  z-index: 10;
+  width: min(48%, 30rem);
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px) scale(0.97);
+  transition:
+    opacity 180ms var(--r-ease-out),
+    transform 220ms var(--r-ease-out),
+    visibility 0s linear 220ms;
+}
+
+.panel[data-open] {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  transition:
+    opacity 180ms var(--r-ease-out),
+    transform 220ms var(--r-ease-out),
+    visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .panel[data-open] {
+    transform: none;
+  }
+}
+
+/* On small screens the preview sits under the chart instead of floating over it. */
+@media (width < 48rem) {
+  .panel {
+    position: static;
+    width: auto;
+    display: none;
+    transform: none;
+  }
+  .panel[data-open] {
+    display: block;
+  }
+}

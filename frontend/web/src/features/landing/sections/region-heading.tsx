@@ -1,35 +1,27 @@
 import type { ReactNode } from "react";
-import type { MapGeometry, RegionId } from "../map/geometry";
-import { LocatorMap } from "../map/locator-map";
+import type { RegionId, StarChart } from "../map/star-chart";
+import { SystemLocator } from "../map/system-locator";
+import { Words } from "../words";
 
-/** Section heading with a "you are here" locator instead of an eyebrow label. */
+/** Section heading with a "you are here" system locator instead of an eyebrow label. */
 export function RegionHeading({
-  geometry,
+  chart,
   region,
   id,
   title,
   children,
 }: {
-  geometry: MapGeometry;
+  chart: StarChart;
   region: RegionId;
   id: string;
   title: string;
   children: ReactNode;
 }) {
-  const gridRef = geometry.regions.find((r) => r.id === region)?.gridRef;
   return (
     <div>
-      <div className="flex items-center gap-4">
-        <LocatorMap geometry={geometry} region={region} />
-        <span
-          className="tabular stretch-condensed text-sm font-semibold text-ink-muted"
-          aria-hidden="true"
-        >
-          {gridRef}
-        </span>
-      </div>
-      <h2 id={id} className="display-caps mt-6 text-[clamp(1.9rem,2.9vw,2.75rem)] text-ink">
-        {title}
+      <SystemLocator chart={chart} region={region} />
+      <h2 id={id} className="display mt-6 text-[clamp(1.9rem,2.9vw,2.75rem)] text-ink">
+        <Words>{title}</Words>
       </h2>
       <p className="mt-5 max-w-[44ch] text-lg leading-relaxed text-ink-soft">{children}</p>
     </div>

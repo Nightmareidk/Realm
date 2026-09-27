@@ -26,7 +26,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   return (
     <fieldset className={cx("inline-flex rounded-md border border-rule p-0.5", className)}>
-      <legend className="sr-only">Map edition</legend>
+      <legend className="sr-only">Colour theme</legend>
       {(
         [
           ["night", "Night", Moon],

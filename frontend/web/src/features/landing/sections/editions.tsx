@@ -124,7 +124,7 @@ export function EditionsSection({
       <div className="mx-auto max-w-[90rem] px-4 py-20 md:px-8 lg:py-28">
         <Heading
           id="download-title"
-          className="display-caps max-w-[22ch] text-[clamp(1.9rem,3.2vw,3rem)] text-ink"
+          className="display max-w-[22ch] text-[clamp(1.9rem,3.2vw,3rem)] text-ink"
         >
           The same Realm on every screen.
         </Heading>
@@ -138,13 +138,13 @@ export function EditionsSection({
             className="relative isolate flex flex-col justify-between gap-10 overflow-hidden rounded-xl border border-rule p-7 md:p-9 lg:col-span-5"
             style={{
               background:
-                "radial-gradient(90% 80% at 0% 0%, color-mix(in oklch, var(--r-overprint-fill) 32%, transparent), transparent 65%), var(--r-panel)",
+                "radial-gradient(90% 80% at 0% 0%, color-mix(in oklch, var(--r-spaces-solid) 22%, transparent), transparent 65%), radial-gradient(50% 50% at 0% 0%, color-mix(in oklch, var(--r-overprint-fill) 10%, transparent), transparent 70%), var(--r-panel)",
             }}
           >
             <div>
               <RealmLogo
                 size={56}
-                className="drop-shadow-[0_10px_30px_color-mix(in_oklch,var(--r-overprint-fill)_60%,transparent)]"
+                className="drop-shadow-[0_10px_30px_color-mix(in_oklch,var(--r-spaces-solid)_50%,transparent)]"
               />
               <p className="stretch-semi-expanded mt-5 text-2xl font-bold text-ink">
                 Realm in your browser

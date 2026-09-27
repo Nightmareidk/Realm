@@ -1,0 +1,203 @@
+import * as THREE from "three";
+
+/** Aurora colours for the 3D world (fixed; the scene doesn't change with the theme). */
+export const C = {
+  ink: "#0a1220",
+  midnight: "#060d16",
+  suit: "#eef2f8",
+  suitShade: "#c9d2e3",
+  lime: "#b1ef4a",
+  teal: "#2dd4bf",
+  blue: "#60a5fa",
+  violet: "#a78bfa",
+  pink: "#f472b6",
+  white: "#f7fbff",
+  // Legacy names still used by props
+  mint: "#2dd4bf",
+  amber: "#b1ef4a",
+  sky: "#60a5fa",
+  coral: "#f472b6",
+  coralShade: "#db2777",
+  cream: "#e9eef7",
+  violetDeep: "#312e81",
+} as const;
+
+const cache = new Map<string, THREE.Material>();
+
+/** Glossy vinyl-toy plastic: soft diffuse, strong clearcoat. Materials are shared per colour. */
+export function toy(
+  color: string,
+  opts: { rough?: number; emissive?: string; glow?: number } = {},
+) {
+  const key = `${color}|${opts.rough ?? ""}|${opts.emissive ?? ""}|${opts.glow ?? ""}`;
+  let m = cache.get(key);
+  if (!m) {
+    m = new THREE.MeshPhysicalMaterial({
+      color,
+      roughness: opts.rough ?? 0.42,
+      clearcoat: 1,
+      clearcoatRoughness: 0.18,
+      emissive: opts.emissive ? new THREE.Color(opts.emissive) : undefined,
+      emissiveIntensity: opts.glow ?? 0,
+    });
+    cache.set(key, m);
+  }
+  return m;
+}
+
+/**
+ * A banded planet surface: soft horizontal stripes in lighter and darker shades of one colour,
+ * drawn on a canvas (seeded, so every render matches) and finished in the same clearcoat plastic.
+ */
+export function banded(color: string, seed = (Number.parseInt(color.slice(1), 16) % 997) + 1) {
+  const key = `band|${color}|${seed}`;
+  let m = cache.get(key);
+  if (!m) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 16;
+    canvas.height = 256;
+    const ctx = canvas.getContext("2d");
+    const base = new THREE.Color(color);
+    let a = seed * 9973;
+    const rand = () => {
+      a = (a * 16807) % 2147483647;
+      return a / 2147483647;
+    };
+    if (ctx) {
+      let y = 0;
+      while (y < 256) {
+        const h = 10 + rand() * 34;
+        const c = base
+          .clone()
+          .offsetHSL((rand() - 0.5) * 0.03, (rand() - 0.5) * 0.08, (rand() - 0.55) * 0.14);
+        ctx.fillStyle = `#${c.getHexString()}`;
+        ctx.fillRect(0, y, 16, h + 1);
+        y += h;
+      }
+      // Soften the stripe edges.
+      ctx.filter = "blur(3px)";
+      ctx.drawImage(canvas, 0, 0);
+    }
+    const map = new THREE.CanvasTexture(canvas);
+    map.colorSpace = THREE.SRGBColorSpace;
+    m = new THREE.MeshPhysicalMaterial({
+      map,
+      roughness: 0.5,
+      clearcoat: 1,
+      clearcoatRoughness: 0.2,
+    });
+    cache.set(key, m);
+  }
+  return m;
+}
+
+/** Dark glass with a rainbow thin-film sheen: astronaut visors, the eclipse. */
+export function iridescent(color = "#0b1222") {
+  const key = `iri|${color}`;
+  let m = cache.get(key);
+  if (!m) {
+    m = new THREE.MeshPhysicalMaterial({
+      color,
+      metalness: 0.3,
+      roughness: 0.06,
+      clearcoat: 1,
+      clearcoatRoughness: 0.04,
+      iridescence: 1,
+      iridescenceIOR: 1.35,
+      iridescenceThicknessRange: [180, 900],
+    });
+    cache.set(key, m);
+  }
+  return m;
+}
+
+/** Soft self-lit material for glows (eyes, beacons, rims). */
+export function glow(color: string, opacity = 1) {
+  const key = `glow|${color}|${opacity}`;
+  let m = cache.get(key);
+  if (!m) {
+    m = new THREE.MeshBasicMaterial({
+      color,
+      transparent: opacity < 1,
+      opacity,
+      blending: opacity < 1 ? THREE.AdditiveBlending : THREE.NormalBlending,
+      depthWrite: opacity >= 1,
+      toneMapped: false,
+    });
+    cache.set(key, m);
+  }
+  return m;
+}
+
+/** Flat-shaded matte material for rock and terrain. */
+export function matte(color: string, flat = false) {
+  const key = `matte|${color}|${flat}`;
+  let m = cache.get(key);
+  if (!m) {
+    m = new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: flat });
+    cache.set(key, m);
+  }
+  return m;
+}
+
+/** A four-point sparkle (the Realm spark) as an extrudable shape. */
+export function sparkShape(r = 1, k = 0.22) {
+  const s = new THREE.Shape();
+  const q = r * k;
+  s.moveTo(0, r);
+  s.quadraticCurveTo(q, q, r, 0);
+  s.quadraticCurveTo(q, -q, 0, -r);
+  s.quadraticCurveTo(-q, -q, -r, 0);
+  s.quadraticCurveTo(-q, q, 0, r);
+  return s;
+}
+
+/** A heart as an extrudable shape. */
+export function heartShape(size = 1) {
+  const s = new THREE.Shape();
+  const x = 0;
+  const y = 0;
+  s.moveTo(x, y + 0.35 * size);
+  s.bezierCurveTo(
+    x,
+    y + 0.7 * size,
+    x - 0.55 * size,
+    y + 0.75 * size,
+    x - 0.55 * size,
+    y + 0.35 * size,
+  );
+  s.bezierCurveTo(x - 0.55 * size, y, x - 0.2 * size, y - 0.25 * size, x, y - 0.5 * size);
+  s.bezierCurveTo(
+    x + 0.2 * size,
+    y - 0.25 * size,
+    x + 0.55 * size,
+    y,
+    x + 0.55 * size,
+    y + 0.35 * size,
+  );
+  s.bezierCurveTo(x + 0.55 * size, y + 0.75 * size, x, y + 0.7 * size, x, y + 0.35 * size);
+  return s;
+}
+
+/** An upvote arrow as an extrudable shape. */
+export function arrowShape(size = 1) {
+  const s = new THREE.Shape();
+  const w = size;
+  s.moveTo(0, w * 0.6);
+  s.lineTo(w * 0.5, 0);
+  s.lineTo(w * 0.2, 0);
+  s.lineTo(w * 0.2, -w * 0.55);
+  s.lineTo(-w * 0.2, -w * 0.55);
+  s.lineTo(-w * 0.2, 0);
+  s.lineTo(-w * 0.5, 0);
+  s.closePath();
+  return s;
+}
+
+export const bevel = {
+  bevelEnabled: true,
+  bevelThickness: 0.06,
+  bevelSize: 0.05,
+  bevelSegments: 8,
+  curveSegments: 40,
+};

@@ -1,11 +1,9 @@
 import { inGamut, type Oklch, oklch } from "./color";
 
 /**
- * THE ATLAS — Realm's visual world, keyed to the Realm logo (a lit gateway and a path into
- * a night landscape). A night map: deep indigo ground from the logo's sky, four region inks
- * (mint, amber, sky, coral) that sit against violet without competing, and one violet-magenta
- * overprint (the logo's path) that only ever marks something you can act on.
- * Dark and light are the night and day editions of the same map; night is the default.
+ * AURORA — Realm's visual world: another universe at night.
+ * Midnight surfaces, northern-lights colour (lime, teal, ice blue, violet, pink), and one lime
+ * accent that only ever marks something you can act on. Night is the default edition.
  */
 
 export type Edition = "night" | "day";
@@ -13,10 +11,10 @@ export type RegionName = "spaces" | "feed" | "profiles" | "boards";
 
 /** Each region owns one ink hue across both editions. */
 export const REGION_HUES: Record<RegionName, number> = {
-  spaces: 168, // mint
-  feed: 78, // amber
-  profiles: 226, // sky
-  boards: 30, // coral
+  spaces: 182, // aurora teal
+  feed: 252, // ice blue
+  profiles: 296, // aurora violet
+  boards: 352, // aurora pink
 };
 
 export interface RegionInks {
@@ -116,55 +114,51 @@ function fitEdition(e: EditionTokens): EditionTokens {
 
 const rawEditions: Record<Edition, EditionTokens> = {
   night: {
-    ground: oklch(0.19, 0.045, 279),
-    panel: oklch(0.222, 0.047, 279),
-    panelRaised: oklch(0.258, 0.05, 279),
-    land: oklch(0.255, 0.055, 283),
-    rule: oklch(0.34, 0.05, 280),
-    ruleStrong: oklch(0.54, 0.045, 282),
-    ink: oklch(0.955, 0.012, 290),
-    inkSoft: oklch(0.83, 0.03, 288),
-    inkMuted: oklch(0.7, 0.04, 286),
-    overprint: oklch(0.76, 0.16, 316),
-    overprintFill: oklch(0.56, 0.23, 308),
-    overprintFillHover: oklch(0.515, 0.23, 306),
-    onOverprint: oklch(0.99, 0.006, 316),
-    focus: oklch(0.82, 0.13, 316),
+    ground: oklch(0.155, 0.024, 256),
+    panel: oklch(0.19, 0.027, 256),
+    panelRaised: oklch(0.228, 0.03, 256),
+    land: oklch(0.21, 0.03, 256),
+    rule: oklch(0.31, 0.03, 256),
+    ruleStrong: oklch(0.52, 0.03, 256),
+    ink: oklch(0.965, 0.008, 240),
+    inkSoft: oklch(0.84, 0.02, 245),
+    inkMuted: oklch(0.71, 0.025, 248),
+    overprint: oklch(0.89, 0.2, 128),
+    overprintFill: oklch(0.88, 0.2, 128),
+    overprintFillHover: oklch(0.93, 0.17, 128),
+    onOverprint: oklch(0.2, 0.05, 145),
+    focus: oklch(0.89, 0.2, 128),
     danger: oklch(0.72, 0.17, 22),
-    success: oklch(0.82, 0.13, 165),
-    shadow: oklch(0.08, 0.045, 279),
+    success: oklch(0.85, 0.15, 160),
+    shadow: oklch(0.06, 0.02, 256),
     regions: {
-      spaces: region("night", REGION_HUES.spaces),
-      feed: region("night", REGION_HUES.feed, { fill: { l: 0.36, c: 0.07 }, line: { l: 0.86 } }),
+      spaces: region("night", REGION_HUES.spaces, { fill: { c: 0.06 } }),
+      feed: region("night", REGION_HUES.feed),
       profiles: region("night", REGION_HUES.profiles),
-      boards: region("night", REGION_HUES.boards, { fill: { c: 0.075 } }),
+      boards: region("night", REGION_HUES.boards),
     },
   },
   day: {
-    ground: oklch(0.975, 0.008, 286),
-    panel: oklch(0.99, 0.005, 286),
-    panelRaised: oklch(0.998, 0.002, 286),
-    land: oklch(0.945, 0.018, 286),
-    rule: oklch(0.875, 0.02, 286),
-    ruleStrong: oklch(0.63, 0.035, 284),
-    ink: oklch(0.24, 0.07, 280),
-    inkSoft: oklch(0.38, 0.055, 281),
-    inkMuted: oklch(0.49, 0.045, 283),
-    overprint: oklch(0.52, 0.23, 308),
-    overprintFill: oklch(0.52, 0.23, 308),
-    overprintFillHover: oklch(0.47, 0.22, 306),
-    onOverprint: oklch(0.99, 0.006, 316),
-    focus: oklch(0.52, 0.23, 308),
+    ground: oklch(0.975, 0.006, 240),
+    panel: oklch(0.99, 0.004, 240),
+    panelRaised: oklch(0.998, 0.002, 240),
+    land: oklch(0.945, 0.012, 240),
+    rule: oklch(0.875, 0.014, 245),
+    ruleStrong: oklch(0.62, 0.025, 250),
+    ink: oklch(0.2, 0.03, 256),
+    inkSoft: oklch(0.36, 0.03, 256),
+    inkMuted: oklch(0.47, 0.03, 252),
+    overprint: oklch(0.47, 0.15, 142),
+    overprintFill: oklch(0.5, 0.16, 145),
+    overprintFillHover: oklch(0.45, 0.15, 145),
+    onOverprint: oklch(0.99, 0.005, 140),
+    focus: oklch(0.47, 0.15, 142),
     danger: oklch(0.54, 0.19, 22),
-    success: oklch(0.5, 0.12, 165),
-    shadow: oklch(0.3, 0.07, 280),
+    success: oklch(0.5, 0.12, 160),
+    shadow: oklch(0.3, 0.04, 256),
     regions: {
       spaces: region("day", REGION_HUES.spaces),
-      feed: region("day", REGION_HUES.feed, {
-        fill: { l: 0.925, c: 0.09 },
-        line: { l: 0.58, c: 0.12 },
-        text: { l: 0.47, c: 0.1 },
-      }),
+      feed: region("day", REGION_HUES.feed),
       profiles: region("day", REGION_HUES.profiles),
       boards: region("day", REGION_HUES.boards),
     },

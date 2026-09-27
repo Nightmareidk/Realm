@@ -11,7 +11,7 @@ const base =
   "active:scale-[0.97] select-none";
 
 const variants: Record<Variant, string> = {
-  // Magenta overprint: the only accent, reserved for the primary action.
+  // Aurora lime: the only accent, reserved for the primary action.
   primary: "bg-overprint-fill text-on-overprint hover:bg-overprint-fill-hover",
   secondary: "border border-rule-strong text-ink hover:border-ink-soft hover:bg-panel",
   quiet: "text-ink-soft hover:text-ink",
