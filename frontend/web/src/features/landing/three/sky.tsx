@@ -13,9 +13,8 @@ import { auroraPhase, type DayMix } from "./theme";
  * bright lower edge, rays shimmering along the curtain, waves rolling through it in both
  * directions, and colours that cycle from green through cyan and magenta to pink and violet
  * (in step with the page's nebula, via the wall clock).
- * Day: a bright sky, deep blue overhead and warm at the horizon, glare and rays around the sun,
- * slow cirrus, tinted with solar gold, rose and amber on the same cycle.
- * Changing edition sweeps day up from the horizon (or night down from the top) with a flare.
+ * Day: transparent, so the filmed day sky (day-backdrop.tsx) shows through. Changing edition
+ * sweeps day up from the horizon (or night down from the top) with a warm flare.
  *
  * Colours are authored in display space (no tone mapping or colour-space conversion).
  */
@@ -349,26 +348,6 @@ vec3 nightSky(vec2 uv, vec2 px, float aspect, float textMask) {
   return col + (stars + meteors(px) * (1.0 - textMask * 0.7)) * (1.0 - hide) + aur * (1.0 - river.a * 0.7);
 }
 
-vec3 daySky(vec2 uv, float aspect, float textMask) {
-  vec3 tint = cycle(vec3(1.0, 0.86, 0.55), vec3(1.0, 0.72, 0.68), vec3(1.0, 0.78, 0.48), uPhase);
-  vec3 col = mix(mix(vec3(1.0, 0.93, 0.84), tint, 0.4), vec3(0.58, 0.8, 1.0), smoothstep(0.0, 0.45, uv.y));
-  col = mix(col, vec3(0.2, 0.5, 0.96), smoothstep(0.45, 1.05, uv.y));
-
-  vec2 sd = (uv - uSun) * vec2(aspect, 1.0);
-  float r = length(sd);
-  float a = atan(sd.y, sd.x);
-  col += tint * exp(-r * 3.2) * 0.5;
-  col += vec3(1.0, 0.97, 0.9) * exp(-r * 14.0) * 0.6;
-  float rays = fbm3(vec2(a * 5.0, uTime * 0.04)) * fbm3(vec2(a * 13.0 + 3.0, uTime * 0.07));
-  col += tint * pow(rays, 1.5) * exp(-r * 1.6) * 0.6;
-
-  vec2 cp = vec2(uv.x * aspect, uv.y) * vec2(1.4, 5.0) + vec2(uTime * 0.012, 0.0);
-  float cl = fbm(cp + fbm3(cp * 0.6 + uTime * 0.01) * 1.4);
-  cl = smoothstep(0.52, 0.86, cl) * smoothstep(0.15, 0.7, uv.y);
-  col = mix(col, mix(vec3(1.0, 0.99, 0.97), tint, 0.15), cl * 0.6);
-
-  return mix(col, vec3(0.97, 0.98, 1.0), textMask * 0.3);
-}
 
 void main() {
   vec2 uv = vUv;
@@ -376,26 +355,27 @@ void main() {
   float aspect = uRes.x / uRes.y;
   float textMask = rectMask(uv, uText, 0.22);
 
-  // Day rises from the horizon: lower sky turns first, then the rest.
+  // Day rises from the horizon: the lower sky gives way first, then the rest. By day this canvas
+  // is transparent and the filmed day sky behind it shows through.
   float dm = smoothstep(0.0, 1.0, clamp(uDay * 1.7 - 0.35 - (uv.y - 0.5) * 0.7, 0.0, 1.0));
 
-  vec3 col;
-  if (dm < 0.001) col = nightSky(uv, px, aspect, textMask);
-  else if (dm > 0.999) col = daySky(uv, aspect, textMask);
-  else col = mix(nightSky(uv, px, aspect, textMask), daySky(uv, aspect, textMask), dm);
+  vec3 col = vec3(0.0);
+  if (dm < 0.999) col = mountains(uv, aspect, nightSky(uv, px, aspect, textMask), 0.0);
+  float alpha = 1.0 - dm;
 
-  col = mountains(uv, aspect, col, dm);
-
-  // While the edition changes: a warm sunrise band and a flare bursting from the sun.
+  // While the edition changes: a warm sunrise band and a flare bursting from the centre.
   float change = sin(clamp(uDay, 0.0, 1.0) * 3.14159);
   if (change > 0.001) {
     vec2 sd = (uv - uSun) * vec2(aspect, 1.0);
-    col += vec3(1.0, 0.5, 0.2) * exp(-uv.y * 3.5) * change * 0.45;
-    col += vec3(1.0, 0.86, 0.62) * exp(-length(sd) * 2.4) * change * change * 1.1;
+    float flare = exp(-length(sd) * 2.4) * change * change * 1.1;
+    float band = exp(-uv.y * 3.5) * change * 0.45;
+    col = col * alpha + vec3(1.0, 0.5, 0.2) * band + vec3(1.0, 0.86, 0.62) * flare;
+    alpha = clamp(alpha + band + flare, 0.0, 1.0);
+    col /= max(alpha, 0.001);
   }
 
   col += (hash21(gl_FragCoord.xy + fract(uTime)) - 0.5) / 255.0;
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(col, alpha);
 }
 `;
 
@@ -425,6 +405,7 @@ export function SkyBackdrop({
         depthTest: false,
         depthWrite: false,
         toneMapped: false,
+        transparent: true,
         uniforms: {
           uTime: { value: 0 },
           uDay: { value: 0 },

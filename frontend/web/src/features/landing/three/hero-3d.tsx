@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 import { cx } from "@/lib/cx";
+import { DayBackdrop } from "./day-backdrop";
 import styles from "./three.module.css";
 
 const HeroWorld = dynamic(() => import("./hero-world"), { ssr: false });
@@ -71,6 +72,7 @@ export function HeroScene({ copy }: { copy: ReactNode }) {
       style={{ "--p": 0 } as CSSProperties}
     >
       <div ref={stage} className={cx(styles.hero, styles.stage, "isolate overflow-clip")}>
+        <DayBackdrop />
         {webgl && (
           <div
             className={cx(

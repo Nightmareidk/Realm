@@ -298,7 +298,7 @@ export default function HeroWorld({
         shadows="soft"
         dpr={[1, 1.5]}
         camera={{ position: [0, 0.4, 14], fov: 36, manual: true }}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         eventSource={stage as RefObject<HTMLElement>}
         eventPrefix="client"
         frameloop={!visible ? "never" : still ? "demand" : "always"}

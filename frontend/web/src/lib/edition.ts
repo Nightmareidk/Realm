@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 /**
  * Night and day editions, and the switch between them.
  *
@@ -92,4 +94,25 @@ export async function switchEdition(next: Edition, from?: { x: number; y: number
   } finally {
     running = false;
   }
+}
+
+/**
+ * Whether the day sky is showing. Follows `<html data-theme>`, and also hears the switch's sky
+ * event, so the sky (and the day video) can start changing a beat before the rest of the page.
+ */
+export function useSkyIsDay() {
+  const [day, setDay] = useState(false);
+  useEffect(() => {
+    const sync = () => setDay(currentEdition() === "day");
+    sync();
+    const mo = new MutationObserver(sync);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const onSky = (e: Event) => setDay((e as CustomEvent<string>).detail === "day");
+    window.addEventListener(SKY_EVENT, onSky);
+    return () => {
+      mo.disconnect();
+      window.removeEventListener(SKY_EVENT, onSky);
+    };
+  }, []);
+  return day;
 }

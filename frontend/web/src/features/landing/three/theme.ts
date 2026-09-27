@@ -1,31 +1,11 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { type RefObject, useEffect, useRef, useState } from "react";
-import { SKY_EVENT } from "@/lib/edition";
+import { type RefObject, useEffect, useRef } from "react";
+import { useSkyIsDay } from "@/lib/edition";
 
-const readIsDay = () => document.documentElement.dataset.theme === "day";
-
-/**
- * Whether the sky is day. Follows `<html data-theme>`, but also hears the edition switch's sky
- * event, so the sky can start changing a beat before the rest of the page does.
- */
-export function useIsDay() {
-  const [day, setDay] = useState(false);
-  useEffect(() => {
-    const sync = () => setDay(readIsDay());
-    sync();
-    const mo = new MutationObserver(sync);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const onSky = (e: Event) => setDay((e as CustomEvent<string>).detail === "day");
-    window.addEventListener(SKY_EVENT, onSky);
-    return () => {
-      mo.disconnect();
-      window.removeEventListener(SKY_EVENT, onSky);
-    };
-  }, []);
-  return day;
-}
+/** Whether the sky is day (see lib/edition). */
+export const useIsDay = useSkyIsDay;
 
 /** 0 at night, 1 by day, and every value in between while the scene changes over. */
 export type DayMix = RefObject<number>;

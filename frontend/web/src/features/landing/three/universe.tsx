@@ -84,10 +84,12 @@ function orbitLine(orbit: number, tilt: number) {
  */
 function AsteroidBelt({
   still,
+  mix,
   radius = 6.9,
   count = 160,
 }: {
   still: boolean;
+  mix?: DayMix;
   radius?: number;
   count?: number;
 }) {
@@ -128,7 +130,8 @@ function AsteroidBelt({
     // fades in as the camera pulls back.
     const m = material.current;
     if (m) {
-      m.opacity = THREE.MathUtils.smoothstep(camera.position.z, 10.5, 13);
+      m.opacity =
+        THREE.MathUtils.smoothstep(camera.position.z, 10.5, 13) * (1 - (mix?.current ?? 0));
       if (mesh.current) mesh.current.visible = m.opacity > 0.01;
     }
   });
@@ -160,18 +163,25 @@ export function Orbits({
 } & ThreeElements["group"]) {
   const planets = useRef<(THREE.Group | null)[]>([]);
   const lines = useMemo(() => PLANETS.map((p) => orbitLine(p.orbit, p.tilt)), []);
-  useFrame(({ clock }) => {
+  useFrame(({ clock, camera }) => {
     const m = mix?.current ?? 0;
     for (const line of lines) {
       const mat = line.material as THREE.LineBasicMaterial;
       mat.color.lerpColors(ORBIT_NIGHT, ORBIT_DAY, m);
-      mat.opacity = 0.22 + m * 0.2;
+      // By day there's nothing at the centre to orbit, so the paths fade away.
+      mat.opacity = 0.22 * (1 - m);
+      line.visible = mat.opacity > 0.005;
     }
+    // By day the worlds wait out the portal shot and drift in as the camera pulls back.
+    const k = THREE.MathUtils.smoothstep(camera.position.z, 9.5, 12.5);
+    const s = THREE.MathUtils.lerp(1, k, m);
     const t = still ? 0 : clock.elapsedTime;
     PLANETS.forEach((p, i) => {
       const g = planets.current[i];
       if (!g) return;
       g.position.copy(orbitPoint(p.start + t * p.speed, p.orbit, p.tilt));
+      g.scale.setScalar(Math.max(0.001, s));
+      g.visible = s > 0.01;
     });
   });
   return (
@@ -180,7 +190,7 @@ export function Orbits({
         <primitive key={PLANETS[i]?.id} object={line} />
       ))}
       <group rotation={[0.08, 0, 0]}>
-        <AsteroidBelt still={still} />
+        <AsteroidBelt still={still} mix={mix} />
       </group>
       {PLANETS.map((p, i) => (
         <group
