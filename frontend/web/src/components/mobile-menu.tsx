@@ -24,14 +24,14 @@ export function MobileMenu({ items }: { items: { href: string; label: string }[]
         aria-controls={id}
         aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex size-10 items-center justify-center rounded-md border border-rule text-ink transition-colors duration-160 ease-out hover:border-rule-strong"
+        className="inline-flex size-10 items-center justify-center rounded-full border border-rule text-ink transition-colors duration-160 ease-out hover:border-rule-strong"
       >
         {open ? <X size={18} /> : <List size={18} />}
       </button>
       <div
         id={id}
         className={cx(
-          "fixed inset-x-0 top-16 border-b border-rule bg-ground px-4 pb-6 pt-2 transition-[opacity,transform] duration-200 ease-out md:px-8",
+          "surface fixed inset-x-2 top-[4.5rem] px-5 pb-4 pt-2 transition-[opacity,transform] duration-200 ease-out md:inset-x-4",
           open ? "opacity-100" : "pointer-events-none -translate-y-2 opacity-0",
         )}
         inert={!open}

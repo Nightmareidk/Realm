@@ -50,7 +50,7 @@ export const people = {
     handle: "priya",
     ink: "spaces",
     online: true,
-    avatar: face("astro-violet"),
+    avatar: face("alien-meshy"),
   },
   mateo: {
     name: "Mateo Silva",
@@ -135,7 +135,7 @@ export const chat: ChatMessage[] = [
     clip: {
       title: "the jump that should not have worked",
       duration: "0:42",
-      image: "https://picsum.photos/seed/realm-clip-ridge/640/360",
+      image: "/media/clip-monoliths-wide.webp",
     },
   },
   {
@@ -173,37 +173,37 @@ export const clip = {
   sound: "original sound · noor",
   likes: "12.4k",
   comments: 318,
-  image: "https://picsum.photos/seed/realm-clip-ridge/540/960",
+  image: "/media/clip-monoliths-tall.webp",
 };
 
 export const post = {
   by: people.ilya,
   time: "2h",
   space: "Late Night Lobby",
-  text: "Planning the next arc of our campaign with @noor. Three weekends of notes, zero regrets.",
-  tags: ["#tabletop", "#worldbuilding"],
-  image: "https://picsum.photos/seed/realm-post-map/960/600",
+  text: "Found the glowing gate on last night's run with @noor. Three weekends of hunting for it, zero regrets.",
+  tags: ["#screenshots", "#openworld"],
+  image: "/media/post-gateway.webp",
   likes: 214,
   comments: 31,
   likedBy: [people.noor, people.kenji, people.priya],
-  topComment: { who: people.kenji, text: "the map alone is worth three weekends" },
+  topComment: { who: people.kenji, text: "the light coming off that gate is unreal" },
 };
 
 export const profile = {
   person: people.saoirse,
   pronouns: "she/her",
   bio: "Speedruns, sourdough, and very long voice calls.",
-  banner: "https://picsum.photos/seed/realm-profile-coast/1200/400",
+  banner: "/media/banner-storm.webp",
   followers: 1284,
   following: 312,
   spaces: 9,
   media: [
-    "https://picsum.photos/seed/realm-media-1/400/400",
-    "https://picsum.photos/seed/realm-media-2/400/400",
-    "https://picsum.photos/seed/realm-media-3/400/400",
-    "https://picsum.photos/seed/realm-media-4/400/400",
-    "https://picsum.photos/seed/realm-media-5/400/400",
-    "https://picsum.photos/seed/realm-media-6/400/400",
+    "/media/media-arch.webp",
+    "/media/media-storm.webp",
+    "/media/media-meadow.webp",
+    "/media/media-gate.webp",
+    "/media/media-monoliths.webp",
+    "/media/media-hills.webp",
   ],
 };
 

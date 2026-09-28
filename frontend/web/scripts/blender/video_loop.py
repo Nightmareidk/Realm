@@ -6,16 +6,21 @@ plus a poster image of the first frame. `--start` / `--end` (source frames, from
 first: pick two frames that look alike (a character in the same pose) and the fade can be short.
 `--pingpong` plays the clip forward then backward instead, for footage where no two frames match
 (a camera that keeps drifting): the camera eases out and back, and there's no seam at all.
+`--sharpen` runs an unsharp mask over every frame before encoding (generated footage is soft; 0.5
+is a gentle amount).
 
     blender -b --factory-startup --python video_loop.py -- \
         --in day1.mp4 --out public/video/day-portal.mp4 --poster public/video/day-portal.jpg \
-        --width 1600 --fade 1.2 --crf high [--mirror] [--start 15 --end 135]
+        --width 1600 --fade 1.2 --crf high [--mirror] [--start 15 --end 135] [--sharpen 0.5]
 """
 
 import argparse
 import sys
+import tempfile
+from pathlib import Path
 
 import bpy
+import numpy as np
 
 
 def parse():
@@ -31,7 +36,38 @@ def parse():
     p.add_argument("--start", type=int, default=1, help="first source frame")
     p.add_argument("--end", type=int, default=0, help="last source frame (0: the clip's end)")
     p.add_argument("--pingpong", action="store_true", help="forward then backward, no crossfade")
+    p.add_argument("--sharpen", type=float, default=0.0, help="unsharp mask amount (0: off)")
     return p.parse_args(argv)
+
+
+def box_blur(a, r, axis):
+    """Mean over a window of 2r+1 along one axis, edges clamped (a running sum, so it's fast)."""
+    pad = [(0, 0)] * a.ndim
+    pad[axis] = (r + 1, r)
+    c = np.cumsum(np.pad(a, pad, mode="edge"), axis=axis, dtype=np.float32)
+    n = a.shape[axis]
+    hi = np.take(c, np.arange(2 * r + 1, 2 * r + 1 + n), axis=axis)
+    lo = np.take(c, np.arange(0, n), axis=axis)
+    return (hi - lo) / (2 * r + 1)
+
+
+def unsharp(path, amount, radius=2):
+    """Sharpen one frame in place: add back the difference from a soft (three-box ~ Gaussian) blur."""
+    img = bpy.data.images.load(str(path))
+    w, h = img.size
+    px = np.empty(w * h * 4, dtype=np.float32)
+    img.pixels.foreach_get(px)
+    a = px.reshape(h, w, 4)
+    rgb = a[..., :3]
+    blur = rgb
+    for _ in range(3):
+        blur = box_blur(box_blur(blur, radius, 0), radius, 1)
+    a[..., :3] = np.clip(rgb + amount * (rgb - blur), 0.0, 1.0)
+    img.pixels.foreach_set(a.ravel())
+    img.filepath_raw = str(path)
+    img.file_format = "PNG"
+    img.save()
+    bpy.data.images.remove(img)
 
 
 def main():
@@ -97,6 +133,25 @@ def main():
     scene.render.image_settings.quality = 84
     scene.render.filepath = a.poster
     bpy.ops.render.render(write_still=True)
+
+    if a.sharpen > 0:
+        # Render the loop to lossless frames, sharpen each, then encode the frames instead.
+        tmp = Path(tempfile.mkdtemp(prefix="realm-loop-"))
+        scene.render.image_settings.media_type = "IMAGE"
+        scene.render.image_settings.file_format = "PNG"
+        scene.render.image_settings.color_mode = "RGB"
+        scene.render.filepath = str(tmp / "f_")
+        bpy.ops.render.render(animation=True)
+        frames = sorted(tmp.glob("f_*.png"))
+        for f in frames:
+            unsharp(f, a.sharpen)
+        for strip in list(strips):
+            strips.remove(strip)
+        seq = strips.new_image("frames", str(frames[0]), 1, 1)
+        for f in frames[1:]:
+            seq.elements.append(f.name)
+        seq.frame_final_duration = len(frames)
+        print(f"loop: sharpened {len(frames)} frames by {a.sharpen}")
 
     scene.render.image_settings.media_type = "VIDEO"
     scene.render.image_settings.file_format = "FFMPEG"

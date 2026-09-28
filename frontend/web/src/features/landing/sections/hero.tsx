@@ -1,3 +1,4 @@
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { buttonClass } from "@/components/button";
 import { cx } from "@/lib/cx";
@@ -22,7 +23,10 @@ export function Hero() {
     <HeroScene
       copy={
         <>
-          <h1 id="hero-title" className="display text-[clamp(2.4rem,4.6vw,4.5rem)] text-ink">
+          <h1
+            id="hero-title"
+            className="display text-[clamp(2.7rem,5vw,4.9rem)] leading-[0.98] font-bold text-ink"
+          >
             <span className="sr-only">
               One place to chat, post, share clips, vote and hang out with your crew.
             </span>
@@ -34,17 +38,22 @@ export function Hero() {
               with your crew.
             </span>
           </h1>
-          <p className="mt-6 max-w-[40ch] text-lg leading-relaxed text-ink-soft md:text-xl">
+          <p className="lead mt-6 max-w-[38ch]">
             Spaces, a feed, profiles and discussion boards. Four apps, one Realm. Early access is
             open in your browser.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/signup" className={buttonClass("primary", "lg")}>
               Open Realm
+              <ArrowRight
+                size={18}
+                weight="bold"
+                className="transition-transform duration-200 ease-out group-hover/button:translate-x-0.5"
+              />
             </Link>
             <Link
               href="#download"
-              className={cx(buttonClass("secondary", "lg"), "bg-ground/30 backdrop-blur-sm")}
+              className={cx(buttonClass("secondary", "lg"), "backdrop-blur-md")}
             >
               Download
             </Link>

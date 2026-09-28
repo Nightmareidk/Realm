@@ -59,9 +59,7 @@ export function BoardPreview({ variant = "full" }: { variant?: "full" | "compact
               <span className="font-semibold text-ink-soft">{thread.by.name}</span>
               <span className="tabular">{thread.time}</span>
             </p>
-            <h3 className="stretch-semi-expanded mt-2 text-base font-bold leading-snug text-ink">
-              {thread.title}
-            </h3>
+            <h3 className="mt-2 text-base font-bold leading-snug text-ink">{thread.title}</h3>
             {!compact && <p className="mt-2 text-sm leading-snug text-ink-soft">{thread.body}</p>}
             <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-ink-muted">
               <ChatCircle size={15} />

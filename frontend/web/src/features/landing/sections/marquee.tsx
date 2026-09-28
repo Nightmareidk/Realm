@@ -1,10 +1,11 @@
+import Image from "next/image";
 import type { CSSProperties } from "react";
 import { cx } from "@/lib/cx";
 import { people } from "../demo";
 import styles from "../fun.module.css";
 
 type Ink = "spaces" | "feed" | "profiles" | "boards";
-type Message = { who: { name: string; ink: Ink }; text: string };
+type Message = { who: { name: string; ink: Ink; avatar?: string }; text: string };
 
 const { noor, tomas, kenji, amara, priya, ilya, mateo, saoirse } = people;
 
@@ -29,13 +30,6 @@ const ROW_B: Message[] = [
   { who: saoirse, text: "new pfp who dis" },
 ];
 
-const initials = (name: string) =>
-  name
-    .split(" ")
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2);
-
 function Row({ items, reverse, speed }: { items: Message[]; reverse?: boolean; speed: number }) {
   // Two copies back to back so the loop is seamless; the copy number keeps keys unique.
   const doubled = [0, 1].flatMap((copy) => items.map((m) => ({ copy, ...m })));
@@ -51,7 +45,10 @@ function Row({ items, reverse, speed }: { items: Message[]; reverse?: boolean; s
             className={styles.sticker}
             style={{ "--tone": `var(--r-${who.ink}-solid)` } as CSSProperties}
           >
-            <span className={styles.stickerAvatar}>{initials(who.name)}</span>
+            <span className={styles.stickerAvatar}>
+              {who.avatar && <Image src={who.avatar} alt="" width={72} height={72} />}
+            </span>
+            <span className={styles.stickerName}>{who.name.split(" ")[0]}</span>
             {text}
           </span>
         ))}
@@ -63,7 +60,7 @@ function Row({ items, reverse, speed }: { items: Message[]; reverse?: boolean; s
 /** Two rows of chat messages drifting past: the sound of a busy Realm. Decorative. */
 export function StickerMarquee() {
   return (
-    <section aria-hidden="true" className="relative overflow-clip py-8">
+    <section aria-hidden="true" className="relative overflow-clip py-10">
       <div className="grid gap-3 [mask-image:linear-gradient(90deg,transparent,#000_10%,#000_90%,transparent)]">
         <Row items={ROW_A} speed={70} />
         <Row items={ROW_B} speed={80} reverse />

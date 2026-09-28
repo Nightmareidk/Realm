@@ -1,127 +1,157 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-27T03:30:00Z",
+  "generatedAt": "2026-09-28T17:30:00Z",
   "title": "Design System: Realm",
   "extensions": {
     "colorMeta": {
-      "midnight-ground": {
+      "ink-night-ground": {
         "role": "neutral",
-        "displayName": "Midnight Ground",
-        "canonical": "oklch(0.15 0.045 278)",
+        "displayName": "Ink Night Ground",
+        "canonical": "oklch(0.135 0.036 280)",
         "tonalRamp": [
-          "oklch(0.15 0.045 278.0)",
-          "oklch(0.264 0.045 278.0)",
-          "oklch(0.379 0.045 278.0)",
-          "oklch(0.493 0.045 278.0)",
-          "oklch(0.607 0.045 278.0)",
-          "oklch(0.721 0.045 278.0)",
-          "oklch(0.836 0.045 278.0)",
-          "oklch(0.95 0.045 278.0)"
+          "oklch(0.15 0.036 280.0)",
+          "oklch(0.264 0.036 280.0)",
+          "oklch(0.379 0.036 280.0)",
+          "oklch(0.493 0.036 280.0)",
+          "oklch(0.607 0.036 280.0)",
+          "oklch(0.721 0.036 280.0)",
+          "oklch(0.836 0.036 280.0)",
+          "oklch(0.95 0.036 280.0)"
+        ]
+      },
+      "deep-blue-sky": {
+        "role": "neutral",
+        "displayName": "Deep Blue Sky",
+        "canonical": "oklch(0.13 0.042 268)",
+        "tonalRamp": [
+          "oklch(0.15 0.042 268.0)",
+          "oklch(0.264 0.042 268.0)",
+          "oklch(0.379 0.042 268.0)",
+          "oklch(0.493 0.042 268.0)",
+          "oklch(0.607 0.042 268.0)",
+          "oklch(0.721 0.042 268.0)",
+          "oklch(0.836 0.042 268.0)",
+          "oklch(0.95 0.042 268.0)"
+        ]
+      },
+      "violet-sky": {
+        "role": "neutral",
+        "displayName": "Violet Sky",
+        "canonical": "oklch(0.14 0.05 296)",
+        "tonalRamp": [
+          "oklch(0.15 0.05 296.0)",
+          "oklch(0.264 0.05 296.0)",
+          "oklch(0.379 0.05 296.0)",
+          "oklch(0.493 0.05 296.0)",
+          "oklch(0.607 0.05 296.0)",
+          "oklch(0.721 0.05 296.0)",
+          "oklch(0.836 0.05 296.0)",
+          "oklch(0.95 0.05 296.0)"
         ]
       },
       "panel": {
         "role": "neutral",
         "displayName": "Panel",
-        "canonical": "oklch(0.19 0.05 280)",
+        "canonical": "oklch(0.175 0.04 282)",
         "tonalRamp": [
-          "oklch(0.15 0.05 280.0)",
-          "oklch(0.264 0.05 280.0)",
-          "oklch(0.379 0.05 280.0)",
-          "oklch(0.493 0.05 280.0)",
-          "oklch(0.607 0.05 280.0)",
-          "oklch(0.721 0.05 280.0)",
-          "oklch(0.836 0.05 280.0)",
-          "oklch(0.95 0.05 280.0)"
+          "oklch(0.15 0.04 282.0)",
+          "oklch(0.264 0.04 282.0)",
+          "oklch(0.379 0.04 282.0)",
+          "oklch(0.493 0.04 282.0)",
+          "oklch(0.607 0.04 282.0)",
+          "oklch(0.721 0.04 282.0)",
+          "oklch(0.836 0.04 282.0)",
+          "oklch(0.95 0.04 282.0)"
         ]
       },
       "panel-raised": {
         "role": "neutral",
         "displayName": "Panel Raised",
-        "canonical": "oklch(0.232 0.055 282)",
+        "canonical": "oklch(0.215 0.045 284)",
         "tonalRamp": [
-          "oklch(0.15 0.055 282.0)",
-          "oklch(0.264 0.055 282.0)",
-          "oklch(0.379 0.055 282.0)",
-          "oklch(0.493 0.055 282.0)",
-          "oklch(0.607 0.055 282.0)",
-          "oklch(0.721 0.055 282.0)",
-          "oklch(0.836 0.055 282.0)",
-          "oklch(0.95 0.055 282.0)"
+          "oklch(0.15 0.045 284.0)",
+          "oklch(0.264 0.045 284.0)",
+          "oklch(0.379 0.045 284.0)",
+          "oklch(0.493 0.045 284.0)",
+          "oklch(0.607 0.045 284.0)",
+          "oklch(0.721 0.045 284.0)",
+          "oklch(0.836 0.045 284.0)",
+          "oklch(0.95 0.045 284.0)"
         ]
       },
       "rule": {
         "role": "neutral",
         "displayName": "Rule",
-        "canonical": "oklch(0.32 0.05 282)",
+        "canonical": "oklch(0.29 0.04 284)",
         "tonalRamp": [
-          "oklch(0.15 0.05 282.0)",
-          "oklch(0.264 0.05 282.0)",
-          "oklch(0.379 0.05 282.0)",
-          "oklch(0.493 0.05 282.0)",
-          "oklch(0.607 0.05 282.0)",
-          "oklch(0.721 0.05 282.0)",
-          "oklch(0.836 0.05 282.0)",
-          "oklch(0.95 0.05 282.0)"
+          "oklch(0.15 0.04 284.0)",
+          "oklch(0.264 0.04 284.0)",
+          "oklch(0.379 0.04 284.0)",
+          "oklch(0.493 0.04 284.0)",
+          "oklch(0.607 0.04 284.0)",
+          "oklch(0.721 0.04 284.0)",
+          "oklch(0.836 0.04 284.0)",
+          "oklch(0.95 0.04 284.0)"
         ]
       },
       "rule-strong": {
         "role": "neutral",
         "displayName": "Rule Strong",
-        "canonical": "oklch(0.55 0.05 285)",
+        "canonical": "oklch(0.54 0.045 286)",
         "tonalRamp": [
-          "oklch(0.15 0.05 285.0)",
-          "oklch(0.264 0.05 285.0)",
-          "oklch(0.379 0.05 285.0)",
-          "oklch(0.493 0.05 285.0)",
-          "oklch(0.607 0.05 285.0)",
-          "oklch(0.721 0.05 285.0)",
-          "oklch(0.836 0.05 285.0)",
-          "oklch(0.95 0.05 285.0)"
+          "oklch(0.15 0.045 286.0)",
+          "oklch(0.264 0.045 286.0)",
+          "oklch(0.379 0.045 286.0)",
+          "oklch(0.493 0.045 286.0)",
+          "oklch(0.607 0.045 286.0)",
+          "oklch(0.721 0.045 286.0)",
+          "oklch(0.836 0.045 286.0)",
+          "oklch(0.95 0.045 286.0)"
         ]
       },
       "starlight-ink": {
         "role": "neutral",
         "displayName": "Starlight Ink",
-        "canonical": "oklch(0.97 0.012 285)",
+        "canonical": "oklch(0.975 0.008 285)",
         "tonalRamp": [
-          "oklch(0.15 0.012 285.0)",
-          "oklch(0.264 0.012 285.0)",
-          "oklch(0.379 0.012 285.0)",
-          "oklch(0.493 0.012 285.0)",
-          "oklch(0.607 0.012 285.0)",
-          "oklch(0.721 0.012 285.0)",
-          "oklch(0.836 0.012 285.0)",
-          "oklch(0.95 0.012 285.0)"
+          "oklch(0.15 0.008 285.0)",
+          "oklch(0.264 0.008 285.0)",
+          "oklch(0.379 0.008 285.0)",
+          "oklch(0.493 0.008 285.0)",
+          "oklch(0.607 0.008 285.0)",
+          "oklch(0.721 0.008 285.0)",
+          "oklch(0.836 0.008 285.0)",
+          "oklch(0.95 0.008 285.0)"
         ]
       },
       "ink-soft": {
         "role": "neutral",
         "displayName": "Ink Soft",
-        "canonical": "oklch(0.85 0.028 285)",
+        "canonical": "oklch(0.86 0.022 285)",
         "tonalRamp": [
-          "oklch(0.15 0.028 285.0)",
-          "oklch(0.264 0.028 285.0)",
-          "oklch(0.379 0.028 285.0)",
-          "oklch(0.493 0.028 285.0)",
-          "oklch(0.607 0.028 285.0)",
-          "oklch(0.721 0.028 285.0)",
-          "oklch(0.836 0.028 285.0)",
-          "oklch(0.95 0.028 285.0)"
+          "oklch(0.15 0.022 285.0)",
+          "oklch(0.264 0.022 285.0)",
+          "oklch(0.379 0.022 285.0)",
+          "oklch(0.493 0.022 285.0)",
+          "oklch(0.607 0.022 285.0)",
+          "oklch(0.721 0.022 285.0)",
+          "oklch(0.836 0.022 285.0)",
+          "oklch(0.95 0.022 285.0)"
         ]
       },
       "ink-muted": {
         "role": "neutral",
         "displayName": "Ink Muted",
-        "canonical": "oklch(0.73 0.038 285)",
+        "canonical": "oklch(0.745 0.03 285)",
         "tonalRamp": [
-          "oklch(0.15 0.038 285.0)",
-          "oklch(0.264 0.038 285.0)",
-          "oklch(0.379 0.038 285.0)",
-          "oklch(0.493 0.038 285.0)",
-          "oklch(0.607 0.038 285.0)",
-          "oklch(0.721 0.038 285.0)",
-          "oklch(0.836 0.038 285.0)",
-          "oklch(0.95 0.038 285.0)"
+          "oklch(0.15 0.03 285.0)",
+          "oklch(0.264 0.03 285.0)",
+          "oklch(0.379 0.03 285.0)",
+          "oklch(0.493 0.03 285.0)",
+          "oklch(0.607 0.03 285.0)",
+          "oklch(0.721 0.03 285.0)",
+          "oklch(0.836 0.03 285.0)",
+          "oklch(0.95 0.03 285.0)"
         ]
       },
       "molten-amber": {
@@ -169,79 +199,124 @@
           "oklch(0.95 0.06 50.0)"
         ]
       },
-      "crimson-coral": {
-        "role": "primary",
-        "displayName": "Crimson Coral",
-        "canonical": "oklch(0.56 0.2 30)",
-        "tonalRamp": [
-          "oklch(0.15 0.2 30.0)",
-          "oklch(0.264 0.2 30.0)",
-          "oklch(0.379 0.2 30.0)",
-          "oklch(0.493 0.2 30.0)",
-          "oklch(0.607 0.2 30.0)",
-          "oklch(0.721 0.2 30.0)",
-          "oklch(0.836 0.2 30.0)",
-          "oklch(0.95 0.2 30.0)"
-        ]
-      },
-      "crimson-ink": {
-        "role": "primary",
-        "displayName": "Crimson Ink",
-        "canonical": "oklch(0.48 0.18 28)",
-        "tonalRamp": [
-          "oklch(0.15 0.18 28.0)",
-          "oklch(0.264 0.18 28.0)",
-          "oklch(0.379 0.18 28.0)",
-          "oklch(0.493 0.18 28.0)",
-          "oklch(0.607 0.18 28.0)",
-          "oklch(0.721 0.18 28.0)",
-          "oklch(0.836 0.18 28.0)",
-          "oklch(0.95 0.18 28.0)"
-        ]
-      },
-      "on-crimson": {
-        "role": "primary",
-        "displayName": "On Crimson",
-        "canonical": "oklch(0.99 0.008 60)",
-        "tonalRamp": [
-          "oklch(0.15 0.008 60.0)",
-          "oklch(0.264 0.008 60.0)",
-          "oklch(0.379 0.008 60.0)",
-          "oklch(0.493 0.008 60.0)",
-          "oklch(0.607 0.008 60.0)",
-          "oklch(0.721 0.008 60.0)",
-          "oklch(0.836 0.008 60.0)",
-          "oklch(0.95 0.008 60.0)"
-        ]
-      },
-      "apricot-ground": {
+      "peach-sky": {
         "role": "neutral",
-        "displayName": "Apricot Ground",
-        "canonical": "oklch(0.91 0.05 50)",
+        "displayName": "Peach Sky",
+        "canonical": "oklch(0.925 0.045 55)",
         "tonalRamp": [
-          "oklch(0.15 0.05 50.0)",
-          "oklch(0.264 0.05 50.0)",
-          "oklch(0.379 0.05 50.0)",
-          "oklch(0.493 0.05 50.0)",
-          "oklch(0.607 0.05 50.0)",
-          "oklch(0.721 0.05 50.0)",
-          "oklch(0.836 0.05 50.0)",
-          "oklch(0.95 0.05 50.0)"
+          "oklch(0.15 0.045 55.0)",
+          "oklch(0.264 0.045 55.0)",
+          "oklch(0.379 0.045 55.0)",
+          "oklch(0.493 0.045 55.0)",
+          "oklch(0.607 0.045 55.0)",
+          "oklch(0.721 0.045 55.0)",
+          "oklch(0.836 0.045 55.0)",
+          "oklch(0.95 0.045 55.0)"
         ]
       },
-      "maroon-ink": {
+      "rose-sky": {
         "role": "neutral",
-        "displayName": "Maroon Ink",
-        "canonical": "oklch(0.24 0.06 18)",
+        "displayName": "Rose Sky",
+        "canonical": "oklch(0.915 0.042 12)",
         "tonalRamp": [
-          "oklch(0.15 0.06 18.0)",
-          "oklch(0.264 0.06 18.0)",
-          "oklch(0.379 0.06 18.0)",
-          "oklch(0.493 0.06 18.0)",
-          "oklch(0.607 0.06 18.0)",
-          "oklch(0.721 0.06 18.0)",
-          "oklch(0.836 0.06 18.0)",
-          "oklch(0.95 0.06 18.0)"
+          "oklch(0.15 0.042 12.0)",
+          "oklch(0.264 0.042 12.0)",
+          "oklch(0.379 0.042 12.0)",
+          "oklch(0.493 0.042 12.0)",
+          "oklch(0.607 0.042 12.0)",
+          "oklch(0.721 0.042 12.0)",
+          "oklch(0.836 0.042 12.0)",
+          "oklch(0.95 0.042 12.0)"
+        ]
+      },
+      "lilac-sky": {
+        "role": "neutral",
+        "displayName": "Lilac Sky",
+        "canonical": "oklch(0.905 0.04 305)",
+        "tonalRamp": [
+          "oklch(0.15 0.04 305.0)",
+          "oklch(0.264 0.04 305.0)",
+          "oklch(0.379 0.04 305.0)",
+          "oklch(0.493 0.04 305.0)",
+          "oklch(0.607 0.04 305.0)",
+          "oklch(0.721 0.04 305.0)",
+          "oklch(0.836 0.04 305.0)",
+          "oklch(0.95 0.04 305.0)"
+        ]
+      },
+      "warm-pearl": {
+        "role": "neutral",
+        "displayName": "Warm Pearl",
+        "canonical": "oklch(0.972 0.016 42)",
+        "tonalRamp": [
+          "oklch(0.15 0.016 42.0)",
+          "oklch(0.264 0.016 42.0)",
+          "oklch(0.379 0.016 42.0)",
+          "oklch(0.493 0.016 42.0)",
+          "oklch(0.607 0.016 42.0)",
+          "oklch(0.721 0.016 42.0)",
+          "oklch(0.836 0.016 42.0)",
+          "oklch(0.95 0.016 42.0)"
+        ]
+      },
+      "plum-ink": {
+        "role": "neutral",
+        "displayName": "Plum Ink",
+        "canonical": "oklch(0.25 0.075 345)",
+        "tonalRamp": [
+          "oklch(0.15 0.075 345.0)",
+          "oklch(0.264 0.075 345.0)",
+          "oklch(0.379 0.075 345.0)",
+          "oklch(0.493 0.075 345.0)",
+          "oklch(0.607 0.075 345.0)",
+          "oklch(0.721 0.075 345.0)",
+          "oklch(0.836 0.075 345.0)",
+          "oklch(0.95 0.075 345.0)"
+        ]
+      },
+      "coral": {
+        "role": "primary",
+        "displayName": "Coral",
+        "canonical": "oklch(0.575 0.19 30)",
+        "tonalRamp": [
+          "oklch(0.15 0.19 30.0)",
+          "oklch(0.264 0.19 30.0)",
+          "oklch(0.379 0.19 30.0)",
+          "oklch(0.493 0.19 30.0)",
+          "oklch(0.607 0.19 30.0)",
+          "oklch(0.721 0.19 30.0)",
+          "oklch(0.836 0.19 30.0)",
+          "oklch(0.95 0.19 30.0)"
+        ]
+      },
+      "coral-ink": {
+        "role": "primary",
+        "displayName": "Coral Ink",
+        "canonical": "oklch(0.5 0.18 26)",
+        "tonalRamp": [
+          "oklch(0.15 0.18 26.0)",
+          "oklch(0.264 0.18 26.0)",
+          "oklch(0.379 0.18 26.0)",
+          "oklch(0.493 0.18 26.0)",
+          "oklch(0.607 0.18 26.0)",
+          "oklch(0.721 0.18 26.0)",
+          "oklch(0.836 0.18 26.0)",
+          "oklch(0.95 0.18 26.0)"
+        ]
+      },
+      "on-coral": {
+        "role": "primary",
+        "displayName": "On Coral",
+        "canonical": "oklch(0.995 0.005 60)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 60.0)",
+          "oklch(0.264 0.005 60.0)",
+          "oklch(0.379 0.005 60.0)",
+          "oklch(0.493 0.005 60.0)",
+          "oklch(0.607 0.005 60.0)",
+          "oklch(0.721 0.005 60.0)",
+          "oklch(0.836 0.005 60.0)",
+          "oklch(0.95 0.005 60.0)"
         ]
       },
       "spaces-cyan": {
@@ -322,27 +397,31 @@
       "success": {
         "role": "neutral",
         "displayName": "Success",
-        "canonical": "oklch(0.85 0.15 160)",
+        "canonical": "oklch(0.84 0.14 165)",
         "tonalRamp": [
-          "oklch(0.15 0.15 160.0)",
-          "oklch(0.264 0.15 160.0)",
-          "oklch(0.379 0.15 160.0)",
-          "oklch(0.493 0.15 160.0)",
-          "oklch(0.607 0.15 160.0)",
-          "oklch(0.721 0.15 160.0)",
-          "oklch(0.836 0.15 160.0)",
-          "oklch(0.95 0.15 160.0)"
+          "oklch(0.15 0.14 165.0)",
+          "oklch(0.264 0.14 165.0)",
+          "oklch(0.379 0.14 165.0)",
+          "oklch(0.493 0.14 165.0)",
+          "oklch(0.607 0.14 165.0)",
+          "oklch(0.721 0.14 165.0)",
+          "oklch(0.836 0.14 165.0)",
+          "oklch(0.95 0.14 165.0)"
         ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Hero and closing headlines only."
+        "purpose": "Hero and closing headlines, Bricolage Grotesque at 700."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Section headings, words rising in on scroll."
+        "purpose": "Section headings, words rising in and unblurring on scroll."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "The paragraph under a headline, a size up from body."
       },
       "title": {
         "displayName": "Title",
@@ -350,7 +429,7 @@
       },
       "body": {
         "displayName": "Body",
-        "purpose": "All reading copy, 40 to 52ch."
+        "purpose": "All reading copy, 38 to 52ch."
       },
       "label": {
         "displayName": "Label",
@@ -359,14 +438,19 @@
     },
     "shadows": [
       {
-        "name": "float",
-        "value": "drop-shadow(0 18px 24px rgb(2 8 18 / 0.5))",
-        "purpose": "Under every floating 3D render."
+        "name": "surface",
+        "value": "inset 0 1px 0 var(--surface-edge), 0 1px 2px shadow/18%, 0 40px 80px -40px shadow/60%",
+        "purpose": "Cards and tiles floating on the sky."
       },
       {
-        "name": "window",
-        "value": "0 40px 80px -30px rgb(2 8 18 / 0.9)",
-        "purpose": "Showcase app window and phone."
+        "name": "preview",
+        "value": "0 36px 70px -34px color-mix(in oklch, var(--r-shadow) 85%, transparent)",
+        "purpose": "Product windows."
+      },
+      {
+        "name": "float",
+        "value": "drop-shadow(0 22px 24px color-mix(in oklch, var(--r-shadow) 55%, transparent))",
+        "purpose": "Under every character render."
       },
       {
         "name": "bubble-glow",
@@ -404,6 +488,21 @@
         "name": "flight",
         "value": "1800ms",
         "purpose": "The star chart's flight path draw, once."
+      },
+      {
+        "name": "tilt-in",
+        "value": "view() entry 0% to cover 42%",
+        "purpose": "The product shot tipping up from 26 degrees as it scrolls in."
+      },
+      {
+        "name": "deck",
+        "value": "view timeline of the next card, entry 0% to 100%",
+        "purpose": "The four world cards stacking: the covered card scales to 0.94 and dims."
+      },
+      {
+        "name": "rise-in",
+        "value": "view() entry, staggered by --i",
+        "purpose": "The cast rising onto the horizon from the middle outwards."
       }
     ],
     "breakpoints": [
@@ -430,23 +529,23 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The one action per view (Open Realm). Lime with deep green text.",
+      "description": "The one action per view (Open Realm). A molten amber pill with deep brown text (coral with white text by day).",
       "html": "<button class=\"ds-btn-primary\">Open Realm</button>",
-      "css": ".ds-btn-primary{display:inline-flex;align-items:center;height:48px;padding:0 20px;border:0;border-radius:var(--r-radius-md,6px);background:var(--r-overprint-fill,oklch(0.88 0.2 128));color:var(--r-on-overprint,oklch(0.2 0.05 145));font:600 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:background-color 160ms cubic-bezier(0.23,1,0.32,1),transform 160ms cubic-bezier(0.23,1,0.32,1)}.ds-btn-primary:hover{background:var(--r-overprint-fill-hover,oklch(0.93 0.17 128))}.ds-btn-primary:active{transform:scale(0.97)}.ds-btn-primary:focus-visible{outline:2px solid var(--r-focus,oklch(0.89 0.2 128));outline-offset:3px}"
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;height:52px;padding:0 24px;border:0;border-radius:999px;background:var(--r-overprint-fill,oklch(0.8 0.16 68));box-shadow:inset 0 1px 0 oklch(1 0 0/0.35),0 10px 24px -12px var(--r-overprint-fill,oklch(0.8 0.16 68));color:var(--r-on-overprint,oklch(0.2 0.05 145));font:600 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:background-color 160ms cubic-bezier(0.23,1,0.32,1),transform 160ms cubic-bezier(0.23,1,0.32,1)}.ds-btn-primary:hover{background:var(--r-overprint-fill-hover,oklch(0.93 0.17 128))}.ds-btn-primary:active{transform:scale(0.97)}.ds-btn-primary:focus-visible{outline:2px solid var(--r-focus,oklch(0.89 0.2 128));outline-offset:3px}"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Outline button for the second choice (Download).",
+      "description": "Outline pill for the second choice (Download).",
       "html": "<button class=\"ds-btn-secondary\">Download</button>",
-      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;height:48px;padding:0 20px;border:1px solid var(--r-rule-strong,oklch(0.52 0.03 256));border-radius:var(--r-radius-md,6px);background:transparent;color:var(--r-ink,oklch(0.965 0.008 240));font:600 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:background-color 160ms cubic-bezier(0.23,1,0.32,1),border-color 160ms}.ds-btn-secondary:hover{border-color:var(--r-ink-soft,oklch(0.84 0.02 245));background:var(--r-panel,oklch(0.19 0.027 256))}.ds-btn-secondary:active{transform:scale(0.97)}.ds-btn-secondary:focus-visible{outline:2px solid var(--r-focus,oklch(0.89 0.2 128));outline-offset:3px}"
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;height:52px;padding:0 24px;border:1px solid var(--r-rule-strong,oklch(0.54 0.045 286));border-radius:999px;background:transparent;color:var(--r-ink,oklch(0.965 0.008 240));font:600 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:background-color 160ms cubic-bezier(0.23,1,0.32,1),border-color 160ms}.ds-btn-secondary:hover{border-color:var(--r-ink-soft,oklch(0.84 0.02 245));background:var(--r-panel,oklch(0.19 0.027 256))}.ds-btn-secondary:active{transform:scale(0.97)}.ds-btn-secondary:focus-visible{outline:2px solid var(--r-focus,oklch(0.89 0.2 128));outline-offset:3px}"
     },
     {
       "name": "Room Tabs",
       "kind": "nav",
       "refersTo": "chip-room",
-      "description": "A Space's rooms as pills along the top; a lime count only when something needs you.",
+      "description": "A Space's rooms as pills along the top; an amber count only when something needs you.",
       "html": "<nav class=\"ds-rooms\"><span class=\"ds-room ds-room-on\"># general</span><span class=\"ds-room\"># clips <b class=\"ds-count\">3</b></span><span class=\"ds-room\"># lfg</span></nav>",
       "css": ".ds-rooms{display:flex;gap:6px}.ds-room{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--r-rule,oklch(0.31 0.03 256));border-radius:999px;color:var(--r-ink-soft,oklch(0.84 0.02 245));font:400 0.75rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:border-color 160ms}.ds-room:hover{border-color:var(--r-rule-strong,oklch(0.52 0.03 256))}.ds-room-on{background:var(--r-spaces-fill,oklch(0.33 0.06 182));border-color:var(--r-spaces-line,oklch(0.8 0.12 182));color:var(--r-spaces-text,oklch(0.84 0.11 182));font-weight:700}.ds-count{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--r-overprint-fill,oklch(0.88 0.2 128));color:var(--r-on-overprint,oklch(0.2 0.05 145));font-size:0.6rem}"
     },
@@ -462,7 +561,7 @@
       "name": "Composer",
       "kind": "input",
       "refersTo": "chip-room",
-      "description": "Floating pill composer with a round lime send button.",
+      "description": "Floating pill composer with a round action-colour send button.",
       "html": "<label class=\"ds-composer\"><input class=\"ds-composer-input\" placeholder=\"Say something in #general\"><button class=\"ds-send\" aria-label=\"Send\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M227.3 28.7a16 16 0 0 0-15.8-4L19.6 83.1a16 16 0 0 0-2.5 29.8l85.5 40.5 40.5 85.5a15.9 15.9 0 0 0 14.4 9.1h1.3a16 16 0 0 0 14.1-11.6l58.4-191.9a16 16 0 0 0-4-15.8Z\"/></svg></button></label>",
       "css": ".ds-composer{display:flex;align-items:center;gap:8px;width:320px;height:40px;padding:0 4px 0 14px;border:1px solid var(--r-rule-strong,oklch(0.52 0.03 256));border-radius:999px;background:color-mix(in oklch,var(--r-ground,oklch(0.155 0.024 256)) 60%,transparent)}.ds-composer:focus-within{border-color:var(--r-focus,oklch(0.89 0.2 128))}.ds-composer-input{flex:1;min-width:0;border:0;background:transparent;color:var(--r-ink,oklch(0.965 0.008 240));font:400 0.875rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;outline:none}.ds-composer-input::placeholder{color:var(--r-ink-muted,oklch(0.71 0.025 248))}.ds-send{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;border-radius:999px;background:var(--r-overprint-fill,oklch(0.88 0.2 128));color:var(--r-on-overprint,oklch(0.2 0.05 145));cursor:pointer}.ds-send:hover{background:var(--r-overprint-fill-hover,oklch(0.93 0.17 128))}"
     },
@@ -477,28 +576,29 @@
   ],
   "narrative": {
     "northStar": "The Eclipse Hour",
-    "overview": "**Creative North Star: \"The Eclipse Hour\"**\n\nRealm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the sky is a cosmic storm: deep indigo, violet and electric-blue cloud around a black hole whose accretion disk burns molten amber. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you. By day it is sunset light: the same page in light colours (an apricot ground, coral, rose, lavender and gold washes, deep maroon type, never plain white) with a crimson-coral action colour taken from the dusk.\n\nThe public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit, an explorer cast floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora (curtains with a bright green lower edge, rays, violet above) over stars that twinkle and scintillate in colour, the sky bent around it by its gravity. By day the sun takes the black hole's place over a filmed summer day: towering sunlit clouds drifting over rolling green hills, grass swaying, and an old red-brick gateway in the middle distance glowing like a magical portal, sparkles rising around it (made with Higgsfield: Soul Cinema still, Nano Banana Pro edit, Kling 3.0 animation). The worlds and the crew are the same in both. Switching editions plays out an eclipse: at night the black hole hides the sun; switching to day it slides away across the sky, the sun comes forward and blazes, and the sky gives way to the day from the horizon up. Switching back, the hole slides in and covers the sun again. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.\n\nIt is semi-cartoon, not a cartoon. The 3D is glossy clearcoat plastic with iridescent visors, cute in form and precise in finish. Colours are modern and luminous rather than pastel.",
+    "overview": "**Creative North Star: \"The Eclipse Hour\"**\n\nRealm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the page is deep ink-indigo lit by violet and electric-blue light around a black hole whose accretion disk burns molten amber. By day it is golden hour: a sky that runs from peach through rose to lilac as you scroll, warm pearl surfaces with rose-tinted shadows, deep plum type and a coral action colour. Never plain white. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you.\n\nThe public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit and the cast floating and waving around it, then a page that keeps moving as you scroll: headlines rise in word by word, the product tips up to face you, the four worlds stack up like a deck of cards, the cast rises onto a glowing horizon at the end. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora over stars that twinkle in colour. By day the sun takes its place over a filmed summer day (towering clouds drifting fast over rolling hills, an old brick gateway glowing like a portal; made with Higgsfield: Soul Cinema still, Nano Banana Pro edit, Kling 3.0 animation). Switching editions plays out an eclipse: the black hole slides off the sun, or back across it. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it, and every bit of that motion can be paused. Inside the app the same world becomes quiet motifs: orbit rings, a soft glow on the active Space, star-chart locators.\n\nIt is premium and a little playful: editorial type, big confident headlines, generous space, and a cast of glossy 3D characters who are cute in form and precise in finish.",
     "keyCharacteristics": [
-      "Midnight ground with light arriving from the edges, as the eclipse does.",
-      "One action colour (molten amber by night, crimson coral by day); four identity inks for the four worlds.",
-      "Real 3D, rendered live or pre-rendered to transparent WebP; never faked with CSS.",
-      "Unbounded for display moments, Atkinson Hyperlegible Next for everything you read.",
-      "Lots of motion on the landing page, all of it pausable, none of it required to understand anything."
+      "A sky, not a flat colour: the page's ground shifts as you scroll (ink, deep blue, violet by night; peach, rose, lilac by day), under a slow nebula and a fine grain.",
+      "One action colour (molten amber by night, coral by day); four identity inks for the four worlds.",
+      "Surfaces float: pearl or ink-glass panels with a lit top edge, a hairline and a soft shadow tinted by the page.",
+      "Bricolage Grotesque for headlines, Atkinson Hyperlegible Next for everything you read.",
+      "Real 3D, rendered live or pre-rendered to transparent WebP; real imagery from Realm's own films in the product previews.",
+      "Lots of scroll-driven motion, all of it pausable, none of it required to understand anything."
     ],
     "rules": [
       {
         "name": "The One Action Rule",
-        "body": "Lime means \"do this\" or \"this needs you\". It never decorates, never washes a panel, and never marks plain unread.",
+        "body": "Amber (or coral by day) means \"do this\" or \"this needs you\". It never decorates, never washes a panel, and never marks plain unread.",
         "section": "colors"
       },
       {
         "name": "The Rim Light Rule",
-        "body": "Glows sit at edges and corners, the way the eclipse is lit, led by the world's own ink with at most a trace of amber. The action colour never washes a panel.",
+        "body": "Glows sit at edges and corners, the way the eclipse is lit, led by the world's own ink. A world's card is lit from the corner where its planet sits.",
         "section": "colors"
       },
       {
         "name": "The Living Sky Rule",
-        "body": "Colour behind the page moves with the aurora: a fixed nebula of three soft colour fields crossfades on a 48-second cycle (aurora green, then cyan and magenta, then a pink and violet nebula by night; gold, orange and rose by day), in step with the hero's aurora through the wall clock. It is ambient only: text, surfaces and actions keep their fixed tokens.",
+        "body": "Colour behind the page moves: a fixed nebula of three soft colour fields crossfades on a 48-second cycle in step with the hero's aurora, over the scrolling sky, under a fine grain. It is ambient only: text, surfaces and actions keep their fixed tokens.",
         "section": "colors"
       },
       {
@@ -508,7 +608,7 @@
       },
       {
         "name": "The Readable First Rule",
-        "body": "Anything longer than a headline is set in Atkinson Hyperlegible Next. Unbounded never sets a paragraph, a button label or a UI list.",
+        "body": "Anything longer than a headline is set in Atkinson Hyperlegible Next. Bricolage never sets a paragraph, a button label or a UI list.",
         "section": "typography"
       },
       {
@@ -524,8 +624,8 @@
     ],
     "dos": [
       "Do keep the action colour for the primary action, send, focus and \"needs you\" counts only.",
-      "Do light surfaces from an edge or corner, teal-led, the way the eclipse is lit.",
-      "Do render 3D for real (live React Three Fiber, or transparent WebP from `scripts/render-assets.mjs`) and record provenance in `frontend/web/brand/README.md`.",
+      "Do float content on `surface` panels over the sky, lit from an edge or corner.",
+      "Do render 3D for real (live React Three Fiber, or transparent WebP from `scripts/render-assets.mjs` and `scripts/render-cast.mjs`) and record provenance in `frontend/web/brand/README.md`.",
       "Do set every paragraph in Atkinson Hyperlegible Next at 17px / 1.6 or larger.",
       "Do make every animation pausable (Pause motion, reduced motion) and never required for understanding.",
       "Do show Spaces as one place with room tabs, bubble chat and a \"Here now\" panel."
@@ -537,11 +637,11 @@
       "Don't use Unicode glyphs or emoji as icons; icons come from Phosphor. Emoji are fine as chat content and reactions.",
       "Don't fake material with CSS (gradient spheres, bevels, embossing) where a real render exists.",
       "Don't let floating art cover text, or hang past the viewport edge on phones.",
-      "Don't use gradient text, or glass behind reading copy.",
+      "Don't use gradient text, coloured side borders on cards or list items, or glass behind reading copy.",
+      "Don't make day plain white: it's a peach-to-lilac sky with pearl surfaces.",
       "Don't show the aurora by day, or the day film at night: each edition has its own sky.",
-      "Don't animate a character by flipping between two poses; move a joint about its pivot.",
-      "Don't draw characters as flat illustrations or primitives in the browser; the cast comes from the Blender pipeline so it stays one family.",
-      "Don't scatter cartoon props (hearts, controllers, stickers) around sections; the 3D world and the explorers carry the personality, the page stays composed."
+      "Don't use stock photography in the product previews; use Realm's own imagery.",
+      "Don't scatter cartoon props around sections; the 3D world and the cast carry the personality, the page stays composed."
     ]
   }
 }

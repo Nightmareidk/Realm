@@ -2,9 +2,10 @@ import { inGamut, type Oklch, oklch } from "./color";
 
 /**
  * Realm's visual world: another universe.
- * Night is a cosmic storm: deep indigo surfaces, violet and electric-blue light, and one molten
- * amber accent that only ever marks something you can act on. Day is golden hour: warm cream
- * surfaces and a sunset-orange accent. Night is the default edition.
+ * Night is the eclipse: deep ink-indigo surfaces, violet and electric-blue light, and one molten
+ * amber accent that only ever marks something you can act on. Day is golden hour: a sky that runs
+ * from peach through rose to lilac as you scroll, warm pearl surfaces, deep plum type and a coral
+ * accent. Night is the default edition.
  */
 
 export type Edition = "night" | "day";
@@ -30,8 +31,11 @@ export interface RegionInks {
 }
 
 export interface EditionTokens {
-  /** Sea / page ground. */
+  /** The page ground at the top of the page. */
   ground: Oklch;
+  /** The page's sky part-way down, and at the end: the ground shifts through these as you scroll. */
+  groundMid: Oklch;
+  groundEnd: Oklch;
   /** Legend panels and raised surfaces. */
   panel: Oklch;
   /** A second, more raised surface (menus, popovers). */
@@ -115,15 +119,18 @@ function fitEdition(e: EditionTokens): EditionTokens {
 
 const rawEditions: Record<Edition, EditionTokens> = {
   night: {
-    ground: oklch(0.15, 0.045, 278),
-    panel: oklch(0.19, 0.05, 280),
-    panelRaised: oklch(0.232, 0.055, 282),
-    land: oklch(0.21, 0.05, 280),
-    rule: oklch(0.32, 0.05, 282),
-    ruleStrong: oklch(0.55, 0.05, 285),
-    ink: oklch(0.97, 0.012, 285),
-    inkSoft: oklch(0.85, 0.028, 285),
-    inkMuted: oklch(0.73, 0.038, 285),
+    // Deep ink-indigo, a touch less saturated than a navy, so light has somewhere to glow.
+    ground: oklch(0.135, 0.036, 280),
+    groundMid: oklch(0.13, 0.042, 268),
+    groundEnd: oklch(0.14, 0.05, 296),
+    panel: oklch(0.175, 0.04, 282),
+    panelRaised: oklch(0.215, 0.045, 284),
+    land: oklch(0.19, 0.04, 282),
+    rule: oklch(0.29, 0.04, 284),
+    ruleStrong: oklch(0.54, 0.045, 286),
+    ink: oklch(0.975, 0.008, 285),
+    inkSoft: oklch(0.86, 0.022, 285),
+    inkMuted: oklch(0.745, 0.03, 285),
     // Molten amber: the core of the storm. Actions, focus and "needs you" only.
     overprint: oklch(0.82, 0.155, 72),
     overprintFill: oklch(0.8, 0.16, 68),
@@ -141,26 +148,29 @@ const rawEditions: Record<Edition, EditionTokens> = {
     },
   },
   day: {
-    // Sunset light: an apricot ground (never plain white), lighter warm cards floating on it,
-    // deep maroon ink, and a crimson-coral action colour taken from the day sky's dusk.
-    ground: oklch(0.91, 0.05, 50),
-    panel: oklch(0.955, 0.028, 58),
-    panelRaised: oklch(0.978, 0.016, 62),
-    land: oklch(0.875, 0.058, 46),
-    rule: oklch(0.82, 0.05, 42),
-    ruleStrong: oklch(0.55, 0.07, 30),
-    ink: oklch(0.24, 0.06, 18),
-    inkSoft: oklch(0.35, 0.06, 22),
-    inkMuted: oklch(0.43, 0.06, 26),
-    // Crimson-coral buttons with white text; the same hue, deeper, for links and focus.
-    overprint: oklch(0.48, 0.18, 28),
-    overprintFill: oklch(0.56, 0.2, 30),
-    overprintFillHover: oklch(0.5, 0.19, 27),
-    onOverprint: oklch(0.99, 0.008, 60),
-    focus: oklch(0.48, 0.18, 28),
+    // Golden hour, never plain white: a peach sky at the top of the page that turns rose, then
+    // lilac, as you scroll; warm pearl cards floating on it with rose-tinted shadows; deep plum
+    // type; and a coral action colour taken from the sunset.
+    ground: oklch(0.925, 0.045, 55),
+    groundMid: oklch(0.915, 0.042, 12),
+    groundEnd: oklch(0.905, 0.04, 305),
+    panel: oklch(0.972, 0.016, 42),
+    panelRaised: oklch(0.99, 0.008, 50),
+    land: oklch(0.9, 0.04, 38),
+    rule: oklch(0.86, 0.035, 25),
+    ruleStrong: oklch(0.58, 0.065, 350),
+    ink: oklch(0.25, 0.075, 345),
+    inkSoft: oklch(0.36, 0.07, 345),
+    inkMuted: oklch(0.44, 0.065, 345),
+    // Coral buttons with white text; the same hue, deeper, for links and focus.
+    overprint: oklch(0.5, 0.18, 26),
+    overprintFill: oklch(0.575, 0.19, 30),
+    overprintFillHover: oklch(0.52, 0.19, 27),
+    onOverprint: oklch(0.995, 0.005, 60),
+    focus: oklch(0.5, 0.18, 26),
     danger: oklch(0.5, 0.2, 12),
     success: oklch(0.46, 0.12, 160),
-    shadow: oklch(0.36, 0.08, 30),
+    shadow: oklch(0.42, 0.1, 355),
     regions: {
       spaces: region("day", REGION_HUES.spaces),
       feed: region("day", REGION_HUES.feed),
@@ -198,9 +208,10 @@ export const radius = { sm: "4px", md: "6px", lg: "12px", xl: "28px", round: "99
 export const space = [0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128] as const;
 
 export const font = {
-  /** Archivo superfamily; widths carry the cartographic label hierarchy. */
-  family: "var(--font-archivo), ui-sans-serif, system-ui, sans-serif",
-  width: { condensed: 78, normal: 100, semiExpanded: 112, expanded: 125 },
+  /** Headlines: Bricolage Grotesque, a modern editorial grotesk (optical sizes, ink traps). */
+  display: "var(--font-bricolage), ui-sans-serif, system-ui, sans-serif",
+  /** Everything you read: Atkinson Hyperlegible Next, designed for legibility. */
+  body: "var(--font-atkinson), ui-sans-serif, system-ui, sans-serif",
 } as const;
 
 /** Systemic layers only. */

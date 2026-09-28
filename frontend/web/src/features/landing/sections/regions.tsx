@@ -1,37 +1,148 @@
+import Image from "next/image";
+import type { CSSProperties, ReactNode } from "react";
 import { AvailabilityKey, FeatureList } from "@/components/availability";
-import { Explorer } from "../art";
-import type { StarChart } from "../map/star-chart";
+import { cx } from "@/lib/cx";
+import type { RegionId, StarChart } from "../map/star-chart";
 import { BoardPreview } from "../previews/board-preview";
 import { FeedPreview } from "../previews/feed-preview";
 import { ProfilePreview } from "../previews/profile-preview";
 import { SpacesPreview } from "../previews/spaces-preview";
 import { RegionHeading } from "./region-heading";
-import { Stage } from "./stage";
+import styles from "./worlds.module.css";
 
-const shell = "mx-auto max-w-[90rem] px-4 md:px-8";
-
-/** Spaces: a teal-lit stage, copy inside on the left, the app on the right. */
-export function SpacesSection({ chart }: { chart: StarChart }) {
+/** Orbit rings sweeping out of the corner where the world's planet sits. */
+function Rings({ region, x, y }: { region: RegionId; x: number; y: number }) {
+  const cx0 = x * 1000;
+  const cy0 = y * 700;
   return (
-    <section id="spaces" aria-labelledby="spaces-title" className="scroll-mt-20 py-12 lg:py-16">
-      <div className={`${shell} relative`}>
-        <Explorer
-          who="human-leo"
-          waving
-          className="absolute bottom-full left-[30%] z-10 w-20 translate-y-7 max-lg:right-10 max-lg:left-auto md:w-28"
+    <svg
+      viewBox="0 0 1000 700"
+      preserveAspectRatio="xMidYMid slice"
+      className={styles.rings}
+      aria-hidden="true"
+    >
+      <g fill="none" stroke={`var(--r-${region}-line)`} transform={`rotate(-14 ${cx0} ${cy0})`}>
+        {[240, 390, 560, 760].map((rx, i) => (
+          <ellipse
+            key={rx}
+            cx={cx0}
+            cy={cy0}
+            rx={rx}
+            ry={rx * 0.42}
+            strokeWidth="1.3"
+            opacity={0.34 - i * 0.07}
+            strokeDasharray={i === 1 ? "3 9" : undefined}
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * One world's card: lit from one bottom corner by its planet (a real render, inside its orbit
+ * rings), the copy on one side and the product on the other.
+ */
+function World({
+  region,
+  n,
+  flip = false,
+  copy,
+  preview,
+}: {
+  region: RegionId;
+  n: number;
+  /** Put the product on the left and the copy on the right. */
+  flip?: boolean;
+  copy: ReactNode;
+  preview: ReactNode;
+}) {
+  // The planet and its light sit in the bottom corner on the copy's side.
+  const px = flip ? 1 : 0;
+  return (
+    <section
+      id={region}
+      aria-labelledby={`${region}-title`}
+      className={cx(styles.world, "scroll-mt-24")}
+      style={{ "--n": n } as CSSProperties}
+    >
+      <div
+        className={cx(styles.card, "surface")}
+        style={{
+          background: `radial-gradient(75% 90% at ${px * 100}% 100%, color-mix(in oklch, var(--r-${region}-solid) 26%, transparent), transparent 62%), radial-gradient(50% 60% at ${(1 - px) * 100}% 0%, color-mix(in oklch, var(--r-${region}-solid) 9%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in oklch, var(--r-panel-raised) 94%, transparent), color-mix(in oklch, var(--r-panel) 94%, transparent))`,
+        }}
+      >
+        <Rings region={region} x={px} y={1} />
+        <Image
+          src={`/art/planet-${region}.webp`}
+          alt=""
+          width={256}
+          height={256}
+          className={cx(
+            styles.planet,
+            "max-lg:hidden",
+            flip ? "-right-24 -bottom-24" : "-bottom-24 -left-24",
+          )}
         />
-        <Stage tone="spaces" glow="10% 100%">
-          <div className="grid grid-cols-1 gap-12 p-7 pt-16 md:p-12 md:pt-20 lg:grid-cols-12 lg:gap-10 lg:p-16 lg:pt-20">
-            <div className="lg:col-span-5">
-              <RegionHeading
-                chart={chart}
-                region="spaces"
-                id="spaces-title"
-                title="Spaces are where your group lives."
-              >
+        <div
+          className={cx(
+            "grid grid-cols-1 items-center gap-10 p-6 md:p-10 lg:grid-cols-12 lg:gap-12 lg:p-12",
+          )}
+        >
+          <div className={cx("lg:col-span-5", flip && "lg:order-2")}>{copy}</div>
+          <div className={cx("relative min-w-0 lg:col-span-7", flip && "lg:order-1")}>
+            {preview}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Heading({
+  chart,
+  region,
+  title,
+  children,
+}: {
+  chart: StarChart;
+  region: RegionId;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <RegionHeading chart={chart} region={region} id={`${region}-title`} title={title}>
+      {children}
+    </RegionHeading>
+  );
+}
+
+const CALLOUTS = [
+  { title: "One handle everywhere", body: "The same name in chat, on posts, and in every Space." },
+  {
+    title: "Friends and followers",
+    body: "Friends for chat and presence. Follows for posts and clips.",
+  },
+  {
+    title: "You decide who sees what",
+    body: "Private profiles, who can message you, and read receipts.",
+  },
+];
+
+/** Spaces, the Feed, Profiles and Boards: four cards that stack up as you scroll. */
+export function WorldsSection({ chart }: { chart: StarChart }) {
+  return (
+    <div className="mx-auto max-w-[80rem] px-4 md:px-8">
+      <div className={styles.deck}>
+        <World
+          region="spaces"
+          n={0}
+          copy={
+            <>
+              <Heading chart={chart} region="spaces" title="Spaces are where your group lives.">
                 Rooms for every topic, boards for longer threads, and roles that decide who can do
-                what. Open it and see who's around and what they're up to.
-              </RegionHeading>
+                what. Open it and see who&apos;s around and what they&apos;re up to.
+              </Heading>
               <FeatureList
                 className="mt-8"
                 items={[
@@ -42,42 +153,20 @@ export function SpacesSection({ chart }: { chart: StarChart }) {
                 ]}
               />
               <AvailabilityKey className="mt-6" />
-            </div>
-            <div className="min-w-0 lg:col-span-7 lg:pt-2">
-              <SpacesPreview />
-            </div>
-          </div>
-        </Stage>
-      </div>
-    </section>
-  );
-}
-
-/** Feed: an ice-blue stage, the feed leads on the left. */
-export function FeedSection({ chart }: { chart: StarChart }) {
-  return (
-    <section id="feed" aria-labelledby="feed-title" className="scroll-mt-20 py-12 lg:py-16">
-      <div className={`${shell} relative`}>
-        <Explorer
-          who="alien-nova"
-          delay={0.5}
-          className="absolute right-12 bottom-full z-10 w-16 translate-y-7 md:w-24"
+            </>
+          }
+          preview={<SpacesPreview appClassName="h-[30rem] xl:h-[32rem]" />}
         />
-        <Stage tone="feed" glow="95% 0%">
-          <div className="grid grid-cols-1 items-center gap-12 p-7 md:p-12 lg:grid-cols-12 lg:gap-16 lg:p-16">
-            <div className="order-2 min-w-0 lg:order-1 lg:col-span-7">
-              <FeedPreview />
-            </div>
-            <div className="order-1 lg:order-2 lg:col-span-5">
-              <RegionHeading
-                chart={chart}
-                region="feed"
-                id="feed-title"
-                title="A feed of people you chose."
-              >
+        <World
+          region="feed"
+          n={1}
+          flip
+          copy={
+            <>
+              <Heading chart={chart} region="feed" title="A feed of people you chose.">
                 Posts and clips from friends, creators you follow and your Spaces. The Following tab
                 stays in order, newest first.
-              </RegionHeading>
+              </Heading>
               <FeatureList
                 className="mt-8"
                 items={[
@@ -86,108 +175,48 @@ export function FeedSection({ chart }: { chart: StarChart }) {
                   { label: "Clips: short vertical video", status: "soon" },
                 ]}
               />
-            </div>
-          </div>
-        </Stage>
-      </div>
-    </section>
-  );
-}
-
-/** Profiles: open composition (no stage), an annotated specimen like a chart figure. */
-export function ProfilesSection({ chart }: { chart: StarChart }) {
-  const callouts = [
-    {
-      title: "One handle everywhere",
-      body: "The same name in chat, on posts, and in every Space.",
-    },
-    {
-      title: "Friends and followers",
-      body: "Friends for chat and presence. Follows for posts and clips.",
-    },
-    {
-      title: "You decide who sees what",
-      body: "Private profiles, who can message you, and read receipts.",
-    },
-  ];
-  return (
-    <section id="profiles" aria-labelledby="profiles-title" className="scroll-mt-20 py-20 lg:py-28">
-      <div className={shell}>
-        <div className="mx-auto max-w-[44rem] text-center [&_p]:mx-auto [&_svg]:mx-auto">
-          <RegionHeading
-            chart={chart}
-            region="profiles"
-            id="profiles-title"
-            title="One profile across all of it."
-          >
-            Your posts, media and Spaces in one place, with privacy settings that stay in your
-            hands.
-          </RegionHeading>
-        </div>
-        <div className="mt-14 grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_minmax(0,30rem)_1fr] lg:gap-12">
-          <ol className="grid gap-8 lg:order-1 lg:text-right">
-            {callouts.slice(0, 2).map((c) => (
-              <Callout key={c.title} {...c} side="left" />
-            ))}
-          </ol>
-          <div className="reveal relative min-w-0 lg:order-2">
-            <Explorer
-              who="human-maya"
-              waving
-              delay={0.3}
-              className="absolute -right-24 bottom-16 z-10 w-28 max-lg:hidden"
-            />
-            <ProfilePreview />
-          </div>
-          <ol className="grid gap-8 lg:order-3">
-            {callouts.slice(2).map((c) => (
-              <Callout key={c.title} {...c} side="right" />
-            ))}
-            <li className="text-sm text-ink-muted">
-              Profiles, friends and privacy controls are available now.
-            </li>
-          </ol>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Callout({ title, body, side }: { title: string; body: string; side: "left" | "right" }) {
-  return (
-    <li className="relative">
-      <span
-        aria-hidden="true"
-        className={`absolute top-3 hidden h-px w-10 bg-profiles-line lg:block ${side === "left" ? "-right-12" : "-left-12"}`}
-      />
-      <p className="font-semibold text-ink">{title}</p>
-      <p className="mt-1 text-[0.95rem] text-ink-soft">{body}</p>
-    </li>
-  );
-}
-
-/** Boards: a pink-lit stage with a reading column, because boards are for reading. */
-export function BoardsSection({ chart }: { chart: StarChart }) {
-  return (
-    <section id="boards" aria-labelledby="boards-title" className="scroll-mt-20 py-12 lg:py-16">
-      <div className={`${shell} relative`}>
-        <Explorer
-          who="monster-bruno"
-          delay={1.1}
-          className="absolute right-10 bottom-full z-10 w-28 translate-y-6 md:right-16 md:w-40"
+            </>
+          }
+          preview={<FeedPreview />}
         />
-        <Stage tone="boards" glow="0% 0%">
-          <div className="grid grid-cols-1 gap-12 p-7 md:p-12 lg:grid-cols-12 lg:gap-10 lg:p-16">
-            <div className="lg:col-span-5">
-              <RegionHeading
-                chart={chart}
-                region="boards"
-                id="boards-title"
-                title="Discussions that don't scroll away."
-              >
+        <World
+          region="profiles"
+          n={2}
+          copy={
+            <>
+              <Heading chart={chart} region="profiles" title="One profile across all of it.">
+                Your posts, media and Spaces in one place, with privacy settings that stay in your
+                hands.
+              </Heading>
+              <ul className="mt-8 grid gap-4">
+                {CALLOUTS.map((c) => (
+                  <li key={c.title} className="border-t border-rule pt-4 first:border-0 first:pt-0">
+                    <p className="font-semibold text-ink">{c.title}</p>
+                    <p className="mt-0.5 text-[0.95rem] text-ink-soft">{c.body}</p>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 text-sm text-ink-muted">
+                Profiles, friends and privacy controls are available now.
+              </p>
+            </>
+          }
+          preview={
+            <div className="mx-auto max-w-[27rem]">
+              <ProfilePreview />
+            </div>
+          }
+        />
+        <World
+          region="boards"
+          n={3}
+          flip
+          copy={
+            <>
+              <Heading chart={chart} region="boards" title="Discussions that don't scroll away.">
                 Board rooms give every Space threaded posts with nested replies and votes, so good
                 answers stay findable.
-              </RegionHeading>
+              </Heading>
               <FeatureList
                 className="mt-8"
                 items={[
@@ -196,13 +225,11 @@ export function BoardsSection({ chart }: { chart: StarChart }) {
                   { label: "Search across boards", status: "soon" },
                 ]}
               />
-            </div>
-            <div className="min-w-0 lg:col-span-6 lg:col-start-7">
-              <BoardPreview />
-            </div>
-          </div>
-        </Stage>
+            </>
+          }
+          preview={<BoardPreview />}
+        />
       </div>
-    </section>
+    </div>
   );
 }

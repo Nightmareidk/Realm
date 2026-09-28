@@ -20,7 +20,7 @@ function Fragment({
       className={cx("absolute float-slow", className)}
       style={{ "--float-delay": `${delay}s` } as CSSProperties}
     >
-      <div className="rounded-lg border border-rule-strong/50 bg-panel-raised/95 px-3.5 py-3 shadow-[0_18px_40px_-14px_rgb(2_8_18/0.9)]">
+      <div className="rounded-2xl border border-rule bg-panel-raised px-4 py-3 shadow-[inset_0_1px_0_var(--surface-edge),0_24px_48px_-20px_color-mix(in_oklch,var(--r-shadow)_85%,transparent)]">
         {children}
       </div>
     </div>

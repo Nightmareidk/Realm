@@ -12,7 +12,7 @@ describe.each(EDITIONS)("%s edition", (name) => {
   const e = editions[name];
 
   it("keeps body text at WCAG AA or better on every surface", () => {
-    for (const surface of [e.ground, e.panel, e.land]) {
+    for (const surface of [e.ground, e.groundMid, e.groundEnd, e.panel, e.land]) {
       expect(contrast(e.ink, surface)).toBeGreaterThanOrEqual(7);
       expect(contrast(e.inkSoft, surface)).toBeGreaterThanOrEqual(4.5);
       expect(contrast(e.inkMuted, surface)).toBeGreaterThanOrEqual(4.5);
@@ -20,7 +20,10 @@ describe.each(EDITIONS)("%s edition", (name) => {
   });
 
   it("keeps the overprint accessible as text, button fill, and focus ring", () => {
-    expect(contrast(e.overprint, e.ground)).toBeGreaterThanOrEqual(4.5);
+    for (const sky of [e.ground, e.groundMid, e.groundEnd]) {
+      expect(contrast(e.overprint, sky)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(e.overprintFill, sky)).toBeGreaterThanOrEqual(3);
+    }
     expect(contrast(e.onOverprint, e.overprintFill)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(e.onOverprint, e.overprintFillHover)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(e.overprintFill, e.ground)).toBeGreaterThanOrEqual(3);

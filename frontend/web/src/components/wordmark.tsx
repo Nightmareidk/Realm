@@ -15,7 +15,7 @@ export function Wordmark({ className, size = 30 }: { className?: string; size?: 
       >
         <EclipseMark className="size-full" />
       </span>
-      <span className="font-display text-[1.3rem] font-semibold leading-none tracking-[-0.04em] text-ink">
+      <span className="font-display text-[1.45rem] font-bold leading-none tracking-[-0.04em] text-ink">
         realm
       </span>
     </span>

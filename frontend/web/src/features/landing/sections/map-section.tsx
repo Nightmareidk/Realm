@@ -1,3 +1,5 @@
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import Image from "next/image";
 import type { StarChart } from "../map/star-chart";
 import { StarChartMap } from "../map/star-chart-map";
 import { BoardPreview } from "../previews/board-preview";
@@ -11,29 +13,38 @@ import { Words } from "../words";
 export function MapSection({ chart }: { chart: StarChart }) {
   return (
     <section id="map" aria-labelledby="map-title" className="scroll-mt-20">
-      <div className="mx-auto grid max-w-[90rem] grid-cols-1 gap-12 px-4 py-24 md:px-8 lg:grid-cols-12 lg:gap-10 lg:py-32">
-        <div className="lg:col-span-4 lg:pt-10">
-          <h2 id="map-title" className="display text-[clamp(2.1rem,3.8vw,3.4rem)] text-ink">
+      <div className="mx-auto grid max-w-[90rem] grid-cols-1 gap-12 px-4 py-24 md:px-8 lg:grid-cols-12 lg:gap-10 lg:py-36">
+        <div className="lg:col-span-4 lg:pt-6">
+          <h2 id="map-title" className="display text-[clamp(2.5rem,4.4vw,4.25rem)] text-ink">
             <Words>Four worlds, one universe.</Words>
           </h2>
-          <p className="mt-5 max-w-[40ch] text-lg leading-relaxed text-ink-soft">
+          <p className="lead reveal mt-6 max-w-[40ch]">
             Your friends, your Spaces and your feed share one account, one set of people, and one
             way to get around. Pick a planet to look inside.
           </p>
-          <ul className="mt-9 grid gap-4">
-            {REGIONS.map((r) => (
-              <li key={r.id}>
-                <a href={r.href} className="group flex items-start gap-3.5">
-                  <span
-                    className="mt-1.5 size-3 shrink-0 rounded-full"
-                    style={{ background: `var(--r-${r.id}-solid)` }}
+          <ul className="mt-10 grid gap-2">
+            {REGIONS.map((r, i) => (
+              <li key={r.id} className="reveal" style={{ animationRangeStart: `entry ${i * 8}%` }}>
+                <a
+                  href={r.href}
+                  className="group -mx-3 flex items-center gap-4 rounded-2xl px-3 py-2.5 transition-colors duration-200 ease-out hover:bg-[color-mix(in_oklch,var(--r-ink)_6%,transparent)]"
+                >
+                  <Image
+                    src={`/art/planet-${r.id}.webp`}
+                    alt=""
+                    width={96}
+                    height={96}
+                    className="size-12 shrink-0 transition-transform duration-500 ease-out group-hover:rotate-[-24deg] group-hover:scale-110"
                   />
-                  <span>
-                    <span className="block font-semibold text-ink group-hover:underline">
-                      {r.name}
-                    </span>
+                  <span className="min-w-0">
+                    <span className="block text-lg font-semibold text-ink">{r.name}</span>
                     <span className="block text-[0.95rem] text-ink-muted">{r.tagline}</span>
                   </span>
+                  <ArrowRight
+                    aria-hidden="true"
+                    size={18}
+                    className="ml-auto shrink-0 text-ink-muted transition-transform duration-200 ease-out group-hover:translate-x-1 group-hover:text-ink"
+                  />
                 </a>
               </li>
             ))}

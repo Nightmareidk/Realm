@@ -14,7 +14,7 @@ const originOf = (e: MouseEvent<HTMLElement>) => {
 export function ThemeToggle({ className }: { className?: string }) {
   const edition = useEdition();
   return (
-    <fieldset className={cx("inline-flex rounded-md border border-rule p-0.5", className)}>
+    <fieldset className={cx("inline-flex rounded-full border border-rule p-0.5", className)}>
       <legend className="sr-only">Colour theme</legend>
       {(
         [
@@ -28,7 +28,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           aria-pressed={edition === value}
           onClick={(e) => switchEdition(value, originOf(e))}
           className={cx(
-            "inline-flex h-8 items-center gap-1.5 rounded-sm px-2.5 text-xs font-semibold transition-colors duration-160 ease-out",
+            "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-colors duration-160 ease-out",
             edition === value ? "bg-panel-raised text-ink" : "text-ink-muted hover:text-ink",
           )}
         >
@@ -52,7 +52,7 @@ export function EditionToggle({ className }: { className?: string }) {
       title={day ? "Switch to night" : "Switch to day"}
       onClick={(e) => switchEdition(day ? "night" : "day", originOf(e))}
       className={cx(
-        "inline-flex size-9 items-center justify-center rounded-md border border-rule text-ink-soft transition-colors duration-160 ease-out hover:border-rule-strong hover:text-ink",
+        "inline-flex size-9 items-center justify-center rounded-full border border-rule text-ink-soft transition-colors duration-160 ease-out hover:border-rule-strong hover:text-ink",
         className,
       )}
     >

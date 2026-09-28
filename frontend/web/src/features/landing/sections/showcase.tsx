@@ -1,53 +1,71 @@
+import type { CSSProperties } from "react";
 import { Explorer } from "../art";
 import { AppWindow } from "../hero/app-window";
 import { HeroFragments } from "../hero/fragments";
 import { Phone } from "../hero/phone";
 import { Words } from "../words";
 
-/** The product itself: the web app and the phone view, with the crew peeking in. */
+/**
+ * The product itself: the web app and the phone view. The window tips up to face you as it
+ * scrolls in, the phone drifts at its own pace in front of it, and two of the crew perch on the
+ * edges.
+ */
 export function ShowcaseSection() {
   return (
-    <section aria-labelledby="showcase-title" className="py-16 lg:py-24">
+    <section aria-labelledby="showcase-title" className="relative py-20 lg:py-32">
       <div className="mx-auto max-w-[90rem] px-4 md:px-8">
-        <div className="mx-auto max-w-[46rem] text-center">
-          <h2 id="showcase-title" className="display text-[clamp(2.1rem,4vw,3.6rem)] text-ink">
+        <div className="mx-auto max-w-[56rem] text-center">
+          <h2 id="showcase-title" className="display text-[clamp(2.5rem,5.4vw,5.25rem)] text-ink">
             <Words>Everything your group does, in one app.</Words>
           </h2>
-          <p className="mx-auto mt-5 max-w-[52ch] text-lg leading-relaxed text-ink-soft">
+          <p className="lead reveal mx-auto mt-6 max-w-[50ch]">
             Chat in Spaces, catch up on the feed, check out a friend&apos;s profile, and settle
             debates on boards. No more switching between four different apps.
           </p>
         </div>
 
-        <div
-          className="reveal relative mx-auto mt-14 max-w-[70rem] rounded-xl border border-rule p-4 md:p-10"
-          style={{
-            background:
-              "radial-gradient(70% 90% at 50% 0%, color-mix(in oklch, var(--r-profiles-solid) 26%, transparent), transparent 70%), radial-gradient(50% 60% at 100% 100%, color-mix(in oklch, var(--r-feed-solid) 22%, transparent), transparent 70%), radial-gradient(40% 50% at 0% 100%, color-mix(in oklch, var(--r-overprint-fill) 12%, transparent), transparent 70%), var(--r-panel)",
-          }}
-        >
-          <Explorer
-            who="astro-teal"
-            waving
-            className="absolute bottom-full left-6 w-20 translate-y-8 md:left-12 md:w-28"
-          />
-          <Explorer
-            who="monster-gloop"
-            delay={0.8}
-            className="absolute -bottom-10 -left-6 w-24 max-md:hidden md:w-28"
+        <div className="relative mx-auto mt-28 max-w-[74rem] md:mt-24">
+          {/* The light the window sits in: the four worlds' inks, soft and wide. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[4%] top-[6%] bottom-[-6%] -z-10 rounded-[50%] opacity-80 blur-3xl"
+            style={{
+              background:
+                "radial-gradient(50% 60% at 30% 40%, color-mix(in oklch, var(--r-spaces-solid) 45%, transparent), transparent 70%), radial-gradient(45% 55% at 72% 35%, color-mix(in oklch, var(--r-profiles-solid) 45%, transparent), transparent 70%), radial-gradient(40% 50% at 55% 90%, color-mix(in oklch, var(--r-overprint-fill) 30%, transparent), transparent 70%)",
+            }}
           />
 
-          <div className="relative mx-auto max-w-[56rem]">
-            <AppWindow className="shadow-[0_40px_80px_-30px_rgb(2_8_18/0.9)]" />
-            <Phone className="absolute -right-4 -bottom-10 w-[34%] max-w-[13rem] drop-shadow-[0_30px_40px_rgb(2_8_18/0.8)] md:-right-16 md:w-[26%]" />
+          <div className="tilt-in relative">
+            <AppWindow className="shadow-[0_50px_100px_-40px_color-mix(in_oklch,var(--r-shadow)_85%,transparent)]" />
             <div className="pointer-events-none absolute inset-0 max-md:hidden">
               <HeroFragments />
             </div>
           </div>
-          <p className="mt-16 text-center text-xs text-ink-muted md:mt-12">
-            Product previews show example content.
-          </p>
+
+          <div
+            className="drift absolute -right-2 -bottom-16 w-[34%] max-w-[15rem] md:-right-14 md:w-[24%]"
+            style={{ "--drift": "-36px" } as CSSProperties}
+          >
+            <Phone className="drop-shadow-[0_36px_40px_color-mix(in_oklch,var(--r-shadow)_80%,transparent)]" />
+          </div>
+
+          <div
+            className="drift absolute bottom-full left-4 z-10 w-20 translate-y-9 md:left-14 md:w-32"
+            style={{ "--drift": "28px" } as CSSProperties}
+          >
+            <Explorer who="astro-teal" waving />
+          </div>
+          <div
+            className="drift absolute -bottom-14 -left-10 z-10 w-24 max-md:hidden md:w-36"
+            style={{ "--drift": "-24px" } as CSSProperties}
+          >
+            <Explorer who="monster-gloop" waving delay={1.2} />
+          </div>
         </div>
+
+        <p className="mt-24 text-center text-xs text-ink-muted md:mt-20">
+          Product previews show example content.
+        </p>
       </div>
     </section>
   );

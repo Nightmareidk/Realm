@@ -8,21 +8,24 @@ export function AppWindow({ className }: { className?: string }) {
   return (
     <div
       inert
-      className={cx("overflow-hidden rounded-lg border border-rule-strong/60 bg-panel", className)}
+      className={cx(
+        "overflow-hidden rounded-[1.25rem] border border-rule bg-panel shadow-[inset_0_1px_0_var(--surface-edge)]",
+        className,
+      )}
     >
-      <div className="flex h-10 items-center gap-3 border-b border-rule bg-ground/70 px-3">
+      <div className="flex h-11 items-center gap-3 border-b border-rule bg-[color-mix(in_oklch,var(--r-ground)_55%,var(--r-panel))] px-4">
         <RealmLogo size={18} />
         <span className="truncate text-xs text-ink-soft">
           <span className="font-semibold text-ink">Late Night Lobby</span>
           <span className="mx-1.5 text-ink-muted">/</span>#general
         </span>
-        <span className="ml-auto flex h-7 w-[min(40%,15rem)] items-center max-sm:hidden gap-2 rounded-md border border-rule bg-panel px-2.5 text-xs text-ink-muted">
+        <span className="ml-auto flex h-7 w-[min(40%,15rem)] items-center gap-2 rounded-full border border-rule bg-panel px-3 text-xs text-ink-muted max-sm:hidden">
           <MagnifyingGlass size={13} />
           <span className="truncate">Travel anywhere</span>
           <kbd className="ml-auto font-sans text-[0.65rem] text-ink-muted">Ctrl K</kbd>
         </span>
       </div>
-      <SpacesApp className="h-[19rem] lg:h-[23rem]" />
+      <SpacesApp className="h-[21rem] md:h-[26rem] lg:h-[31rem]" />
     </div>
   );
 }

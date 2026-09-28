@@ -44,7 +44,7 @@ export function MotionToggle({
       title={label ? undefined : paused ? "Motion paused" : "Pause motion"}
       onClick={toggle}
       className={cx(
-        "inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-rule text-ink-soft transition-colors duration-160 ease-out hover:border-rule-strong hover:text-ink",
+        "inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-rule text-ink-soft transition-colors duration-160 ease-out hover:border-rule-strong hover:text-ink",
         label ? "px-3 text-xs font-semibold" : "w-9",
         className,
       )}

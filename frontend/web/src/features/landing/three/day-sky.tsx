@@ -7,6 +7,8 @@ import styles from "./three.module.css";
 
 /** How long the film stays up after night is asked for, while the night sky closes over it. */
 const LINGER_MS = 3200;
+/** The clouds are filmed slow; the sky runs a little faster than life so it feels alive. */
+const SPEED = 1.7;
 
 /**
  * The day sky: a filmed summer day, towering clouds drifting over rolling green hills, grass
@@ -45,8 +47,10 @@ export function DaySky() {
     let visible = false;
     const update = () => {
       const still = reduce.matches || root.dataset.motion === "paused";
-      if (shown && visible && !still && !document.hidden) v.play().catch(() => {});
-      else v.pause();
+      if (shown && visible && !still && !document.hidden) {
+        v.playbackRate = SPEED;
+        v.play().catch(() => {});
+      } else v.pause();
     };
     const io = new IntersectionObserver(([e]) => {
       visible = Boolean(e?.isIntersecting);

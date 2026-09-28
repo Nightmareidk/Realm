@@ -20,7 +20,7 @@ export function PreviewFrame({
     <figure className={cx("m-0", className)}>
       <div
         inert
-        className="overflow-hidden rounded-md border border-rule bg-panel shadow-[0_18px_40px_-18px_color-mix(in_oklch,var(--r-shadow)_70%,transparent)]"
+        className="overflow-hidden rounded-[1.25rem] border border-rule bg-panel shadow-[inset_0_1px_0_var(--surface-edge),0_1px_2px_color-mix(in_oklch,var(--r-shadow)_20%,transparent),0_36px_70px_-34px_color-mix(in_oklch,var(--r-shadow)_85%,transparent)]"
       >
         {children}
       </div>

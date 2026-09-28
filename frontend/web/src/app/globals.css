@@ -8,6 +8,9 @@
 
 @theme inline {
   --color-ground: var(--r-ground);
+  --color-ground-mid: var(--r-ground-mid);
+  --color-ground-end: var(--r-ground-end);
+  --color-shadow: var(--r-shadow);
   --color-panel: var(--r-panel);
   --color-panel-raised: var(--r-panel-raised);
   --color-land: var(--r-land);
@@ -42,7 +45,7 @@
   --color-boards-text: var(--r-boards-text);
 
   --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-unbounded), var(--font-atkinson), system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-atkinson), system-ui, sans-serif;
   --radius-sm: var(--r-radius-sm);
   --radius-md: var(--r-radius-md);
   --radius-lg: var(--r-radius-lg);
@@ -66,12 +69,42 @@
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
-/* Display voice: wide and modern, sentence case (all caps is harder to read for many people). */
+/* Display voice: an editorial grotesk set tight and heavy, sentence case (all caps is harder to
+   read for many people). Its optical size follows the font size, so big type tightens up. */
 @utility display {
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.035em;
-  line-height: 1.04;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  font-optical-sizing: auto;
+  text-wrap: balance;
+}
+
+/* The paragraph under a headline: a size up from body, in the soft ink. */
+@utility lead {
+  font-size: clamp(1.0625rem, 0.95rem + 0.35vw, 1.25rem);
+  line-height: 1.6;
+  color: var(--r-ink-soft);
+  text-wrap: pretty;
+}
+
+/*
+ * A surface that floats on the sky: a pearl (day) or ink-glass (night) panel with a lit top edge,
+ * a hairline and a soft shadow tinted by the page. Opaque enough that nothing behind it needs
+ * blurring while you scroll.
+ */
+@utility surface {
+  border-radius: var(--r-radius-xl);
+  border: 1px solid color-mix(in oklch, var(--r-rule) 85%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--r-panel-raised) 94%, transparent),
+    color-mix(in oklch, var(--r-panel) 94%, transparent)
+  );
+  box-shadow:
+    inset 0 1px 0 var(--surface-edge),
+    0 1px 2px color-mix(in oklch, var(--r-shadow) 18%, transparent),
+    0 40px 80px -40px color-mix(in oklch, var(--r-shadow) 60%, transparent);
 }
 
 /* Gentle hover in place for floating things. Off under reduced motion. */
@@ -89,13 +122,44 @@
   }
 }
 
-/* Scroll-linked entrance where supported; content is fully visible everywhere else. */
+/* Scroll-linked entrances where supported; content is fully visible everywhere else. */
 @utility reveal {
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
       animation: realm-reveal linear both;
       animation-timeline: view();
-      animation-range: entry 0% entry 60%;
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+/* A product shot tipping up to face you as it scrolls in, like a screen being lifted. */
+@utility tilt-in {
+  transform-origin: 50% 0%;
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: realm-tilt-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 42%;
+    }
+  }
+}
+/* Drifts against the scroll (set --drift; negative drifts the other way): depth for floating art. */
+@utility drift {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: realm-drift linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+  }
+}
+/* Rises into place in turn (set --i for its place in the line). */
+@utility rise-in {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: realm-rise-in linear both;
+      animation-timeline: view();
+      animation-range: entry calc(5% + var(--i, 0) * 6%) cover calc(28% + var(--i, 0) * 4%);
     }
   }
 }
@@ -132,7 +196,35 @@
 @keyframes realm-reveal {
   from {
     opacity: 0;
-    transform: translateY(28px) scale(0.985);
+    transform: translateY(48px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes realm-tilt-in {
+  from {
+    opacity: 0.4;
+    transform: perspective(1800px) translateY(60px) rotateX(26deg) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1800px) none;
+  }
+}
+@keyframes realm-drift {
+  from {
+    transform: translateY(var(--drift, 60px));
+  }
+  to {
+    transform: translateY(calc(var(--drift, 60px) * -1));
+  }
+}
+@keyframes realm-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(45%) scale(0.86);
   }
   to {
     opacity: 1;
@@ -163,24 +255,83 @@
 }
 
 /* The page's ground, resolved at the root, so surfaces that keep night colours (the hero) can
-   still fade into the page's actual background. */
+   still fade into the page's actual background. And the lit top edge of floating surfaces. */
 :root {
   --page-ground: var(--r-ground);
+  --surface-edge: oklch(1 0 0 / 0.07);
+}
+:root[data-theme="day"] {
+  --surface-edge: oklch(1 0 0 / 0.85);
 }
 
-/* The header at the very top of the page: clear, so the hero runs up under it (header-bar.tsx),
-   with a soft shadow behind it so the links stay readable over the brightest sky. */
-.site-header[data-top] {
-  background-color: transparent;
-  background-image: linear-gradient(180deg, oklch(0.1 0.04 280 / 0.55), transparent);
-  /* Size it to the border box, or it repeats into the 1px border as a dark line. */
-  background-origin: border-box;
-  background-repeat: no-repeat;
+/*
+ * The header is a floating capsule: once you scroll it frosts over, with a hairline and a soft
+ * shadow, and a thin line along its foot fills as you read down the page. At the very top it's
+ * clear, so the hero runs up under it (header-bar.tsx), with a soft shade behind the links so they
+ * stay readable over the brightest sky.
+ */
+.site-pill {
+  position: relative;
+  border: 1px solid color-mix(in oklch, var(--r-rule) 90%, transparent);
+  background: color-mix(in oklch, var(--r-panel) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 var(--surface-edge),
+    0 18px 40px -24px color-mix(in oklch, var(--r-shadow) 70%, transparent);
+  transition:
+    background-color 300ms var(--r-ease-out),
+    border-color 300ms var(--r-ease-out),
+    box-shadow 300ms var(--r-ease-out);
+}
+.site-header[data-top] .site-pill {
+  background: transparent;
   border-color: transparent;
+  box-shadow: none;
   backdrop-filter: none;
 }
-:root[data-theme="day"] .site-header[data-top] {
-  background-image: linear-gradient(180deg, oklch(0.98 0.02 70 / 0.6), transparent);
+.site-header[data-top]::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -2.5rem;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, oklch(0.1 0.04 280 / 0.5), transparent);
+}
+:root[data-theme="day"] .site-header[data-top]::before {
+  background: linear-gradient(180deg, oklch(0.98 0.02 60 / 0.55), transparent);
+}
+.scroll-progress {
+  position: absolute;
+  inset-inline: 1.5rem;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--r-spaces-solid),
+    var(--r-feed-solid),
+    var(--r-profiles-solid),
+    var(--r-boards-solid),
+    var(--r-overprint-fill)
+  );
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  opacity: 0;
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    opacity: 0.9;
+    animation: realm-progress linear both;
+    animation-timeline: scroll(root);
+  }
+  .site-header[data-top] .scroll-progress {
+    opacity: 0;
+  }
+}
+@keyframes realm-progress {
+  to {
+    transform: scaleX(1);
+  }
 }
 
 /*
@@ -222,24 +373,36 @@
 :root[data-theme="day"] .realm-nebula > i {
   opacity: 0.6;
 }
-/* By day the washes are the dusk's own colours, lifted into light: coral, rose, lavender, gold. */
+/* By day the washes are golden-hour light: sun gold, coral, rose and lilac haze. */
 :root[data-theme="day"] .realm-nebula > i:nth-child(1) {
   background:
-    radial-gradient(42% 36% at 92% 6%, oklch(0.8 0.13 32 / 0.55), transparent 70%),
-    radial-gradient(38% 34% at 4% 58%, oklch(0.84 0.09 350 / 0.45), transparent 70%),
-    radial-gradient(40% 30% at 40% 100%, oklch(0.88 0.1 75 / 0.4), transparent 70%);
+    radial-gradient(42% 36% at 92% 6%, oklch(0.86 0.11 60 / 0.6), transparent 70%),
+    radial-gradient(38% 34% at 4% 58%, oklch(0.84 0.09 355 / 0.45), transparent 70%),
+    radial-gradient(40% 30% at 40% 100%, oklch(0.84 0.08 305 / 0.45), transparent 70%);
 }
 :root[data-theme="day"] .realm-nebula > i:nth-child(2) {
   background:
-    radial-gradient(40% 36% at 8% 8%, oklch(0.84 0.11 55 / 0.5), transparent 70%),
-    radial-gradient(38% 34% at 96% 62%, oklch(0.82 0.08 305 / 0.45), transparent 70%),
-    radial-gradient(34% 30% at 60% 100%, oklch(0.8 0.12 20 / 0.35), transparent 70%);
+    radial-gradient(40% 36% at 8% 8%, oklch(0.84 0.11 45 / 0.5), transparent 70%),
+    radial-gradient(38% 34% at 96% 62%, oklch(0.83 0.08 315 / 0.5), transparent 70%),
+    radial-gradient(34% 30% at 60% 100%, oklch(0.82 0.11 18 / 0.4), transparent 70%);
 }
 :root[data-theme="day"] .realm-nebula > i:nth-child(3) {
   background:
-    radial-gradient(44% 36% at 55% 0%, oklch(0.83 0.1 10 / 0.45), transparent 70%),
-    radial-gradient(36% 32% at 2% 86%, oklch(0.86 0.1 80 / 0.45), transparent 70%),
-    radial-gradient(34% 30% at 98% 34%, oklch(0.83 0.08 290 / 0.4), transparent 70%);
+    radial-gradient(44% 36% at 55% 0%, oklch(0.88 0.1 75 / 0.5), transparent 70%),
+    radial-gradient(36% 32% at 2% 86%, oklch(0.82 0.1 5 / 0.45), transparent 70%),
+    radial-gradient(34% 30% at 98% 34%, oklch(0.83 0.08 295 / 0.45), transparent 70%);
+}
+/* Fine grain over everything: it keeps the big soft gradients from banding and gives the page a
+   printed, physical finish. Fixed, so it never repaints on scroll. */
+.realm-nebula::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+:root[data-theme="day"] .realm-nebula::after {
+  opacity: 0.07;
 }
 @media (prefers-reduced-motion: no-preference) {
   .realm-nebula > i {
@@ -325,7 +488,17 @@
     /* Set here too: otherwise body's clip propagates to the viewport, and mobile browsers still
        widen the layout viewport to fit floating decorations that hang past the edge. */
     overflow-x: clip;
-    background: var(--r-ground);
+    /* The sky runs down the whole page, so it shifts as you scroll (peach, rose, lilac by day;
+       ink, deep blue, violet by night) with nothing to animate. */
+    background: linear-gradient(
+      180deg,
+      var(--r-ground) 0%,
+      var(--r-ground) 12%,
+      var(--r-ground-mid) 48%,
+      var(--r-ground-end) 88%
+    );
+    background-repeat: no-repeat;
+    background-color: var(--r-ground-end);
     color: var(--r-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -399,8 +572,14 @@
   }
 
   ::selection {
-    background: color-mix(in oklch, var(--r-overprint-fill) 55%, transparent);
+    background: color-mix(in oklch, var(--r-overprint-fill) 45%, transparent);
     color: var(--r-ink);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   :focus-visible {

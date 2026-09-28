@@ -1,8 +1,18 @@
-import { GlobeHemisphereWest, Info, LockKey } from "@phosphor-icons/react/dist/ssr";
+import {
+  ChatCircleDots,
+  Check,
+  Checks,
+  Devices,
+  EyeSlash,
+  GlobeHemisphereWest,
+  Info,
+  LockKey,
+} from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
+import type { ComponentType, ReactNode } from "react";
+import { cx } from "@/lib/cx";
 import styles from "../fun.module.css";
 import { Words } from "../words";
-import { Stage } from "./stage";
 
 const E2EE = [
   "Direct messages",
@@ -13,94 +23,119 @@ const E2EE = [
 
 const PROTECTED = ["Public Spaces and their rooms", "Posts, comments and the feed", "Profiles"];
 
-const CONTROLS = [
-  "Choose who can message you",
-  "Make your profile private",
-  "See every signed-in device and sign any of them out",
-  "Turn read receipts off",
+type Icon = ComponentType<{ size?: number; weight?: "regular" | "bold" | "duotone" | "fill" }>;
+
+const CONTROLS: { label: string; Icon: Icon }[] = [
+  { label: "Choose who can message you", Icon: ChatCircleDots },
+  { label: "Make your profile private", Icon: EyeSlash },
+  { label: "See every signed-in device and sign any of them out", Icon: Devices },
+  { label: "Turn read receipts off", Icon: Checks },
 ];
 
+function Card({
+  Icon,
+  title,
+  tone,
+  children,
+  className,
+}: {
+  Icon: Icon;
+  title: string;
+  /** The icon tile's colour: the action colour marks the stronger promise. */
+  tone: "action" | "plain";
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cx("surface reveal p-7 md:p-9", className)}>
+      <p className="flex items-center gap-3.5 text-lg font-semibold text-ink">
+        <span
+          className={cx(
+            "flex size-11 shrink-0 items-center justify-center rounded-2xl",
+            tone === "action"
+              ? "bg-overprint-fill text-on-overprint shadow-[inset_0_1px_0_oklch(1_0_0/0.35)]"
+              : "border border-rule bg-panel-raised text-ink-soft",
+          )}
+        >
+          <Icon size={22} weight="duotone" />
+        </span>
+        {title}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+/** How each part of Realm is protected, said plainly. A pinned statement beside the detail. */
 export function PrivacySection() {
   return (
-    <section id="privacy" aria-labelledby="privacy-title" className="scroll-mt-20 py-12 lg:py-16">
-      <div className="mx-auto max-w-[90rem] px-4 md:px-8">
-        <Stage tone="realm" glow="50% 0%">
-          <div className="p-7 md:p-12 lg:p-16">
-            <div className="mx-auto max-w-[46rem] text-center">
-              <span className={`${styles.floatA} mx-auto block w-20 md:w-24`} aria-hidden="true">
-                <Image
-                  src="/art/lock.webp"
-                  alt=""
-                  width={240}
-                  height={340}
-                  className="h-auto w-full"
-                />
-              </span>
-              <h2
-                id="privacy-title"
-                className="display mt-7 text-[clamp(1.9rem,3.2vw,3rem)] text-ink"
-              >
-                <Words>Private where it counts. Honest about the rest.</Words>
-              </h2>
-              <p className="mx-auto mt-5 max-w-[50ch] text-lg leading-relaxed text-ink-soft">
-                Realm tells you exactly how each part of the app is protected, and never calls
-                something end-to-end encrypted unless it is.
-              </p>
-            </div>
+    <section id="privacy" aria-labelledby="privacy-title" className="scroll-mt-24 py-24 lg:py-36">
+      <div className="mx-auto grid max-w-[80rem] grid-cols-1 gap-12 px-4 md:px-8 lg:grid-cols-12 lg:gap-16">
+        <div className="self-start lg:sticky lg:top-28 lg:col-span-5">
+          <span className={cx(styles.floatA, "block w-20 md:w-24")} aria-hidden="true">
+            <Image src="/art/lock.webp" alt="" width={240} height={340} className="h-auto w-full" />
+          </span>
+          <h2 id="privacy-title" className="display mt-8 text-[clamp(2.4rem,4.2vw,4rem)] text-ink">
+            <Words>Private where it counts. Honest about the rest.</Words>
+          </h2>
+          <p className="lead reveal mt-6 max-w-[42ch]">
+            Realm tells you exactly how each part of the app is protected, and never calls something
+            end-to-end encrypted unless it is.
+          </p>
+          <p className="reveal mt-8 flex max-w-[46ch] items-start gap-3 text-[0.95rem] text-ink">
+            <Info size={20} weight="duotone" className="mt-0.5 shrink-0 text-overprint" />
+            <span>
+              During early access, direct messages are not end-to-end encrypted yet. Realm says so
+              inside every conversation until they are.
+            </span>
+          </p>
+        </div>
 
-            <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-rule bg-rule lg:grid-cols-2">
-              <div className="bg-panel/90 p-7 md:p-9">
-                <p className="flex items-center gap-2.5 font-semibold text-ink">
-                  <LockKey size={20} weight="duotone" className="text-overprint" />
-                  End-to-end encrypted, before public launch
-                </p>
-                <ul className="mt-5 grid gap-2.5 text-ink-soft">
-                  {E2EE.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-                <p className="mt-6 max-w-[48ch] text-sm text-ink-muted">
-                  Built on MLS, the IETF standard for secure group messaging. Only the people in the
-                  conversation hold the keys, not Realm.
-                </p>
-              </div>
-              <div className="bg-panel/90 p-7 md:p-9">
-                <p className="flex items-center gap-2.5 font-semibold text-ink">
-                  <GlobeHemisphereWest size={20} weight="duotone" className="text-ink-soft" />
-                  Protected, not end-to-end encrypted
-                </p>
-                <ul className="mt-5 grid gap-2.5 text-ink-soft">
-                  {PROTECTED.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-                <p className="mt-6 max-w-[48ch] text-sm text-ink-muted">
-                  Encrypted in transit and at rest. Realm can read these so they can be moderated,
-                  searched, and shown to people who join later.
-                </p>
-              </div>
-            </div>
-
-            <p className="mt-6 flex items-start gap-3 rounded-lg border border-rule-strong bg-panel/70 px-5 py-4 text-[0.95rem] text-ink">
-              <Info size={20} className="mt-0.5 shrink-0 text-ink-soft" />
-              <span>
-                During early access, direct messages are not end-to-end encrypted yet. Realm says so
-                inside every conversation until they are.
-              </span>
+        <div className="grid gap-5 lg:col-span-7">
+          <Card Icon={LockKey} tone="action" title="End-to-end encrypted, before public launch">
+            <ul className="mt-6 grid gap-3 text-ink-soft sm:grid-cols-2">
+              {E2EE.map((item) => (
+                <li key={item} className="flex items-start gap-2.5">
+                  <Check size={18} weight="bold" className="mt-0.5 shrink-0 text-overprint" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 max-w-[52ch] text-sm text-ink-muted">
+              Built on MLS, the IETF standard for secure group messaging. Only the people in the
+              conversation hold the keys, not Realm.
             </p>
+          </Card>
 
-            <div id="security" className="mt-12 scroll-mt-24">
-              <h3 className="font-semibold text-ink">Your controls</h3>
-              <ul className="mt-4 grid grid-cols-1 gap-x-10 gap-y-3 text-ink-soft sm:grid-cols-2">
-                {CONTROLS.map((c) => (
-                  <li key={c} className="border-t border-rule pt-3">
-                    {c}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <Card Icon={GlobeHemisphereWest} tone="plain" title="Protected, not end-to-end encrypted">
+            <ul className="mt-6 grid gap-3 text-ink-soft sm:grid-cols-2">
+              {PROTECTED.map((item) => (
+                <li key={item} className="flex items-start gap-2.5">
+                  <Check size={18} weight="bold" className="mt-0.5 shrink-0 text-ink-muted" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 max-w-[52ch] text-sm text-ink-muted">
+              Encrypted in transit and at rest. Realm can read these so they can be moderated,
+              searched, and shown to people who join later.
+            </p>
+          </Card>
+
+          <div id="security" className="surface reveal scroll-mt-28 p-7 md:p-9">
+            <h3 className="text-lg font-semibold text-ink">Your controls</h3>
+            <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {CONTROLS.map(({ label, Icon }) => (
+                <li key={label} className="flex items-start gap-3 text-ink-soft">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-rule bg-panel-raised text-ink">
+                    <Icon size={18} weight="duotone" />
+                  </span>
+                  <span className="pt-1.5">{label}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </Stage>
+        </div>
       </div>
     </section>
   );

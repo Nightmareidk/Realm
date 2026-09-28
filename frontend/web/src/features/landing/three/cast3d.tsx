@@ -4,16 +4,16 @@ import { useGLTF } from "@react-three/drei";
 import { type ThreeElements, useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 /**
- * A member of Realm's cast, live in 3D. It bobs gently and turns its head a little toward the
- * pointer; with `wave` it waves. Two kinds of model:
+ * A member of Realm's cast, live in 3D. The characters are made in Meshy (image to 3D) and made
+ * light for the web by scripts/render-cast.mjs. It bobs gently in zero-g; with `wave` it says hello.
+ * Two kinds of model:
  *
- * - Built by Blender (scripts/blender/cast.py), with the right arm on two named joints, ShoulderR
- *   and ElbowR: the wave is posed here, raising the arm and swinging from the elbow.
- * - Rigged and animated elsewhere (Meshy and the like, as a GLB with its animations inside): it
+ * - Posed (a single mesh, already standing with a hand up): the hello is the whole body rocking
+ *   from the feet, a few quick sways every few seconds, then back to drifting.
+ * - Rigged and animated (a GLB with its animations inside, as Meshy's Animate step exports): it
  *   plays its own clips. An idle loops if there is one; the wave (a clip named like "wave" or
  *   "hello") plays every few seconds and eases back into the idle.
  *
@@ -21,7 +21,6 @@ import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js
  */
 export type CastName =
   | "astro-teal"
-  | "astro-violet"
   | "alien-zib"
   | "alien-meshy"
   | "alien-nova"
@@ -32,50 +31,6 @@ export type CastName =
 
 const DRACO = "/draco/";
 const url = (who: CastName) => `/models/${who}.glb`;
-
-// Blender's rotation about its depth axis (Y) becomes a rotation about three's depth axis (Z)
-// once the model is converted to Y-up; the sign flips.
-const RAISE = THREE.MathUtils.degToRad(128 - 15);
-const BEND = THREE.MathUtils.degToRad(48 + 12);
-const Z = new THREE.Vector3(0, 0, 1);
-
-/**
- * The exported models keep every part as its own mesh, about 55 per character. Parts that hang
- * from the same joint and share a material are merged into one mesh here, so a character costs a
- * dozen or so draw calls instead of fifty (twice over, counting the shadow pass). Nothing moves
- * relative to its joint, so the merge can't be seen.
- */
-function mergeParts(root: THREE.Object3D) {
-  const groups = new Map<string, THREE.Mesh[]>();
-  root.traverse((o) => {
-    if (!(o instanceof THREE.Mesh) || !o.parent || o.children.length) return;
-    if (Array.isArray(o.material)) return;
-    const g = o.geometry as THREE.BufferGeometry;
-    const key = [
-      o.parent.uuid,
-      o.material.uuid,
-      Object.keys(g.attributes).sort().join(","),
-      g.index ? "i" : "",
-    ].join("|");
-    groups.set(key, [...(groups.get(key) ?? []), o]);
-  });
-  for (const meshes of groups.values()) {
-    const first = meshes[0];
-    const parent = first?.parent;
-    if (!first || !parent || meshes.length < 2) continue;
-    const merged = mergeGeometries(
-      meshes.map((m) => {
-        m.updateMatrix();
-        return m.geometry.clone().applyMatrix4(m.matrix);
-      }),
-    );
-    if (!merged) continue;
-    const mesh = new THREE.Mesh(merged, first.material);
-    mesh.name = first.name;
-    parent.add(mesh);
-    for (const m of meshes) parent.remove(m);
-  }
-}
 
 /**
  * Glass and jelly parts are exported with transmission, which makes three render the whole scene a
@@ -115,11 +70,8 @@ export function CastMember({
     scene.traverse((o) => {
       if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned = true;
     });
-    // A rigged model needs its skeleton cloned with it (and must keep its meshes separate).
-    if (skinned) return cloneSkinned(scene);
-    const m = scene.clone(true);
-    mergeParts(m);
-    return m;
+    // A rigged model needs its skeleton cloned with it.
+    return skinned ? cloneSkinned(scene) : scene.clone(true);
   }, [scene]);
   const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
 
@@ -158,25 +110,9 @@ export function CastMember({
       mixer.stopAllAction();
     };
   }, [mixer, animations, wave, phase]);
-  const joints = useMemo(() => {
-    const get = (name: string) => model.getObjectByName(name) ?? null;
-    const shoulder = get("ShoulderR");
-    const elbow = get("ElbowR");
-    const head = get("Head");
-    return {
-      shoulder,
-      elbow,
-      head,
-      q0: {
-        shoulder: shoulder?.quaternion.clone() ?? new THREE.Quaternion(),
-        elbow: elbow?.quaternion.clone() ?? new THREE.Quaternion(),
-        head: head?.quaternion.clone() ?? new THREE.Quaternion(),
-      },
-    };
-  }, [model]);
   const root = useRef<THREE.Group>(null);
-  const q = useMemo(() => new THREE.Quaternion(), []);
-  const euler = useMemo(() => new THREE.Euler(), []);
+  // A posed model says hello by rocking from its feet; an animated one plays its own wave.
+  const rock = wave && !animations.length;
 
   useLayoutEffect(() => {
     model.traverse((o) => {
@@ -193,24 +129,18 @@ export function CastMember({
   useFrame((state, delta) => {
     if (!still) mixer.update(delta);
     const t = state.clock.elapsedTime + phase;
-    const { shoulder, elbow, head, q0 } = joints;
-    if (root.current) {
-      root.current.position.y = still ? 0 : Math.sin(t * 0.9) * 0.14;
-      root.current.rotation.z = still ? 0 : Math.sin(t * 0.6) * 0.05;
+    const g = root.current;
+    if (!g) return;
+    if (still) {
+      g.position.y = 0;
+      g.rotation.set(0, 0, 0);
+      return;
     }
-    if (head) {
-      const yaw = still ? 0 : state.pointer.x * 0.25;
-      const tilt = still ? 0 : Math.sin(t * 0.7 + 2) * 0.05;
-      head.quaternion
-        .copy(q0.head)
-        .multiply(q.setFromEuler(euler.set(-state.pointer.y * 0.08, yaw, tilt)));
-    }
-    if (!wave || !shoulder || !elbow) return;
-    const { env, swing } = still ? { env: 0, swing: 0 } : waveAt(t);
-    shoulder.quaternion
-      .copy(q0.shoulder)
-      .multiply(q.setFromAxisAngle(Z, RAISE + env * swing * 0.05));
-    elbow.quaternion.copy(q0.elbow).multiply(q.setFromAxisAngle(Z, BEND + env * swing * 0.5));
+    const { env, swing } = rock ? waveAt(t) : { env: 0, swing: 0 };
+    g.position.y = Math.sin(t * 0.9) * 0.14 + env * Math.abs(swing) * 0.05;
+    g.rotation.z = Math.sin(t * 0.6) * 0.05 + env * swing * 0.11;
+    // A little turn toward the pointer, like a glance.
+    g.rotation.y = state.pointer.x * 0.18 + env * 0.12;
   });
 
   return (

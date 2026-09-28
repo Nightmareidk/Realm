@@ -1,12 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Next, Unbounded } from "next/font/google";
+import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from "next/font/google";
+import { SITE } from "@/lib/site";
 import "./globals.css";
 
-/** Wide, modern display face for headlines: a little spacey, never sci-fi costume. */
-const unbounded = Unbounded({
+/**
+ * Headlines: a modern editorial grotesk. Its optical sizes tighten it up at display sizes (the
+ * browser picks the size automatically), and its ink traps give big type a crafted edge.
+ */
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-unbounded",
+  variable: "--font-bricolage",
   display: "swap",
+  axes: ["opsz"],
 });
 
 /** Body text: designed for legibility (distinct letterforms help dyslexic readers). */
@@ -20,18 +25,48 @@ const atkinson = Atkinson_Hyperlegible_Next({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.REALM_WEB_ORIGIN ?? "http://localhost:3000"),
+  metadataBase: new URL(SITE.origin),
   title: {
-    default: "Realm: step into another universe with your crew",
+    default: SITE.title,
     template: "%s | Realm",
   },
-  description:
-    "Chat, post, share clips and hang out with your friends. Spaces, a feed, profiles and boards in one app. Early access is open in your browser.",
+  description: SITE.description,
   applicationName: "Realm",
+  category: "social networking",
+  keywords: [
+    "Realm",
+    "group chat",
+    "friend group app",
+    "gaming community",
+    "Discord alternative",
+    "Spaces",
+    "short clips",
+    "discussion boards",
+    "social app",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "Realm",
+    locale: "en_US",
+    url: "/",
+    title: SITE.title,
+    description: SITE.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE.title,
+    description: SITE.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+  formatDetection: { telephone: false, email: false, address: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#08081e",
+  themeColor: "#0b0c1f",
   colorScheme: "dark light",
 };
 
@@ -45,7 +80,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${unbounded.variable} ${atkinson.variable}`}
+      className={`${bricolage.variable} ${atkinson.variable}`}
       suppressHydrationWarning
     >
       <head>

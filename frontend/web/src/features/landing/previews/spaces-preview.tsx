@@ -1,4 +1,5 @@
 import {
+  ArrowBendUpLeft,
   Article,
   CalendarBlank,
   Gif,
@@ -217,8 +218,10 @@ function Message({ m }: { m: ChatMessage }) {
           </p>
         )}
         {m.replyTo && (
-          <span className="mb-1 max-w-full truncate rounded-xl border-l-2 border-spaces-line bg-panel-raised/60 px-2.5 py-1 text-[0.68rem] text-ink-muted">
-            <span className="font-semibold text-ink-soft">{m.replyTo.name}</span> {m.replyTo.text}
+          <span className="mb-1 flex max-w-full items-center gap-1.5 truncate rounded-full bg-panel-raised/70 py-1 pr-3 pl-2 text-[0.68rem] text-ink-muted">
+            <ArrowBendUpLeft size={12} weight="bold" className="shrink-0 text-spaces-text" />
+            <span className="font-semibold text-ink-soft">{m.replyTo.name}</span>
+            <span className="truncate">{m.replyTo.text}</span>
           </span>
         )}
         {m.voice && <VoiceNote duration={m.voice.duration} />}
@@ -280,7 +283,7 @@ function Conversation({ compact }: { compact: boolean }) {
   const rows = compact ? chat.slice(-2) : chat;
   const typing = people.saoirse;
   return (
-    <ol className="flex min-h-0 flex-1 flex-col justify-end gap-2.5 overflow-hidden px-4 pt-3">
+    <ol className="flex min-h-0 flex-1 flex-col justify-end gap-2.5 overflow-hidden px-4 pt-3 [mask-image:linear-gradient(to_bottom,transparent,#000_2.5rem)]">
       {rows.map((m) => (
         <Message key={m.time + m.who.handle} m={m} />
       ))}
@@ -376,14 +379,24 @@ export function SpacesApp({
   );
 }
 
-export function SpacesPreview({ variant = "full" }: { variant?: "full" | "compact" }) {
+export function SpacesPreview({
+  variant = "full",
+  appClassName,
+}: {
+  variant?: "full" | "compact";
+  /** The app's height (the conversation fills whatever it's given). */
+  appClassName?: string;
+}) {
   const compact = variant === "compact";
   return (
     <PreviewFrame
       label="A Space with rooms, a pinned event, bubble chat with clips and voice notes, and who's here now"
       caption={!compact}
     >
-      <SpacesApp compact={compact} className={compact ? "h-[18rem]" : "h-[38rem]"} />
+      <SpacesApp
+        compact={compact}
+        className={appClassName ?? (compact ? "h-[18rem]" : "h-[38rem]")}
+      />
     </PreviewFrame>
   );
 }

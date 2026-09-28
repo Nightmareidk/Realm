@@ -6,13 +6,6 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
   devIndicators: false,
-  images: {
-    // Illustrative photography on the landing page until real product media exists.
-    remotePatterns: [
-      { protocol: "https", hostname: "picsum.photos" },
-      { protocol: "https", hostname: "fastly.picsum.photos" },
-    ],
-  },
   // The web app talks to the API same-origin (/api/v1/...), so session cookies stay first-party.
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${API_URL}/:path*` }];

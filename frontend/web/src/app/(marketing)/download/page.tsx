@@ -5,6 +5,7 @@ import { getReleases } from "@/lib/releases";
 export const metadata: Metadata = {
   title: "Download",
   description: "Use Realm in your browser today. Desktop and phone apps are on the way.",
+  alternates: { canonical: "/download" },
 };
 
 export default async function DownloadPage() {
