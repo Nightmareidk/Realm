@@ -128,7 +128,11 @@ export function useEdition(): Edition {
  * event, so the sky (and the day video) can start changing a beat before the rest of the page.
  */
 export function useSkyIsDay() {
-  const [day, setDay] = useState(false);
+  // Only used client-side (the 3D hero), so it can start from the page's edition straight away
+  // instead of starting at night and then playing the switch to day on load.
+  const [day, setDay] = useState(
+    () => typeof document !== "undefined" && currentEdition() === "day",
+  );
   useEffect(() => {
     const sync = () => setDay(currentEdition() === "day");
     sync();

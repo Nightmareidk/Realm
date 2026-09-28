@@ -4,8 +4,7 @@ import { cx } from "@/lib/cx";
 import { RotatingWord } from "../rotating-word";
 import { HeroScene } from "../three/hero-3d";
 
-// Token colours. The hero is dark in both editions (a night sky, or the day's crimson dusk), so
-// these are read in their night values there.
+// Token colours, so each word stays readable on the night sky and on the bright day sky alike.
 const WORDS = [
   { word: "chat", color: "var(--r-spaces-text)" },
   { word: "post", color: "var(--r-feed-text)" },
@@ -16,7 +15,7 @@ const WORDS = [
 
 /**
  * First viewport: the headline with a word that keeps changing, over the live 3D universe. At night
- * the black hole in an aurora sky; by day the sun, in a crimson dusk between two monoliths.
+ * the black hole in an aurora sky; by day the sun over rolling hills and a brick gateway.
  */
 export function Hero() {
   return (

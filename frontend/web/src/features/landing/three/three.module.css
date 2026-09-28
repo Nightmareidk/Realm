@@ -6,46 +6,17 @@
     linear-gradient(180deg, #04041a 0%, #0c0a2c 60%, var(--r-ground) 100%);
 }
 :global(:root[data-theme="day"]) .hero {
-  background: #1d0908 url("/video/day-sky.jpg") center / cover no-repeat;
-}
-
-/* ── Day sky: the film behind the clear canvas, easing out as the intro pulls back ───────── */
-.daySky {
-  visibility: hidden;
-}
-.daySky[data-shown],
-:global(:root[data-theme="day"]) .daySky {
-  visibility: visible;
-}
-.dayFilm {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 55%;
-  transform: scale(calc(1.12 - var(--p) * 0.12));
-  transform-origin: 50% 55%;
-}
-
-/* The film runs down through ember and coral into the page's apricot: a dusk, not a grey fade. */
-.dayFade {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 46%;
   background: linear-gradient(
     180deg,
-    transparent 0%,
-    oklch(0.3 0.09 28 / 0.35) 24%,
-    oklch(0.46 0.15 30 / 0.82) 50%,
-    oklch(0.68 0.14 38) 72%,
-    oklch(0.84 0.09 46) 88%,
-    var(--page-ground) 100%
+    #3d80e0 0%,
+    #7eb8f2 45%,
+    #dcecfa 70%,
+    #7fae5a 71%,
+    #5d8c3f 100%
   );
 }
 
-/* The hero meets the page below in the page's own colour (the stage keeps night colours). */
+/* The hero meets the page below in the page's own colour. */
 .toPage {
   background: linear-gradient(180deg, transparent, var(--page-ground));
 }

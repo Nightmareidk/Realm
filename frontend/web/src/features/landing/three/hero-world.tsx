@@ -327,7 +327,7 @@ function World({
 /**
  * The live 3D hero, filling the whole hero stage: at night the sky (aurora, stars, the cosmic
  * river) and the black hole covering the sun; by day the hole slides away and the sky gives way to
- * the day film behind a clear canvas. Four worlds and the explorer crew in both. Shaders compile in the background before the
+ * a bright cloudy day over rolling hills and a brick gateway. Four worlds and the crew in both. Shaders compile in the background before the
  * first frame. Rendering pauses off screen, in a hidden tab, or while the day edition is showing;
  * reduced motion / Pause motion renders single frames. On a GPU that can't keep up, the canvas
  * drops to a lower pixel ratio rather than stutter.
@@ -394,7 +394,7 @@ export default function HeroWorld({
         shadows="percentage"
         dpr={[1, dpr]}
         camera={{ position: [0, 0.4, 14], fov: 36, manual: true }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         eventSource={stage as RefObject<HTMLElement>}
         eventPrefix="client"
         frameloop={!warm || !visible ? "never" : still ? "demand" : "always"}

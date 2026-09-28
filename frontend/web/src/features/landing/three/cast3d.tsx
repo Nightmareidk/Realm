@@ -2,15 +2,22 @@
 
 import { useGLTF } from "@react-three/drei";
 import { type ThreeElements, useFrame } from "@react-three/fiber";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 /**
- * A member of Realm's cast, live in 3D: the model is built and exported by Blender
- * (scripts/blender/cast.py) with its right arm on two named joints, ShoulderR and ElbowR, so it
- * can wave here. It bobs gently, turns its head a little toward the pointer, and (with `wave`)
- * raises its arm and waves from the elbow. `still` freezes it.
+ * A member of Realm's cast, live in 3D. It bobs gently and turns its head a little toward the
+ * pointer; with `wave` it waves. Two kinds of model:
+ *
+ * - Built by Blender (scripts/blender/cast.py), with the right arm on two named joints, ShoulderR
+ *   and ElbowR: the wave is posed here, raising the arm and swinging from the elbow.
+ * - Rigged and animated elsewhere (Meshy and the like, as a GLB with its animations inside): it
+ *   plays its own clips. An idle loops if there is one; the wave (a clip named like "wave" or
+ *   "hello") plays every few seconds and eases back into the idle.
+ *
+ * `still` freezes it.
  */
 export type CastName =
   | "astro-teal"
@@ -102,12 +109,55 @@ export function CastMember({
   still?: boolean;
   phase?: number;
 } & ThreeElements["group"]) {
-  const { scene } = useGLTF(url(who), DRACO);
+  const { scene, animations } = useGLTF(url(who), DRACO);
   const model = useMemo(() => {
+    let skinned = false;
+    scene.traverse((o) => {
+      if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned = true;
+    });
+    // A rigged model needs its skeleton cloned with it (and must keep its meshes separate).
+    if (skinned) return cloneSkinned(scene);
     const m = scene.clone(true);
     mergeParts(m);
     return m;
   }, [scene]);
+  const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
+
+  // Models that bring their own animations: idle on a loop, a wave now and then.
+  useEffect(() => {
+    if (!animations.length) return;
+    const find = (re: RegExp) => animations.find((c) => re.test(c.name));
+    const idleClip = find(/idle|breath|stand/i);
+    const waveClip = find(/wave|hello|greet|hi\b/i);
+    const idle = idleClip ? mixer.clipAction(idleClip).play() : null;
+    const first = animations[0];
+    if (!wave || !waveClip) {
+      if (!idle && first) mixer.clipAction(first).play();
+      return () => {
+        mixer.stopAllAction();
+      };
+    }
+    const hello = mixer.clipAction(waveClip);
+    hello.setLoop(THREE.LoopOnce, 1);
+    let timer = 0;
+    const greet = () => {
+      hello.reset().fadeIn(0.3).play();
+      idle?.fadeOut(0.3);
+    };
+    const onDone = (e: { action: THREE.AnimationAction }) => {
+      if (e.action !== hello) return;
+      idle?.reset().fadeIn(0.45).play();
+      hello.fadeOut(0.45);
+      timer = window.setTimeout(greet, 2600);
+    };
+    mixer.addEventListener("finished", onDone);
+    timer = window.setTimeout(greet, 600 + phase * 500);
+    return () => {
+      window.clearTimeout(timer);
+      mixer.removeEventListener("finished", onDone);
+      mixer.stopAllAction();
+    };
+  }, [mixer, animations, wave, phase]);
   const joints = useMemo(() => {
     const get = (name: string) => model.getObjectByName(name) ?? null;
     const shoulder = get("ShoulderR");
@@ -140,7 +190,8 @@ export function CastMember({
     });
   }, [model]);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
+    if (!still) mixer.update(delta);
     const t = state.clock.elapsedTime + phase;
     const { shoulder, elbow, head, q0 } = joints;
     if (root.current) {

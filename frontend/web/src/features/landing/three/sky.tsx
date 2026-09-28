@@ -40,6 +40,8 @@ varying vec2 vUv;
 uniform float uTime;
 uniform float uDay;
 uniform vec2 uCentre;
+uniform sampler2D uGate;
+uniform vec3 uGround;
 uniform float uHoleR;
 uniform float uPhase;
 uniform float uScroll;
@@ -360,6 +362,176 @@ vec3 nightSky(vec2 uv, vec2 px, float aspect, float textMask) {
 }
 
 
+
+// ── Day: a bright cloudy sky over rolling hills, with the old brick gateway on the middle hill ──
+
+// Scroll intro parallax for the day layers: each is magnified around the horizon at the start and
+// eases to its place as the camera pulls back, nearer layers more.
+vec2 dayLayer(vec2 q, float aspect, float depth) {
+  vec2 anchor = vec2(0.5 * aspect, 0.2);
+  float zoom = 1.0 + depth * (1.0 - uScroll);
+  return anchor + (q - anchor) / zoom + vec2(uPointer.x * depth * 0.05, 0.0);
+}
+
+vec3 daySkyColor(vec2 uv, float aspect) {
+  vec3 zenith = vec3(0.24, 0.5, 0.88);
+  vec3 mid = vec3(0.47, 0.72, 0.97);
+  vec3 horizon = vec3(0.86, 0.93, 0.99);
+  vec3 col = mix(horizon, mid, smoothstep(0.18, 0.55, uv.y));
+  col = mix(col, zenith, smoothstep(0.55, 1.05, uv.y));
+  // Sunlight warms and brightens the sky around the sun.
+  vec2 sd = (uv - uCentre) * vec2(aspect, 1.0);
+  float d = length(sd);
+  col = mix(col, vec3(1.0, 0.95, 0.84), exp(-d * 2.2) * 0.35);
+  col += vec3(1.0, 0.93, 0.78) * (exp(-d * 6.0) * 0.28 + exp(-d * 1.6) * 0.06);
+  return col;
+}
+
+// Cumulus: a warped, drifting density field, heaped into a band with flatter bases, lit from the
+// sun's side (bright tops and edges, soft blue-grey undersides).
+float cloudField(vec2 p) {
+  vec2 w = vec2(fbm3(p * 0.6 + 3.0), fbm3(p * 0.6 - 5.0));
+  return fbm(p + w * 1.3);
+}
+vec4 cumulus(vec2 q, vec2 uv, float aspect, float band, float spread, float scale, float speed, float seed) {
+  vec2 p = q * scale + vec2(uTime * speed + seed, seed * 0.37);
+  float n = cloudField(p);
+  float fromBand = abs(uv.y - band) / spread;
+  float threshold = 0.5 + fromBand * fromBand * 0.35;
+  float base = band - spread * 0.55 + (noise(vec2(p.x * 0.8, seed)) - 0.5) * spread * 0.4;
+  float dens = smoothstep(threshold, threshold + 0.16, n) * smoothstep(base, base + 0.05, uv.y);
+  if (dens <= 0.001) return vec4(0.0);
+  // Light: less cloud toward the sun means brighter.
+  vec2 toSun = normalize((uCentre - uv) * vec2(aspect, 1.0) + vec2(0.0001));
+  float ahead = cloudField(p + toSun * 0.22);
+  float lit = clamp(0.62 + (n - ahead) * 3.2, 0.0, 1.0);
+  float under = smoothstep(base + 0.12, base, uv.y);
+  vec3 shadow = vec3(0.62, 0.69, 0.82);
+  vec3 bright = vec3(1.0, 0.995, 0.975);
+  vec3 col = mix(shadow, bright, lit);
+  col = mix(col, vec3(0.7, 0.75, 0.86), under * 0.45);
+  // A silver lining where the cloud thins toward the sun.
+  float sunNear = exp(-length((uv - uCentre) * vec2(aspect, 1.0)) * 3.0);
+  col += vec3(1.0, 0.92, 0.75) * (1.0 - dens) * sunNear * 0.6;
+  return vec4(col, dens);
+}
+
+// Rolling hills: soft ridgelines, lit on the slopes facing the sun (upper right), patchwork fields
+// with hedgerows on the nearer ones, and clumps of round trees along the ridges.
+float hill(float x, float base, float amp, float f, float seed) {
+  return base + amp * (0.55 * sin(x * f + seed) + 0.3 * sin(x * f * 2.3 + seed * 1.7) + 0.15 * (noise(vec2(x * f * 3.0, seed)) - 0.5));
+}
+
+// A clump of trees: two to four round canopies on the ridge, shaded from the upper right.
+vec4 treeClumps(vec2 q, float base, float amp, float f, float seed, float size) {
+  vec4 best = vec4(0.0);
+  float cells = 6.0;
+  for (int k = -1; k <= 1; k++) {
+    float cell = floor(q.x * cells) + float(k);
+    float r = hash21(vec2(cell, seed));
+    if (r > 0.55) continue;
+    for (int j = 0; j < 4; j++) {
+      float fj = float(j);
+      if (fj > 1.0 + r * 5.0) break;
+      float cx = (cell + 0.15 + 0.7 * hash21(vec2(cell + fj * 7.1, seed + 1.0))) / cells;
+      float sz = size * (0.55 + 0.6 * hash21(vec2(cell + fj * 3.3, seed + 2.0)));
+      float cy = hill(cx, base, amp, f, seed) + sz * 0.62;
+      vec2 d = (q - vec2(cx, cy)) / sz;
+      float rr = length(d * vec2(1.0, 1.1)) + (noise(d * 6.0 + fj) - 0.5) * 0.12;
+      float c = smoothstep(1.0, 0.92, rr);
+      if (c <= 0.0) continue;
+      float light = clamp(0.5 + dot(d, vec2(0.62, 0.78)) * 0.55, 0.0, 1.0);
+      vec3 col = mix(vec3(0.1, 0.24, 0.1), vec3(0.4, 0.58, 0.22), light);
+      col *= 0.9 + 0.15 * noise(d * 14.0 + cell);
+      // Nearer canopies (drawn later in the loop) cover the ones behind.
+      best = vec4(mix(best.rgb, col, c), max(best.a, c));
+    }
+  }
+  return best;
+}
+
+vec4 hillLayer(vec2 q, float base, float amp, float f, float seed, vec3 lit, vec3 grass, vec3 deep, float fields, float trees) {
+  float x = q.x;
+  float h = hill(x, base, amp, f, seed);
+  float aa = 1.5 / uRes.y;
+  float cover = smoothstep(h + aa, h - aa, q.y);
+  vec3 col = vec3(0.0);
+  if (cover > 0.0) {
+    float e = 0.003;
+    float slope = (hill(x + e, base, amp, f, seed) - hill(x - e, base, amp, f, seed)) / (2.0 * e);
+    float light = clamp(0.6 - slope * 0.9, 0.25, 1.0);
+    float down = clamp((h - q.y) * 5.0, 0.0, 1.0);
+    // Sunlit near the ridge, deeper green below and on slopes turned away.
+    col = mix(lit, grass, smoothstep(0.0, 0.5, down));
+    col = mix(col, deep, (1.0 - light) * 0.7 + down * 0.25);
+    if (fields > 0.0) {
+      vec2 fp = vec2(x * 4.5 + (noise(vec2(q.y * 8.0, seed)) - 0.5) * 0.8, (h - q.y) * 14.0 + (noise(vec2(x * 3.0, seed + 5.0)) - 0.5) * 1.2);
+      vec2 id = floor(fp);
+      vec2 fr = fract(fp);
+      float tint = hash21(id + seed);
+      col *= mix(0.88, 1.1, tint);
+      col = mix(col, col * vec3(1.08, 1.04, 0.82), step(0.8, tint) * 0.6);
+      float edge = min(min(fr.x, 1.0 - fr.x), min(fr.y, 1.0 - fr.y));
+      col = mix(col, deep * 0.72, smoothstep(0.07, 0.0, edge) * fields);
+    }
+    col *= 0.94 + 0.1 * noise(vec2(x * 80.0, q.y * 80.0));
+    // Light catching the ridge line.
+    col += vec3(0.16, 0.18, 0.06) * exp(-(h - q.y) * 120.0) * light;
+  }
+  vec4 layer = vec4(col, cover);
+  if (trees > 0.0 && q.y < h + trees * 2.0 && q.y > h - trees * 0.4) {
+    vec4 t = treeClumps(q, base, amp, f, seed, trees);
+    layer = vec4(mix(layer.rgb, t.rgb, t.a), max(layer.a, t.a));
+  }
+  return layer;
+}
+
+vec3 daySky(vec2 uv, float aspect) {
+  vec2 q0 = vec2(uv.x * aspect, uv.y);
+  vec3 col = daySkyColor(uv, aspect);
+  vec3 haze = vec3(0.8, 0.88, 0.95);
+
+  // High wisps, then two decks of cumulus.
+  vec2 qs = dayLayer(q0, aspect, 0.05);
+  float wisp = smoothstep(0.55, 0.85, fbm(vec2(qs.x * 1.2 + uTime * 0.004, qs.y * 7.0)));
+  col = mix(col, vec3(1.0), wisp * smoothstep(0.55, 0.95, uv.y) * 0.35);
+  if (uv.y > 0.28) {
+    vec4 hi = cumulus(qs, uv, aspect, 0.8, 0.2, 1.7, 0.006, 3.0);
+    col = mix(col, hi.rgb, hi.a * 0.9);
+    vec4 lo = cumulus(dayLayer(q0, aspect, 0.08), uv, aspect, 0.52, 0.16, 2.3, 0.01, 11.0);
+    col = mix(col, mix(lo.rgb, haze, 0.15), lo.a);
+  }
+
+  if (uv.y < 0.46) {
+    // Far hills: pale and blue with distance.
+    vec2 qf = dayLayer(q0, aspect, 0.1);
+    vec4 far = hillLayer(qf, 0.31, 0.06, 1.9, 1.3, vec3(0.66, 0.8, 0.74), vec3(0.56, 0.7, 0.7), vec3(0.46, 0.6, 0.66), 0.0, 0.0);
+    col = mix(col, mix(far.rgb, haze, 0.5), far.a);
+
+    // Middle hill: fields and hedgerows, with the brick gateway standing on it.
+    vec2 qm = dayLayer(q0, aspect, 0.16);
+    vec4 mid = hillLayer(qm, 0.245, 0.05, 1.35, 4.2, vec3(0.66, 0.8, 0.4), vec3(0.47, 0.66, 0.32), vec3(0.3, 0.46, 0.26), 0.7, 0.014);
+    col = mix(col, mix(mid.rgb, haze, 0.2), mid.a);
+    float gx = 0.63 * aspect;
+    float gBase = hill(gx, 0.245, 0.05, 1.35, 4.2) - 0.012;
+    float S = 0.3;
+    vec2 guv = vec2((qm.x - gx) / S + 0.5, (qm.y - gBase) / S + 0.083);
+    if (guv.x > 0.0 && guv.x < 1.0 && guv.y > 0.0 && guv.y < 1.0) {
+      vec4 g = texture2D(uGate, guv);
+      col = mix(col, mix(g.rgb, haze, 0.1), g.a);
+    }
+
+    // Near hill with trees along its ridge, and the nearest slope.
+    vec4 near = hillLayer(dayLayer(q0, aspect, 0.24), 0.15, 0.06, 1.05, 7.7, vec3(0.6, 0.78, 0.32), vec3(0.4, 0.62, 0.25), vec3(0.22, 0.4, 0.18), 0.0, 0.026);
+    col = mix(col, near.rgb, near.a);
+    vec4 front = hillLayer(dayLayer(q0, aspect, 0.32), 0.06, 0.045, 1.6, 2.2, vec3(0.52, 0.72, 0.28), vec3(0.34, 0.55, 0.2), vec3(0.18, 0.34, 0.14), 0.0, 0.0);
+    col = mix(col, front.rgb, front.a);
+  }
+  // A warm morning mist in the lowest valley, into the page's own colour.
+  col = mix(col, uGround, smoothstep(0.12, 0.0, uv.y) * 0.55);
+  return col;
+}
+
 // Gravitational lensing by the black hole, as a thin point-mass lens: each pixel shows the sky
 // from where its light really started. Near the Einstein radius that stretches stars into arcs
 // hugging the shadow; further out the bend fades away.
@@ -379,36 +551,37 @@ void main() {
   float aspect = uRes.x / uRes.y;
   float textMask = rectMask(uv, uText, 0.22);
 
-  // Day rises from the horizon: the lower sky gives way first, then the rest, and the day film
-  // behind this canvas shows through.
+  // Day rises from the horizon: the lower sky gives way first, then the rest.
   float dm = smoothstep(0.0, 1.0, clamp(uDay * 1.7 - 0.35 - (uv.y - 0.5) * 0.7, 0.0, 1.0));
-  vec3 col = vec3(0.0);
+  vec3 night = vec3(0.0);
   if (dm < 0.999) {
     vec2 lp = uHoleR > 0.0 ? lens(px) : px;
-    col = nightSky(lp / uRes, lp, aspect, textMask);
+    night = nightSky(lp / uRes, lp, aspect, textMask);
     // The mountains never reach this high: skip them above their tallest peak.
-    if (uv.y < 0.42) col = mountains(uv, aspect, col);
-    col += (hash21(gl_FragCoord.xy + fract(uTime)) - 0.5) / 255.0;
+    if (uv.y < 0.42) night = mountains(uv, aspect, night);
   }
-  float alpha = 1.0 - dm;
+  vec3 day = dm > 0.001 ? daySky(uv, aspect) : vec3(0.0);
+  vec3 col = mix(night, day, dm);
+  col += (hash21(gl_FragCoord.xy + fract(uTime)) - 0.5) / 255.0;
 
-  // While the edition changes: a warm band along the horizon and a flare from the sun, as light
-  // over whichever sky is showing. Output is premultiplied (the canvas is see-through by day).
+  // While the edition changes: a warm band along the horizon and a flare from the sun.
   float change = sin(clamp(uDay, 0.0, 1.0) * 3.14159);
-  vec3 add = vec3(0.0);
   if (change > 0.001) {
     vec2 sd = (uv - uCentre) * vec2(aspect, 1.0);
-    float flare = exp(-length(sd) * 2.6) * change * change * 0.8;
-    float band = exp(-uv.y * 3.5) * change * 0.3;
-    add = vec3(1.0, 0.5, 0.25) * band + vec3(1.0, 0.84, 0.6) * flare;
+    float flare = exp(-length(sd) * 2.6) * change * change * 0.7;
+    float band = exp(-uv.y * 3.5) * change * 0.25;
+    col += vec3(1.0, 0.6, 0.3) * band + vec3(1.0, 0.86, 0.62) * flare;
   }
-  gl_FragColor = vec4(col * alpha + add, clamp(alpha + max(add.r, max(add.g, add.b)), 0.0, 1.0));
+  gl_FragColor = vec4(col, 1.0);
 }
 `;
 
+/** The page's day ground (apricot, oklch(0.91 0.05 50)) in display RGB, for the valley mist. */
+const DAY_GROUND = new THREE.Vector3(0.996, 0.849, 0.77);
+
 /**
- * Full-screen night sky behind the hero scene. By day (`mix` → 1) it gives way from the horizon up
- * and isn't drawn at all once it's gone: the canvas is clear and the day film shows through.
+ * Full-screen sky behind the hero scene: the night sky, or by day (`mix` → 1) a bright cloudy sky
+ * over rolling hills with a brick gateway, giving way to each other from the horizon up.
  * `hole` is the black hole, which the sky bends around; `centre` is where the sun and the black
  * hole meet, which the flare comes from and which the edition switch opens the new edition from;
  * `layout` says where the headline sits, so the sky quietens there; `scroll` is the intro's
@@ -429,6 +602,13 @@ export function SkyBackdrop({
   layout: LayoutRef;
   scroll?: RefObject<number>;
 }) {
+  const gate = useMemo(() => {
+    const t = new THREE.TextureLoader().load("/art/day-gateway.webp");
+    // Sampled as stored: the shader works in display colours.
+    t.colorSpace = THREE.NoColorSpace;
+    t.anisotropy = 4;
+    return t;
+  }, []);
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -444,6 +624,8 @@ export function SkyBackdrop({
           uTime: { value: 0 },
           uDay: { value: 0 },
           uCentre: { value: new THREE.Vector2(0.7, 0.6) },
+          uGate: { value: gate },
+          uGround: { value: DAY_GROUND },
           uHoleR: { value: 0 },
           uPhase: { value: 0 },
           uScroll: { value: 0 },
@@ -453,13 +635,12 @@ export function SkyBackdrop({
           uPointer: { value: new THREE.Vector2() },
         },
       }),
-    [],
+    [gate],
   );
   const gl = useThree((s) => s.gl);
   const v = useMemo(() => new THREE.Vector3(), []);
   const edge = useMemo(() => new THREE.Vector3(), []);
   const seen = useRef(-1);
-  const mesh = useRef<THREE.Mesh>(null);
   // The centre's position on the canvas (0..1, y up), for the edition switch's reveal.
   const onCanvas = useRef<{ x: number; y: number } | null>(null);
 
@@ -481,9 +662,7 @@ export function SkyBackdrop({
   useFrame((state) => {
     const u = material.uniforms as Record<string, THREE.IUniform>;
     if (!still) u.uTime.value = state.clock.elapsedTime + 40;
-    const day = mix.current ?? 0;
-    u.uDay.value = day;
-    if (mesh.current) mesh.current.visible = day < 0.999;
+    u.uDay.value = mix.current ?? 0;
     u.uPhase.value = auroraPhase();
     u.uScroll.value = scroll?.current ?? 0;
     (u.uRes.value as THREE.Vector2).set(state.size.width, state.size.height);
@@ -521,7 +700,7 @@ export function SkyBackdrop({
   });
 
   return (
-    <mesh ref={mesh} frustumCulled={false} renderOrder={-1000} material={material}>
+    <mesh frustumCulled={false} renderOrder={-1000} material={material}>
       <planeGeometry args={[2, 2]} />
     </mesh>
   );

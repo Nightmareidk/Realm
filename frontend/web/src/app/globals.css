@@ -179,6 +179,9 @@
   border-color: transparent;
   backdrop-filter: none;
 }
+:root[data-theme="day"] .site-header[data-top] {
+  background-image: linear-gradient(180deg, oklch(0.98 0.02 70 / 0.6), transparent);
+}
 
 /*
  * The page's nebula: three soft colour fields behind everything that crossfade on a 48 s cycle,

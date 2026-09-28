@@ -16,17 +16,17 @@ const NIGHT = {
   fill: "#7fe3ff",
   fillI: 0.9,
 };
-/** By day: sunlight, a warm key and an ember rim from the crimson sky. */
+/** By day: warm sunlight, a bright blue sky above and green bounce from the hills below. */
 const DAY = {
-  sky: "#ffe2c8",
-  ground: "#5a1e1a",
-  hemi: 1.2,
-  key: "#fff1dc",
-  keyI: 2.7,
-  rim: "#ff7a45",
-  rimI: 2.2,
-  fill: "#ffb38a",
-  fillI: 0.7,
+  sky: "#d6ecff",
+  ground: "#7a9a5c",
+  hemi: 1.35,
+  key: "#fff3e0",
+  keyI: 2.8,
+  rim: "#ffd29a",
+  rimI: 1.9,
+  fill: "#b8dcff",
+  fillI: 0.8,
 };
 
 /** Soft light panels around the scene, reflected in the cast's clearcoat. */

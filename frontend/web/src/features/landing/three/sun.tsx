@@ -154,11 +154,11 @@ void main() {
   float s2 = noise(ring * 11.0 + vec2(0.0, x * 4.0 - uTime * 0.2));
   float fil = pow(noise(ring * 34.0 + vec2(x * 2.0 - uTime * 0.12, 0.0)), 4.0);
   float streak = pow(s1, 1.6) * 1.2 + pow(s2, 3.0) * 0.55 + fil * 0.6;
-  float fall = exp(-x * 2.6 / (1.0 + uSwell * 1.2));
+  float fall = exp(-x * 4.2 / (1.0 + uSwell * 1.2));
   float rim = exp(-x * 15.0);
   float burst = smoothstep(0.66, 1.0, noise(ring * 1.6 + vec2(uTime * 0.09, 3.0)));
   float flare = burst * exp(-x * 5.0) * (0.65 + 0.35 * sin(a * 23.0 + uTime * 0.8));
-  float I = streak * fall * 1.1 * (1.0 + uSwell * 1.6) + rim * 1.4 + flare * 1.7;
+  float I = streak * fall * 0.55 * (1.0 + uSwell * 1.6) + rim * 1.1 + flare * 0.9;
 
   vec3 col = mix(vec3(1.0, 0.97, 0.86), vec3(1.0, 0.66, 0.24), smoothstep(0.0, 0.18, x));
   col = mix(col, vec3(1.0, 0.36, 0.14), smoothstep(0.18, 0.6, x));

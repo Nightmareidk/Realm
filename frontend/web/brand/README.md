@@ -25,13 +25,13 @@ materials (clearcoat plastic, fabric sheen, subsurface skin, jelly transmission,
 
 Masters are kept in `brand/renders/cast/`.
 
-## Day sky (`public/video/`)
+## Day sky
 
-`day-sky.mp4` (a crimson dusk: smoke between two black monoliths, a pine forest below) is the
-product owner's own Higgsfield clip. Its camera drifts the whole time, so no two frames match for a
-crossfade loop; instead it plays forward then backward (`scripts/blender/video_loop.py --pingpong`,
-source frames 1 to 150, H.264, neutral colour): the camera eases out and back with no seam.
-`day-sky.jpg` is its first frame, used as the poster and the CSS fallback sky.
+The day sky is drawn live in the hero's sky shader (`src/features/landing/three/sky.tsx`): clouds,
+hills, fields and trees are procedural. The one painted piece is the brick gateway on the middle
+hill, `public/art/day-gateway.webp`: modelled and rendered in Blender by
+`scripts/blender/gateway.py` (Cycles, procedural brick in running bond, stone coping, keystone and
+finials, moss, a shadow-catcher ground for its contact shadow), master in `brand/renders/`.
 
 ## Other 3D renders (`public/art/*.webp`)
 
