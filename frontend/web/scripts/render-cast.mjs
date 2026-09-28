@@ -328,8 +328,9 @@ for (const who of cast) {
     console.log("repacked", who, JSON.stringify(manifest[who]));
     continue;
   }
-  rmSync(frames, { recursive: true, force: true });
+  // Empty the folder rather than delete it: Windows won't remove a folder something has open.
   mkdirSync(frames, { recursive: true });
+  for (const f of readdirSync(frames)) rmSync(join(frames, f), { force: true });
   console.log("rig", who);
   blender("rig_wave.py", [
     "--in",

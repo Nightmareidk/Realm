@@ -27,6 +27,7 @@ import math
 import sys
 from pathlib import Path
 
+import bmesh
 import bpy
 from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Quaternion, Vector
@@ -42,7 +43,13 @@ def parse():
     p.add_argument("--frames", default="")
     for j in ("shoulder", "elbow", "wrist", "tip"):
         p.add_argument(f"--{j}", required=True, help="x,z")
-    p.add_argument("--radius", type=float, default=0.16, help="arm capsule radius")
+    p.add_argument("--radius", type=float, default=0.16, help="the forearm's thickness")
+    p.add_argument(
+        "--hand-radius",
+        type=float,
+        default=0.0,
+        help="how far the hand's fingers may reach from the wrist-to-tip line (0: 2.6 x radius)",
+    )
     p.add_argument(
         "--guard",
         type=float,
@@ -107,6 +114,13 @@ def prepare(a):
         bpy.ops.object.join()
     body = bpy.context.view_layer.objects.active
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    # The importer splits the mesh along its texture seams; weld it back into one surface (texture
+    # coordinates live on the faces, so they survive) so the arm can be found by walking the mesh.
+    bm = bmesh.new()
+    bm.from_mesh(body.data)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+    bm.to_mesh(body.data)
+    bm.free()
     lo, hi = bounds([body])
     s = HEIGHT / (hi.z - lo.z)
     body.scale = (s, s, s)
@@ -137,6 +151,8 @@ def joint_depth(body, x, z, r=0.12):
 
 
 def build_rig(body, a):
+    if not a.hand_radius:
+        a.hand_radius = a.radius * 2.6
     pts = {}
     for j in ("shoulder", "elbow", "wrist", "tip"):
         x, z = xz(getattr(a, j))
@@ -162,18 +178,21 @@ def build_rig(body, a):
         parent = b
     bpy.ops.object.mode_set(mode="OBJECT")
 
-    # Weights: along the arm by arc length, blended across each joint; only inside the capsule.
+    # Which vertices move: the whole forearm and hand as one connected piece of the mesh, found by
+    # walking the mesh from the fingertips back toward the elbow. Every finger is part of it however
+    # far it spreads (a capsule around the arm's centre line left the outer fingers half behind, so
+    # they stretched), and nothing that merely sits near the hand (a helmet, an ear, hair) is, unless
+    # the mesh actually joins it to the hand.
     segs = [(pts["shoulder"], pts["elbow"]), (pts["elbow"], pts["wrist"]), (pts["wrist"], pts["tip"])]
-    lens = [(b - a_).length for a_, b in segs]
+    lens = [(b_ - a_).length for a_, b_ in segs]
     s_elbow = lens[0]
     s_wrist = lens[0] + lens[1]
-    # Crisp joints: the bend happens over a short span, like a real elbow and wrist, so the
-    # forearm and hand stay solid instead of stretching like rubber.
-    blend = 0.025
     side = 1.0 if pts["tip"].x > 0 else -1.0
-    groups = {n: body.vertex_groups.new(name=n) for n in ("Root", "Upper", "Fore", "Hand")}
-    R = a.radius
-    for v in body.data.vertices:
+    verts = body.data.vertices
+    n = len(verts)
+    arc = [0.0] * n
+    allowed = [False] * n
+    for v in verts:
         p = v.co
         best = None
         for i, (p0, p1) in enumerate(segs):
@@ -183,28 +202,62 @@ def build_rig(body, a):
             if best is None or dist < best[0]:
                 best = (dist, i, t)
         dist, i, t = best
-        # The hand's region is widest; the joints near the body narrowest.
-        r = R * (1.25 if i == 2 else 1.0)
-        m = 1.0 - smoothstep(r, r * 1.3, dist)
-        if a.guard is not None and i >= 1 and side * p.x < side * a.guard:
-            m = 0.0
+        arc[v.index] = sum(lens[:i]) + t * lens[i]
+        reach = a.radius * 1.4 if i == 1 else a.hand_radius
+        # The guard keeps the body beside the elbow out of the forearm; the hand needs none (a
+        # head or ear near it isn't joined to it), and a guard there would cut through a thumb.
+        allowed[v.index] = (
+            i >= 1
+            and arc[v.index] >= s_elbow - 0.08
+            and dist < reach
+            and (i == 2 or a.guard is None or side * p.x >= side * a.guard)
+        )
+    adj = [[] for _ in range(n)]
+    for e in body.data.edges:
+        i, j = e.vertices
+        adj[i].append(j)
+        adj[j].append(i)
+    seed = min((v.index for v in verts if allowed[v.index]), key=lambda k: (verts[k].co - pts["tip"]).length)
+    member = [0.0] * n
+    member[seed] = 1.0
+    todo = [seed]
+    while todo:
+        k = todo.pop()
+        for j in adj[k]:
+            if allowed[j] and member[j] == 0.0:
+                member[j] = 1.0
+                todo.append(j)
+    # A soft rim a few vertices wide where the piece meets the rest of the mesh, so nothing tears.
+    for _ in range(3):
+        nxt = member[:]
+        for k in range(n):
+            if member[k] < 1.0 and adj[k]:
+                nxt[k] = max(member[k], sum(member[j] for j in adj[k]) / (len(adj[k]) + 1))
+        member = nxt
+    print("RIG moving vertices", sum(1 for m in member if m >= 1.0), "of", n)
+
+    # Crisp joints: the bend happens over a short span, like a real elbow and wrist, so the forearm
+    # and hand stay solid instead of stretching like rubber.
+    blend = 0.025
+    groups = {g: body.vertex_groups.new(name=g) for g in ("Root", "Upper", "Fore", "Hand")}
+    for v in verts:
+        m = member[v.index]
         if m <= 0.0:
             groups["Root"].add([v.index], 1.0, "REPLACE")
             continue
-        s = sum(lens[:i]) + t * lens[i]
-        w_root = 1.0 - smoothstep(0.0, blend * 2, s)
-        w_hand = smoothstep(s_wrist - blend, s_wrist + blend, s)
-        w_fore = smoothstep(s_elbow - blend, s_elbow + blend, s) * (1.0 - w_hand)
-        w_upper = max(0.0, 1.0 - w_root - w_fore - w_hand)
+        s_ = arc[v.index]
+        w_hand = smoothstep(s_wrist - blend, s_wrist + blend, s_)
+        w_fore = smoothstep(s_elbow - blend, s_elbow + blend, s_) * (1.0 - w_hand)
+        w_upper = max(0.0, 1.0 - w_fore - w_hand)
         weights = {
-            "Root": w_root * m + (1.0 - m),
+            "Root": 1.0 - m,
             "Upper": w_upper * m,
             "Fore": w_fore * m,
             "Hand": w_hand * m,
         }
-        for n, w in weights.items():
+        for g, w in weights.items():
             if w > 1e-4:
-                groups[n].add([v.index], w, "REPLACE")
+                groups[g].add([v.index], w, "REPLACE")
 
     body.parent = rig
     mod = body.modifiers.new("Rig", "ARMATURE")
@@ -224,15 +277,15 @@ def animate(rig, side, swing):
         pb = rig.pose.bones[name]
         pb.rotation_mode = "QUATERNION"
         axes[name] = rig.data.bones[name].matrix_local.to_3x3().inverted() @ world_y
-    # A natural hello: the forearm swings side to side from the elbow as one solid piece, and the
-    # hand stays firm, following a touch behind. Two swings, easing in from the pose and back to
-    # it. Degrees; positive swings away from the body.
+    # A natural hello: the forearm swings side to side from the elbow as one solid piece, leaning
+    # outward so the hand clears the head, and the hand stays firm, following a touch behind. Two
+    # swings, easing in from the pose and back to it. Degrees; positive swings away from the body.
     period = 17.0
     keys = []
     for f in range(0, 41, 2):
         env = smoothstep(0, 7, f) * (1.0 - smoothstep(29, 40, f))
         ph = 2 * math.pi * (f - 2) / period
-        keys.append((f, 0.0, 17 * env * math.sin(ph), 5 * env * math.sin(ph - 0.7)))
+        keys.append((f, 0.0, env * (4 + 16 * math.sin(ph)), 5 * env * math.sin(ph - 0.7)))
     for f, up, fore, hand in keys:
         for name, deg in (("Upper", up), ("Fore", fore), ("Hand", hand)):
             pb = rig.pose.bones[name]

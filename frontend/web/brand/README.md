@@ -22,9 +22,10 @@ the blue plush) and people (`human-maya`, `human-leo`). The product owner made t
 raised arm's joints for each are listed at the top of that script, read off a front view):
 
 - rigs the raised arm in **Blender 5.2** (`scripts/blender/rig_wave.py`): shoulder, elbow, wrist
-  and hand bones, each vertex weighted by where it sits along the arm and only inside a capsule
-  around it, with crisp joints, and a baked "Wave" (the forearm swings from the elbow as one firm
-  piece, the hand following a touch behind);
+  and hand bones; the forearm and hand are found as one connected piece of the mesh (walking it
+  from the fingertips back to the elbow), so every finger moves whole and nothing merely near the
+  hand (a head, an ear) moves with it; crisp joints; and a baked "Wave" (the forearm swings from
+  the elbow as one firm piece, leaning outward, the hand following a touch behind);
 - writes `public/models/<who>.glb` for the live hero: about 60k triangles, skinned, with the Wave
   animation, 1024 px WebP textures, Draco (decoder served from `public/draco/`, copied from three);
 - renders the wave's 41 frames with Cycles on the GPU, in the cast's studio light (a warm key, cool
