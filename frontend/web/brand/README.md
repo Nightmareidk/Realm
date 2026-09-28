@@ -25,13 +25,13 @@ materials (clearcoat plastic, fabric sheen, subsurface skin, jelly transmission,
 
 Masters are kept in `brand/renders/cast/`.
 
-## Day sky
+## Day sky (`public/video/`)
 
-The day sky is drawn live in the hero's sky shader (`src/features/landing/three/sky.tsx`): clouds,
-hills, fields and trees are procedural. The one painted piece is the brick gateway on the middle
-hill, `public/art/day-gateway.webp`: modelled and rendered in Blender by
-`scripts/blender/gateway.py` (Cycles, procedural brick in running bond, stone coping, keystone and
-finials, moss, a shadow-catcher ground for its contact shadow), master in `brand/renders/`.
+`day-sky.mp4` is a summer day: towering clouds over rolling green hills and an old red-brick
+gateway glowing like a portal. Made with Higgsfield for the product owner: a Soul Cinema still,
+edited with Nano Banana Pro to light the gateway, animated with Kling 3.0 (pro, locked camera,
+everything in motion), then made seamless and web-sized with Blender's sequencer
+(`scripts/blender/video_loop.py`). `day-sky.jpg` is its first frame, the poster and CSS fallback.
 
 ## Other 3D renders (`public/art/*.webp`)
 

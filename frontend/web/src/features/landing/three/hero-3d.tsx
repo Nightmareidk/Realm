@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 import { cx } from "@/lib/cx";
+import { DaySky } from "./day-sky";
 import { useStageLayout } from "./layout";
 import styles from "./three.module.css";
 
@@ -27,8 +28,8 @@ function hasWebGL() {
  * finished composition. Until the scene's first frame is ready (and on devices without WebGL) a
  * rendered poster stands in over a CSS sky.
  *
- * The sky is drawn in the canvas for both editions: night's aurora, or a bright cloudy day over
- * rolling hills with a brick gateway.
+ * At night the sky is drawn in the canvas (the aurora); by day the canvas clears from the horizon
+ * up onto a filmed summer day behind it, with the brick gateway glowing on the hills.
  */
 export function HeroScene({ copy }: { copy: ReactNode }) {
   const section = useRef<HTMLElement>(null);
@@ -89,6 +90,7 @@ export function HeroScene({ copy }: { copy: ReactNode }) {
         className={cx(styles.hero, styles.stage, "isolate overflow-clip")}
         style={{ viewTransitionName: "realm-hero" }}
       >
+        <DaySky />
         {webgl && (
           <div
             className={cx(

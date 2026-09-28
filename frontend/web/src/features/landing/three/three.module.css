@@ -6,13 +6,69 @@
     linear-gradient(180deg, #04041a 0%, #0c0a2c 60%, var(--r-ground) 100%);
 }
 :global(:root[data-theme="day"]) .hero {
+  background: #6fa8e6 url("/video/day-sky.jpg") center 60% / cover no-repeat;
+}
+
+/* ── Day sky: the film behind the clear canvas, easing out as the intro pulls back ───────── */
+.daySky {
+  visibility: hidden;
+}
+.daySky[data-shown],
+:global(:root[data-theme="day"]) .daySky {
+  visibility: visible;
+}
+/* The glowing gateway sits in the middle of the film. The intro opens with it under the sun at
+   the centre; as the camera pulls back it slides right, to stand under the sun again between the
+   explorer and the monster (and clear of the headline). Phones keep it centred. */
+.dayFilm {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 60%;
+  transform: translateX(calc(var(--p) * 13%)) scale(calc(1.45 - var(--p) * 0.15));
+  transform-origin: 50% 60%;
+}
+@media (width < 64rem) {
+  .dayFilm {
+    transform: scale(calc(1.12 - var(--p) * 0.12));
+  }
+}
+/* A soft light haze behind the headline column, so maroon type stays readable over the film. */
+.dayCopyHaze {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    oklch(0.98 0.02 80 / 0.62) 0%,
+    oklch(0.98 0.02 80 / 0.42) 30%,
+    oklch(0.98 0.02 80 / 0) 50%
+  );
+  opacity: clamp(0, calc((var(--p) - 0.3) * 3), 1);
+}
+@media (width < 64rem) {
+  .dayCopyHaze {
+    background: linear-gradient(
+      180deg,
+      oklch(0.98 0.02 80 / 0.55) 0%,
+      oklch(0.98 0.02 80 / 0.35) 45%,
+      oklch(0.98 0.02 80 / 0) 65%
+    );
+  }
+}
+/* The film's grass meets the page's apricot through a soft warm haze. */
+.dayFade {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 30%;
   background: linear-gradient(
     180deg,
-    #3d80e0 0%,
-    #7eb8f2 45%,
-    #dcecfa 70%,
-    #7fae5a 71%,
-    #5d8c3f 100%
+    transparent 0%,
+    color-mix(in oklch, var(--page-ground) 40%, transparent) 45%,
+    color-mix(in oklch, var(--page-ground) 85%, transparent) 80%,
+    var(--page-ground) 100%
   );
 }
 

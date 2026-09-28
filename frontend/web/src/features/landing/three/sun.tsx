@@ -175,7 +175,7 @@ varying vec2 vUv;
 void main() {
   // A tight glow and a faint wide bloom, added as light: the sky behind stays readable.
   float r = length(vUv * 2.0 - 1.0);
-  float glow = exp(-r * mix(6.5, 3.5, uSwell)) * 0.62 + exp(-r * 2.6) * 0.1;
+  float glow = exp(-r * mix(7.5, 3.5, uSwell)) * 0.55 + exp(-r * 3.2) * 0.035;
   vec3 col = mix(vec3(1.0, 0.9, 0.68), vec3(1.0, 0.56, 0.24), smoothstep(0.08, 0.6, r));
   vec3 light = col * glow * (1.0 + uSwell * 0.8) * uShow;
   gl_FragColor = vec4(light, clamp(max(light.r, max(light.g, light.b)), 0.0, 1.0));
