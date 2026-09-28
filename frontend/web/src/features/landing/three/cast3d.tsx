@@ -5,24 +5,19 @@ import { type ThreeElements, useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
+import cast from "../cast.json";
 
 /**
  * A member of Realm's cast, live in 3D. The characters are made in Meshy (image to 3D); their
  * raised arm is rigged and given a "Wave" by scripts/render-cast.mjs (Blender), so with `wave` the
  * forearm swings from the elbow every few seconds, hand firm, while the body just floats. A model that brings an idle clip loops it between waves. `still` freezes it.
  */
-export type CastName =
-  | "astro-teal"
-  | "alien-zib"
-  | "alien-meshy"
-  | "alien-nova"
-  | "monster-gloop"
-  | "monster-bruno"
-  | "human-maya"
-  | "human-leo";
+export type CastName = keyof typeof cast;
 
 const DRACO = "/draco/";
-const url = (who: CastName) => `/models/${who}.glb`;
+// The file name carries a hash of the model (scripts/render-cast.mjs), so a re-rig is always a
+// fresh address: no browser cache or hot reload keeps playing an old one.
+const url = (who: CastName) => `/models/${cast[who].model}`;
 
 /**
  * Glass and jelly parts are exported with transmission, which makes three render the whole scene a

@@ -1,7 +1,11 @@
 "use client";
 
+import { useGLTF } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { type ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense, useLayoutEffect, useMemo } from "react";
+import * as THREE from "three";
+import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
+import cast from "@/features/landing/cast.json";
 import { HeroCast } from "@/features/landing/three/hero-world";
 import {
   Bubble3D,
@@ -87,8 +91,42 @@ const ITEMS: Record<string, Item> = {
   "hero-poster-day": heroPoster(true),
 };
 
+/**
+ * A character's rigged wave frozen at time `t` (seconds), exactly as the site's loader and three's
+ * skinning play it, for checking the hand up close.
+ */
+function WaveAt({ who, t }: { who: string; t: number }) {
+  const file = (cast as Record<string, { model: string }>)[who]?.model ?? `${who}.glb`;
+  const { scene, animations } = useGLTF(`/models/${file}`, "/draco/");
+  const model = useMemo(() => cloneSkinned(scene), [scene]);
+  useLayoutEffect(() => {
+    const clip = animations.find((c) => /wave/i.test(c.name));
+    if (!clip) return;
+    const mixer = new THREE.AnimationMixer(model);
+    const action = mixer.clipAction(clip);
+    action.play();
+    mixer.setTime(t);
+    return () => {
+      mixer.stopAllAction();
+    };
+  }, [model, animations, t]);
+  return <primitive object={model} />;
+}
+
+/** `wave:<who>:<t>:<x>:<y>:<distance>`: a character's wave at time t, framed on (x, y). */
+function waveItem(spec: string): Item | undefined {
+  const [, who, t = "0", x = "0", y = "1.4", d = "7"] = spec.split(":");
+  if (!who) return undefined;
+  return {
+    node: () => <WaveAt who={who} t={Number(t)} />,
+    camera: [Number(x), Number(y), Number(d)],
+    look: [Number(x), Number(y), 0],
+    size: [480, 480],
+  };
+}
+
 export function RenderStage({ item }: { item: string }) {
-  const it = ITEMS[item];
+  const it = item.startsWith("wave:") ? waveItem(item) : ITEMS[item];
   if (!it)
     return <p style={{ color: "white" }}>Unknown item. Try: {Object.keys(ITEMS).join(", ")}</p>;
   const [w, h] = it.size ?? [640, 640];

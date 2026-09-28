@@ -5,8 +5,9 @@
 // brand/models-incoming as <who>-source.glb (large, not committed). For each one this:
 //   1. rigs the raised arm and bakes a wave (scripts/blender/rig_wave.py): shoulder, elbow, wrist
 //      and hand bones on the joints below, weighted only around the arm with crisp joints; the
-//      forearm swings from the elbow, hand firm. It writes the live model, public/models/<who>.glb
-//      (skinned, with its "Wave" animation, Draco, WebP textures), and renders the wave's 41 frames
+//      forearm swings from the elbow, hand firm. It writes the live model,
+//      public/models/<who>.<hash>.glb (skinned, with its "Wave" animation, Draco, WebP textures; the
+//      hash changes with every re-rig so nothing keeps playing an old one), and renders the wave's 41 frames
 //      in Blender (Cycles).
 //   2. packs those frames for the page: public/art/cast/<who>.webp is the pose with the arm's area
 //      cut out, and <who>-wave.webp is that area in every frame side by side, which CSS steps
@@ -169,6 +170,22 @@ function publish(buf, name) {
   return file;
 }
 
+/**
+ * Publishes the rigged model from the frames folder as public/models/<who>.<hash>.glb (a new address
+ * whenever it changes, so no browser or hot reload keeps an old rig) and removes older copies.
+ */
+function publishModel(who, frames) {
+  const src = join(frames, "model.glb");
+  const buf = readFileSync(src);
+  const file = `${who}.${createHash("sha1").update(buf).digest("hex").slice(0, 8)}.glb`;
+  writeFileSync(join(MODELS, file), buf);
+  const mine = new RegExp(`^${who}(\\.[0-9a-f]{8})?\\.glb$`);
+  for (const f of readdirSync(MODELS)) {
+    if (mine.test(f) && f !== file) unlinkSync(join(MODELS, f));
+  }
+  return file;
+}
+
 /** Removes a character's previous art, keeping only the files just published. */
 function prune(who, keep) {
   const mine = new RegExp(`^${who}(-wave|-face)?(\\.[0-9a-f]{8})?\\.webp$`);
@@ -320,10 +337,15 @@ for (const who of cast) {
   if (!existsSync(source)) throw new Error(`missing ${source}`);
   const frames = join(FRAMES, who);
   if (packOnly) {
+    // A model from before models were kept with the frames: adopt it.
+    const legacy = join(MODELS, `${who}.glb`);
+    if (!existsSync(join(frames, "model.glb")) && existsSync(legacy)) {
+      writeFileSync(join(frames, "model.glb"), readFileSync(legacy));
+    }
     const art = await pack(who, frames);
     const face = await portrait(who);
     prune(who, [art.pose, art.wave, face]);
-    manifest[who] = { ...art, face };
+    manifest[who] = { ...art, face, model: publishModel(who, frames) };
     writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
     console.log("repacked", who, JSON.stringify(manifest[who]));
     continue;
@@ -336,7 +358,7 @@ for (const who of cast) {
     "--in",
     source,
     "--glb",
-    join(MODELS, `${who}.glb`),
+    join(frames, "model.glb"),
     "--frames",
     frames,
     // "=" so a negative value (an arm on the left) isn't read as an option.
@@ -375,7 +397,7 @@ for (const who of cast) {
   const face = await portrait(who);
   prune(who, [art.pose, art.wave, face]);
 
-  manifest[who] = { ...art, face };
+  manifest[who] = { ...art, face, model: publishModel(who, frames) };
   writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
   console.log("exported", who, JSON.stringify(art));
 }

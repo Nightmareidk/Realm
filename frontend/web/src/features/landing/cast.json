@@ -13,7 +13,8 @@
       "span": 42.3155,
       "pad": 0.01604
     },
-    "face": "astro-teal-face.85422ee4.webp"
+    "face": "astro-teal-face.85422ee4.webp",
+    "model": "astro-teal.70e038a6.glb"
   },
   "alien-zib": {
     "w": 346,
@@ -29,7 +30,8 @@
       "span": 42.5669,
       "pad": 0.01911
     },
-    "face": "alien-zib-face.f5b5aada.webp"
+    "face": "alien-zib-face.f5b5aada.webp",
+    "model": "alien-zib.64cde62f.glb"
   },
   "alien-nova": {
     "w": 282,
@@ -45,7 +47,8 @@
       "span": 42.651,
       "pad": 0.02013
     },
-    "face": "alien-nova-face.39257490.webp"
+    "face": "alien-nova-face.39257490.webp",
+    "model": "alien-nova.bb051482.glb"
   },
   "alien-meshy": {
     "w": 369,
@@ -61,7 +64,8 @@
       "span": 42.6291,
       "pad": 0.01987
     },
-    "face": "alien-meshy-face.9241027c.webp"
+    "face": "alien-meshy-face.9241027c.webp",
+    "model": "alien-meshy.118ee132.glb"
   },
   "monster-bruno": {
     "w": 582,
@@ -77,7 +81,8 @@
       "span": 42.2746,
       "pad": 0.01554
     },
-    "face": "monster-bruno-face.a994d687.webp"
+    "face": "monster-bruno-face.a994d687.webp",
+    "model": "monster-bruno.7b1ff19b.glb"
   },
   "monster-gloop": {
     "w": 518,
@@ -93,7 +98,8 @@
       "span": 42.1389,
       "pad": 0.01389
     },
-    "face": "monster-gloop-face.cd6833cb.webp"
+    "face": "monster-gloop-face.cd6833cb.webp",
+    "model": "monster-gloop.83d5475a.glb"
   },
   "human-maya": {
     "w": 334,
@@ -109,7 +115,8 @@
       "span": 42.64,
       "pad": 0.02
     },
-    "face": "human-maya-face.399f5b46.webp"
+    "face": "human-maya-face.399f5b46.webp",
+    "model": "human-maya.c64b3e5a.glb"
   },
   "human-leo": {
     "w": 323,
@@ -125,6 +132,7 @@
       "span": 42.6849,
       "pad": 0.02055
     },
-    "face": "human-leo-face.e64351d7.webp"
+    "face": "human-leo-face.e64351d7.webp",
+    "model": "human-leo.5d6f8af1.glb"
   }
 }
