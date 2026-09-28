@@ -13,6 +13,7 @@
 .daySky {
   visibility: hidden;
 }
+.daySky[data-shown],
 :global(:root[data-theme="day"]) .daySky {
   visibility: visible;
 }
@@ -25,6 +26,23 @@
   object-position: 50% 55%;
   transform: scale(calc(1.12 - var(--p) * 0.12));
   transform-origin: 50% 55%;
+}
+
+/* The film runs down through ember and coral into the page's apricot: a dusk, not a grey fade. */
+.dayFade {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 46%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    oklch(0.3 0.09 28 / 0.35) 24%,
+    oklch(0.46 0.15 30 / 0.82) 50%,
+    oklch(0.68 0.14 38) 72%,
+    oklch(0.84 0.09 46) 88%,
+    var(--page-ground) 100%
+  );
 }
 
 /* The hero meets the page below in the page's own colour (the stage keeps night colours). */

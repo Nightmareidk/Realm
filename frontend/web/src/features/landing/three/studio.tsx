@@ -1,8 +1,9 @@
 "use client";
 
-import { useThree } from "@react-three/fiber";
-import { useLayoutEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
+import { type DayMix, ease } from "./theme";
 
 const NIGHT = {
   sky: "#c9d6ff",
@@ -83,23 +84,66 @@ function StudioEnvironment() {
   return null;
 }
 
+const color = (hex: string) => new THREE.Color(hex);
+const N = {
+  sky: color(NIGHT.sky),
+  ground: color(NIGHT.ground),
+  key: color(NIGHT.key),
+  rim: color(NIGHT.rim),
+  fill: color(NIGHT.fill),
+};
+const D = {
+  sky: color(DAY.sky),
+  ground: color(DAY.ground),
+  key: color(DAY.key),
+  rim: color(DAY.rim),
+  fill: color(DAY.fill),
+};
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
 /**
  * Shared lighting for every Realm 3D scene: a key light from the front right that casts soft
  * shadows, a coloured rim from behind, a fill, a sky/ground hemisphere, and a tiny procedural
  * environment for the clearcoat reflections (no HDR downloads). Cool with a pink rim at night;
- * warm sunlight with an ember rim by day. (Only colours and strengths change between the two, so
- * no shader has to recompile when the edition switches.)
+ * warm sunlight with an ember rim by day, easing between them with `mix` as the edition changes.
+ * (Only colours and strengths change, so no shader recompiles.)
  */
-export function Studio({ shadows = true, day = false }: { shadows?: boolean; day?: boolean }) {
-  const light = day ? DAY : NIGHT;
+export function Studio({ shadows = true, mix }: { shadows?: boolean; mix?: DayMix }) {
+  const hemi = useRef<THREE.HemisphereLight>(null);
+  const key = useRef<THREE.DirectionalLight>(null);
+  const rim = useRef<THREE.DirectionalLight>(null);
+  const fill = useRef<THREE.DirectionalLight>(null);
+
+  useFrame(() => {
+    const m = ease(mix?.current ?? 0);
+    if (hemi.current) {
+      hemi.current.color.lerpColors(N.sky, D.sky, m);
+      hemi.current.groundColor.lerpColors(N.ground, D.ground, m);
+      hemi.current.intensity = lerp(NIGHT.hemi, DAY.hemi, m);
+    }
+    if (key.current) {
+      key.current.color.lerpColors(N.key, D.key, m);
+      key.current.intensity = lerp(NIGHT.keyI, DAY.keyI, m);
+    }
+    if (rim.current) {
+      rim.current.color.lerpColors(N.rim, D.rim, m);
+      rim.current.intensity = lerp(NIGHT.rimI, DAY.rimI, m);
+    }
+    if (fill.current) {
+      fill.current.color.lerpColors(N.fill, D.fill, m);
+      fill.current.intensity = lerp(NIGHT.fillI, DAY.fillI, m);
+    }
+  });
+
   return (
     <>
-      <hemisphereLight color={light.sky} groundColor={light.ground} intensity={light.hemi} />
+      <hemisphereLight ref={hemi} args={[NIGHT.sky, NIGHT.ground, NIGHT.hemi]} />
       <ambientLight intensity={0.18} />
       <directionalLight
+        ref={key}
         position={[5, 9, 8]}
-        intensity={light.keyI}
-        color={light.key}
+        intensity={NIGHT.keyI}
+        color={NIGHT.key}
         castShadow={shadows}
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
@@ -112,8 +156,13 @@ export function Studio({ shadows = true, day = false }: { shadows?: boolean; day
         shadow-camera-near={1}
         shadow-camera-far={40}
       />
-      <directionalLight position={[-7, 4, -6]} intensity={light.rimI} color={light.rim} />
-      <directionalLight position={[6, 1, -6]} intensity={light.fillI} color={light.fill} />
+      <directionalLight ref={rim} position={[-7, 4, -6]} intensity={NIGHT.rimI} color={NIGHT.rim} />
+      <directionalLight
+        ref={fill}
+        position={[6, 1, -6]}
+        intensity={NIGHT.fillI}
+        color={NIGHT.fill}
+      />
       <StudioEnvironment />
     </>
   );

@@ -2,52 +2,51 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { type RefObject, useEffect, useRef } from "react";
-import { currentEdition, SKY_EVENT, SKY_LEAD_MS } from "@/lib/edition";
 
 /** A 0..1 value that components read as `.current` inside useFrame. */
 export type Pulse = RefObject<number>;
 
+/** 0 at night, 1 by day, and every value in between while the edition changes. */
+export type DayMix = Pulse;
+
+const DURATION = 2.8;
+const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+
 /**
- * The centrepiece's flare when the page switches edition: 0 at rest, then rising to 1 over the
- * moment between the switch being asked for and the new edition being revealed (spreading out
- * from the centrepiece). At night the black hole flares white-hot; by day the sun swells. Once the
- * new edition is showing, it rests again.
+ * A night-to-day value that plays the change as one eased move (about three seconds): the black
+ * hole slides off the sun (or back across it), the sky brightens from the horizon up into the day
+ * film (or night falls back over it). It starts the moment a switch is asked for, a beat before
+ * the rest of the page changes. Components read `.current` inside useFrame. With motion stilled
+ * it jumps straight to the new value.
  */
-export function useIgnite(): Pulse {
-  const value = useRef(0);
-  const start = useRef<number | null>(null);
-  const clock = useThree((s) => s.clock);
+export function useDayMix(day: boolean, still: boolean): DayMix {
+  const mix = useRef(day ? 1 : 0);
+  const tween = useRef<{ from: number; to: number; start: number } | null>(null);
   const invalidate = useThree((s) => s.invalidate);
+  const clock = useThree((s) => s.clock);
 
   useEffect(() => {
-    const rest = () => {
-      start.current = null;
-      value.current = 0;
+    const to = day ? 1 : 0;
+    if (still) {
+      mix.current = to;
+      tween.current = null;
       invalidate();
-    };
-    const onSky = (e: Event) => {
-      if ((e as CustomEvent<string>).detail === currentEdition()) return rest();
-      start.current = clock.elapsedTime;
-      invalidate();
-    };
-    window.addEventListener(SKY_EVENT, onSky);
-    const mo = new MutationObserver(rest);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => {
-      window.removeEventListener(SKY_EVENT, onSky);
-      mo.disconnect();
-    };
-  }, [clock, invalidate]);
+      return;
+    }
+    if (mix.current !== to) tween.current = { from: mix.current, to, start: clock.elapsedTime };
+    invalidate();
+  }, [day, still, invalidate, clock]);
 
   useFrame((state) => {
-    if (start.current === null) return;
-    const p = Math.min(1, (state.clock.elapsedTime - start.current) / (SKY_LEAD_MS / 1000));
-    // Accelerating into the reveal, so the flash peaks as the new edition opens from it.
-    value.current = p * p;
-    if (p < 1) state.invalidate();
+    const tw = tween.current;
+    if (!tw) return;
+    const p = Math.min(1, (state.clock.elapsedTime - tw.start) / DURATION);
+    mix.current = tw.from + (tw.to - tw.from) * easeInOut(p);
+    if (p >= 1) tween.current = null;
+    else state.invalidate();
   });
 
-  return value;
+  return mix;
 }
 
 /** Smoothstep, for easing positions and intensities. */

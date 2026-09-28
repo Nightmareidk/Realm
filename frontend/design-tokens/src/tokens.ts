@@ -44,7 +44,7 @@ export interface EditionTokens {
   ink: Oklch;
   inkSoft: Oklch;
   inkMuted: Oklch;
-  /** The action colour: molten amber by night, sunset orange by day. Actions only. */
+  /** The action colour: molten amber by night, crimson coral by day. Actions only. */
   overprint: Oklch;
   /** Overprint used as a fill behind text (buttons). */
   overprintFill: Oklch;
@@ -141,25 +141,26 @@ const rawEditions: Record<Edition, EditionTokens> = {
     },
   },
   day: {
-    ground: oklch(0.975, 0.014, 78),
-    panel: oklch(0.99, 0.009, 78),
-    panelRaised: oklch(0.998, 0.004, 78),
-    land: oklch(0.945, 0.022, 76),
-    rule: oklch(0.88, 0.022, 70),
-    ruleStrong: oklch(0.6, 0.035, 60),
-    ink: oklch(0.21, 0.035, 268),
-    inkSoft: oklch(0.36, 0.035, 268),
-    inkMuted: oklch(0.47, 0.035, 262),
-    // Golden hour by day: burnt orange for text and focus, sunset-orange buttons with dark text
-    // (white on orange can't reach 4.5:1).
-    overprint: oklch(0.53, 0.18, 42),
-    overprintFill: oklch(0.66, 0.19, 52),
-    overprintFillHover: oklch(0.72, 0.17, 60),
-    onOverprint: oklch(0.2, 0.05, 40),
-    focus: oklch(0.53, 0.18, 42),
-    danger: oklch(0.54, 0.19, 22),
-    success: oklch(0.5, 0.12, 160),
-    shadow: oklch(0.32, 0.05, 50),
+    // Sunset light: an apricot ground (never plain white), lighter warm cards floating on it,
+    // deep maroon ink, and a crimson-coral action colour taken from the day sky's dusk.
+    ground: oklch(0.91, 0.05, 50),
+    panel: oklch(0.955, 0.028, 58),
+    panelRaised: oklch(0.978, 0.016, 62),
+    land: oklch(0.875, 0.058, 46),
+    rule: oklch(0.82, 0.05, 42),
+    ruleStrong: oklch(0.55, 0.07, 30),
+    ink: oklch(0.24, 0.06, 18),
+    inkSoft: oklch(0.35, 0.06, 22),
+    inkMuted: oklch(0.43, 0.06, 26),
+    // Crimson-coral buttons with white text; the same hue, deeper, for links and focus.
+    overprint: oklch(0.48, 0.18, 28),
+    overprintFill: oklch(0.56, 0.2, 30),
+    overprintFillHover: oklch(0.5, 0.19, 27),
+    onOverprint: oklch(0.99, 0.008, 60),
+    focus: oklch(0.48, 0.18, 28),
+    danger: oklch(0.5, 0.2, 12),
+    success: oklch(0.46, 0.12, 160),
+    shadow: oklch(0.36, 0.08, 30),
     regions: {
       spaces: region("day", REGION_HUES.spaces),
       feed: region("day", REGION_HUES.feed),

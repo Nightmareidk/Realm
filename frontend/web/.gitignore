@@ -1,0 +1,3 @@
+
+# Source models dropped in for optimising (large; the optimised copies live in public/models)
+brand/models-incoming/*.glb

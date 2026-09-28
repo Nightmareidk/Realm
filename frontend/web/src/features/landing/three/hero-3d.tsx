@@ -89,6 +89,7 @@ export function HeroScene({ copy }: { copy: ReactNode }) {
         ref={stage}
         data-edition="night"
         className={cx(styles.hero, styles.stage, "isolate overflow-clip")}
+        style={{ viewTransitionName: "realm-hero" }}
       >
         <DaySky />
         {webgl && (

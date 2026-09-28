@@ -6,13 +6,13 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { type ReactNode, type RefObject, Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { cx } from "@/lib/cx";
-import { useEdition } from "@/lib/edition";
+import { useSkyIsDay } from "@/lib/edition";
 import { BlackHole, HOLE_RADIUS } from "./black-hole";
 import type { LayoutRef } from "./layout";
 import { SkyBackdrop } from "./sky";
 import { Studio } from "./studio";
 import { SUN_RADIUS, Sun } from "./sun";
-import { ease, lerp, type Pulse, useIgnite } from "./theme";
+import { type DayMix, ease, lerp, useDayMix } from "./theme";
 import styles from "./three.module.css";
 import { Explorers, Orbits, PLANETS } from "./universe";
 
@@ -72,7 +72,7 @@ function Camera({ layout, intro }: { layout: LayoutRef; intro: RefObject<number>
   return null;
 }
 
-type Occluder = { object: RefObject<THREE.Object3D | null>; radius: number };
+type Occluder = { object: RefObject<THREE.Object3D | null>; radius: () => number };
 
 /**
  * Projects 3D anchors to the screen every frame and moves the matching DOM labels, keeping them
@@ -130,7 +130,8 @@ function Track({
       let hidden = occluders.some(({ object, radius }) => {
         if (!object.current) return false;
         object.current.getWorldPosition(sphere.current.center);
-        sphere.current.radius = radius;
+        sphere.current.radius = radius();
+        if (sphere.current.radius <= 0) return false;
         const p = ray.current.intersectSphere(sphere.current, hit.current);
         return Boolean(p && camera.position.distanceTo(p) < far);
       });
@@ -182,36 +183,40 @@ const BUBBLES = [
 ] as const;
 
 /**
- * Everything in the hero that isn't sky: the centrepiece (the black hole at night, the sun by day,
- * in the same place), the four worlds in orbit with their moons and an asteroid belt, and the
- * explorer crew. Both centrepieces stay mounted (only one is shown), and the sun's light is always
- * there (dark at night), so switching edition never changes a shader. Shared with the render
- * stage, so the posters match.
+ * Everything in the hero that isn't sky: the eclipse (the black hole in front of the sun: covering
+ * it at night, slid away by day), the four worlds in orbit with their moons and an asteroid belt,
+ * and the explorer crew. Everything stays mounted and the sun's light is always there (dark at
+ * night), so changing edition never changes a shader. Shared with the render stage, so the
+ * posters match.
  */
 export function HeroCast({
-  ignite,
+  mix,
   still,
-  day = false,
   hole,
+  sun,
+  centre,
   planetAnchors,
   crewAnchors,
 }: {
-  ignite: Pulse;
+  mix: DayMix;
   still: boolean;
-  day?: boolean;
   hole?: RefObject<THREE.Object3D | null>;
+  sun?: RefObject<THREE.Object3D | null>;
+  centre?: RefObject<THREE.Object3D | null>;
   planetAnchors?: Anchors;
   crewAnchors?: Anchors;
 }) {
+  const sunlight = useRef<THREE.PointLight>(null);
   return (
     <>
-      <object3D ref={hole} position={SUN_AT.toArray()} />
-      <BlackHole ignite={ignite} still={still} position={SUN_AT.toArray()} visible={!day} />
-      <Sun swell={ignite} still={still} position={SUN_AT.toArray()} visible={day} />
+      <object3D ref={centre} position={SUN_AT.toArray()} />
+      <Sun mix={mix} still={still} anchor={sun} light={sunlight} position={SUN_AT.toArray()} />
+      <BlackHole mix={mix} still={still} anchor={hole} position={SUN_AT.toArray()} />
       <pointLight
+        ref={sunlight}
         position={SUN_AT.toArray()}
         color="#ffd9a8"
-        intensity={day ? 70 : 0}
+        intensity={0}
         distance={40}
         decay={1.4}
       />
@@ -247,7 +252,6 @@ function Warmup({ onWarm }: { onWarm: () => void }) {
 
 function World({
   still,
-  day,
   warm,
   layout,
   intro,
@@ -257,7 +261,6 @@ function World({
   crewBubbles,
 }: {
   still: boolean;
-  day: boolean;
   warm: boolean;
   layout: LayoutRef;
   intro: RefObject<number>;
@@ -266,8 +269,11 @@ function World({
   planetLabels: Targets;
   crewBubbles: Targets;
 }) {
-  const ignite = useIgnite();
+  // The eclipse starts the moment a switch is asked for, a beat before the rest of the page.
+  const mix = useDayMix(useSkyIsDay(), still);
   const hole = useRef<THREE.Object3D>(null);
+  const sun = useRef<THREE.Object3D>(null);
+  const centre = useRef<THREE.Object3D>(null);
   const invalidate = useThree((s) => s.invalidate);
 
   // With motion stilled the canvas only draws on demand; the scroll intro still moves the camera.
@@ -285,20 +291,21 @@ function World({
     <>
       <Camera layout={layout} intro={intro} />
       <SkyBackdrop
-        ignite={ignite}
+        mix={mix}
         still={still}
-        day={day}
         hole={hole}
+        centre={centre}
         layout={layout}
         scroll={intro}
       />
-      <Studio day={day} />
+      <Studio mix={mix} />
       <Rig still={still}>
         <HeroCast
-          ignite={ignite}
+          mix={mix}
           still={still}
-          day={day}
           hole={hole}
+          sun={sun}
+          centre={centre}
           planetAnchors={planetAnchors}
           crewAnchors={crewAnchors}
         />
@@ -307,7 +314,10 @@ function World({
         anchors={planetAnchors}
         targets={planetLabels}
         layout={layout}
-        occluders={[{ object: hole, radius: day ? SUN_RADIUS : HOLE_RADIUS }]}
+        occluders={[
+          { object: hole, radius: () => ((mix.current ?? 0) < 0.99 ? HOLE_RADIUS : 0) },
+          { object: sun, radius: () => ((mix.current ?? 0) > 0.5 ? SUN_RADIUS : 0) },
+        ]}
       />
       <Track anchors={crewAnchors} targets={crewBubbles} layout={layout} />
     </>
@@ -316,8 +326,8 @@ function World({
 
 /**
  * The live 3D hero, filling the whole hero stage: at night the sky (aurora, stars, the cosmic
- * river) and the black hole; by day a clear canvas over the day film, with the sun. Four worlds
- * and the explorer crew in both. Shaders compile in the background before the
+ * river) and the black hole covering the sun; by day the hole slides away and the sky gives way to
+ * the day film behind a clear canvas. Four worlds and the explorer crew in both. Shaders compile in the background before the
  * first frame. Rendering pauses off screen, in a hidden tab, or while the day edition is showing;
  * reduced motion / Pause motion renders single frames. On a GPU that can't keep up, the canvas
  * drops to a lower pixel ratio rather than stutter.
@@ -340,7 +350,6 @@ export default function HeroWorld({
   const [still, setStill] = useState(false);
   const [warm, setWarm] = useState(false);
   const [dpr, setDpr] = useState(1.5);
-  const day = useEdition() === "day";
   const planetAnchors = useRef<(THREE.Object3D | null)[]>([]);
   const crewAnchors = useRef<(THREE.Object3D | null)[]>([]);
   const planetLabels = useRef<(HTMLElement | null)[]>([]);
@@ -399,7 +408,6 @@ export default function HeroWorld({
         <Warmup onWarm={onWarm} />
         <World
           still={still}
-          day={day}
           warm={warm}
           layout={layout}
           intro={intro}

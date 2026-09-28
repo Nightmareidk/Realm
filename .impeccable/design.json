@@ -169,49 +169,79 @@
           "oklch(0.95 0.06 50.0)"
         ]
       },
-      "solar-orange": {
+      "crimson-coral": {
         "role": "primary",
-        "displayName": "Solar Orange",
-        "canonical": "oklch(0.66 0.19 52)",
+        "displayName": "Crimson Coral",
+        "canonical": "oklch(0.56 0.2 30)",
         "tonalRamp": [
-          "oklch(0.15 0.19 52.0)",
-          "oklch(0.264 0.19 52.0)",
-          "oklch(0.379 0.19 52.0)",
-          "oklch(0.493 0.19 52.0)",
-          "oklch(0.607 0.19 52.0)",
-          "oklch(0.721 0.19 52.0)",
-          "oklch(0.836 0.19 52.0)",
-          "oklch(0.95 0.19 52.0)"
+          "oklch(0.15 0.2 30.0)",
+          "oklch(0.264 0.2 30.0)",
+          "oklch(0.379 0.2 30.0)",
+          "oklch(0.493 0.2 30.0)",
+          "oklch(0.607 0.2 30.0)",
+          "oklch(0.721 0.2 30.0)",
+          "oklch(0.836 0.2 30.0)",
+          "oklch(0.95 0.2 30.0)"
         ]
       },
-      "solar-ember": {
+      "crimson-ink": {
         "role": "primary",
-        "displayName": "Solar Ember",
-        "canonical": "oklch(0.53 0.18 42)",
+        "displayName": "Crimson Ink",
+        "canonical": "oklch(0.48 0.18 28)",
         "tonalRamp": [
-          "oklch(0.15 0.18 42.0)",
-          "oklch(0.264 0.18 42.0)",
-          "oklch(0.379 0.18 42.0)",
-          "oklch(0.493 0.18 42.0)",
-          "oklch(0.607 0.18 42.0)",
-          "oklch(0.721 0.18 42.0)",
-          "oklch(0.836 0.18 42.0)",
-          "oklch(0.95 0.18 42.0)"
+          "oklch(0.15 0.18 28.0)",
+          "oklch(0.264 0.18 28.0)",
+          "oklch(0.379 0.18 28.0)",
+          "oklch(0.493 0.18 28.0)",
+          "oklch(0.607 0.18 28.0)",
+          "oklch(0.721 0.18 28.0)",
+          "oklch(0.836 0.18 28.0)",
+          "oklch(0.95 0.18 28.0)"
         ]
       },
-      "on-solar": {
+      "on-crimson": {
         "role": "primary",
-        "displayName": "On Solar",
-        "canonical": "oklch(0.2 0.05 40)",
+        "displayName": "On Crimson",
+        "canonical": "oklch(0.99 0.008 60)",
         "tonalRamp": [
-          "oklch(0.15 0.05 40.0)",
-          "oklch(0.264 0.05 40.0)",
-          "oklch(0.379 0.05 40.0)",
-          "oklch(0.493 0.05 40.0)",
-          "oklch(0.607 0.05 40.0)",
-          "oklch(0.721 0.05 40.0)",
-          "oklch(0.836 0.05 40.0)",
-          "oklch(0.95 0.05 40.0)"
+          "oklch(0.15 0.008 60.0)",
+          "oklch(0.264 0.008 60.0)",
+          "oklch(0.379 0.008 60.0)",
+          "oklch(0.493 0.008 60.0)",
+          "oklch(0.607 0.008 60.0)",
+          "oklch(0.721 0.008 60.0)",
+          "oklch(0.836 0.008 60.0)",
+          "oklch(0.95 0.008 60.0)"
+        ]
+      },
+      "apricot-ground": {
+        "role": "neutral",
+        "displayName": "Apricot Ground",
+        "canonical": "oklch(0.91 0.05 50)",
+        "tonalRamp": [
+          "oklch(0.15 0.05 50.0)",
+          "oklch(0.264 0.05 50.0)",
+          "oklch(0.379 0.05 50.0)",
+          "oklch(0.493 0.05 50.0)",
+          "oklch(0.607 0.05 50.0)",
+          "oklch(0.721 0.05 50.0)",
+          "oklch(0.836 0.05 50.0)",
+          "oklch(0.95 0.05 50.0)"
+        ]
+      },
+      "maroon-ink": {
+        "role": "neutral",
+        "displayName": "Maroon Ink",
+        "canonical": "oklch(0.24 0.06 18)",
+        "tonalRamp": [
+          "oklch(0.15 0.06 18.0)",
+          "oklch(0.264 0.06 18.0)",
+          "oklch(0.379 0.06 18.0)",
+          "oklch(0.493 0.06 18.0)",
+          "oklch(0.607 0.06 18.0)",
+          "oklch(0.721 0.06 18.0)",
+          "oklch(0.836 0.06 18.0)",
+          "oklch(0.95 0.06 18.0)"
         ]
       },
       "spaces-cyan": {
@@ -447,10 +477,10 @@
   ],
   "narrative": {
     "northStar": "The Eclipse Hour",
-    "overview": "**Creative North Star: \"The Eclipse Hour\"**\n\nRealm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the sky is a cosmic storm: deep indigo, violet and electric-blue cloud around a black hole whose accretion disk burns molten amber. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you. By day it is golden hour: the same page, warm cream, with a sunset-orange action colour.\n\nThe public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit, an explorer cast floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora (curtains with a bright green lower edge, rays, violet above) over stars that twinkle and scintillate in colour, the sky bent around it by its gravity. By day the sun takes the black hole's place, blazing in a filmed crimson dusk: smoke drifting between two black monoliths with light pouring through the gap, a pine forest below. The worlds and the crew are the same in both. Switching editions plays the change out: the black hole flares and the day opens from it, or the sun swells and night opens from it. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.\n\nIt is semi-cartoon, not a cartoon. The 3D is glossy clearcoat plastic with iridescent visors, cute in form and precise in finish. Colours are modern and luminous rather than pastel.",
+    "overview": "**Creative North Star: \"The Eclipse Hour\"**\n\nRealm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the sky is a cosmic storm: deep indigo, violet and electric-blue cloud around a black hole whose accretion disk burns molten amber. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you. By day it is sunset light: the same page in light colours (an apricot ground, coral, rose, lavender and gold washes, deep maroon type, never plain white) with a crimson-coral action colour taken from the dusk.\n\nThe public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit, an explorer cast floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora (curtains with a bright green lower edge, rays, violet above) over stars that twinkle and scintillate in colour, the sky bent around it by its gravity. By day the sun takes the black hole's place, blazing in a filmed crimson dusk: smoke drifting between two black monoliths with light pouring through the gap, a pine forest below. The worlds and the crew are the same in both. Switching editions plays out an eclipse: at night the black hole hides the sun; switching to day it slides away across the sky, the sun comes forward and blazes, and the sky gives way from the horizon into the dusk film. Switching back, the hole slides in and covers the sun again. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.\n\nIt is semi-cartoon, not a cartoon. The 3D is glossy clearcoat plastic with iridescent visors, cute in form and precise in finish. Colours are modern and luminous rather than pastel.",
     "keyCharacteristics": [
       "Midnight ground with light arriving from the edges, as the eclipse does.",
-      "One action colour (molten amber by night, sunset orange by day); four identity inks for the four worlds.",
+      "One action colour (molten amber by night, crimson coral by day); four identity inks for the four worlds.",
       "Real 3D, rendered live or pre-rendered to transparent WebP; never faked with CSS.",
       "Unbounded for display moments, Atkinson Hyperlegible Next for everything you read.",
       "Lots of motion on the landing page, all of it pausable, none of it required to understand anything."

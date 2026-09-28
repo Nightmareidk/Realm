@@ -16,6 +16,7 @@ export type CastName =
   | "astro-teal"
   | "astro-violet"
   | "alien-zib"
+  | "alien-meshy"
   | "alien-nova"
   | "monster-gloop"
   | "monster-bruno"

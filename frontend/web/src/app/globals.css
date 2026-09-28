@@ -216,20 +216,27 @@
     radial-gradient(34% 32% at 96% 72%, oklch(0.6 0.2 300 / 0.2), transparent 70%),
     radial-gradient(36% 30% at 4% 30%, oklch(0.62 0.17 256 / 0.16), transparent 70%);
 }
+:root[data-theme="day"] .realm-nebula > i {
+  opacity: 0.6;
+}
+/* By day the washes are the dusk's own colours, lifted into light: coral, rose, lavender, gold. */
 :root[data-theme="day"] .realm-nebula > i:nth-child(1) {
   background:
-    radial-gradient(38% 34% at 90% 4%, oklch(0.88 0.14 85 / 0.32), transparent 70%),
-    radial-gradient(34% 30% at 6% 55%, oklch(0.85 0.1 60 / 0.2), transparent 70%);
+    radial-gradient(42% 36% at 92% 6%, oklch(0.8 0.13 32 / 0.55), transparent 70%),
+    radial-gradient(38% 34% at 4% 58%, oklch(0.84 0.09 350 / 0.45), transparent 70%),
+    radial-gradient(40% 30% at 40% 100%, oklch(0.88 0.1 75 / 0.4), transparent 70%);
 }
 :root[data-theme="day"] .realm-nebula > i:nth-child(2) {
   background:
-    radial-gradient(38% 34% at 12% 6%, oklch(0.82 0.14 55 / 0.28), transparent 70%),
-    radial-gradient(34% 30% at 94% 64%, oklch(0.8 0.12 35 / 0.18), transparent 70%);
+    radial-gradient(40% 36% at 8% 8%, oklch(0.84 0.11 55 / 0.5), transparent 70%),
+    radial-gradient(38% 34% at 96% 62%, oklch(0.82 0.08 305 / 0.45), transparent 70%),
+    radial-gradient(34% 30% at 60% 100%, oklch(0.8 0.12 20 / 0.35), transparent 70%);
 }
 :root[data-theme="day"] .realm-nebula > i:nth-child(3) {
   background:
-    radial-gradient(40% 34% at 55% 0%, oklch(0.8 0.12 20 / 0.24), transparent 70%),
-    radial-gradient(34% 32% at 4% 80%, oklch(0.86 0.12 75 / 0.2), transparent 70%);
+    radial-gradient(44% 36% at 55% 0%, oklch(0.83 0.1 10 / 0.45), transparent 70%),
+    radial-gradient(36% 32% at 2% 86%, oklch(0.86 0.1 80 / 0.45), transparent 70%),
+    radial-gradient(34% 30% at 98% 34%, oklch(0.83 0.08 290 / 0.4), transparent 70%);
 }
 @media (prefers-reduced-motion: no-preference) {
   .realm-nebula > i {
@@ -271,15 +278,29 @@
   animation: none;
   mix-blend-mode: normal;
 }
+/* The hero plays the switch itself, live (the black hole slides off the sun, or back across it),
+   so it's kept out of the page's reveal: no snapshot of it, just the live hero on top. The header
+   rides above it. */
+::view-transition-old(realm-hero) {
+  display: none;
+}
+::view-transition-new(realm-hero) {
+  animation: none;
+}
+::view-transition-group(realm-header) {
+  z-index: 2;
+}
 :root[data-vt] ::view-transition-new(root) {
   mask-image: radial-gradient(
     circle at var(--vt-x, 70%) var(--vt-y, 30%),
     #000 var(--vt-r),
     transparent calc(var(--vt-r) + 180px)
   );
-  animation: realm-reveal 1.5s cubic-bezier(0.65, 0, 0.35, 1) both;
+  animation: realm-edition-reveal 1.5s cubic-bezier(0.65, 0, 0.35, 1) both;
 }
-@keyframes realm-reveal {
+/* Not "realm-reveal": that name is the scroll-in entrance above, and a second @keyframes with the
+   same name would silently replace it. */
+@keyframes realm-edition-reveal {
   from {
     --vt-r: 0px;
   }

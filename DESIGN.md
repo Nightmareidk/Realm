@@ -13,9 +13,11 @@ colors:
   molten-amber: "oklch(0.8 0.16 68)"
   molten-amber-hover: "oklch(0.86 0.14 76)"
   on-amber: "oklch(0.22 0.06 50)"
-  solar-orange: "oklch(0.66 0.19 52)"
-  solar-ember: "oklch(0.53 0.18 42)"
-  on-solar: "oklch(0.2 0.05 40)"
+  crimson-coral: "oklch(0.56 0.2 30)"
+  crimson-ink: "oklch(0.48 0.18 28)"
+  on-crimson: "oklch(0.99 0.008 60)"
+  apricot-ground: "oklch(0.91 0.05 50)"
+  maroon-ink: "oklch(0.24 0.06 18)"
   spaces-cyan: "oklch(0.72 0.13 196)"
   feed-electric-blue: "oklch(0.72 0.14 256)"
   profiles-violet: "oklch(0.72 0.14 300)"
@@ -103,15 +105,15 @@ components:
 
 **Creative North Star: "The Eclipse Hour"**
 
-Realm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the sky is a cosmic storm: deep indigo, violet and electric-blue cloud around a black hole whose accretion disk burns molten amber. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you. By day it is golden hour: the same page, warm cream, with a sunset-orange action colour.
+Realm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the sky is a cosmic storm: deep indigo, violet and electric-blue cloud around a black hole whose accretion disk burns molten amber. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you. By day it is sunset light: the same page in light colours (an apricot ground, coral, rose, lavender and gold washes, deep maroon type, never plain white) with a crimson-coral action colour taken from the dusk.
 
-The public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit, an explorer cast floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora (curtains with a bright green lower edge, rays, violet above) over stars that twinkle and scintillate in colour, the sky bent around it by its gravity. By day the sun takes the black hole's place, blazing in a filmed crimson dusk: smoke drifting between two black monoliths with light pouring through the gap, a pine forest below. The worlds and the crew are the same in both. Switching editions plays the change out: the black hole flares and the day opens from it, or the sun swells and night opens from it. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.
+The public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit, an explorer cast floating and waving, speech bubbles, a star chart with a flight path drawing itself between worlds. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora (curtains with a bright green lower edge, rays, violet above) over stars that twinkle and scintillate in colour, the sky bent around it by its gravity. By day the sun takes the black hole's place, blazing in a filmed crimson dusk: smoke drifting between two black monoliths with light pouring through the gap, a pine forest below. The worlds and the crew are the same in both. Switching editions plays out an eclipse: at night the black hole hides the sun; switching to day it slides away across the sky, the sun comes forward and blazes, and the sky gives way from the horizon into the dusk film. Switching back, the hole slides in and covers the sun again. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it. Inside the app the same world becomes quiet motifs: orbit rings, a soft aurora edge on the active Space, star-chart locators. Reading surfaces are never glass and never animated for their own sake.
 
 It is semi-cartoon, not a cartoon. The 3D is glossy clearcoat plastic with iridescent visors, cute in form and precise in finish. Colours are modern and luminous rather than pastel.
 
 **Key Characteristics:**
 - Midnight ground with light arriving from the edges, as the eclipse does.
-- One action colour (molten amber by night, sunset orange by day); four identity inks for the four worlds.
+- One action colour (molten amber by night, crimson coral by day); four identity inks for the four worlds.
 - Real 3D, rendered live or pre-rendered to transparent WebP; never faked with CSS.
 - Unbounded for display moments, Atkinson Hyperlegible Next for everything you read.
 - Lots of motion on the landing page, all of it pausable, none of it required to understand anything.
@@ -122,7 +124,7 @@ Indigo neutrals (hue 278-285), one molten amber for actions, and four cosmic ink
 
 ### Primary
 - **Molten Amber** (night): the core of the storm and the black hole's disk. It marks the primary action (Open Realm, send), "needs you" counts, focus rings, the flight path on the star chart, and nothing else. Text on it is the deep brown **On Amber**, never white.
-- **Solar Orange** (day): the same role by day, when the eclipse has ended and the sun is out. Buttons are Solar Orange with deep brown **On Solar** text (white can't reach 4.5:1 on orange); text links and focus rings use the darker **Solar Ember**. The mark follows: by day its disc glows gold and its rim burns gold, orange and rose.
+- **Crimson Coral** (day): the same role by day, taken from the dusk sky. Buttons are Crimson Coral with white text; text links and focus rings use the deeper **Crimson Ink**. It sits on an apricot ground with lighter warm cards and deep maroon type, so day reads as light colour rather than white. The mark follows: by day its disc glows gold and its rim burns gold, orange and rose.
 
 ### Secondary
 - **Spaces Teal**: the Spaces world and your own chat bubbles. Also the lead colour of the brand glow when a surface needs light without meaning "act".
@@ -196,7 +198,7 @@ Round is the default voice, precise at the edges. Planets, avatars, presence dot
 ### Buttons
 Confident and simple, with a tactile press.
 - **Shape:** gently rounded (6px), 48px tall on the landing page, 40px in the app.
-- **Primary:** Molten Amber with On Amber text (Sunset Orange by day). One per view; it says what happens ("Open Realm").
+- **Primary:** Molten Amber with On Amber text (Crimson Coral with white text by day). One per view; it says what happens ("Open Realm").
 - **Secondary:** a Rule Strong outline with Starlight Ink text, filling with Panel on hover.
 - **Press:** scale to 0.97 on press; colour transitions 160ms ease-out. No animation on keyboard activation.
 
@@ -217,7 +219,7 @@ The container for a world's feature section: Panel with a 28px radius, lit from 
 A sticky header, clear over the hero (with a soft shadow behind the links) and blurred midnight once you scroll; over the hero it keeps night colours in both editions, since the hero is dark in both. The Eclipse wordmark, text links in Ink Soft (Ink on hover), a Pause motion button, Sign in (quiet) and Open Realm (primary). On phones the links move into a menu and Pause motion moves to the footer. In the app, a dock of five destinations replaces any server-icon rail (see docs/UX-ARCHITECTURE.md).
 
 ### Signature: the scroll intro and the edition switch
-The landing page opens on a title card under a close-up of the centrepiece (the black hole, or the sun by day); scrolling pulls the camera back through space while the stage stays pinned, the worlds and asteroid belt come into frame, the crew drifts in, and the headline arrives. By day the film behind eases out a little as the camera pulls back. Switching editions scrolls back to the top, lets the hero's centrepiece react first (the black hole flares white-hot, or the sun swells), then reveals the whole page in the new edition as a soft-edged circle spreading from that point. Reduced motion and Pause motion skip all of it.
+The landing page opens on a title card under a close-up of the centrepiece (the black hole, or the sun by day); scrolling pulls the camera back through space while the stage stays pinned, the worlds and asteroid belt come into frame, the crew drifts in, and the headline arrives. By day the film behind eases out a little as the camera pulls back. Switching editions scrolls back to the top and plays the eclipse in the hero (the black hole sliding off the sun or back across it, the sky changing from the horizon up), live, while the rest of the page is revealed in the new edition as a soft-edged circle spreading from the sun. By day the film runs down through ember and coral into the page's apricot, so the hero meets the page as a dusk. Reduced motion and Pause motion skip all of it.
 
 ### Signature: the black hole and the cast
 The Eclipse mark (a dark disc over a glowing rim with a small star) appears as the logo, the app icon and the star chart's centre. At night the hero's centrepiece is a black hole, and it's alive: a shadow; a photon ring where arcs of light race round, brighter on the side turning toward you; an accretion disk crossing in front with its far side lensed over the top, spinning faster inside than out, its gas turbulent and sheared by the orbits (renewed every few seconds so it never winds into artificial rings), with hot clumps orbiting in it; a soft violet and blue glow around it; faint polar jets; and every few seconds a magnetic flare that bursts on the ring with a starburst and a lens streak. The sky behind bends around it. By day the sun takes its place: a sphere of granulated plasma with sunspots and faculae, limb darkening, a warm halo, a corona of streamers and flares, and arcs of plasma looping from the limb; it lights the scene warm.

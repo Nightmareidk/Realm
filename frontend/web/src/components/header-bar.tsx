@@ -52,7 +52,12 @@ export function HeaderBar({ children, className }: { children: ReactNode; classN
   }, []);
 
   return (
-    <header ref={ref} data-top="" className={cx("site-header", className)}>
+    <header
+      ref={ref}
+      data-top=""
+      className={cx("site-header", className)}
+      style={{ viewTransitionName: "realm-header" }}
+    >
       {children}
     </header>
   );

@@ -38,7 +38,7 @@ const planet = (world: "spaces" | "feed" | "profiles" | "boards"): Item => ({
 
 /** The hero scene without its sky, as the loading poster for one edition. */
 const heroPoster = (day: boolean): Item => ({
-  node: () => <HeroCast ignite={{ current: 0 }} still day={day} />,
+  node: () => <HeroCast mix={{ current: day ? 1 : 0 }} still />,
   camera: [0, 0.4, 14],
   look: [0, 0, 0],
   size: [1200, 960],
@@ -101,7 +101,7 @@ export function RenderStage({ item }: { item: string }) {
         camera={{ position: it.camera, fov: it.fov ?? 32 }}
         onCreated={({ camera }) => camera.lookAt(...it.look)}
       >
-        <Studio day={it.day} />
+        <Studio mix={{ current: it.day ? 1 : 0 }} />
         <Suspense fallback={null}>{it.node()}</Suspense>
       </Canvas>
     </div>

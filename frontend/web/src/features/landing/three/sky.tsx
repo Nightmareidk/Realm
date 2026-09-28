@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { registerSunLocator } from "@/lib/edition";
 import { HOLE_RADIUS } from "./black-hole";
 import type { LayoutRef } from "./layout";
-import { auroraPhase, type Pulse } from "./theme";
+import { auroraPhase, type DayMix } from "./theme";
 
 /**
  * The hero's sky, drawn by one full-screen shader behind everything else.
@@ -17,7 +17,9 @@ import { auroraPhase, type Pulse } from "./theme";
  * directions, and colours that cycle from green through cyan and magenta to pink and violet
  * (in step with the page's nebula, via the wall clock). Around the black hole the sky is bent by
  * its gravity, like a lens: stars and cloud near it curve around the shadow.
- * When the page switches to day, the hole flares and its light floods the sky.
+ * Switching to day, the sky gives way from the horizon up and the day film behind the canvas
+ * shows through, with a warm band and a flare from the sun while it changes; switching back,
+ * night falls over it again.
  *
  * The heavy parts return early where they can't show (mountains high in the sky, the river away
  * from its band, a curtain far below its edge), so the shader costs only what's on screen.
@@ -36,7 +38,8 @@ const fragment = /* glsl */ `
 precision highp float;
 varying vec2 vUv;
 uniform float uTime;
-uniform float uIgnite;
+uniform float uDay;
+uniform vec2 uCentre;
 uniform float uHoleR;
 uniform float uPhase;
 uniform float uScroll;
@@ -376,45 +379,53 @@ void main() {
   float aspect = uRes.x / uRes.y;
   float textMask = rectMask(uv, uText, 0.22);
 
-  vec2 lp = uHoleR > 0.0 ? lens(px) : px;
-  vec3 col = nightSky(lp / uRes, lp, aspect, textMask);
-  // The mountains never reach this high: skip them above their tallest peak.
-  if (uv.y < 0.42) col = mountains(uv, aspect, col);
-
-  // Switching to day: the hole flares, a streak of light flashes across it, and the glow floods
-  // the sky just as the day page is revealed from this point.
-  if (uIgnite > 0.001) {
-    vec2 sd = (uv - uSun) * vec2(aspect, 1.0);
-    float r = length(sd);
-    col += vec3(1.0, 0.78, 0.5) * exp(-r * mix(10.0, 1.4, uIgnite)) * uIgnite * 1.8;
-    col += vec3(1.0, 0.92, 0.8) * exp(-abs(sd.y) * 90.0) * exp(-abs(sd.x) * 1.2) * uIgnite * 1.4;
+  // Day rises from the horizon: the lower sky gives way first, then the rest, and the day film
+  // behind this canvas shows through.
+  float dm = smoothstep(0.0, 1.0, clamp(uDay * 1.7 - 0.35 - (uv.y - 0.5) * 0.7, 0.0, 1.0));
+  vec3 col = vec3(0.0);
+  if (dm < 0.999) {
+    vec2 lp = uHoleR > 0.0 ? lens(px) : px;
+    col = nightSky(lp / uRes, lp, aspect, textMask);
+    // The mountains never reach this high: skip them above their tallest peak.
+    if (uv.y < 0.42) col = mountains(uv, aspect, col);
+    col += (hash21(gl_FragCoord.xy + fract(uTime)) - 0.5) / 255.0;
   }
+  float alpha = 1.0 - dm;
 
-  col += (hash21(gl_FragCoord.xy + fract(uTime)) - 0.5) / 255.0;
-  gl_FragColor = vec4(col, 1.0);
+  // While the edition changes: a warm band along the horizon and a flare from the sun, as light
+  // over whichever sky is showing. Output is premultiplied (the canvas is see-through by day).
+  float change = sin(clamp(uDay, 0.0, 1.0) * 3.14159);
+  vec3 add = vec3(0.0);
+  if (change > 0.001) {
+    vec2 sd = (uv - uCentre) * vec2(aspect, 1.0);
+    float flare = exp(-length(sd) * 2.6) * change * change * 0.8;
+    float band = exp(-uv.y * 3.5) * change * 0.3;
+    add = vec3(1.0, 0.5, 0.25) * band + vec3(1.0, 0.84, 0.6) * flare;
+  }
+  gl_FragColor = vec4(col * alpha + add, clamp(alpha + max(add.r, max(add.g, add.b)), 0.0, 1.0));
 }
 `;
 
 /**
- * Full-screen night sky behind the hero scene (by day it isn't drawn: the canvas is clear and the
- * day film shows through). `hole` marks the centrepiece, which the sky bends around and which
- * flares with `ignite`; `layout` says where the headline sits, so the sky quietens there; `scroll`
- * is the intro's progress, for a little parallax. It also tells the edition switch where the
- * centrepiece (the black hole, or the sun in the same place) is on screen, so the new edition can
- * open from it.
+ * Full-screen night sky behind the hero scene. By day (`mix` → 1) it gives way from the horizon up
+ * and isn't drawn at all once it's gone: the canvas is clear and the day film shows through.
+ * `hole` is the black hole, which the sky bends around; `centre` is where the sun and the black
+ * hole meet, which the flare comes from and which the edition switch opens the new edition from;
+ * `layout` says where the headline sits, so the sky quietens there; `scroll` is the intro's
+ * progress, for a little parallax.
  */
 export function SkyBackdrop({
-  ignite,
+  mix,
   still,
-  day,
   hole,
+  centre,
   layout,
   scroll,
 }: {
-  ignite: Pulse;
+  mix: DayMix;
   still: boolean;
-  day: boolean;
   hole: RefObject<THREE.Object3D | null>;
+  centre: RefObject<THREE.Object3D | null>;
   layout: LayoutRef;
   scroll?: RefObject<number>;
 }) {
@@ -431,7 +442,8 @@ export function SkyBackdrop({
         blending: THREE.NoBlending,
         uniforms: {
           uTime: { value: 0 },
-          uIgnite: { value: 0 },
+          uDay: { value: 0 },
+          uCentre: { value: new THREE.Vector2(0.7, 0.6) },
           uHoleR: { value: 0 },
           uPhase: { value: 0 },
           uScroll: { value: 0 },
@@ -447,7 +459,8 @@ export function SkyBackdrop({
   const v = useMemo(() => new THREE.Vector3(), []);
   const edge = useMemo(() => new THREE.Vector3(), []);
   const seen = useRef(-1);
-  // The hole's position on the canvas (0..1, y up), for the edition switch's reveal.
+  const mesh = useRef<THREE.Mesh>(null);
+  // The centre's position on the canvas (0..1, y up), for the edition switch's reveal.
   const onCanvas = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -468,7 +481,9 @@ export function SkyBackdrop({
   useFrame((state) => {
     const u = material.uniforms as Record<string, THREE.IUniform>;
     if (!still) u.uTime.value = state.clock.elapsedTime + 40;
-    u.uIgnite.value = ignite.current;
+    const day = mix.current ?? 0;
+    u.uDay.value = day;
+    if (mesh.current) mesh.current.visible = day < 0.999;
     u.uPhase.value = auroraPhase();
     u.uScroll.value = scroll?.current ?? 0;
     (u.uRes.value as THREE.Vector2).set(state.size.width, state.size.height);
@@ -488,7 +503,14 @@ export function SkyBackdrop({
         ((edge.x - v.x) * state.size.width) / 2,
         ((edge.y - v.y) * state.size.height) / 2,
       );
-      onCanvas.current = { x: sx, y: sy };
+    }
+    const c = centre.current;
+    if (c) {
+      c.getWorldPosition(v).project(state.camera);
+      const cx = v.x * 0.5 + 0.5;
+      const cy = v.y * 0.5 + 0.5;
+      (u.uCentre.value as THREE.Vector2).set(cx, cy);
+      onCanvas.current = { x: cx, y: cy };
     }
 
     const L = layout.current;
@@ -499,7 +521,7 @@ export function SkyBackdrop({
   });
 
   return (
-    <mesh frustumCulled={false} renderOrder={-1000} material={material} visible={!day}>
+    <mesh ref={mesh} frustumCulled={false} renderOrder={-1000} material={material}>
       <planeGeometry args={[2, 2]} />
     </mesh>
   );

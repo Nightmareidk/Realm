@@ -2,9 +2,9 @@
 
 import { Billboard } from "@react-three/drei";
 import { type ThreeElements, useFrame } from "@react-three/fiber";
-import { useMemo } from "react";
+import { type RefObject, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { auroraPhase, type Pulse } from "./theme";
+import { auroraPhase, type DayMix, ease } from "./theme";
 
 /**
  * The heart of the night sky: a black hole, alive.
@@ -19,7 +19,8 @@ import { auroraPhase, type Pulse } from "./theme";
  * the hole as it fades. Molten amber and white-hot gold inside; the outer haze cycles with the
  * aurora.
  *
- * `ignite` (0 → 1) flares the whole thing white-hot just before the page switches to day.
+ * By day (`mix` → 1) it slides off the sun it has been hiding, up and out of frame, flaring as it
+ * crosses; switching back to night it slides back across the sun and covers it again.
  */
 export const HOLE_RADIUS = 1.5;
 const SIZE = 16;
@@ -233,13 +234,20 @@ void main() {
 }
 `;
 
+/** Where the hole goes when it slides off the sun by day: up and away, out of frame. */
+// Toward the camera too, so it stays in front of the sun as the sun comes forward.
+const AWAY = new THREE.Vector3(9.5, 5.5, 3.0);
+
 export function BlackHole({
-  ignite,
+  mix,
   still,
+  anchor,
   ...props
 }: {
-  ignite: Pulse;
+  mix: DayMix;
   still: boolean;
+  /** Marks the hole's centre as it moves, for the sky's lens and the label occluders. */
+  anchor?: RefObject<THREE.Object3D | null>;
 } & ThreeElements["group"]) {
   const materials = useMemo(() => {
     const uniforms = () => ({
@@ -273,28 +281,43 @@ export function BlackHole({
       }),
     };
   }, []);
+  const body = useRef<THREE.Group>(null);
 
   useFrame((state) => {
     const t = still ? 24 : state.clock.elapsedTime + 24;
     const phase = auroraPhase();
-    for (const m of [materials.shadow, materials.light]) {
-      const u = m.uniforms as Record<string, THREE.IUniform<number>>;
+    const m = mix.current ?? 0;
+    // The disk flares as the hole moves across the sun, and settles when it's gone or back.
+    const flare = 0.35 * Math.sin(Math.min(1, Math.max(0, m)) * Math.PI);
+    for (const mat of [materials.shadow, materials.light]) {
+      const u = mat.uniforms as Record<string, THREE.IUniform<number>>;
       u.uTime.value = t;
       u.uPhase.value = phase;
-      u.uIgnite.value = ignite.current ?? 0;
+      u.uIgnite.value = flare;
+    }
+    // By day it slides off the sun, up and away, shrinking a little with distance.
+    const g = body.current;
+    if (g) {
+      const k = ease(m * 1.1);
+      g.position.copy(AWAY).multiplyScalar(k);
+      g.scale.setScalar(1 - 0.2 * k);
+      g.visible = m < 0.999;
     }
   });
 
   return (
     <group {...props}>
-      <Billboard>
-        <mesh material={materials.shadow} renderOrder={1}>
-          <planeGeometry args={[SIZE, SIZE]} />
-        </mesh>
-        <mesh material={materials.light} renderOrder={2}>
-          <planeGeometry args={[SIZE, SIZE]} />
-        </mesh>
-      </Billboard>
+      <group ref={body}>
+        <object3D ref={anchor} />
+        <Billboard>
+          <mesh material={materials.shadow} renderOrder={1}>
+            <planeGeometry args={[SIZE, SIZE]} />
+          </mesh>
+          <mesh material={materials.light} renderOrder={2}>
+            <planeGeometry args={[SIZE, SIZE]} />
+          </mesh>
+        </Billboard>
+      </group>
     </group>
   );
 }

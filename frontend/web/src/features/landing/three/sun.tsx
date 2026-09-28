@@ -2,18 +2,22 @@
 
 import { Billboard } from "@react-three/drei";
 import { type ThreeElements, useFrame } from "@react-three/fiber";
-import { useMemo } from "react";
+import { type RefObject, useMemo, useRef } from "react";
 import * as THREE from "three";
-import type { Pulse } from "./theme";
+import { type DayMix, ease } from "./theme";
 
 /**
- * The day's centrepiece: the sun, where the black hole is at night.
+ * The day's centrepiece: the sun, hidden behind the black hole at night.
  *
  * A sphere of granulated plasma: fine convection cells over slow swirls, sunspots with dark
  * cores, bright faculae toward the limb, limb darkening from white-gold to deep orange. Around it,
  * facing the camera: a warm halo, a corona of streamers and fine filaments flowing outward with
- * flares that rise and fade, and arcs of plasma looping up from the limb. When the page switches
- * to night, it swells and flashes (`swell`), and night opens out from it.
+ * flares that rise and fade, and arcs of plasma looping up from the limb.
+ *
+ * `mix` (0 night, 1 day) plays the eclipse: at night the sun sits back, small, behind the black
+ * hole; as the hole slides away it comes forward to full size and its glow rises, blazing a little
+ * while half uncovered. The glow is added light, so the day film behind stays clear rather than
+ * being washed over.
  */
 export const SUN_RADIUS = 1.85;
 const CORONA_SIZE = 13;
@@ -128,6 +132,7 @@ float noise(vec2 p) {
 const coronaFragment = /* glsl */ `
 uniform float uTime;
 uniform float uSwell;
+uniform float uShow;
 uniform float uR;
 varying vec2 vUv;
 ${PLANE_NOISE}
@@ -157,19 +162,23 @@ void main() {
 
   vec3 col = mix(vec3(1.0, 0.97, 0.86), vec3(1.0, 0.66, 0.24), smoothstep(0.0, 0.18, x));
   col = mix(col, vec3(1.0, 0.36, 0.14), smoothstep(0.18, 0.6, x));
-  float alpha = clamp(I, 0.0, 1.0) * (1.0 - smoothstep(0.7, 1.0, r));
-  gl_FragColor = vec4(col, alpha);
+  // Added light (see the material), with coverage in alpha for a clear canvas.
+  vec3 light = col * clamp(I, 0.0, 1.2) * (1.0 - smoothstep(0.7, 1.0, r)) * 0.8 * uShow;
+  gl_FragColor = vec4(light, clamp(max(light.r, max(light.g, light.b)), 0.0, 1.0));
 }
 `;
 
 const haloFragment = /* glsl */ `
 uniform float uSwell;
+uniform float uShow;
 varying vec2 vUv;
 void main() {
+  // A tight glow and a faint wide bloom, added as light: the sky behind stays readable.
   float r = length(vUv * 2.0 - 1.0);
-  float glow = exp(-r * mix(4.2, 2.2, uSwell)) * 0.9 + exp(-r * 1.6) * 0.35;
-  vec3 col = mix(vec3(1.0, 0.92, 0.7), vec3(1.0, 0.62, 0.25), smoothstep(0.1, 0.8, r));
-  gl_FragColor = vec4(col, clamp(glow * (0.85 + uSwell * 0.9), 0.0, 1.0));
+  float glow = exp(-r * mix(6.5, 3.5, uSwell)) * 0.62 + exp(-r * 2.6) * 0.1;
+  vec3 col = mix(vec3(1.0, 0.9, 0.68), vec3(1.0, 0.56, 0.24), smoothstep(0.08, 0.6, r));
+  vec3 light = col * glow * (1.0 + uSwell * 0.8) * uShow;
+  gl_FragColor = vec4(light, clamp(max(light.r, max(light.g, light.b)), 0.0, 1.0));
 }
 `;
 
@@ -200,7 +209,11 @@ const PROMINENCES: [number, number, number, number][] = [
   [5.4, 0.22, 0.2, 5],
 ];
 
-const planeMaterial = (fragmentShader: string, uniforms: Record<string, THREE.IUniform>) =>
+const planeMaterial = (
+  fragmentShader: string,
+  uniforms: Record<string, THREE.IUniform>,
+  additive = false,
+) =>
   new THREE.ShaderMaterial({
     vertexShader: planeVertex,
     fragmentShader,
@@ -209,13 +222,36 @@ const planeMaterial = (fragmentShader: string, uniforms: Record<string, THREE.IU
     toneMapped: false,
     side: THREE.DoubleSide,
     uniforms,
+    ...(additive
+      ? {
+          // Pure addition (colour × 1 + what's behind), with coverage accumulated in alpha.
+          blending: THREE.CustomBlending,
+          blendSrc: THREE.OneFactor,
+          blendDst: THREE.OneFactor,
+          blendSrcAlpha: THREE.OneFactor,
+          blendDstAlpha: THREE.OneFactor,
+        }
+      : {}),
   });
 
+/** How far back the sun sits at night, behind the black hole, and how small. */
+const BACK = -2.4;
+const SMALL = 0.74;
+
 export function Sun({
-  swell,
+  mix,
   still,
+  anchor,
+  light,
   ...props
-}: { swell: Pulse; still: boolean } & ThreeElements["group"]) {
+}: {
+  mix: DayMix;
+  still: boolean;
+  /** Marks the sun's centre, for the label occluders. */
+  anchor?: RefObject<THREE.Object3D | null>;
+  /** The sun's light on the scene; its strength follows the eclipse. */
+  light?: RefObject<THREE.PointLight | null>;
+} & ThreeElements["group"]) {
   const m = useMemo(
     () => ({
       sun: new THREE.ShaderMaterial({
@@ -224,12 +260,17 @@ export function Sun({
         toneMapped: false,
         uniforms: { uTime: { value: 0 }, uSwell: { value: 0 } },
       }),
-      corona: planeMaterial(coronaFragment, {
-        uTime: { value: 0 },
-        uSwell: { value: 0 },
-        uR: { value: SUN_RADIUS / (CORONA_SIZE / 2) },
-      }),
-      halo: planeMaterial(haloFragment, { uSwell: { value: 0 } }),
+      corona: planeMaterial(
+        coronaFragment,
+        {
+          uTime: { value: 0 },
+          uSwell: { value: 0 },
+          uShow: { value: 0 },
+          uR: { value: SUN_RADIUS / (CORONA_SIZE / 2) },
+        },
+        true,
+      ),
+      halo: planeMaterial(haloFragment, { uSwell: { value: 0 }, uShow: { value: 0 } }, true),
       proms: PROMINENCES.map(([, , , seed]) =>
         planeMaterial(promFragment, { uTime: { value: 0 }, uSeed: { value: seed } }),
       ),
@@ -237,45 +278,63 @@ export function Sun({
     [],
   );
 
+  const body = useRef<THREE.Group>(null);
+
   useFrame((state) => {
     const t = still ? 20 : state.clock.elapsedTime + 20;
-    const s = swell.current ?? 0;
+    const d = Math.min(1, Math.max(0, mix.current ?? 0));
+    const show = ease(d * 1.25);
+    // A little extra blaze while it's half uncovered.
+    const swell = 0.5 * Math.sin(d * Math.PI);
     for (const mat of [m.sun, m.corona, ...m.proms]) {
       (mat.uniforms.uTime as THREE.IUniform<number>).value = t;
     }
     for (const mat of [m.sun, m.corona, m.halo]) {
-      (mat.uniforms.uSwell as THREE.IUniform<number>).value = s;
+      (mat.uniforms.uSwell as THREE.IUniform<number>).value = swell;
     }
+    for (const mat of [m.corona, m.halo]) {
+      (mat.uniforms.uShow as THREE.IUniform<number>).value = show;
+    }
+    const g = body.current;
+    if (g) {
+      g.position.set(0, 0, BACK * (1 - show));
+      g.scale.setScalar(SMALL + (1 - SMALL) * show);
+      g.visible = d > 0.001;
+    }
+    if (light?.current) light.current.intensity = 70 * show;
   });
 
   return (
     <group {...props}>
-      <mesh material={m.sun}>
-        <sphereGeometry args={[SUN_RADIUS, 96, 64]} />
-      </mesh>
-      <Billboard>
-        <mesh material={m.halo} renderOrder={0} position={[0, 0, -0.5]}>
-          <planeGeometry args={[CORONA_SIZE * 1.6, CORONA_SIZE * 1.6]} />
+      <group ref={body}>
+        <object3D ref={anchor} />
+        <mesh material={m.sun}>
+          <sphereGeometry args={[SUN_RADIUS, 96, 64]} />
         </mesh>
-        <mesh material={m.corona} renderOrder={1}>
-          <planeGeometry args={[CORONA_SIZE, CORONA_SIZE]} />
-        </mesh>
-        {PROMINENCES.map(([angle, size, tilt], i) => (
-          <mesh
-            key={angle}
-            material={m.proms[i]}
-            renderOrder={2}
-            position={[
-              Math.cos(angle) * SUN_RADIUS * 0.96,
-              Math.sin(angle) * SUN_RADIUS * 0.96,
-              0.1,
-            ]}
-            rotation={[tilt, 0, angle - Math.PI / 2]}
-          >
-            <torusGeometry args={[size, size * 0.14, 12, 48, Math.PI]} />
+        <Billboard>
+          <mesh material={m.halo} renderOrder={0} position={[0, 0, -0.5]}>
+            <planeGeometry args={[CORONA_SIZE * 1.6, CORONA_SIZE * 1.6]} />
           </mesh>
-        ))}
-      </Billboard>
+          <mesh material={m.corona} renderOrder={1}>
+            <planeGeometry args={[CORONA_SIZE, CORONA_SIZE]} />
+          </mesh>
+          {PROMINENCES.map(([angle, size, tilt], i) => (
+            <mesh
+              key={angle}
+              material={m.proms[i]}
+              renderOrder={2}
+              position={[
+                Math.cos(angle) * SUN_RADIUS * 0.96,
+                Math.sin(angle) * SUN_RADIUS * 0.96,
+                0.1,
+              ]}
+              rotation={[tilt, 0, angle - Math.PI / 2]}
+            >
+              <torusGeometry args={[size, size * 0.14, 12, 48, Math.PI]} />
+            </mesh>
+          ))}
+        </Billboard>
+      </group>
     </group>
   );
 }

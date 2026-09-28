@@ -192,7 +192,7 @@ export function Orbits({
   );
 }
 
-const CREW: CastName[] = ["astro-teal", "alien-zib", "monster-gloop", "human-maya"];
+const CREW: CastName[] = ["astro-teal", "alien-meshy", "monster-gloop", "human-maya"];
 // Fetch and decode the crew as soon as this module loads (it's loaded ahead of time by day, so the
 // switch to night doesn't wait on the network).
 if (typeof window !== "undefined") preloadCast(CREW);
@@ -219,7 +219,8 @@ export function Explorers({
     phase: number;
   }[] = [
     { who: "astro-teal", pos: [-3.1, -2.4, 2.2], rot: 0.3, s: 1.0, wave: true, phase: 0 },
-    { who: "alien-zib", pos: [4.4, 0.9, 1.0], rot: -0.35, s: 0.78, wave: false, phase: 1.2 },
+    // Made in Meshy (brand/models-incoming), in place of Zib: trying it out before the rest.
+    { who: "alien-meshy", pos: [4.4, 0.9, 1.0], rot: -0.35, s: 0.78, wave: false, phase: 1.2 },
     { who: "monster-gloop", pos: [1.9, -2.9, 2.6], rot: -0.25, s: 0.9, wave: false, phase: 2.3 },
     { who: "human-maya", pos: [-4.1, 1.2, 0.4], rot: 0.45, s: 0.72, wave: false, phase: 3.1 },
   ];
