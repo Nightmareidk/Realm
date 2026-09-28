@@ -6,10 +6,12 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { type ReactNode, type RefObject, Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { cx } from "@/lib/cx";
+import { useEdition } from "@/lib/edition";
 import { BlackHole, HOLE_RADIUS } from "./black-hole";
 import type { LayoutRef } from "./layout";
 import { SkyBackdrop } from "./sky";
 import { Studio } from "./studio";
+import { SUN_RADIUS, Sun } from "./sun";
 import { ease, lerp, type Pulse, useIgnite } from "./theme";
 import styles from "./three.module.css";
 import { Explorers, Orbits, PLANETS } from "./universe";
@@ -180,25 +182,39 @@ const BUBBLES = [
 ] as const;
 
 /**
- * Everything in the hero that isn't sky: the black hole, the four worlds in orbit with their moons
- * and an asteroid belt, and the explorer crew. Shared with the render stage, so the poster matches.
+ * Everything in the hero that isn't sky: the centrepiece (the black hole at night, the sun by day,
+ * in the same place), the four worlds in orbit with their moons and an asteroid belt, and the
+ * explorer crew. Both centrepieces stay mounted (only one is shown), and the sun's light is always
+ * there (dark at night), so switching edition never changes a shader. Shared with the render
+ * stage, so the posters match.
  */
 export function HeroCast({
   ignite,
   still,
+  day = false,
   hole,
   planetAnchors,
   crewAnchors,
 }: {
   ignite: Pulse;
   still: boolean;
+  day?: boolean;
   hole?: RefObject<THREE.Object3D | null>;
   planetAnchors?: Anchors;
   crewAnchors?: Anchors;
 }) {
   return (
     <>
-      <BlackHole ignite={ignite} still={still} anchor={hole} position={SUN_AT.toArray()} />
+      <object3D ref={hole} position={SUN_AT.toArray()} />
+      <BlackHole ignite={ignite} still={still} position={SUN_AT.toArray()} visible={!day} />
+      <Sun swell={ignite} still={still} position={SUN_AT.toArray()} visible={day} />
+      <pointLight
+        position={SUN_AT.toArray()}
+        color="#ffd9a8"
+        intensity={day ? 70 : 0}
+        distance={40}
+        decay={1.4}
+      />
       <Orbits
         still={still}
         position={SUN_AT.toArray()}
@@ -231,6 +247,7 @@ function Warmup({ onWarm }: { onWarm: () => void }) {
 
 function World({
   still,
+  day,
   warm,
   layout,
   intro,
@@ -240,6 +257,7 @@ function World({
   crewBubbles,
 }: {
   still: boolean;
+  day: boolean;
   warm: boolean;
   layout: LayoutRef;
   intro: RefObject<number>;
@@ -266,12 +284,20 @@ function World({
   return (
     <>
       <Camera layout={layout} intro={intro} />
-      <SkyBackdrop ignite={ignite} still={still} hole={hole} layout={layout} scroll={intro} />
-      <Studio />
+      <SkyBackdrop
+        ignite={ignite}
+        still={still}
+        day={day}
+        hole={hole}
+        layout={layout}
+        scroll={intro}
+      />
+      <Studio day={day} />
       <Rig still={still}>
         <HeroCast
           ignite={ignite}
           still={still}
+          day={day}
           hole={hole}
           planetAnchors={planetAnchors}
           crewAnchors={crewAnchors}
@@ -281,7 +307,7 @@ function World({
         anchors={planetAnchors}
         targets={planetLabels}
         layout={layout}
-        occluders={[{ object: hole, radius: HOLE_RADIUS }]}
+        occluders={[{ object: hole, radius: day ? SUN_RADIUS : HOLE_RADIUS }]}
       />
       <Track anchors={crewAnchors} targets={crewBubbles} layout={layout} />
     </>
@@ -289,8 +315,9 @@ function World({
 }
 
 /**
- * The live 3D hero, filling the whole hero stage: the night sky (aurora, stars, the cosmic river),
- * the black hole, four worlds and the explorer crew. Shaders compile in the background before the
+ * The live 3D hero, filling the whole hero stage: at night the sky (aurora, stars, the cosmic
+ * river) and the black hole; by day a clear canvas over the day film, with the sun. Four worlds
+ * and the explorer crew in both. Shaders compile in the background before the
  * first frame. Rendering pauses off screen, in a hidden tab, or while the day edition is showing;
  * reduced motion / Pause motion renders single frames. On a GPU that can't keep up, the canvas
  * drops to a lower pixel ratio rather than stutter.
@@ -313,6 +340,7 @@ export default function HeroWorld({
   const [still, setStill] = useState(false);
   const [warm, setWarm] = useState(false);
   const [dpr, setDpr] = useState(1.5);
+  const day = useEdition() === "day";
   const planetAnchors = useRef<(THREE.Object3D | null)[]>([]);
   const crewAnchors = useRef<(THREE.Object3D | null)[]>([]);
   const planetLabels = useRef<(HTMLElement | null)[]>([]);
@@ -357,7 +385,7 @@ export default function HeroWorld({
         shadows="percentage"
         dpr={[1, dpr]}
         camera={{ position: [0, 0.4, 14], fov: 36, manual: true }}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         eventSource={stage as RefObject<HTMLElement>}
         eventPrefix="client"
         frameloop={!warm || !visible ? "never" : still ? "demand" : "always"}
@@ -371,6 +399,7 @@ export default function HeroWorld({
         <Warmup onWarm={onWarm} />
         <World
           still={still}
+          day={day}
           warm={warm}
           layout={layout}
           intro={intro}

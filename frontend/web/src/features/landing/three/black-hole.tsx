@@ -2,7 +2,7 @@
 
 import { Billboard } from "@react-three/drei";
 import { type ThreeElements, useFrame } from "@react-three/fiber";
-import { type RefObject, useMemo } from "react";
+import { useMemo } from "react";
 import * as THREE from "three";
 import { auroraPhase, type Pulse } from "./theme";
 
@@ -12,8 +12,8 @@ import { auroraPhase, type Pulse } from "./theme";
  * A dark shadow; a razor-thin photon ring where light races round the hole (brighter on the side
  * turning toward you); a hot accretion disk seen almost edge-on, its near side sweeping in front
  * of the hole and its far side bent up over the top (and faintly under the bottom) by gravity.
- * The disk turns the way real ones do, inner orbits faster than outer ones, with hot clumps
- * orbiting in it and trailing streaks behind them. Violet and blue gas spirals in from outside.
+ * The disk turns the way real ones do, inner orbits faster than outer ones, its turbulence sheared
+ * into long soft arcs, with hot clumps orbiting in it. A soft violet and blue glow surrounds it.
  * Faint jets stream from the poles, knots of light travelling out along them. Every few seconds a
  * magnetic flare erupts on the ring, flashes a starburst and a lens streak, and is carried round
  * the hole as it fades. Molten amber and white-hot gold inside; the outer haze cycles with the
@@ -75,7 +75,7 @@ vec3 cycle(vec3 a, vec3 b, vec3 c, float t) {
 float dAngle(float a, float b) { return atan(sin(a - b), cos(a - b)); }
 
 const float RIN = 1.55;
-const float ROUT = 4.6;
+const float ROUT = 4.0;
 const float INCL = 0.17;
 
 // Keplerian angular speed: inner orbits are faster.
@@ -88,11 +88,26 @@ vec3 disk(float r, float a, float approach) {
   float inner = smoothstep(RIN - 0.05, RIN + 0.25, r);
   float outer = 1.0 - smoothstep(ROUT * 0.62, ROUT, r);
   if (inner * outer <= 0.0) return vec3(0.0);
-  float spin = a - omega(r) * uTime;
-  float turb = fbm(vec2(r * 2.3, 0.0) + vec2(sin(spin), cos(spin)) * 2.2);
-  float streak = noiseP(vec2(r * 16.0, spin * TURN * 19.0), 19.0) * 0.6
-               + noiseP(vec2(r * 41.0, spin * TURN * 31.0), 31.0) * 0.4;
-  float heat = pow(RIN / r, 1.6);
+  // Turbulent gas: soft clouds carried round and sheared by the orbits. Inner orbits are faster,
+  // so a pattern left to spin winds tighter and tighter into thin rings; instead each pattern
+  // lives a few seconds and crossfades into a fresh one (two overlapping phases), so the gas
+  // always flows and shears but never winds up.
+  const float LIFE = 6.0;
+  float ph1 = fract(uTime / LIFE);
+  float ph2 = fract(uTime / LIFE + 0.5);
+  float w1 = 1.0 - abs(2.0 * ph1 - 1.0);
+  vec2 o1 = vec2(floor(uTime / LIFE) * 3.1, 0.0);
+  vec2 o2 = vec2(floor(uTime / LIFE + 0.5) * 3.1 + 11.0, 0.0);
+  float s1 = a - omega(r) * ph1 * LIFE;
+  float s2 = a - omega(r) * ph2 * LIFE;
+  float turb = fbm(vec2(r * 1.5, 0.0) + vec2(sin(s1), cos(s1)) * 1.8 + o1) * w1
+             + fbm(vec2(r * 1.5, 0.0) + vec2(sin(s2), cos(s2)) * 1.8 + o2) * (1.0 - w1);
+  float streak = fbm(vec2(r * 2.2 + 5.0, 3.0) + vec2(sin(s1 * 2.0), cos(s1 * 2.0)) * 1.4 + o1) * w1
+               + fbm(vec2(r * 2.2 + 5.0, 3.0) + vec2(sin(s2 * 2.0), cos(s2 * 2.0)) * 1.4 + o2) * (1.0 - w1);
+  // Averaging two patterns flattens them; restore their contrast around the middle.
+  turb = 0.5 + (turb - 0.5) * 1.35;
+  streak = 0.5 + (streak - 0.5) * 1.35;
+  float heat = pow(RIN / r, 2.0);
 
   // Hot clumps, each on its own orbit, with a sharp leading edge and a long tail.
   float clumps = 0.0;
@@ -107,7 +122,7 @@ vec3 disk(float r, float a, float approach) {
 
   // The gas flickers: brightness wanders a little over time.
   float flicker = 0.88 + 0.24 * noise(vec2(uTime * 0.9 + cos(a), r * 1.7 + sin(a)));
-  float glow = heat * (0.45 + 1.05 * turb * turb * 1.6) * (0.6 + 0.65 * streak) * flicker;
+  float glow = heat * (0.55 + 0.9 * turb * turb * 1.5) * (0.78 + 0.4 * streak) * flicker;
   glow += clumps * heat * 1.3;
   glow *= inner * outer * 1.35;
 
@@ -146,16 +161,12 @@ void main() {
   float ig = uIgnite;
   vec3 col = vec3(0.0);
 
-  // Infalling gas: violet and blue filaments on a logarithmic spiral, drawn inward over time.
+  // Infalling gas: a soft violet and blue glow, slowly turning, thinning with distance.
   vec3 hazeA = cycle(vec3(0.5, 0.32, 1.0), vec3(0.3, 0.5, 1.0), vec3(0.85, 0.3, 0.8), uPhase);
   vec3 hazeB = cycle(vec3(0.3, 0.55, 1.0), vec3(0.8, 0.35, 0.9), vec3(0.55, 0.35, 1.0), uPhase);
-  float lr = log(max(rho, 0.2));
-  float arm = ang + lr * 2.4 + uTime * 0.16;
-  float fil = fbm(vec2(cos(arm), sin(arm)) * 1.6 + vec2(lr * 2.6 - uTime * 0.22, 0.0));
-  float strands = smoothstep(0.42, 0.78, fil);
-  float swirl = fbm(vec2(cos(ang), sin(ang)) * 1.3 + vec2(rho * 1.2 - uTime * 0.08, uTime * 0.05));
-  float haze = exp(-(rho - 1.0) * 0.85) * smoothstep(0.98, 1.3, rho) * edge;
-  col += mix(hazeA, hazeB, swirl) * haze * (0.12 + 0.26 * strands);
+  float swirl = fbm(vec2(cos(ang + uTime * 0.03), sin(ang + uTime * 0.03)) * 1.3 + vec2(rho * 0.9 - uTime * 0.06, 0.0));
+  float haze = exp(-(rho - 1.0) * 1.1) * smoothstep(0.98, 1.4, rho) * edge;
+  col += mix(hazeA, hazeB, swirl) * haze * (0.08 + 0.12 * swirl);
 
   // Polar jets: two thin beams of blue-white plasma, knots of light running outward along them.
   float h = abs(p.y);
@@ -163,7 +174,7 @@ void main() {
   float beamLine = exp(-p.x * p.x / (width * width));
   float knots = 0.55 + 0.45 * sin(h * 4.2 - uTime * 3.2) * (0.6 + 0.4 * noise(vec2(h * 2.0 - uTime * 1.5, 3.0)));
   float jet = beamLine * knots * exp(-h * 0.42) * smoothstep(1.05, 1.9, h) * edgeY;
-  col += mix(vec3(0.45, 0.6, 1.0), vec3(0.8, 0.9, 1.0), beamLine) * jet * 0.32;
+  col += mix(vec3(0.45, 0.6, 1.0), vec3(0.8, 0.9, 1.0), beamLine) * jet * 0.14;
 
   // The far side of the disk, lensed into a band hugging the shadow: thick above, thinner below.
   float lensTop = 0.5 + 0.5 * sin(ang);
@@ -225,13 +236,10 @@ void main() {
 export function BlackHole({
   ignite,
   still,
-  anchor,
   ...props
 }: {
   ignite: Pulse;
   still: boolean;
-  /** Marks the hole's centre, for the sky's lens and the label occluders. */
-  anchor?: RefObject<THREE.Object3D | null>;
 } & ThreeElements["group"]) {
   const materials = useMemo(() => {
     const uniforms = () => ({
@@ -279,7 +287,6 @@ export function BlackHole({
 
   return (
     <group {...props}>
-      <object3D ref={anchor} />
       <Billboard>
         <mesh material={materials.shadow} renderOrder={1}>
           <planeGeometry args={[SIZE, SIZE]} />

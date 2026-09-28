@@ -25,17 +25,13 @@ materials (clearcoat plastic, fabric sheen, subsurface skin, jelly transmission,
 
 Masters are kept in `brand/renders/cast/`.
 
-## Day video (`public/video/`)
+## Day sky (`public/video/`)
 
-`day-sun.mp4` (an explorer on a coral world) is the product owner's own Higgsfield clip, made
-seamless and web-sized with Blender's sequencer (`scripts/blender/video_loop.py`: trimmed to source
-frames 15 to 135, where the explorer's pose matches, then a 0.3 s tail crossfade; H.264, neutral
-colour). `day-sun.jpg` is its first frame.
-
-`day-sun-mask.webp` (the foreground mask: rocks and coral in front of the sky) and
-`day-sky-patch.webp` (sky painted over the film's red planet) come from the poster frame via
-`scripts/video/day-sun-plates.mjs`; the film's camera never moves, so they fit every frame. The live
-sun (`src/features/landing/day/day-sun.tsx`) stands in the patched sky, behind the mask.
+`day-sky.mp4` (a crimson dusk: smoke between two black monoliths, a pine forest below) is the
+product owner's own Higgsfield clip. Its camera drifts the whole time, so no two frames match for a
+crossfade loop; instead it plays forward then backward (`scripts/blender/video_loop.py --pingpong`,
+source frames 1 to 150, H.264, neutral colour): the camera eases out and back with no seam.
+`day-sky.jpg` is its first frame, used as the poster and the CSS fallback sky.
 
 ## Other 3D renders (`public/art/*.webp`)
 

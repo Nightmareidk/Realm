@@ -27,7 +27,7 @@ const CHROME = process.env.CHROME_PATH ?? "C:/Program Files/Google/Chrome/Applic
 const PROPS = ["lock"];
 const PLANETS = ["planet-spaces", "planet-feed", "planet-profiles", "planet-boards"];
 // The cast (explorers, aliens, monsters, humans) is rendered in Blender: scripts/render-cast.mjs.
-const ALL = [...PROPS, ...PLANETS, "hero-poster-night"];
+const ALL = [...PROPS, ...PLANETS, "hero-poster-night", "hero-poster-day"];
 
 const wanted = process.argv.slice(2);
 const items = wanted.length ? wanted : ALL;

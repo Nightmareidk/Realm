@@ -4,7 +4,7 @@ import { useThree } from "@react-three/fiber";
 import { useLayoutEffect } from "react";
 import * as THREE from "three";
 
-const light = {
+const NIGHT = {
   sky: "#c9d6ff",
   ground: "#241a6b",
   hemi: 1.05,
@@ -14,6 +14,18 @@ const light = {
   rimI: 1.5,
   fill: "#7fe3ff",
   fillI: 0.9,
+};
+/** By day: sunlight, a warm key and an ember rim from the crimson sky. */
+const DAY = {
+  sky: "#ffe2c8",
+  ground: "#5a1e1a",
+  hemi: 1.2,
+  key: "#fff1dc",
+  keyI: 2.7,
+  rim: "#ff7a45",
+  rimI: 2.2,
+  fill: "#ffb38a",
+  fillI: 0.7,
 };
 
 /** Soft light panels around the scene, reflected in the cast's clearcoat. */
@@ -72,14 +84,17 @@ function StudioEnvironment() {
 }
 
 /**
- * Shared lighting for every Realm 3D scene: a cool key light from the front right that casts soft
- * shadows, a pink rim from behind, a cyan fill, a sky/ground hemisphere, and a tiny procedural
- * environment for the clearcoat reflections (no HDR downloads).
+ * Shared lighting for every Realm 3D scene: a key light from the front right that casts soft
+ * shadows, a coloured rim from behind, a fill, a sky/ground hemisphere, and a tiny procedural
+ * environment for the clearcoat reflections (no HDR downloads). Cool with a pink rim at night;
+ * warm sunlight with an ember rim by day. (Only colours and strengths change between the two, so
+ * no shader has to recompile when the edition switches.)
  */
-export function Studio({ shadows = true }: { shadows?: boolean }) {
+export function Studio({ shadows = true, day = false }: { shadows?: boolean; day?: boolean }) {
+  const light = day ? DAY : NIGHT;
   return (
     <>
-      <hemisphereLight args={[light.sky, light.ground, light.hemi]} />
+      <hemisphereLight color={light.sky} groundColor={light.ground} intensity={light.hemi} />
       <ambientLight intensity={0.18} />
       <directionalLight
         position={[5, 9, 8]}

@@ -1,23 +1,9 @@
 "use client";
 
 import { Moon, Sun } from "@phosphor-icons/react";
-import { type MouseEvent, useEffect, useState } from "react";
+import type { MouseEvent } from "react";
 import { cx } from "@/lib/cx";
-import { type Edition, switchEdition } from "@/lib/edition";
-
-/** The current edition, kept in sync with `<html data-theme>` (so every toggle agrees). */
-function useEdition(): Edition {
-  const [edition, setEdition] = useState<Edition>("night");
-  useEffect(() => {
-    const root = document.documentElement;
-    const sync = () => setEdition(root.dataset.theme === "day" ? "day" : "night");
-    sync();
-    const mo = new MutationObserver(sync);
-    mo.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => mo.disconnect();
-  }, []);
-  return edition;
-}
+import { switchEdition, useEdition } from "@/lib/edition";
 
 const originOf = (e: MouseEvent<HTMLElement>) => {
   const r = e.currentTarget.getBoundingClientRect();

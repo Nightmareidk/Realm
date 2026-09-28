@@ -4,6 +4,8 @@ The last `--fade` seconds of the clip are cross-faded over its first seconds, so
 (clip length minus the fade) loops with no visible seam. Output is H.264 MP4 (plays everywhere),
 plus a poster image of the first frame. `--start` / `--end` (source frames, from 1) trim the clip
 first: pick two frames that look alike (a character in the same pose) and the fade can be short.
+`--pingpong` plays the clip forward then backward instead, for footage where no two frames match
+(a camera that keeps drifting): the camera eases out and back, and there's no seam at all.
 
     blender -b --factory-startup --python video_loop.py -- \
         --in day1.mp4 --out public/video/day-portal.mp4 --poster public/video/day-portal.jpg \
@@ -28,6 +30,7 @@ def parse():
     p.add_argument("--mirror", action="store_true", help="flip horizontally")
     p.add_argument("--start", type=int, default=1, help="first source frame")
     p.add_argument("--end", type=int, default=0, help="last source frame (0: the clip's end)")
+    p.add_argument("--pingpong", action="store_true", help="forward then backward, no crossfade")
     return p.parse_args(argv)
 
 
@@ -42,11 +45,23 @@ def main():
     fps = base.fps
     end = a.end or (base.frame_final_end - base.frame_final_start)
     length = end - a.start + 1
-    fade = max(1, round(a.fade * fps))
-    out_len = length - fade
-
-    # The tail of the clip, placed so its last `fade` frames sit over the output's first frames.
-    tail = strips.new_movie("tail", a.src, 2, 1 - (end - fade))
+    clip_len = base.frame_final_end - base.frame_final_start
+    if a.pingpong:
+        # The same frames reversed, starting on the forward pass's last frame (same image), and
+        # stopping one short of the first frame, which the loop wraps back to.
+        fade = 0
+        out_len = 2 * length - 2
+        # Reversal applies to the whole clip before trimming, so the trims swap ends.
+        tail = strips.new_movie("tail", a.src, 2, 1)
+        tail.use_reverse_frames = True
+        tail.frame_offset_start = clip_len - end
+        tail.frame_offset_end = a.start - 1
+        tail.frame_start = length - (clip_len - end)
+    else:
+        fade = max(1, round(a.fade * fps))
+        out_len = length - fade
+        # The tail of the clip, placed so its last `fade` frames sit over the output's first frames.
+        tail = strips.new_movie("tail", a.src, 2, 1 - (end - fade))
 
     src_w = base.elements[0].orig_width
     src_h = base.elements[0].orig_height
@@ -69,10 +84,11 @@ def main():
         strip.use_flip_x = a.mirror
 
     tail.blend_type = "ALPHA_OVER"
-    tail.blend_alpha = 1.0
-    tail.keyframe_insert("blend_alpha", frame=1)
-    tail.blend_alpha = 0.0
-    tail.keyframe_insert("blend_alpha", frame=fade)
+    if not a.pingpong:
+        tail.blend_alpha = 1.0
+        tail.keyframe_insert("blend_alpha", frame=1)
+        tail.blend_alpha = 0.0
+        tail.keyframe_insert("blend_alpha", frame=fade)
 
     # Poster: the first output frame, as a JPEG.
     scene.frame_set(1)

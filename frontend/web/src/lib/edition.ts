@@ -108,6 +108,22 @@ export async function switchEdition(next: Edition, from?: Point) {
 }
 
 /**
+ * The edition the page is showing now: follows `<html data-theme>` only (the switch's reveal, not
+ * its lead-in).
+ */
+export function useEdition(): Edition {
+  const [edition, setEdition] = useState<Edition>("night");
+  useEffect(() => {
+    const sync = () => setEdition(currentEdition());
+    sync();
+    const mo = new MutationObserver(sync);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => mo.disconnect();
+  }, []);
+  return edition;
+}
+
+/**
  * Whether the day sky is showing. Follows `<html data-theme>`, and also hears the switch's sky
  * event, so the sky (and the day video) can start changing a beat before the rest of the page.
  */

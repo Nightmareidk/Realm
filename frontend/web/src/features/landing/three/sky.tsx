@@ -16,7 +16,7 @@ import { auroraPhase, type Pulse } from "./theme";
  * bright lower edge, rays shimmering along the curtain, waves rolling through it in both
  * directions, and colours that cycle from green through cyan and magenta to pink and violet
  * (in step with the page's nebula, via the wall clock). Around the black hole the sky is bent by
- * its gravity, like a real lens: stars and cloud near it are pulled into arcs around the shadow.
+ * its gravity, like a lens: stars and cloud near it curve around the shadow.
  * When the page switches to day, the hole flares and its light floods the sky.
  *
  * The heavy parts return early where they can't show (mountains high in the sky, the river away
@@ -365,7 +365,8 @@ vec2 lens(vec2 px) {
   vec2 d = px - hole;
   float r2 = max(dot(d, d), 1.0);
   float re = uHoleR * 1.75;
-  float k = re * re / r2 * smoothstep(re * 7.0, re * 2.2, sqrt(r2));
+  // Capped short of the singular ring, where bright cloud would smear into thin circles.
+  float k = min(re * re / r2, 0.55) * smoothstep(re * 7.0, re * 2.2, sqrt(r2));
   return hole + d * (1.0 - k);
 }
 
@@ -395,20 +396,24 @@ void main() {
 `;
 
 /**
- * Full-screen sky behind the hero scene. `hole` is the black hole, which the sky bends around and
- * which flares with `ignite`; `layout` says where the headline sits, so the sky quietens there;
- * `scroll` is the intro's progress, for a little parallax. It also tells the edition switch where
- * the hole is on screen, so the day page can open from it.
+ * Full-screen night sky behind the hero scene (by day it isn't drawn: the canvas is clear and the
+ * day film shows through). `hole` marks the centrepiece, which the sky bends around and which
+ * flares with `ignite`; `layout` says where the headline sits, so the sky quietens there; `scroll`
+ * is the intro's progress, for a little parallax. It also tells the edition switch where the
+ * centrepiece (the black hole, or the sun in the same place) is on screen, so the new edition can
+ * open from it.
  */
 export function SkyBackdrop({
   ignite,
   still,
+  day,
   hole,
   layout,
   scroll,
 }: {
   ignite: Pulse;
   still: boolean;
+  day: boolean;
   hole: RefObject<THREE.Object3D | null>;
   layout: LayoutRef;
   scroll?: RefObject<number>;
@@ -445,16 +450,20 @@ export function SkyBackdrop({
   // The hole's position on the canvas (0..1, y up), for the edition switch's reveal.
   const onCanvas = useRef<{ x: number; y: number } | null>(null);
 
-  useEffect(
-    () =>
-      registerSunLocator("night", () => {
-        const p = onCanvas.current;
-        if (!p) return null;
-        const c = gl.domElement.getBoundingClientRect();
-        return { x: c.left + p.x * c.width, y: c.top + (1 - p.y) * c.height };
-      }),
-    [gl],
-  );
+  useEffect(() => {
+    const where = () => {
+      const p = onCanvas.current;
+      if (!p) return null;
+      const c = gl.domElement.getBoundingClientRect();
+      return { x: c.left + p.x * c.width, y: c.top + (1 - p.y) * c.height };
+    };
+    const night = registerSunLocator("night", where);
+    const day = registerSunLocator("day", where);
+    return () => {
+      night();
+      day();
+    };
+  }, [gl]);
 
   useFrame((state) => {
     const u = material.uniforms as Record<string, THREE.IUniform>;
@@ -490,7 +499,7 @@ export function SkyBackdrop({
   });
 
   return (
-    <mesh frustumCulled={false} renderOrder={-1000} material={material}>
+    <mesh frustumCulled={false} renderOrder={-1000} material={material} visible={!day}>
       <planeGeometry args={[2, 2]} />
     </mesh>
   );

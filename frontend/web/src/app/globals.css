@@ -162,11 +162,20 @@
   --mark-tile-b: #ffd6a3;
 }
 
+/* The page's ground, resolved at the root, so surfaces that keep night colours (the hero) can
+   still fade into the page's actual background. */
+:root {
+  --page-ground: var(--r-ground);
+}
+
 /* The header at the very top of the page: clear, so the hero runs up under it (header-bar.tsx),
    with a soft shadow behind it so the links stay readable over the brightest sky. */
 .site-header[data-top] {
   background-color: transparent;
   background-image: linear-gradient(180deg, oklch(0.1 0.04 280 / 0.55), transparent);
+  /* Size it to the border box, or it repeats into the 1px border as a dark line. */
+  background-origin: border-box;
+  background-repeat: no-repeat;
   border-color: transparent;
   backdrop-filter: none;
 }
