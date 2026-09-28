@@ -17,41 +17,55 @@
   }
 }
 
-/* ── The crew as renders: a gentle bob, a hop on hover, and a hello ───── */
+/* ── The crew as renders: a gentle float, a hop on hover, and a real wave ─ */
 /* No position or display here: unlayered module rules beat Tailwind's layered utilities
    (`absolute`, `max-lg:hidden`), so art.tsx sets both as utilities. */
 .crew {
   transform-origin: 50% 100%;
   filter: drop-shadow(0 22px 24px color-mix(in oklch, var(--r-shadow) 55%, transparent));
 }
-.crew img {
+.crew > img {
   display: block;
   width: 100%;
   height: auto;
 }
+/* The raised arm's area, over the pose: a strip of the wave's frames, stepped through. */
+.arm {
+  position: absolute;
+  overflow: hidden;
+}
+.frames {
+  display: block;
+  height: 100%;
+  width: calc(var(--span) * 100%);
+  max-width: none;
+  /* Each tile starts a small margin before the arm's area. */
+  margin-left: calc(var(--pad) * -100%);
+}
 
 @media (prefers-reduced-motion: no-preference) {
   .crew {
-    animation: crew-bob 3.2s ease-in-out infinite;
-    animation-delay: var(--delay, 0s);
-  }
-  /* Posed with a hand up, so the hello is the whole figure rocking from its feet. */
-  .waving {
-    animation: crew-hello 4.2s infinite;
+    animation: crew-float 4.6s ease-in-out infinite;
     animation-delay: var(--delay, 0s);
   }
   .crew:hover {
     animation: crew-hop 560ms cubic-bezier(0.23, 1, 0.32, 1);
   }
+  /* The wave: 41 frames at 24 per second (1.7 s), then the pose held until the next. The last
+     frame is the pose, so the hold is seamless. Frame k starts k/41 of the way along the strip. */
+  .waving {
+    animation: crew-wave 3.6s infinite;
+    animation-delay: var(--delay, 0s);
+  }
 }
 
-@keyframes crew-bob {
+@keyframes crew-float {
   0%,
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(0);
   }
   50% {
-    transform: translateY(-7px) rotate(-1deg);
+    transform: translateY(-5px);
   }
 }
 @keyframes crew-hop {
@@ -68,39 +82,18 @@
     transform: translateY(0) scale(1, 1);
   }
 }
-/* A hello: a little lift, three rocks that grow then settle, then a slow float until the next.
-   Each leg eases in and out, so it slows at the ends of every rock like a real wave. */
-@keyframes crew-hello {
+@keyframes crew-wave {
   0% {
-    transform: translateY(0) rotate(0deg);
-    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    transform: translateX(0);
+    /* 41 positions (0/40 to 40/40 of the way), one per frame. */
+    animation-timing-function: steps(41, jump-none);
   }
-  8% {
-    transform: translateY(-6px) rotate(-5deg);
-    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  47.5% {
+    transform: translateX(calc(-100% * 40 / 41));
   }
-  16% {
-    transform: translateY(-8px) rotate(6deg);
-    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
-  }
-  24% {
-    transform: translateY(-8px) rotate(-6deg);
-    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
-  }
-  32% {
-    transform: translateY(-6px) rotate(4deg);
-    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
-  }
-  42% {
-    transform: translateY(0) rotate(0deg);
-    animation-timing-function: ease-in-out;
-  }
-  71% {
-    transform: translateY(-7px) rotate(-1deg);
-    animation-timing-function: ease-in-out;
-  }
+  47.6%,
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: translateX(calc(-100% * 40 / 41));
   }
 }
 
@@ -205,30 +198,18 @@
   visibility: hidden;
 }
 
-/* ── Headline words rising in as a section scrolls into view ─────────── */
+/* ── Headline words, each in a mask it rises out of (scroll-fx.tsx) ─────── */
+.wordMask {
+  display: inline-block;
+  overflow: clip;
+  /* Room for descenders and the rise, without changing the line's height. */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+  vertical-align: top;
+}
 .word {
   display: inline-block;
-}
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .word {
-      animation: word-rise linear both;
-      animation-timeline: view();
-      animation-range: entry calc(var(--i) * 4%) entry calc(40% + var(--i) * 4%);
-    }
-  }
-}
-@keyframes word-rise {
-  from {
-    opacity: 0;
-    transform: translateY(0.55em) rotate(4deg);
-    filter: blur(10px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: blur(0);
-  }
+  transform-origin: 0 100%;
 }
 
 /* ── Closing: the cast on a glowing horizon (an aurora by night, the sunset by day) ─ */

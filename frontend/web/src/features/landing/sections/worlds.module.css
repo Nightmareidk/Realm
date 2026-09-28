@@ -1,30 +1,16 @@
 /*
  * The four worlds as a deck. On a screen tall enough to hold a card, each card pins below the
- * header as you reach it and the next slides up over it; the one underneath settles back and dims,
- * so the deck stacks up. Each card also leaves a sliver of the ones before it showing above.
- * Everywhere else (phones, short screens, no scroll-driven animation) the cards simply follow one
- * another.
+ * header as you reach it and the next slides up over it, leaving a sliver of the ones before it
+ * showing above; the one underneath settles back and dims (scroll-fx.tsx, `deck`). Everywhere else
+ * the cards simply follow one another.
  */
 .deck {
   position: relative;
-  timeline-scope: --w1, --w2, --w3, --w4;
 }
 
 .world {
   position: relative;
   padding-block: 1.25rem;
-}
-.world:nth-child(1) {
-  view-timeline-name: --w1;
-}
-.world:nth-child(2) {
-  view-timeline-name: --w2;
-}
-.world:nth-child(3) {
-  view-timeline-name: --w3;
-}
-.world:nth-child(4) {
-  view-timeline-name: --w4;
 }
 
 .card {
@@ -33,9 +19,8 @@
   overflow: clip;
   transform-origin: 50% 0%;
 }
-/* Settles back into the page as the next card covers it. */
-.card::after {
-  content: "";
+/* Darkens the card as the next one covers it. */
+.dim {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -47,12 +32,10 @@
 
 /* A world's planet (a real render) sits in the card's corner inside its orbit rings. */
 .planet {
-  position: absolute;
-  z-index: -1;
+  display: block;
   width: clamp(14rem, 22vw, 20rem);
   height: auto;
   opacity: 0.85;
-  pointer-events: none;
   user-select: none;
 }
 .rings {
@@ -73,47 +56,5 @@
   }
   .world:last-child {
     margin-bottom: 0;
-  }
-
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .world:nth-child(1) .card,
-      .world:nth-child(1) .card::after {
-        animation-timeline: --w2;
-      }
-      .world:nth-child(2) .card,
-      .world:nth-child(2) .card::after {
-        animation-timeline: --w3;
-      }
-      .world:nth-child(3) .card,
-      .world:nth-child(3) .card::after {
-        animation-timeline: --w4;
-      }
-      .world:not(:last-child) .card {
-        animation-name: recede;
-        animation-duration: 1ms;
-        animation-timing-function: linear;
-        animation-fill-mode: both;
-        animation-range: entry 0% entry 100%;
-      }
-      .world:not(:last-child) .card::after {
-        animation-name: dim;
-        animation-duration: 1ms;
-        animation-timing-function: linear;
-        animation-fill-mode: both;
-        animation-range: entry 0% entry 100%;
-      }
-    }
-  }
-}
-
-@keyframes recede {
-  to {
-    transform: scale(0.94);
-  }
-}
-@keyframes dim {
-  to {
-    opacity: 0.55;
   }
 }

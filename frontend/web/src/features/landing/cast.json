@@ -1,34 +1,130 @@
 {
   "astro-teal": {
-    "w": 421,
-    "h": 640
+    "w": 406,
+    "h": 577,
+    "pose": "astro-teal.418192e1.webp",
+    "wave": "astro-teal-wave.dfef5f10.webp",
+    "arm": {
+      "x": 52.71,
+      "y": 18.2,
+      "w": 47.29,
+      "h": 39.51,
+      "n": 41,
+      "span": 42.2813,
+      "pad": 0.01563
+    },
+    "face": "astro-teal-face.b85b4f99.webp"
   },
   "alien-zib": {
-    "w": 322,
-    "h": 640
+    "w": 341,
+    "h": 606,
+    "pose": "alien-zib.118ed164.webp",
+    "wave": "alien-zib-wave.4ae15aed.webp",
+    "arm": {
+      "x": 47.51,
+      "y": 30.03,
+      "w": 52.49,
+      "h": 35.15,
+      "n": 41,
+      "span": 42.3743,
+      "pad": 0.01676
+    },
+    "face": "alien-zib-face.ce12c15e.webp"
   },
   "alien-nova": {
-    "w": 256,
-    "h": 640
+    "w": 278,
+    "h": 615,
+    "pose": "alien-nova.2be0240f.webp",
+    "wave": "alien-nova-wave.b92a41c7.webp",
+    "arm": {
+      "x": 42.45,
+      "y": 28.46,
+      "w": 57.55,
+      "h": 28.46,
+      "n": 41,
+      "span": 42.5375,
+      "pad": 0.01875
+    },
+    "face": "alien-nova-face.257dbaa0.webp"
   },
   "alien-meshy": {
-    "w": 359,
-    "h": 640
+    "w": 365,
+    "h": 611,
+    "pose": "alien-meshy.8cb007a7.webp",
+    "wave": "alien-meshy-wave.f53f08c2.webp",
+    "arm": {
+      "x": 0,
+      "y": 32.24,
+      "w": 49.59,
+      "h": 29.79,
+      "n": 41,
+      "span": 42.3591,
+      "pad": 0.01657
+    },
+    "face": "alien-meshy-face.9970556d.webp"
   },
   "monster-bruno": {
-    "w": 607,
-    "h": 640
+    "w": 577,
+    "h": 580,
+    "pose": "monster-bruno.fbac8f56.webp",
+    "wave": "monster-bruno-wave.b00e762d.webp",
+    "arm": {
+      "x": 65.51,
+      "y": 24.83,
+      "w": 34.49,
+      "h": 38.1,
+      "n": 41,
+      "span": 42.2362,
+      "pad": 0.01508
+    },
+    "face": "monster-bruno-face.1482a0c2.webp"
   },
   "monster-gloop": {
-    "w": 539,
-    "h": 640
+    "w": 513,
+    "h": 559,
+    "pose": "monster-gloop.61af7c2f.webp",
+    "wave": "monster-gloop-wave.8e57013a.webp",
+    "arm": {
+      "x": 58.28,
+      "y": 19.14,
+      "w": 41.72,
+      "h": 42.4,
+      "n": 41,
+      "span": 42.1495,
+      "pad": 0.01402
+    },
+    "face": "monster-gloop-face.8fe75869.webp"
   },
   "human-maya": {
-    "w": 315,
-    "h": 640
+    "w": 329,
+    "h": 603,
+    "pose": "human-maya.dcdc81d0.webp",
+    "wave": "human-maya-wave.53f4db06.webp",
+    "arm": {
+      "x": 48.33,
+      "y": 24.71,
+      "w": 51.67,
+      "h": 31.84,
+      "n": 41,
+      "span": 42.4471,
+      "pad": 0.01765
+    },
+    "face": "human-maya-face.243a9fe9.webp"
   },
   "human-leo": {
-    "w": 308,
-    "h": 640
+    "w": 317,
+    "h": 602,
+    "pose": "human-leo.b36b1e52.webp",
+    "wave": "human-leo-wave.7f089724.webp",
+    "arm": {
+      "x": 52.37,
+      "y": 27.91,
+      "w": 47.63,
+      "h": 32.06,
+      "n": 41,
+      "span": 42.6291,
+      "pad": 0.01987
+    },
+    "face": "human-leo-face.8058d049.webp"
   }
 }

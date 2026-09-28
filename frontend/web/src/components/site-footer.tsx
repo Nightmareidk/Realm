@@ -60,6 +60,8 @@ export function SiteFooter() {
       {/* The name, huge and faded, like a signature under the page. */}
       <p
         aria-hidden="true"
+        data-fx="parallax"
+        data-speed="-0.25"
         className="pointer-events-none -mt-4 select-none text-center font-display text-[clamp(6rem,26vw,24rem)] leading-[0.8] font-bold tracking-[-0.04em] text-[color-mix(in_oklch,var(--r-ink)_14%,transparent)] [mask-image:linear-gradient(180deg,#000,transparent_85%)]"
       >
         realm

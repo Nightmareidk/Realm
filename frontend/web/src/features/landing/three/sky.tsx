@@ -374,6 +374,39 @@ vec2 lens(vec2 px) {
   return hole + d * (1.0 - k);
 }
 
+// One layer of motes: soft points of light in hashed cells, drifting up and swaying, twinkling.
+float motes(vec2 q, float t, float density) {
+  vec2 cell = floor(q);
+  vec2 f = fract(q) - 0.5;
+  float h = hash21(cell);
+  vec2 off = (vec2(hash21(cell + 3.1), hash21(cell + 7.7)) - 0.5) * 0.6;
+  off.x += 0.18 * sin(t * (0.6 + h) + h * 20.0);
+  float size = 0.05 + 0.07 * hash21(cell + 11.3);
+  float d = length(f - off);
+  float core = smoothstep(size, 0.0, d);
+  float halo = smoothstep(size * 3.2, 0.0, d) * 0.35;
+  float tw = 0.45 + 0.55 * sin(t * (1.2 + 2.4 * h) + h * 40.0);
+  return (core + halo) * step(1.0 - density, h) * tw;
+}
+
+// By day, light that lives over the film: sun rays turning slowly out of the sun and breathing,
+// and motes of light (dust and pollen in a summer beam) drifting up, brighter inside the beam.
+vec3 daylight(vec2 uv, vec2 px, float aspect, float textMask) {
+  float t = uTime;
+  vec2 sd = (uv - uCentre) * vec2(aspect, 1.0);
+  float r = length(sd);
+  float a = atan(sd.y, sd.x);
+  float rays = pow(0.5 + 0.5 * sin(a * 9.0 + t * 0.21 + sin(a * 3.0 - t * 0.13) * 1.3), 5.0);
+  rays += 0.8 * pow(0.5 + 0.5 * sin(a * 16.0 - t * 0.33 + 1.7 + sin(a * 5.0 + t * 0.2)), 7.0);
+  rays *= exp(-r * 1.25) * smoothstep(0.03, 0.2, r) * (0.8 + 0.2 * sin(t * 0.7));
+  float beam = exp(-r * 1.3);
+  vec2 q = px / uRes.y;
+  float m = motes(q * 18.0 + vec2(sin(t * 0.07) * 1.5, -t * 0.55), t, 0.22)
+          + motes(q * 9.0 + vec2(cos(t * 0.05) * 1.2, -t * 0.42) + 40.0, t * 0.8, 0.18) * 1.3;
+  float quiet = 1.0 - textMask * 0.75;
+  return vec3(1.0, 0.9, 0.72) * (rays * 0.2 + m * (0.18 + 0.7 * beam)) * quiet;
+}
+
 void main() {
   vec2 uv = vUv;
   vec2 px = uv * uRes;
@@ -402,6 +435,7 @@ void main() {
     float band = exp(-uv.y * 3.5) * change * 0.25;
     add = vec3(1.0, 0.6, 0.3) * band + vec3(1.0, 0.86, 0.62) * flare;
   }
+  if (dm > 0.001) add += daylight(uv, px, aspect, textMask) * dm;
   // Premultiplied: the canvas is see-through by day.
   gl_FragColor = vec4(col * alpha + add, clamp(alpha + max(add.r, max(add.g, add.b)), 0.0, 1.0));
 }

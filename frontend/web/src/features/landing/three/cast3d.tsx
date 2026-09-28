@@ -7,17 +7,9 @@ import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 /**
- * A member of Realm's cast, live in 3D. The characters are made in Meshy (image to 3D) and made
- * light for the web by scripts/render-cast.mjs. It bobs gently in zero-g; with `wave` it says hello.
- * Two kinds of model:
- *
- * - Posed (a single mesh, already standing with a hand up): the hello is the whole body rocking
- *   from the feet, a few quick sways every few seconds, then back to drifting.
- * - Rigged and animated (a GLB with its animations inside, as Meshy's Animate step exports): it
- *   plays its own clips. An idle loops if there is one; the wave (a clip named like "wave" or
- *   "hello") plays every few seconds and eases back into the idle.
- *
- * `still` freezes it.
+ * A member of Realm's cast, live in 3D. The characters are made in Meshy (image to 3D); their
+ * raised arm is rigged and given a "Wave" by scripts/render-cast.mjs (Blender), so with `wave` the
+ * forearm swings from the elbow every few seconds, hand firm, while the body just floats. A model that brings an idle clip loops it between waves. `still` freezes it.
  */
 export type CastName =
   | "astro-teal"
@@ -43,13 +35,6 @@ function softenGlass(m: THREE.Material) {
   m.transmission = 0;
   m.transparent = true;
   m.needsUpdate = true;
-}
-
-function waveAt(t: number) {
-  const p = t % 3.2;
-  const env =
-    THREE.MathUtils.smoothstep(p, 0, 0.35) * (1 - THREE.MathUtils.smoothstep(p, 1.75, 2.15));
-  return { env, swing: Math.sin(p * Math.PI * 2 * 1.45) };
 }
 
 export function CastMember({
@@ -100,7 +85,7 @@ export function CastMember({
       if (e.action !== hello) return;
       idle?.reset().fadeIn(0.45).play();
       hello.fadeOut(0.45);
-      timer = window.setTimeout(greet, 2600);
+      timer = window.setTimeout(greet, 1800);
     };
     mixer.addEventListener("finished", onDone);
     timer = window.setTimeout(greet, 600 + phase * 500);
@@ -111,8 +96,6 @@ export function CastMember({
     };
   }, [mixer, animations, wave, phase]);
   const root = useRef<THREE.Group>(null);
-  // A posed model says hello by rocking from its feet; an animated one plays its own wave.
-  const rock = wave && !animations.length;
 
   useLayoutEffect(() => {
     model.traverse((o) => {
@@ -136,11 +119,8 @@ export function CastMember({
       g.rotation.set(0, 0, 0);
       return;
     }
-    const { env, swing } = rock ? waveAt(t) : { env: 0, swing: 0 };
-    g.position.y = Math.sin(t * 0.9) * 0.14 + env * Math.abs(swing) * 0.05;
-    g.rotation.z = Math.sin(t * 0.6) * 0.05 + env * swing * 0.11;
-    // A little turn toward the pointer, like a glance.
-    g.rotation.y = state.pointer.x * 0.18 + env * 0.12;
+    // Floating in zero-g: a slow bob, nothing more. The hello is the arm's own animation.
+    g.position.y = Math.sin(t * 0.9) * 0.12;
   });
 
   return (

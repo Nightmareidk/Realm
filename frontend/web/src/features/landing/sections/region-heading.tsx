@@ -20,7 +20,11 @@ export function RegionHeading({
   return (
     <div>
       <SystemLocator chart={chart} region={region} />
-      <h2 id={id} className="display mt-6 text-[clamp(2.1rem,3.3vw,3.25rem)] text-ink">
+      <h2
+        id={id}
+        data-fx="words"
+        className="display mt-6 text-[clamp(2.1rem,3.3vw,3.25rem)] text-ink"
+      >
         <Words>{title}</Words>
       </h2>
       <p className="lead mt-5 max-w-[42ch]">{children}</p>

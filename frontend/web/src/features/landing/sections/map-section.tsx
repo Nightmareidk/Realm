@@ -15,16 +15,20 @@ export function MapSection({ chart }: { chart: StarChart }) {
     <section id="map" aria-labelledby="map-title" className="scroll-mt-20">
       <div className="mx-auto grid max-w-[90rem] grid-cols-1 gap-12 px-4 py-24 md:px-8 lg:grid-cols-12 lg:gap-10 lg:py-36">
         <div className="lg:col-span-4 lg:pt-6">
-          <h2 id="map-title" className="display text-[clamp(2.5rem,4.4vw,4.25rem)] text-ink">
+          <h2
+            id="map-title"
+            data-fx="words"
+            className="display text-[clamp(2.5rem,4.4vw,4.25rem)] text-ink"
+          >
             <Words>Four worlds, one universe.</Words>
           </h2>
-          <p className="lead reveal mt-6 max-w-[40ch]">
+          <p data-fx="fade" className="lead mt-6 max-w-[40ch]">
             Your friends, your Spaces and your feed share one account, one set of people, and one
             way to get around. Pick a planet to look inside.
           </p>
-          <ul className="mt-10 grid gap-2">
-            {REGIONS.map((r, i) => (
-              <li key={r.id} className="reveal" style={{ animationRangeStart: `entry ${i * 8}%` }}>
+          <ul data-fx="stagger" data-delay="0.2" className="mt-10 grid gap-2">
+            {REGIONS.map((r) => (
+              <li key={r.id}>
                 <a
                   href={r.href}
                   className="group -mx-3 flex items-center gap-4 rounded-2xl px-3 py-2.5 transition-colors duration-200 ease-out hover:bg-[color-mix(in_oklch,var(--r-ink)_6%,transparent)]"
@@ -50,7 +54,7 @@ export function MapSection({ chart }: { chart: StarChart }) {
             ))}
           </ul>
         </div>
-        <div className="reveal lg:col-span-8">
+        <div data-fx="zoom" className="lg:col-span-8">
           <StarChartMap
             chart={chart}
             previews={{

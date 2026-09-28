@@ -1,4 +1,5 @@
 import type { Ink } from "@/components/avatar";
+import { castFace } from "./art";
 
 /**
  * Illustrative content for the landing-page previews. Every preview that uses it is
@@ -14,7 +15,7 @@ export interface DemoPerson {
   avatar?: string;
 }
 
-const face = (who: string) => `/art/cast/${who}-face.webp`;
+const face = castFace;
 
 export const people = {
   noor: {

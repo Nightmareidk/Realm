@@ -3,7 +3,7 @@
 Imports the model, stands it up at a fixed height with its feet on the ground, lights it in the
 cast's studio (a warm key, a cool fill and two coloured rims, so it sits well on the night and the
 day page alike) and renders, on a transparent background:
-  <name>.png        full figure, turned a little toward the viewer
+  <name>.png        full figure, turned a little toward the viewer (skipped with --face-only)
   <name>-face.png   a head-and-shoulders portrait (avatars)
 
     blender -b --factory-startup --python render_model.py -- --in model.glb --out <dir> \
@@ -29,6 +29,7 @@ def parse():
     p.add_argument("--samples", type=int, default=128)
     p.add_argument("--turn", type=float, default=0.22, help="radians toward camera-left")
     p.add_argument("--face", type=float, default=0.5, help="share of the height the portrait shows")
+    p.add_argument("--face-only", action="store_true", help="skip the full figure")
     return p.parse_args(argv)
 
 
@@ -158,13 +159,14 @@ def main():
     lo, hi = bounds()
 
     # Full figure: square frame on the larger of width and height.
-    size = max(hi.x - lo.x, hi.z - lo.z) * 1.1
-    cam = camera((lo + hi) / 2, size, hi.y - lo.y, a.turn)
-    render(out / f"{a.name}.png")
+    if not a.face_only:
+        size = max(hi.x - lo.x, hi.z - lo.z) * 1.1
+        cam = camera((lo + hi) / 2, size, hi.y - lo.y, a.turn)
+        render(out / f"{a.name}.png")
+        bpy.data.objects.remove(cam)
 
     # Portrait: the top of the figure (head and shoulders on these big-headed characters),
     # centred on the head itself rather than the figure, so a raised hand doesn't pull it aside.
-    bpy.data.objects.remove(cam)
     top = height * a.face
     xs = sorted(
         (o.matrix_world @ v.co).x

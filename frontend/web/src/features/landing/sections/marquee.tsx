@@ -38,6 +38,7 @@ function Row({ items, reverse, speed }: { items: Message[]; reverse?: boolean; s
       <div
         className={cx(styles.marquee, reverse && styles.reverse)}
         style={{ "--speed": `${speed}s` } as CSSProperties}
+        data-marquee={speed}
       >
         {doubled.map(({ copy, who, text }) => (
           <span

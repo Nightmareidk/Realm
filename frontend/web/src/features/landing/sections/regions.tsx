@@ -20,6 +20,9 @@ function Rings({ region, x, y }: { region: RegionId; x: number; y: number }) {
       preserveAspectRatio="xMidYMid slice"
       className={styles.rings}
       aria-hidden="true"
+      data-fx="spin"
+      data-turn="10"
+      data-origin={`${x * 100}% ${y * 100}%`}
     >
       <g fill="none" stroke={`var(--r-${region}-line)`} transform={`rotate(-14 ${cx0} ${cy0})`}>
         {[240, 390, 560, 760].map((rx, i) => (
@@ -63,37 +66,53 @@ function World({
     <section
       id={region}
       aria-labelledby={`${region}-title`}
+      data-card=""
       className={cx(styles.world, "scroll-mt-24")}
       style={{ "--n": n } as CSSProperties}
     >
       <div
+        data-surface=""
+        data-spotlight=""
         className={cx(styles.card, "surface")}
         style={{
           background: `radial-gradient(75% 90% at ${px * 100}% 100%, color-mix(in oklch, var(--r-${region}-solid) 26%, transparent), transparent 62%), radial-gradient(50% 60% at ${(1 - px) * 100}% 0%, color-mix(in oklch, var(--r-${region}-solid) 9%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in oklch, var(--r-panel-raised) 94%, transparent), color-mix(in oklch, var(--r-panel) 94%, transparent))`,
         }}
       >
         <Rings region={region} x={px} y={1} />
-        <Image
-          src={`/art/planet-${region}.webp`}
-          alt=""
-          width={256}
-          height={256}
+        <div
+          data-fx="parallax"
+          data-speed="0.35"
+          aria-hidden="true"
           className={cx(
-            styles.planet,
-            "max-lg:hidden",
+            "pointer-events-none absolute -z-1 max-lg:hidden",
             flip ? "-right-24 -bottom-24" : "-bottom-24 -left-24",
           )}
-        />
+        >
+          <Image
+            src={`/art/planet-${region}.webp`}
+            alt=""
+            width={256}
+            height={256}
+            className={styles.planet}
+          />
+        </div>
         <div
           className={cx(
             "grid grid-cols-1 items-center gap-10 p-6 md:p-10 lg:grid-cols-12 lg:gap-12 lg:p-12",
           )}
         >
-          <div className={cx("lg:col-span-5", flip && "lg:order-2")}>{copy}</div>
-          <div className={cx("relative min-w-0 lg:col-span-7", flip && "lg:order-1")}>
+          <div data-fx="stagger" className={cx("lg:col-span-5", flip && "lg:order-2")}>
+            {copy}
+          </div>
+          <div
+            data-fx="rise"
+            data-delay="0.15"
+            className={cx("relative min-w-0 lg:col-span-7", flip && "lg:order-1")}
+          >
             {preview}
           </div>
         </div>
+        <div data-dim="" aria-hidden="true" className={styles.dim} />
       </div>
     </section>
   );
@@ -133,7 +152,7 @@ const CALLOUTS = [
 export function WorldsSection({ chart }: { chart: StarChart }) {
   return (
     <div className="mx-auto max-w-[80rem] px-4 md:px-8">
-      <div className={styles.deck}>
+      <div data-fx="deck" className={styles.deck}>
         <World
           region="spaces"
           n={0}

@@ -32,3 +32,6 @@ test-results/
 .impeccable/questions/
 .impeccable/review/
 .impeccable/build/
+
+# rendered frames kept between cast runs (frontend/web/scripts/render-cast.mjs)
+.cache/

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildStarChart } from "@/features/landing/map/star-chart";
+import { ScrollFX } from "@/features/landing/scroll-fx";
 import { ClosingSection } from "@/features/landing/sections/closing";
 import { EditionsSection } from "@/features/landing/sections/editions";
 import { Hero } from "@/features/landing/sections/hero";
@@ -8,6 +9,7 @@ import { StickerMarquee } from "@/features/landing/sections/marquee";
 import { PrivacySection } from "@/features/landing/sections/privacy";
 import { WorldsSection } from "@/features/landing/sections/regions";
 import { ShowcaseSection } from "@/features/landing/sections/showcase";
+import { StatementSection } from "@/features/landing/sections/statement";
 import { getReleases } from "@/lib/releases";
 import { SITE } from "@/lib/site";
 
@@ -62,12 +64,14 @@ export default async function LandingPage() {
       />
       <Hero />
       <StickerMarquee />
+      <StatementSection />
       <ShowcaseSection />
       <MapSection chart={chart} />
       <WorldsSection chart={chart} />
       <PrivacySection />
       <EditionsSection releases={releases} />
       <ClosingSection />
+      <ScrollFX />
     </>
   );
 }

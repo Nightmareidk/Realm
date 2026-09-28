@@ -7,8 +7,8 @@ import styles from "./three.module.css";
 
 /** How long the film stays up after night is asked for, while the night sky closes over it. */
 const LINGER_MS = 3200;
-/** The clouds are filmed slow; the sky runs a little faster than life so it feels alive. */
-const SPEED = 1.7;
+/** The clouds are filmed slow; the sky runs faster than life so it feels alive. */
+const SPEED = 2.1;
 
 /**
  * The day sky: a filmed summer day, towering clouds drifting over rolling green hills, grass
@@ -61,11 +61,35 @@ export function DaySky() {
     mo.observe(root, { attributes: true, attributeFilter: ["data-motion"] });
     document.addEventListener("visibilitychange", update);
     reduce.addEventListener("change", update);
+
+    // The film leans away from the pointer a little, eased, like looking out at a real sky.
+    const target = { x: 0, y: 0 };
+    const cur = { x: 0, y: 0 };
+    let raf = 0;
+    const step = () => {
+      cur.x += (target.x - cur.x) * 0.06;
+      cur.y += (target.y - cur.y) * 0.06;
+      el.style.setProperty("--mx", cur.x.toFixed(4));
+      el.style.setProperty("--my", cur.y.toFixed(4));
+      raf =
+        Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > 0.001
+          ? requestAnimationFrame(step)
+          : 0;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!visible || reduce.matches || root.dataset.motion === "paused") return;
+      target.x = (e.clientX / window.innerWidth) * 2 - 1;
+      target.y = (e.clientY / window.innerHeight) * 2 - 1;
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
     return () => {
       io.disconnect();
       mo.disconnect();
       document.removeEventListener("visibilitychange", update);
       reduce.removeEventListener("change", update);
+      window.removeEventListener("pointermove", onMove);
+      cancelAnimationFrame(raf);
     };
   }, [shown, wanted]);
 

@@ -27,7 +27,11 @@
   height: 100%;
   object-fit: cover;
   object-position: 50% 60%;
-  transform: translateX(calc(var(--p) * 10%)) scale(calc(1.32 - var(--p) * 0.1));
+  transform: translate(
+      calc(var(--p) * 8.5% - var(--mx, 0) * 1.2%),
+      calc(var(--p) * -2% - var(--my, 0) * 0.9%)
+    )
+    scale(calc(1.4 - var(--p) * 0.16));
   transform-origin: 50% 60%;
 }
 @media (width < 64rem) {

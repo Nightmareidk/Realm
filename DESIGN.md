@@ -121,7 +121,7 @@ components:
 
 Realm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the page is deep ink-indigo lit by violet and electric-blue light around a black hole whose accretion disk burns molten amber. By day it is golden hour: a sky that runs from peach through rose to lilac as you scroll, warm pearl surfaces with rose-tinted shadows, deep plum type and a coral action colour. Never plain white. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you.
 
-The public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit and the cast floating and waving around it, then a page that keeps moving as you scroll: headlines rise in word by word, the product tips up to face you, the four worlds stack up like a deck of cards, the cast rises onto a glowing horizon at the end. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora over stars that twinkle in colour. By day the sun takes its place over a filmed summer day (towering clouds drifting fast over rolling hills, an old brick gateway glowing like a portal; made with Higgsfield: Soul Cinema still, Nano Banana Pro edit, Kling 3.0 animation). Switching editions plays out an eclipse: the black hole slides off the sun, or back across it. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it, and every bit of that motion can be paused. Inside the app the same world becomes quiet motifs: orbit rings, a soft glow on the active Space, star-chart locators.
+The public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit and the cast floating and waving around it, then a page that keeps moving as you scroll: headlines rise out of masks word by word, a statement lights up as you read it, the product tips up to face you, the four worlds stack up like a deck of cards, the chat stickers race when you scroll fast, and the cast springs up onto a glowing horizon at the end. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora over stars that twinkle in colour. By day the sun takes its place over a filmed summer day (towering clouds racing over rolling hills, an old brick gateway glowing like a portal; made with Higgsfield: Soul Cinema still, Nano Banana Pro edit, Kling 3.0 animation), with live light over it: sun rays turning out of the sun and motes of light drifting up through the beam, and the whole sky leaning away from your pointer. Switching editions plays out an eclipse: the black hole slides off the sun, or back across it. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it, and every bit of that motion can be paused. Inside the app the same world becomes quiet motifs: orbit rings, a soft glow on the active Space, star-chart locators.
 
 It is premium and a little playful: editorial type, big confident headlines, generous space, and a cast of glossy 3D characters who are cute in form and precise in finish.
 
@@ -131,7 +131,7 @@ It is premium and a little playful: editorial type, big confident headlines, gen
 - Surfaces float: pearl or ink-glass panels with a lit top edge, a hairline and a soft shadow tinted by the page.
 - Bricolage Grotesque for headlines, Atkinson Hyperlegible Next for everything you read.
 - Real 3D, rendered live or pre-rendered to transparent WebP; real imagery from Realm's own films in the product previews.
-- Lots of scroll-driven motion, all of it pausable, none of it required to understand anything.
+- Lots of scroll motion (GSAP ScrollTrigger, in every browser), all of it pausable, none of it required to understand anything.
 
 ## Colors
 
@@ -246,17 +246,21 @@ Built from the real UI, framed as a window (20px radius, lit edge, deep shadow),
 The landing page opens on a title card under a close-up of the centrepiece (the black hole, or the sun by day); scrolling pulls the camera back through space while the stage stays pinned, the worlds and asteroid belt come into frame, the crew drifts in, and the headline arrives. By day the film (playing at 1.7x so the clouds race) eases out a little as the camera pulls back and fades at its foot through a soft warm haze into the peach sky. Switching editions scrolls back to the top and plays the eclipse in the hero, live, while the rest of the page is revealed in the new edition as a soft-edged circle spreading from the sun. Reduced motion and Pause motion skip all of it.
 
 ### Signature: scroll motion
-One authored moment per section, all scroll-driven CSS (`animation-timeline: view()`, no JavaScript), all off under reduced motion and paused by Pause motion, and content fully visible where scroll timelines aren't supported:
-- **Headlines** rise in word by word, each unblurring as it lands.
-- **The product shot** tips up from 26 degrees to face you as it scrolls in; the phone and the perched crew drift at their own pace in front of it.
-- **The worlds** stack up as a deck (see Layout).
-- **Privacy** pins its statement while the protection cards scroll past.
-- **The close**: the cast rises onto the horizon from the middle outwards, then waves.
+Every section moves as you scroll, in every browser: GSAP ScrollTrigger (`src/features/landing/scroll-fx.tsx`), driven by `data-fx` attributes in the markup. Everything is fully visible without JavaScript; reduced motion and Pause motion switch it all off and put every element back in place.
+- **Headlines** rise out of a mask word by word (`words`); lead paragraphs rise in and unblur (`fade`).
+- **The statement** ("One app instead of four...") lights up word by word as you read down it, scrubbed (`light`).
+- **The product shot** tips up from 30 degrees and grows to face you, scrubbed (`tilt`); the phone and the perched crew drift at their own pace in front of it (`parallax`); the moments around it spring in (`pop`).
+- **The chat stickers** run faster the faster you scroll, then ease back (`marquee`).
+- **The star chart** grows into place (`zoom`); its planet list arrives one by one (`stagger`).
+- **The worlds** stack up as a deck: each card settles back to 90% and dims as the next slides over it (`deck`); inside, the copy arrives in turn, the product rises, the planet drifts and the orbit rings turn.
+- **Privacy** pins its statement while the protection cards slide in from the right; the lock turns as it passes.
+- **The close**: the headline grows into place, and the whole cast springs up onto the horizon from the middle outwards, then waves.
+- Throughout: primary buttons lean toward the pointer, cards catch a soft light where the pointer is, the header's line fills as you read, and the nebula drifts up behind everything.
 
 ### Signature: the black hole and the cast
 The Eclipse mark (a dark disc over a glowing rim with a small star) appears as the logo, the app icon and the star chart's centre. At night the hero's centrepiece is a black hole, and it's alive: a photon ring where arcs of light race round, an accretion disk crossing in front with its far side lensed over the top, turbulent gas sheared by the orbits, hot clumps, a soft violet and blue glow, faint polar jets, and every few seconds a magnetic flare. By day the sun takes its place: granulated plasma with sunspots, limb darkening, a warm halo and a corona of streamers.
 
-Realm's characters are a cast, not a mascot: an astronaut, aliens (three-eyed Zib, crystal-crowned Nova, the little green one), monsters (Gloop the pink cyclops, Bruno the blue plush) and people (Maya in her headset, Leo in his glasses). They're made in Meshy (image to 3D) as glossy semi-cartoon figures, each posed with a hand up to say hello, and prepared for the web by `scripts/render-cast.mjs`: rendered in Blender (Cycles) to transparent art and portraits, and slimmed to light live models. Live in the hero they drift in zero-g and, every few seconds, rock from the feet to wave; on the page they bob and do the same. Their portraits are the avatars in every product preview. A model rigged with its own animations (Meshy's Animate step) plays its idle and wave clips instead.
+Realm's characters are a cast, not a mascot: an astronaut, aliens (three-eyed Zib, crystal-crowned Nova, the little green one), monsters (Gloop the pink cyclops, Bruno the blue plush) and people (Maya in her headset, Leo in his glasses). They're made in Meshy (image to 3D) as glossy semi-cartoon figures, each posed with a hand up, and `scripts/render-cast.mjs` gives every one a real wave: it rigs the raised arm in Blender (shoulder, elbow, wrist and hand bones, weighted only around the arm so nothing else can bend) and bakes a "Wave" where the forearm swings side to side from the elbow as one firm piece, the hand following a touch behind, with crisp joints so nothing bends like rubber. Live in the hero the models play that animation every couple of seconds while they float; on the page the same wave is rendered in Cycles as 41 frames of just the arm's area, stepped through by CSS over the still pose. Only the hand moves; the body never rocks. Their portraits are the avatars in every product preview.
 
 ## Do's and Don'ts
 
@@ -280,3 +284,5 @@ Realm's characters are a cast, not a mascot: an astronaut, aliens (three-eyed Zi
 - **Don't** show the aurora by day, or the day film at night: each edition has its own sky.
 - **Don't** use stock photography in the product previews; use Realm's own imagery.
 - **Don't** scatter cartoon props around sections; the 3D world and the cast carry the personality, the page stays composed.
+- **Don't** animate a character by rocking its whole body; a wave is the arm and hand, from the rig.
+- **Don't** rely on CSS scroll timelines alone for scroll motion; some browsers don't run them. Use `data-fx` (GSAP).

@@ -1,6 +1,5 @@
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import type { CSSProperties } from "react";
 import { buttonClass } from "@/components/button";
 import { cx } from "@/lib/cx";
 import { type CastName, Explorer } from "../art";
@@ -28,16 +27,25 @@ export function ClosingSection() {
       className={cx(styles.closing, "relative isolate mt-12 overflow-clip lg:mt-20")}
     >
       <div className="relative mx-auto flex max-w-[90rem] flex-col items-center px-4 pt-28 text-center md:px-8 lg:pt-40">
-        <h2
-          id="closing-title"
-          className="display text-[clamp(3rem,8vw,6rem)] leading-[0.95] font-bold text-ink"
-        >
-          <Words>Bring your group over.</Words>
-        </h2>
-        <p className="lead reveal mt-6 max-w-[44ch]">
+        <div data-fx="zoom">
+          <h2
+            id="closing-title"
+            data-fx="words"
+            className="display text-[clamp(3rem,8vw,6rem)] leading-[0.95] font-bold text-ink"
+          >
+            <Words>Bring your group over.</Words>
+          </h2>
+        </div>
+        <p data-fx="fade" className="lead mt-6 max-w-[44ch]">
           Create a Space, share one invite link, and everyone lands in the same universe.
         </p>
-        <Link href="/signup" className={cx(buttonClass("primary", "lg"), "reveal mt-10")}>
+        <Link
+          href="/signup"
+          data-fx="fade"
+          data-delay="0.25"
+          data-magnetic=""
+          className={cx(buttonClass("primary", "lg"), "mt-10")}
+        >
           Open Realm
           <ArrowRight
             size={18}
@@ -48,13 +56,12 @@ export function ClosingSection() {
 
         <div className="relative mt-20 w-full pb-16 lg:pb-24">
           <div aria-hidden="true" className={styles.horizon} />
-          <div className="relative flex items-end justify-center gap-1 sm:gap-3 lg:gap-5">
+          <div
+            data-fx="cast"
+            className="relative flex items-end justify-center gap-1 sm:gap-3 lg:gap-5"
+          >
             {LINEUP.map((c, i) => (
-              <div
-                key={c.who}
-                className={cx("rise-in", c.hideSm && "max-sm:hidden")}
-                style={{ "--i": Math.abs(i - 3.5) } as CSSProperties}
-              >
+              <div key={c.who} className={cx(c.hideSm && "max-sm:hidden")}>
                 <Explorer who={c.who} waving delay={(i * 0.37) % 2.1} className={c.w} />
               </div>
             ))}

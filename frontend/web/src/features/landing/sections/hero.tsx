@@ -43,7 +43,7 @@ export function Hero() {
             open in your browser.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/signup" className={buttonClass("primary", "lg")}>
+            <Link href="/signup" className={buttonClass("primary", "lg")} data-magnetic="">
               Open Realm
               <ArrowRight
                 size={18}

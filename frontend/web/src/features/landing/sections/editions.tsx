@@ -13,6 +13,7 @@ import { Road } from "@/components/availability";
 import { ButtonLink } from "@/components/button";
 import { RealmLogo } from "@/components/wordmark";
 import { Explorer } from "../art";
+import { Words } from "../words";
 
 type IconType = ComponentType<{ size?: number; weight?: "regular" | "fill" | "duotone" }>;
 
@@ -124,18 +125,20 @@ export function EditionsSection({
       <div className="mx-auto max-w-[80rem] px-4 py-24 md:px-8 lg:py-32">
         <Heading
           id="download-title"
+          data-fx="words"
           className="display max-w-[18ch] text-[clamp(2.4rem,4.2vw,4rem)] text-ink"
         >
-          The same Realm on every screen.
+          <Words>The same Realm on every screen.</Words>
         </Heading>
-        <p className="lead mt-6 max-w-[50ch]">
+        <p data-fx="fade" className="lead mt-6 max-w-[50ch]">
           Use it in your browser today. Desktop and phone apps are on the way, and they will appear
           here the moment they are ready.
         </p>
 
-        <div className="mt-14 grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div data-fx="stagger" className="mt-14 grid grid-cols-1 gap-5 lg:grid-cols-12">
           <div
-            className="surface reveal relative isolate flex min-h-[22rem] flex-col justify-between gap-10 overflow-clip p-7 md:p-10 lg:col-span-7 lg:row-span-2"
+            data-spotlight=""
+            className="surface relative isolate flex min-h-[22rem] flex-col justify-between gap-10 overflow-clip p-7 md:p-10 lg:col-span-7 lg:row-span-2"
             style={{
               background:
                 "radial-gradient(80% 90% at 0% 0%, color-mix(in oklch, var(--r-spaces-solid) 24%, transparent), transparent 62%), radial-gradient(60% 70% at 100% 100%, color-mix(in oklch, var(--r-profiles-solid) 20%, transparent), transparent 65%), linear-gradient(180deg, color-mix(in oklch, var(--r-panel-raised) 94%, transparent), color-mix(in oklch, var(--r-panel) 94%, transparent))",
@@ -149,7 +152,7 @@ export function EditionsSection({
               <p className="lead mt-2">Available now. Nothing to install.</p>
             </div>
             <div className="flex flex-wrap items-center gap-4">
-              <ButtonLink href="/signup" size="lg">
+              <ButtonLink href="/signup" size="lg" data-magnetic="">
                 Open Realm
               </ButtonLink>
               <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
@@ -160,12 +163,16 @@ export function EditionsSection({
               aria-hidden="true"
               className="absolute right-6 -bottom-6 flex items-end gap-1 max-sm:hidden md:right-10"
             >
-              <Explorer who="alien-meshy" waving delay={0.4} className="w-20 md:w-24" />
-              <Explorer who="human-leo" waving delay={1.3} className="w-14 md:w-16" />
+              <div data-fx="pop" data-delay="0.4">
+                <Explorer who="alien-meshy" waving delay={0.4} className="w-20 md:w-24" />
+              </div>
+              <div data-fx="pop" data-delay="0.55">
+                <Explorer who="human-leo" waving delay={1.3} className="w-14 md:w-16" />
+              </div>
             </div>
           </div>
 
-          <div className="surface reveal p-7 md:p-9 lg:col-span-5">
+          <div data-spotlight="" className="surface p-7 md:p-9 lg:col-span-5">
             <div>
               <p className="text-sm font-semibold text-ink">Desktop</p>
               <ul className="mt-2">
@@ -180,7 +187,7 @@ export function EditionsSection({
               </ul>
             </div>
           </div>
-          <div className="surface reveal p-7 md:p-9 lg:col-span-5">
+          <div data-spotlight="" className="surface p-7 md:p-9 lg:col-span-5">
             <div>
               <p className="text-sm font-semibold text-ink">Phone and tablet</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">

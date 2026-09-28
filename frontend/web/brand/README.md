@@ -18,21 +18,25 @@ An astronaut (`astro-teal`), aliens (`alien-zib` three-eyed, `alien-nova` crysta
 `alien-meshy` the little green one), monsters (`monster-gloop` the pink cyclops, `monster-bruno`
 the blue plush) and people (`human-maya`, `human-leo`). The product owner made them in **Meshy**
 (image to 3D, textured), each posed with a hand up. The source GLBs go in `models-incoming/` as
-`<who>-source.glb` (large, not committed). `node scripts/render-cast.mjs` then, per character:
+`<who>-source.glb` (large, not committed). `node scripts/render-cast.mjs` then, per character (the
+raised arm's joints for each are listed at the top of that script, read off a front view):
 
-- renders it in **Blender 5.2** with Cycles on the GPU (`scripts/blender/render_model.py`: stood at
-  a fixed height, the cast's studio light of a warm key, cool fill and two coloured rims) into
-  `brand/renders/cast/<who>.png` and `<who>-face.png` (masters, kept here);
-- writes `public/art/cast/<who>.webp` (the page art) and `<who>-face.webp` (the avatars in every
+- rigs the raised arm in **Blender 5.2** (`scripts/blender/rig_wave.py`): shoulder, elbow, wrist
+  and hand bones, each vertex weighted by where it sits along the arm and only inside a capsule
+  around it, with crisp joints, and a baked "Wave" (the forearm swings from the elbow as one firm
+  piece, the hand following a touch behind);
+- writes `public/models/<who>.glb` for the live hero: about 60k triangles, skinned, with the Wave
+  animation, 1024 px WebP textures, Draco (decoder served from `public/draco/`, copied from three);
+- renders the wave's 41 frames with Cycles on the GPU, in the cast's studio light (a warm key, cool
+  fill and two coloured rims), and packs them: `public/art/cast/<who>.webp` is the pose with the
+  arm's area cut out and `<who>-wave.webp` is that area in every frame side by side, which the page
+  steps through with CSS; the pose's master goes to `brand/renders/cast/<who>.png`;
+- renders a portrait (`scripts/blender/render_model.py --face-only`) into
+  `brand/renders/cast/<who>-face.png` and `public/art/cast/<who>-face.webp` (the avatars in every
   product preview);
-- makes `public/models/<who>.glb` for the live hero with `scripts/blender/optimize_glb.py`: about
-  60k triangles, 1024 px WebP textures, Draco (decoder served from `public/draco/`, copied from
-  three), feet on the ground;
-- records each figure's size in `src/features/landing/cast.json`.
+- records each figure's size and the arm's area in `src/features/landing/cast.json`.
 
-If a character comes back from Meshy rigged and animated (its Animate step), the live hero plays its
-own idle and wave clips (`src/features/landing/three/cast3d.tsx`); posed models rock from the feet
-to wave instead.
+`scripts/blender/optimize_glb.py` still slims a model on its own (no rig) when needed.
 
 ## Day sky (`public/video/`)
 
@@ -42,7 +46,9 @@ edited with Nano Banana Pro to light the gateway, animated with Kling 3.0 (pro, 
 everything in motion), then made seamless and web-sized with Blender's sequencer
 (`scripts/blender/video_loop.py --width 1920 --fade 1.5 --crf HIGH --sharpen 0.6`: a 1.5 s
 crossfade loop, a gentle unsharp mask on every frame, H.264 at high quality). The page plays it at
-1.7x so the clouds race. `day-sky.jpg` is its first frame, the poster and CSS fallback.
+2.1x so the clouds race, leans it away from the pointer, and draws live sun rays and drifting motes
+of light over it in the hero's sky shader. `day-sky.jpg` is its first frame, the poster and CSS
+fallback.
 
 ## Preview media (`public/media/`)
 
