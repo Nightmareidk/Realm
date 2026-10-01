@@ -132,15 +132,6 @@
   }
 }
 
-@keyframes realm-starlight {
-  from {
-    opacity: 0.25;
-  }
-  to {
-    opacity: 0.9;
-  }
-}
-
 @keyframes realm-twinkle {
   0%,
   100% {
@@ -182,6 +173,127 @@
 :root[data-theme="day"] {
   --surface-edge: oklch(1 0 0 / 0.85);
 }
+/* Surfaces that keep the night edition's colours by day (the hero, the header over it). */
+[data-edition="night"] {
+  --surface-edge: oklch(1 0 0 / 0.07);
+}
+
+/*
+ * Where a page ends on the ground (the landing: the cast on its horizon, closing.tsx), the footer
+ * is that ground carried on down, so no sky shows below the horizon: by night the world's dark
+ * surface; by day the meadow itself, the same rendered grass running on down past the first row of
+ * links before it eases into its own green (the grass's average colour, so the one becomes the
+ * other without a seam), in light inks.
+ *
+ * --closing-foot is how much ground shows under the cast: at least as far as the hill's curve falls
+ * at the screen's edges (8.9vw), so the footer always starts below the curve.
+ */
+:root {
+  --closing-foot: 5rem;
+}
+@media (width >= 64rem) {
+  :root {
+    --closing-foot: max(9rem, 9.2vw);
+  }
+}
+:root {
+  /* The Moon's dust in shadow, a touch cool, for the night footer. */
+  --moon-shade: oklch(0.17 0.014 282);
+}
+:root[data-theme="day"] {
+  --meadow-shade: oklch(0.28 0.08 134);
+}
+main:has([data-ground]) + .site-footer {
+  isolation: isolate;
+  border-top-width: 0;
+  background: var(--moon-shade);
+}
+/* The ground's own texture, a fine grain, and by day a pool of sunlight on it, both fading in
+   below the seam with the hill so nothing marks where the one becomes the other. */
+main:has([data-ground]) + .site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mask-image: linear-gradient(180deg, transparent 12rem, #000 26rem);
+}
+:root[data-theme="day"] main:has([data-ground]) + .site-footer::before {
+  background:
+    radial-gradient(55% 45% at 22% 38%, oklch(0.55 0.11 128 / 0.2), transparent 70%),
+    radial-gradient(45% 40% at 85% 70%, oklch(0.5 0.1 140 / 0.12), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+:root[data-theme="day"] main:has([data-ground]) + .site-footer {
+  color-scheme: dark;
+  --r-ink: oklch(0.97 0.025 105);
+  --r-ink-soft: oklch(0.9 0.045 115);
+  --r-ink-muted: oklch(0.83 0.055 122);
+  --r-rule: oklch(0.45 0.07 140);
+  --r-rule-strong: oklch(0.68 0.08 130);
+  --r-panel: oklch(0.29 0.06 142);
+  --r-panel-raised: oklch(0.36 0.07 140);
+  --r-shadow: oklch(0.14 0.04 145);
+  --surface-edge: oklch(1 0 0 / 0.1);
+  background: linear-gradient(180deg, var(--meadow-shade) 22rem, oklch(0.22 0.06 140));
+}
+/* The grass itself, once the page is near the end (hill-lineup.tsx sets data-near, so the art
+   isn't fetched up front): the hill's plate lined up with the one above the seam, the tile of the
+   same grass under it where the plate runs out, and the green coming in over both. Light text
+   gets a soft shadow while it's over the grass. */
+:root[data-theme="day"] main:has([data-ground][data-near]) + .site-footer {
+  background:
+    linear-gradient(180deg, transparent 6rem, var(--meadow-shade) 22rem),
+    url("/art/sky/hill.webp") 50% calc(-2vw - var(--closing-foot) - 0.4rem) / 100vw auto no-repeat,
+    url("/art/sky/grass.webp") 50% 0 / 25.6vw auto repeat,
+    var(--meadow-shade);
+  text-shadow: 0 1px 3px oklch(0.12 0.04 140 / 0.75);
+}
+/* By night the Moon runs on down from the cast's horizon (render_moon.py, lined up with the plate
+   above the seam), dimming as it comes toward you so the light text stays easy to read over it, and
+   fading to its own dark dust. Only once the page is near the end (hill-lineup.tsx, data-near). */
+:root:not([data-theme="day"]) main:has([data-ground][data-near]) + .site-footer {
+  background:
+    linear-gradient(
+      180deg,
+      transparent,
+      color-mix(in oklch, var(--moon-shade) 55%, transparent) 5rem,
+      var(--moon-shade) 22rem
+    ),
+    url("/art/sky/moon.webp") 50% calc(-2vw - var(--closing-foot) - 0.4rem) / 100vw auto no-repeat,
+    var(--moon-shade);
+  text-shadow: 0 1px 3px oklch(0.06 0.02 280 / 0.85);
+}
+
+/* Off screen, a part of the page rests (offscreen-still.tsx): its CSS animations pause until it's
+   about to come back into view. */
+[data-still] *,
+[data-still] *::before,
+[data-still] *::after {
+  /* biome-ignore lint/complexity/noImportantStyles: it has to win over every animation shorthand. */
+  animation-play-state: paused !important;
+}
+
+/* The name under every page, huge, set into whatever it ends on: by night raised in soft light; by
+   day carved, a shade darker than the ground with a catch of light along the letters' lower edges. */
+.site-signature {
+  /* By night, raised in soft light: a pale fill, a catch of light along the top edges and a
+     shadow under them. */
+  color: oklch(0.93 0.02 285 / 0.13);
+  text-shadow:
+    0 -1px 0 oklch(1 0 0 / 0.09),
+    0 4px 8px oklch(0 0 0 / 0.35);
+  mask-image: linear-gradient(180deg, #000, transparent 85%);
+}
+:root[data-theme="day"] .site-signature {
+  color: oklch(0.35 0.06 250 / 0.07);
+  text-shadow: 0 2px 0 oklch(1 0 0 / 0.75);
+}
+:root[data-theme="day"] main:has([data-ground]) + .site-footer .site-signature {
+  color: oklch(0.1 0.04 150 / 0.42);
+  text-shadow: 0 2px 0 oklch(0.78 0.12 125 / 0.12);
+}
 
 /*
  * The header is a floating capsule: once you scroll it frosts over, with a hairline and a soft
@@ -193,7 +305,8 @@
   position: relative;
   border: 1px solid color-mix(in oklch, var(--r-rule) 90%, transparent);
   background: color-mix(in oklch, var(--r-panel) 78%, transparent);
-  backdrop-filter: blur(18px) saturate(1.4);
+  /* Mostly opaque already, so a light frost reads the same as a heavy one, for less work. */
+  backdrop-filter: blur(10px) saturate(1.25);
   box-shadow:
     inset 0 1px 0 var(--surface-edge),
     0 18px 40px -24px color-mix(in oklch, var(--r-shadow) 70%, transparent);
@@ -216,7 +329,7 @@
   pointer-events: none;
   background: linear-gradient(180deg, oklch(0.1 0.04 280 / 0.5), transparent);
 }
-:root[data-theme="day"] .site-header[data-top]::before {
+:root[data-theme="day"] .site-header[data-top]:not([data-edition="night"])::before {
   background: linear-gradient(180deg, oklch(0.98 0.02 60 / 0.55), transparent);
 }
 .scroll-progress {
@@ -266,10 +379,9 @@
 }
 
 /*
- * The page's nebula: three soft colour fields behind everything that crossfade on a 48 s cycle,
- * in step with the hero's aurora (both are keyed to the wall clock via --aurora-t, set before
- * first paint). Aurora greens, cyan and magenta, then a pink and violet nebula by night; gold,
- * orange and rose by day. Opacity-only animation, so it stays on the compositor.
+ * The page's nebula: three soft colour fields crossfading behind everything, drawn into one small
+ * canvas (components/nebula.tsx) that the GPU stretches over the screen, a margin below for the
+ * page's slow drift up (scroll-fx.tsx). Its own layer, so redrawing it never repaints anything.
  */
 .realm-nebula {
   position: fixed;
@@ -278,87 +390,13 @@
   pointer-events: none;
   overflow: hidden;
 }
-.realm-nebula > i {
+.realm-nebula > canvas {
   position: absolute;
-  inset: -10%;
-  opacity: 0.34;
-}
-.realm-nebula > i:nth-child(1) {
-  background:
-    radial-gradient(38% 34% at 10% 6%, oklch(0.62 0.2 300 / 0.24), transparent 70%),
-    radial-gradient(34% 30% at 92% 48%, oklch(0.66 0.17 256 / 0.18), transparent 70%),
-    radial-gradient(40% 30% at 30% 96%, oklch(0.6 0.18 285 / 0.14), transparent 70%);
-}
-.realm-nebula > i:nth-child(2) {
-  background:
-    radial-gradient(36% 32% at 88% 8%, oklch(0.72 0.16 240 / 0.2), transparent 70%),
-    radial-gradient(38% 34% at 8% 60%, oklch(0.62 0.22 345 / 0.16), transparent 70%),
-    radial-gradient(34% 30% at 70% 98%, oklch(0.5 0.16 275 / 0.2), transparent 70%);
-}
-.realm-nebula > i:nth-child(3) {
-  background:
-    radial-gradient(40% 34% at 50% 0%, oklch(0.72 0.16 60 / 0.14), transparent 70%),
-    radial-gradient(34% 32% at 96% 72%, oklch(0.6 0.2 300 / 0.2), transparent 70%),
-    radial-gradient(36% 30% at 4% 30%, oklch(0.62 0.17 256 / 0.16), transparent 70%);
-}
-:root[data-theme="day"] .realm-nebula > i {
-  opacity: 0.6;
-}
-/* By day the washes are golden-hour light: sun gold, coral, rose and lilac haze. */
-:root[data-theme="day"] .realm-nebula > i:nth-child(1) {
-  background:
-    radial-gradient(42% 36% at 92% 6%, oklch(0.86 0.11 60 / 0.6), transparent 70%),
-    radial-gradient(38% 34% at 4% 58%, oklch(0.84 0.09 355 / 0.45), transparent 70%),
-    radial-gradient(40% 30% at 40% 100%, oklch(0.84 0.08 305 / 0.45), transparent 70%);
-}
-:root[data-theme="day"] .realm-nebula > i:nth-child(2) {
-  background:
-    radial-gradient(40% 36% at 8% 8%, oklch(0.84 0.11 45 / 0.5), transparent 70%),
-    radial-gradient(38% 34% at 96% 62%, oklch(0.83 0.08 315 / 0.5), transparent 70%),
-    radial-gradient(34% 30% at 60% 100%, oklch(0.82 0.11 18 / 0.4), transparent 70%);
-}
-:root[data-theme="day"] .realm-nebula > i:nth-child(3) {
-  background:
-    radial-gradient(44% 36% at 55% 0%, oklch(0.88 0.1 75 / 0.5), transparent 70%),
-    radial-gradient(36% 32% at 2% 86%, oklch(0.82 0.1 5 / 0.45), transparent 70%),
-    radial-gradient(34% 30% at 98% 34%, oklch(0.83 0.08 295 / 0.45), transparent 70%);
-}
-/* Fine grain over everything: it keeps the big soft gradients from banding and gives the page a
-   printed, physical finish. Fixed, so it never repaints on scroll. */
-.realm-nebula::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0.05;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-:root[data-theme="day"] .realm-nebula::after {
-  opacity: 0.07;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .realm-nebula > i {
-    opacity: 0;
-    animation: realm-nebula 48s linear infinite;
-  }
-  .realm-nebula > i:nth-child(1) {
-    animation-delay: calc(var(--aurora-t, 0) * -1s);
-  }
-  .realm-nebula > i:nth-child(2) {
-    animation-delay: calc((var(--aurora-t, 0) + 32) * -1s);
-  }
-  .realm-nebula > i:nth-child(3) {
-    animation-delay: calc((var(--aurora-t, 0) + 16) * -1s);
-  }
-}
-@keyframes realm-nebula {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  33.33%,
-  66.67% {
-    opacity: 0;
-  }
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 109%;
+  will-change: transform;
 }
 
 /*
@@ -455,7 +493,9 @@
     animation-play-state: paused !important;
   }
 
-  /* A quiet starfield behind the whole night edition: fixed, non-interactive, no repaint on scroll. */
+  /* Behind the whole page, still: two scatterings of stars by night, and a fine grain over the
+     nebula (it keeps the big soft gradients from banding and gives the page a printed finish).
+     One fixed layer; the stars used to twinkle as a second full-screen layer of their own. */
   body::before {
     content: "";
     position: fixed;
@@ -469,36 +509,31 @@
       radial-gradient(1px 1px at 37% 63%, oklch(0.95 0.02 290 / 0.3), transparent 60%),
       radial-gradient(1.2px 1.2px at 56% 82%, oklch(0.95 0.02 290 / 0.35), transparent 60%),
       radial-gradient(1px 1px at 7% 91%, oklch(0.95 0.02 290 / 0.3), transparent 60%),
-      radial-gradient(1px 1px at 91% 74%, oklch(0.95 0.02 290 / 0.35), transparent 60%);
-    background-size: 420px 420px;
+      radial-gradient(1px 1px at 91% 74%, oklch(0.95 0.02 290 / 0.35), transparent 60%),
+      radial-gradient(1.6px 1.6px at 22% 30%, oklch(0.9 0.12 200 / 0.6), transparent 60%),
+      radial-gradient(1.4px 1.4px at 74% 22%, oklch(0.88 0.12 330 / 0.52), transparent 60%),
+      radial-gradient(1.8px 1.8px at 48% 72%, oklch(0.93 0.1 90 / 0.56), transparent 60%),
+      radial-gradient(1.3px 1.3px at 88% 86%, oklch(0.88 0.14 290 / 0.52), transparent 60%),
+      radial-gradient(1.5px 1.5px at 8% 64%, oklch(0.9 0.14 140 / 0.52), transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size:
+      420px 420px,
+      420px 420px,
+      420px 420px,
+      420px 420px,
+      420px 420px,
+      420px 420px,
+      420px 420px,
+      560px 560px,
+      560px 560px,
+      560px 560px,
+      560px 560px,
+      560px 560px,
+      220px 220px;
   }
-
-  /* A second, sparser layer of coloured stars that twinkles (opacity only, so it stays cheap). */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image:
-      radial-gradient(1.6px 1.6px at 22% 30%, oklch(0.9 0.12 200 / 0.8), transparent 60%),
-      radial-gradient(1.4px 1.4px at 74% 22%, oklch(0.88 0.12 330 / 0.7), transparent 60%),
-      radial-gradient(1.8px 1.8px at 48% 72%, oklch(0.93 0.1 90 / 0.75), transparent 60%),
-      radial-gradient(1.3px 1.3px at 88% 86%, oklch(0.88 0.14 290 / 0.7), transparent 60%),
-      radial-gradient(1.5px 1.5px at 8% 64%, oklch(0.9 0.14 140 / 0.7), transparent 60%);
-    background-size: 560px 560px;
-    opacity: 0.8;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    body::after {
-      animation: realm-starlight 4.5s ease-in-out infinite alternate;
-    }
-  }
-
-  :root[data-theme="day"] body::before,
-  :root[data-theme="day"] body::after {
-    display: none;
+  :root[data-theme="day"] body::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.063 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 220px 220px;
   }
 
   ::selection {

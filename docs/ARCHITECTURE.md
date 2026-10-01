@@ -95,6 +95,8 @@ Chosen for: a small team moving fast, one language end to end, mature/boring inf
 
 pnpm workspaces (recursive scripts; add Turborepo later if build caching is needed) · Biome (lint + format) · Vitest · Playwright (e2e + visual checks) · GitHub Actions · Docker Compose for local infra.
 
+Patched dependencies live in `patches/` (applied by pnpm on install). `gsap@3.15.0`: ScrollTrigger keeps an empty `requestAnimationFrame` loop running forever (a repaint workaround for Firefox); patched to run only for a second after each scroll, since forever it had the browser draw every frame at the display's full rate (240 a second on a fast screen) even with the page at rest. Drop the patch when upgrading GSAP if upstream has changed that loop.
+
 ### Deployment (recommended path)
 
 | Stage | Web | API / gateway / worker | Postgres | Redis | Storage |
@@ -197,7 +199,9 @@ Clients request an upload (`POST /v1/media/uploads`) → receive a presigned URL
 Phase 1 feeds are **explainable**: *Following* = reverse-chronological from followed users; *Communities* = hot-ranked posts from joined communities; *Home* = a blend of both. We log feed impressions/engagement events from day one so a real recommender (Phase 5) has data to learn from. We don't call anything "personalized AI" until it is.
 
 ### 5.8 Security baseline
-- TLS everywhere; HSTS; strict nonce-based CSP on the web app; no third-party scripts in the authenticated app.
+- TLS everywhere; HSTS; no third-party scripts in the authenticated app.
+- CSP (`frontend/web/next.config.ts`): only first-party scripts, styles, images, fonts, media and workers; no framing (`frame-ancestors 'none'`), no plugins, no foreign form targets, `base-uri 'self'`. The public site is prebuilt (static), so its policy allows Next.js's inline boot scripts rather than nonces (a nonce per request would render every page on every visit). The signed-in app, rendered per request anyway, gets a strict nonce-based CSP (`'strict-dynamic'`) when it's built. Also sent: COOP `same-origin`, CORP `same-site`, `nosniff`, `X-Frame-Options: DENY`, a strict `Referrer-Policy` and a `Permissions-Policy` that turns off camera, microphone, location, payments and device APIs.
+- Failure handling: the API has one error handler (expected failures are typed `AppError`s; anything else is a 500 that leaks no detail), and the process logs and restarts cleanly on anything that escapes. The web app has error pages at every level (`error.tsx`, `global-error.tsx`, `not-found.tsx`) and a `SafeBoundary` around each 3D scene, so a failed model download or a lost GPU drops that part to its still version instead of taking the page down.
 - Cookies: `HttpOnly; Secure; SameSite=Lax`; mutations require `Content-Type: application/json` **and** a matching `Origin` → CSRF-safe without tokens.
 - Rate limiting in Redis per IP **and** per user, per route bucket; stricter buckets for auth endpoints; slowmode per channel.
 - Passwords: Argon2id; breached-password check (k-anonymity) in Phase 2.

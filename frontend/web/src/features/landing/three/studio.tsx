@@ -4,6 +4,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
 import { type DayMix, ease } from "./theme";
+import { holdWarmup, quietShaderChecks } from "./warm";
 
 const NIGHT = {
   sky: "#c9d6ff",
@@ -16,17 +17,20 @@ const NIGHT = {
   fill: "#7fe3ff",
   fillI: 0.9,
 };
-/** By day: warm sunlight, a bright blue sky above and green bounce from the hills below. */
+/**
+ * By day: dawn in orbit. The low sun rims everyone in gold from behind, space above is a cool
+ * blue, and the sunlit cloud sea below bounces warm orange light up onto them.
+ */
 const DAY = {
-  sky: "#d6ecff",
-  ground: "#7a9a5c",
-  hemi: 1.35,
-  key: "#fff3e0",
-  keyI: 2.8,
-  rim: "#ffd29a",
-  rimI: 1.9,
-  fill: "#b8dcff",
-  fillI: 0.8,
+  sky: "#8fb6ff",
+  ground: "#ff9a5a",
+  hemi: 1.2,
+  key: "#ffe9d2",
+  keyI: 2.4,
+  rim: "#ffb35c",
+  rimI: 2.6,
+  fill: "#9cc7ff",
+  fillI: 0.75,
 };
 
 /** Soft light panels around the scene, reflected in the cast's clearcoat. */
@@ -43,18 +47,34 @@ const PANELS: {
   { form: "rect", color: "#7fe3ff", intensity: 0.9, position: [4, -3, 4], scale: [6, 2, 1] },
 ];
 
+/** The PMREM generator's internals used to build the environment without a stall (three 0.186). */
+type PmremInternals = {
+  _setSize?: (size: number) => void;
+  _allocateTargets?: () => THREE.WebGLRenderTarget;
+  _ggxMaterial?: THREE.Material | null;
+  _pingPongRenderTarget?: THREE.WebGLRenderTarget | null;
+};
+
+const ENV_SIZE = 128;
+
 /**
- * The reflection environment, built once from the light panels and set on the scene as the
- * scene mounts, before anything is compiled or drawn. (Attaching it on the first frame instead,
- * as a render-time environment does, changes every lit material's shader after the scene has been
- * compiled in the background, so they all recompile on the spot; on a cold shader cache that froze
- * the page for seconds.)
+ * The reflection environment, built once from the light panels.
+ *
+ * Every lit material's shader depends on the scene having an environment, so one is set as the
+ * scene mounts, before anything is compiled: an empty target of exactly the final one's size and
+ * format. (Setting it later changes those shaders after they've compiled in the background, and
+ * they all recompile on the spot.) The prefilter that builds the real one uses a big shader that
+ * took half a second to compile on Windows, blocking the page; it compiles in the background
+ * first, then the environment is built and swapped in (same size and format, so no shader
+ * changes). The scene isn't counted as warm (./warm.ts) until it's in.
  */
 function StudioEnvironment() {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
 
   useLayoutEffect(() => {
+    // Set before anything here compiles (this runs ahead of the canvas's own setup).
+    quietShaderChecks(gl);
     const room = new THREE.Scene();
     const disposables: { dispose: () => void }[] = [];
     for (const p of PANELS) {
@@ -69,15 +89,47 @@ function StudioEnvironment() {
       room.add(mesh);
       disposables.push(geometry, material);
     }
-    const pmrem = new THREE.PMREMGenerator(gl);
-    const target = pmrem.fromScene(room, 0, 0.1, 100, { size: 128 });
-    pmrem.dispose();
-    for (const d of disposables) d.dispose();
     const before = scene.environment;
-    scene.environment = target.texture;
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const inside = pmrem as unknown as PmremInternals;
+    let live = true;
+    let placeholder: THREE.WebGLRenderTarget | null = null;
+    let target: THREE.WebGLRenderTarget | null = null;
+    const build = () => {
+      if (!live) return;
+      target = pmrem.fromScene(room, 0, 0.1, 100, { size: ENV_SIZE });
+      pmrem.dispose();
+      for (const d of disposables) d.dispose();
+      scene.environment = target.texture;
+      placeholder?.dispose();
+      placeholder = null;
+    };
+
+    if (inside._setSize && inside._allocateTargets) {
+      inside._setSize(ENV_SIZE);
+      placeholder = inside._allocateTargets();
+      scene.environment = placeholder.texture;
+      const filter = inside._ggxMaterial;
+      if (filter) {
+        // Compiled as it will be drawn: into a float target, not the screen.
+        const mesh = new THREE.Mesh(new THREE.BufferGeometry(), filter);
+        const was = gl.getRenderTarget();
+        gl.setRenderTarget(inside._pingPongRenderTarget ?? placeholder);
+        const ready = gl.compileAsync(mesh, new THREE.OrthographicCamera()).catch(() => {});
+        gl.setRenderTarget(was);
+        holdWarmup(scene, ready.then(build));
+      } else build();
+    } else build();
+
     return () => {
-      if (scene.environment === target.texture) scene.environment = before;
-      target.dispose();
+      live = false;
+      if (!target) for (const d of disposables) d.dispose();
+      if (scene.environment === target?.texture || scene.environment === placeholder?.texture) {
+        scene.environment = before;
+      }
+      placeholder?.dispose();
+      target?.dispose();
+      pmrem.dispose();
     };
   }, [gl, scene]);
 
@@ -105,7 +157,7 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
  * Shared lighting for every Realm 3D scene: a key light from the front right that casts soft
  * shadows, a coloured rim from behind, a fill, a sky/ground hemisphere, and a tiny procedural
  * environment for the clearcoat reflections (no HDR downloads). Cool with a pink rim at night;
- * warm sunlight with an ember rim by day, easing between them with `mix` as the edition changes.
+ * a low golden sun with warm cloud light from below by day, easing between them with `mix` as the edition changes.
  * (Only colours and strengths change, so no shader recompiles.)
  */
 export function Studio({ shadows = true, mix }: { shadows?: boolean; mix?: DayMix }) {
@@ -145,10 +197,10 @@ export function Studio({ shadows = true, mix }: { shadows?: boolean; mix?: DayMi
         intensity={NIGHT.keyI}
         color={NIGHT.key}
         castShadow={shadows}
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
         shadow-bias={-0.0004}
         shadow-normalBias={0.03}
-        shadow-radius={6}
+        shadow-radius={3}
         shadow-camera-left={-9}
         shadow-camera-right={9}
         shadow-camera-top={7}

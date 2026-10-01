@@ -16,7 +16,7 @@ import { type DayMix, ease } from "./theme";
  *
  * `mix` (0 night, 1 day) plays the eclipse: at night the sun sits back, small, behind the black
  * hole; as the hole slides away it comes forward to full size and its glow rises, blazing a little
- * while half uncovered. The glow is added light, so the day film behind stays clear rather than
+ * while half uncovered. The glow is added light, so the dawn sky behind stays clear rather than
  * being washed over.
  */
 export const SUN_RADIUS = 1.85;

@@ -15,14 +15,14 @@ colors:
   molten-amber: "oklch(0.8 0.16 68)"
   molten-amber-hover: "oklch(0.86 0.14 76)"
   on-amber: "oklch(0.22 0.06 50)"
-  peach-sky: "oklch(0.925 0.045 55)"
-  rose-sky: "oklch(0.915 0.042 12)"
-  lilac-sky: "oklch(0.905 0.04 305)"
-  warm-pearl: "oklch(0.972 0.016 42)"
-  plum-ink: "oklch(0.25 0.075 345)"
-  coral: "oklch(0.575 0.19 30)"
-  coral-ink: "oklch(0.5 0.18 26)"
-  on-coral: "oklch(0.995 0.005 60)"
+  ice-sky: "oklch(0.962 0.018 228)"
+  cyan-sky: "oklch(0.948 0.026 205)"
+  dawn-gold-sky: "oklch(0.95 0.03 85)"
+  cloud-white: "oklch(0.985 0.009 228)"
+  navy-ink: "oklch(0.235 0.068 262)"
+  sunrise-orange: "oklch(0.645 0.18 50)"
+  burnt-orange-ink: "oklch(0.52 0.155 45)"
+  on-sunrise: "oklch(0.2 0.06 262)"
   spaces-cyan: "oklch(0.72 0.13 196)"
   feed-electric-blue: "oklch(0.72 0.14 256)"
   profiles-violet: "oklch(0.72 0.14 300)"
@@ -119,16 +119,16 @@ components:
 
 **Creative North Star: "The Eclipse Hour"**
 
-Realm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the page is deep ink-indigo lit by violet and electric-blue light around a black hole whose accretion disk burns molten amber. By day it is golden hour: a sky that runs from peach through rose to lilac as you scroll, warm pearl surfaces with rose-tinted shadows, deep plum type and a coral action colour. Never plain white. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you.
+Realm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the page is deep ink-indigo lit by violet and electric-blue light around a black hole whose accretion disk burns molten amber. By day it is the stratosphere: the hero watches the sun rise over a cloud-wrapped world from orbit, and the page below is the bright high sky you come down into, ice blue turning pale cyan and, at the very end, a trace of dawn gold, with crisp white-blue surfaces, cool navy shadows, deep navy type and a sunrise-orange action colour. Never plain white. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you.
 
-The public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit and the cast floating and waving around it, then a page that keeps moving as you scroll: headlines rise out of masks word by word, a statement lights up as you read it, the product tips up to face you, the four worlds stack up like a deck of cards, the chat stickers race when you scroll fast, and the cast springs up onto a glowing horizon at the end. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora over stars that twinkle in colour. By day the sun takes its place over a filmed summer day (towering clouds racing over rolling hills, an old brick gateway glowing like a portal; made with Higgsfield: Soul Cinema still, Nano Banana Pro edit, Kling 3.0 animation), with live light over it: sun rays turning out of the sun and motes of light drifting up through the beam, and the whole sky leaning away from your pointer. Switching editions plays out an eclipse: the black hole slides off the sun, or back across it. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it, and every bit of that motion can be paused. Inside the app the same world becomes quiet motifs: orbit rings, a soft glow on the active Space, star-chart locators.
+The public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit and the cast floating and waving around it, then a page that keeps moving as you scroll: headlines rise out of masks word by word, a statement lights up as you read it, the product tips up to face you, the four worlds stack up like a deck of cards, the chat stickers race when you scroll fast, and the cast springs up onto a glowing horizon at the end. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora over stars that twinkle in colour. By day the sun takes its place, just clear of the horizon of a world seen from orbit: space and stars above, the atmosphere a thin band of light along the curve of the world (white-gold under the sun, teal away from it) with a razor-bright line on the limb, and below, a sea of cumulus tops lit from the side, glowing orange toward the sun and falling into mauve shadow near you, streaming toward you as you orbit; a starburst, a streak and faint ghosts of the sun in the lens; the worlds still in orbit round the sun and the crew floating over the clouds, lit gold from behind and warm from the clouds below. All of it is drawn live, and it leans away from your pointer. Switching editions plays out an eclipse: the black hole slides off the sun, or back across it. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it, and every bit of that motion can be paused. Inside the app the same world becomes quiet motifs: orbit rings, a soft glow on the active Space, star-chart locators.
 
 It is premium and a little playful: editorial type, big confident headlines, generous space, and a cast of glossy 3D characters who are cute in form and precise in finish.
 
 **Key Characteristics:**
-- A sky, not a flat colour: the page's ground shifts as you scroll (ink, deep blue, violet by night; peach, rose, lilac by day), under a slow nebula and a fine grain.
-- One action colour (molten amber by night, coral by day); four identity inks for the four worlds.
-- Surfaces float: pearl or ink-glass panels with a lit top edge, a hairline and a soft shadow tinted by the page.
+- A sky, not a flat colour: the page's ground shifts as you scroll (ink, deep blue, violet by night; ice blue, pale cyan, dawn gold by day), under a slow nebula and a fine grain.
+- One action colour (molten amber by night, sunrise orange by day); four identity inks for the four worlds.
+- Surfaces float: white-blue or ink-glass panels with a lit top edge, a hairline and a soft shadow tinted by the page.
 - Bricolage Grotesque for headlines, Atkinson Hyperlegible Next for everything you read.
 - Real 3D, rendered live or pre-rendered to transparent WebP; real imagery from Realm's own films in the product previews.
 - Lots of scroll motion (GSAP ScrollTrigger, in every browser), all of it pausable, none of it required to understand anything.
@@ -139,7 +139,7 @@ Two skies, one set of roles. All values are OKLCH, generated and contrast-tested
 
 ### Primary
 - **Molten Amber** (night): the core of the storm and the black hole's disk. It marks the primary action (Open Realm, send), "needs you" counts, focus rings, the flight path on the star chart, and nothing else. Text on it is the deep brown **On Amber**, never white.
-- **Coral** (day): the same role by day, taken from the sunset. Buttons are Coral with white text; text links and focus rings use the deeper **Coral Ink**. The mark follows: by day its disc glows gold and its rim burns gold, orange and rose.
+- **Sunrise Orange** (day): the same role by day, taken from the sun on the horizon. Buttons are Sunrise Orange with deep navy text; text links and focus rings use the deeper **Burnt Orange Ink**. The mark follows: by day its disc glows gold and its rim burns gold, orange and rose.
 
 ### Secondary
 - **Spaces Teal**: the Spaces world and your own chat bubbles.
@@ -150,13 +150,13 @@ Two skies, one set of roles. All values are OKLCH, generated and contrast-tested
 Each world ink has four roles in the token set: `fill` (a tinted surface), `line` (strokes and orbit rings), `solid` (planets, dots, badges) and `text` (lettering on the ground).
 
 ### Neutral
-- **The sky** (`ground`, `groundMid`, `groundEnd`): the page ground at the top, part-way down and at the end. By night Ink Night, Deep Blue, Violet; by day Peach, Rose, Lilac. It's one gradient down the whole document, so it shifts as you scroll with nothing to animate.
-- **Panel / Panel Raised**: two surface steps (ink-glass by night, Warm Pearl by day) for cards, windows and bubbles from other people.
+- **The sky** (`ground`, `groundMid`, `groundEnd`): the page ground at the top, part-way down and at the end. By night Ink Night, Deep Blue, Violet; by day Ice, Cyan, Dawn Gold. It's one gradient down the whole document, so it shifts as you scroll with nothing to animate.
+- **Panel / Panel Raised**: two surface steps (ink-glass by night, Cloud White by day) for cards, windows and bubbles from other people.
 - **Rule / Rule Strong**: hairlines and outlines; Rule Strong for anything interactive.
-- **Ink / Ink Soft / Ink Muted**: starlight by night, plum by day. Headings and primary text, body copy, then metadata. All pass 4.5:1 on every surface and every part of the sky (tested).
+- **Ink / Ink Soft / Ink Muted**: starlight by night, navy by day. Headings and primary text, body copy, then metadata. All pass 4.5:1 on every surface and every part of the sky (tested).
 
 ### Named Rules
-**The One Action Rule.** Amber (or coral by day) means "do this" or "this needs you". It never decorates, never washes a panel, and never marks plain unread.
+**The One Action Rule.** Amber (or sunrise orange by day) means "do this" or "this needs you". It never decorates, never washes a panel, and never marks plain unread.
 
 **The Rim Light Rule.** Glows sit at edges and corners, the way the eclipse is lit, led by the world's own ink. A world's card is lit from the corner where its planet sits.
 
@@ -173,7 +173,7 @@ Each world ink has four roles in the token set: `fill` (a tinted surface), `line
 
 ### Hierarchy
 - **Display** (700, clamp(2.7rem, 5vw, 4.9rem), 0.98, -0.04em): the hero headline; the closing headline goes up to 6rem.
-- **Headline** (650, clamp(2.4rem, 4.4vw, 4.25rem), 1.02): section headings; a world card's heading is a step down (clamp(2.1rem, 3.3vw, 3.25rem)). Words rise in one after another, unblurring, as they scroll into view.
+- **Headline** (650, clamp(2.4rem, 4.4vw, 4.25rem), 1.02): section headings; a world card's heading is a step down (clamp(2.1rem, 3.3vw, 3.25rem)). Words rise in one after another as they scroll into view.
 - **Lead** (Atkinson, clamp(1.0625rem to 1.25rem), 1.6, Ink Soft): the paragraph under a headline, 38 to 50ch.
 - **Title** (700, 1.125rem): card and panel titles, names in chat.
 - **Body** (400, 1.0625rem, 1.6): all reading copy.
@@ -218,7 +218,7 @@ Round is the default voice. Buttons, the header, chips, room tabs, the composer,
 ### Buttons
 Confident pills with a tactile press.
 - **Shape:** full pill, 52px tall for page actions, 40px in the header.
-- **Primary:** Molten Amber with On Amber text (Coral with white text by day), a lit top edge and a soft shadow in its own hue. One per view; it says what happens ("Open Realm"), with an arrow that nudges forward on hover.
+- **Primary:** Molten Amber with On Amber text (Sunrise Orange with navy text by day), a lit top edge and a soft shadow in its own hue. One per view; it says what happens ("Open Realm"), with an arrow that nudges forward on hover.
 - **Secondary:** a Rule Strong outline over a translucent panel, filling with Panel on hover.
 - **Press:** scale to 0.97 on press; transitions 160ms ease-out. No animation on keyboard activation.
 
@@ -243,7 +243,10 @@ A world's card: a surface lit from one bottom corner by its world's ink, where i
 Built from the real UI, framed as a window (20px radius, lit edge, deep shadow), inert, and captioned as illustrative. Their people are the cast (portraits as avatars) and their media is Realm's own imagery: stills from the films and images made for the brand, never stock photos.
 
 ### Signature: the scroll intro and the edition switch
-The landing page opens on a title card under a close-up of the centrepiece (the black hole, or the sun by day); scrolling pulls the camera back through space while the stage stays pinned, the worlds and asteroid belt come into frame, the crew drifts in, and the headline arrives. By day the film (playing at 1.7x so the clouds race) eases out a little as the camera pulls back and fades at its foot through a soft warm haze into the peach sky. Switching editions scrolls back to the top and plays the eclipse in the hero, live, while the rest of the page is revealed in the new edition as a soft-edged circle spreading from the sun. Reduced motion and Pause motion skip all of it.
+The landing page opens on a title card under a close-up of the centrepiece (the black hole, or the sun by day); scrolling pulls the camera back through space while the stage stays pinned, the worlds and asteroid belt come into frame, the crew drifts in, and the headline arrives. By day the dawn's horizon rides just under the sun as the camera pulls back; then, with the stage still pinned, comes the descent: the camera drops toward the world, the headline and the crew rise away, the horizon climbs out of the frame and the cloud tops come up to meet you, catching more light as you fall (peach-white heads, lilac shadows); puffs of cloud swell toward you and stream past as you scroll, thicken to white, and clear, and you're in the bright ice-blue sky of the page itself (the canvas clears onto it). With reduced motion or Pause motion there's no descent; the hero fades at its foot through a cool haze into the sky instead. The hero is deep space in both editions, so it (and the header while it's over the hero) keeps the night edition's inks. Switching editions scrolls back to the top and plays the eclipse in the hero, live, while the rest of the page is revealed in the new edition as a soft-edged circle spreading from the sun. Reduced motion and Pause motion skip all of it.
+
+### Signature: the sky behind the page
+Below the hero the page is the sky you've come down into (`src/features/landing/sky-life.tsx`), behind everything and never over text, and everything in it is part of the scroll: nothing runs on a clock. Scroll on and things fly; stop and they hold where they are; scroll back and they fly backwards. Each flight has its own stretch of the page and lasts a couple of screens of scrolling. By day, rendered cumulus pass by, the near ones big and quick, the far ones small, pale and slow, each drifting sideways as it rises and paling as it sinks toward the horizon; a jet crosses high up now and then, drawing its twin contrails out behind it; and a few gulls fly over, beating their wings as you go. By night it's space: shooting stars streak across and burn out; satellites glide over, the near ones turning with a red beacon blinking and a flash of sun off their panels, the far ones just moving lights; a rocket lifts off from the foot of the screen and climbs away into space on its flickering fire, leaning into its climb, its exhaust growing out behind it; and a flying saucer darts in spinning, hangs a moment bobbing (its glowing wake fading), then zips off. The jet, rocket, saucers and satellite are the product owner's own models, rendered as sprites; they scale down on a phone. At the very end you've landed, and below the cast's horizon there's no more sky, only ground. By day it's a meadow on the crest of a hill, rendered blade by blade (lush green, gold where the sun catches the crest, the blade tips standing up against the sky) that falls into its own shade down the slope; by night it's the Moon, its horizon curving away under them (grey regolith in a low sun from the left, every crater rim lit and throwing its shadow, boulders on the skyline, a violet glow behind). The cast stand along the curve, each lower and leaning out with the slope the further from the middle, like people on a small world, with a soft shadow at their feet; by day the blade tips come up over their shoes. The footer is that ground carried on down: by day deep green with a fine grain and a pool of sunlight, in light inks; by night the Moon runs on down into the footer, dimming toward you to its own dark dust, in light inks. The name signs off under every page, huge: carved into the ground by day, raised in soft light by night. With reduced motion or Pause motion the clouds stand still and nothing flies.
 
 ### Signature: scroll motion
 Every section moves as you scroll, in every browser: GSAP ScrollTrigger (`src/features/landing/scroll-fx.tsx`), driven by `data-fx` attributes in the markup. Everything is fully visible without JavaScript; reduced motion and Pause motion switch it all off and put every element back in place.
@@ -280,8 +283,8 @@ Realm's characters are a cast, not a mascot: an astronaut, aliens (three-eyed Zi
 - **Don't** fake material with CSS (gradient spheres, bevels, embossing) where a real render exists.
 - **Don't** let floating art cover text, or hang past the viewport edge on phones.
 - **Don't** use gradient text, coloured side borders on cards or list items, or glass behind reading copy.
-- **Don't** make day plain white: it's a peach-to-lilac sky with pearl surfaces.
-- **Don't** show the aurora by day, or the day film at night: each edition has its own sky.
+- **Don't** make day plain white: it's an ice-blue to cyan sky with white-blue surfaces and a trace of dawn gold.
+- **Don't** show the aurora by day, or the dawn at night: each edition has its own sky.
 - **Don't** use stock photography in the product previews; use Realm's own imagery.
 - **Don't** scatter cartoon props around sections; the 3D world and the cast carry the personality, the page stays composed.
 - **Don't** animate a character by rocking its whole body; a wave is the arm and hand, from the rig.

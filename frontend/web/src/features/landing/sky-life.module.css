@@ -1,0 +1,269 @@
+/* Life in the sky behind the page (sky-life.tsx). Nothing here runs on its own: the scroll places
+   and poses everything, by transform and opacity only, so the compositor moves it without
+   repainting the page. */
+.life {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.life[data-shown] {
+  opacity: 1;
+}
+
+/* ── By day ─────────────────────────────────────────────────────────────────────────────── */
+
+/* A cloud, placed by the scroll. */
+.cloud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+.cloud > img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Every flight waits, hidden, for its stretch of the page (sky-life.tsx). */
+.jet,
+.flock,
+.meteor,
+.satellite,
+.light,
+.rocket,
+.ufo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+}
+
+/* A jet high up (the product owner's model, rendered nose to the left), drawing its two contrails
+   out behind it. */
+.jet {
+  width: var(--size, 110px);
+}
+.jet > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: scaleX(-1);
+}
+.jet:where([data-dir="-1"]) > img {
+  transform: none;
+}
+.trail {
+  position: absolute;
+  top: 55%;
+  right: 94%;
+  width: 34vw;
+  height: 5px;
+  margin-top: -2.5px;
+  transform-origin: 100% 50%;
+  --fade: 90deg;
+}
+.jet[data-dir="-1"] .trail {
+  right: auto;
+  left: 94%;
+  transform-origin: 0 50%;
+  --fade: 270deg;
+}
+.trail::before,
+.trail::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    var(--fade),
+    transparent,
+    oklch(1 0 0 / 0.55) 55%,
+    oklch(1 0 0 / 0.95)
+  );
+  box-shadow: 0 1px 0 oklch(0.55 0.05 250 / 0.12);
+}
+.trail::before {
+  top: 0;
+}
+.trail::after {
+  bottom: 0;
+}
+
+/* A flock: it crosses as one; each bird beats its wings on its own count. */
+.bird {
+  position: absolute;
+  width: var(--bird, 26px);
+  aspect-ratio: 64 / 40;
+  overflow: hidden;
+}
+.flock[data-dir="-1"] .bird {
+  transform: scaleX(-1);
+}
+.bird > img {
+  display: block;
+  width: 800%;
+  max-width: none;
+  height: 100%;
+}
+
+/* ── By night ───────────────────────────────────────────────────────────────────────────── */
+
+/* A shooting star: a bright head leading a tail, streaking along its heading and burning out. */
+.meteor {
+  width: var(--length, 180px);
+  height: 2px;
+  border-radius: 2px;
+  transform-origin: 100% 50%;
+  background: linear-gradient(
+    270deg,
+    oklch(1 0 0 / 0.95),
+    oklch(0.9 0.08 230 / 0.5) 30%,
+    transparent
+  );
+  box-shadow: 0 0 8px oklch(0.92 0.06 230 / 0.6);
+}
+
+/* A glint of sun off a satellite's panels, now and then on its way over. */
+.flash {
+  position: absolute;
+  inset: 18% 28%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    oklch(1 0 0 / 0.95),
+    oklch(0.95 0.05 230 / 0.35) 45%,
+    transparent
+  );
+  opacity: 0;
+}
+
+/* A far satellite: a small steady light gliding over. */
+.light {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: oklch(0.98 0.02 230);
+  box-shadow: 0 0 6px oklch(0.9 0.05 230 / 0.8);
+}
+.light > .flash {
+  inset: -3px;
+  background: oklch(1 0 0);
+}
+
+/* A frame strip (the saucers, the satellite): the image holds sixteen frames side by side, and
+   the scroll steps along them. */
+.frames {
+  display: block;
+  width: var(--size, 90px);
+  aspect-ratio: var(--aspect, 2);
+  overflow: hidden;
+}
+.frames > img {
+  display: block;
+  width: 1600%;
+  max-width: none;
+  height: 100%;
+}
+
+/* A near satellite: the model, turning as it glides over, a red beacon blinking on it. */
+.beacon {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: oklch(0.7 0.22 25);
+  box-shadow: 0 0 6px 1px oklch(0.66 0.24 25 / 0.8);
+  opacity: 0.15;
+}
+
+/* A rocket climbing away on its fire, leaning into its climb: the outer box sets where it lifts
+   off and its lean, the inner one flies it up along that lean, its exhaust growing behind it. */
+.rocket {
+  width: calc(var(--size, 100px) * 87 / 240);
+  transform-origin: 50% 0;
+}
+.ship {
+  position: relative;
+}
+.body {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* The fire from the nozzles: a strip of eight flickering frames. */
+.fire {
+  position: absolute;
+  top: calc(var(--size, 100px) * 0.95);
+  left: 50%;
+  width: calc(var(--size, 100px) * 0.34);
+  aspect-ratio: 48 / 128;
+  margin-left: calc(var(--size, 100px) * -0.17);
+  overflow: hidden;
+  transform-origin: 50% 0;
+}
+.fire > img {
+  display: block;
+  width: 800%;
+  max-width: none;
+  height: 100%;
+}
+/* The exhaust: hot just behind the fire, cooling to a pale plume that spreads and thins out. */
+.plume {
+  position: absolute;
+  top: calc(var(--size, 100px) * 1.2);
+  left: 50%;
+  width: calc(var(--size, 100px) * 0.9);
+  height: 55vh;
+  margin-left: calc(var(--size, 100px) * -0.45);
+  transform-origin: 50% 0;
+  background: linear-gradient(
+    180deg,
+    oklch(0.86 0.13 70 / 0.55),
+    oklch(0.72 0.1 45 / 0.3) 12%,
+    oklch(0.8 0.03 260 / 0.16) 38%,
+    transparent
+  );
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  mask-image: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
+}
+
+/* A flying saucer: it darts in spinning, hangs a moment bobbing, then zips off; its glowing wake
+   is bright while it moves and fades while it hangs there. */
+.hover {
+  position: relative;
+}
+/* The glow off its underside. */
+.hover::before {
+  content: "";
+  position: absolute;
+  inset: 55% 12% -18%;
+  background: radial-gradient(closest-side, oklch(0.86 0.15 190 / 0.6), transparent);
+}
+.wake {
+  position: absolute;
+  top: 58%;
+  right: 50%;
+  width: 40vw;
+  height: calc(var(--size, 90px) * 0.36);
+  margin-top: calc(var(--size, 90px) * -0.18);
+  background:
+    linear-gradient(90deg, transparent, oklch(0.97 0.06 195)) center / 100% 2px no-repeat,
+    linear-gradient(90deg, transparent, oklch(0.84 0.15 190 / 0.75)) center / 100% 30% no-repeat,
+    linear-gradient(90deg, transparent 10%, oklch(0.74 0.16 200 / 0.4));
+  mask-image: linear-gradient(180deg, transparent, #000 40%, #000 60%, transparent);
+}
+.ufo[data-dir="-1"] .wake {
+  right: auto;
+  left: 50%;
+  scale: -1 1;
+}

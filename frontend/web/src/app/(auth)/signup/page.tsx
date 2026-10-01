@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button";
 
-export const metadata: Metadata = { title: "Create your account" };
+export const metadata: Metadata = {
+  title: "Create your account",
+  description:
+    "Create a Realm account and bring your friend group over: Spaces, chat, clips, profiles and boards in one app.",
+  alternates: { canonical: "/signup" },
+};
 
 // The sign-up form is the next build step (the API behind it already exists).
 export default function SignupPage() {

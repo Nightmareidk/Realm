@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from "next/font/google";
 import { SITE } from "@/lib/site";
 import "./globals.css";
+import { Nebula } from "@/components/nebula";
 
 /**
  * Headlines: a modern editorial grotesk. Its optical sizes tighten it up at display sizes (the
@@ -72,9 +73,10 @@ export const viewport: Viewport = {
 
 /**
  * Dark is the default. The day edition and paused motion are personal choices remembered on
- * this device and applied before first paint, so nothing flashes or moves unexpectedly.
+ * this device and applied before first paint, so nothing flashes or moves unexpectedly. The
+ * landing page's opening plays once per visit, and never with reduced or paused motion.
  */
-const bootScript = `try{var d=document.documentElement;d.style.setProperty("--aurora-t",(Date.now()/1e3%48).toFixed(2));var t=localStorage.getItem("realm:theme");if(t==="day"||t==="night")d.dataset.theme=t;if(localStorage.getItem("realm:motion")==="paused")d.dataset.motion="paused"}catch(e){}`;
+const bootScript = `try{var d=document.documentElement;d.style.setProperty("--aurora-t",(Date.now()/1e3%48).toFixed(2));var t=localStorage.getItem("realm:theme");if(t==="day"||t==="night")d.dataset.theme=t;var p=localStorage.getItem("realm:motion")==="paused";if(p)d.dataset.motion="paused";if(p||sessionStorage.getItem("realm:intro")||matchMedia("(prefers-reduced-motion: reduce)").matches)d.dataset.intro="skip"}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -88,11 +90,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
       <body>
-        <div className="realm-nebula" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </div>
+        <Nebula />
         {children}
       </body>
     </html>

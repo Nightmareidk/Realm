@@ -9,6 +9,11 @@
 //      public/models/<who>.<hash>.glb (skinned, with its "Wave" animation, Draco, WebP textures; the
 //      hash changes with every re-rig so nothing keeps playing an old one), and renders the wave's 41 frames
 //      in Blender (Cycles).
+//      A character with joints for its whole body (scripts/blender/joints/<who>.json) is then
+//      rigged head to toe instead for the live model (scripts/blender/rig_body.py): it floats,
+//      swims, flails and tumbles as well as waving. The frames stay the arm-only render.
+//      One the product owner has rigged in Meshy (<who>-rigged-source.glb, with its bones named
+//      in scripts/blender/joints/<who>-rig.json) keeps Meshy's skeleton and weights instead.
 //   2. packs those frames for the page: public/art/cast/<who>.webp is the pose with the arm's area
 //      cut out, and <who>-wave.webp is that area in every frame side by side, which CSS steps
 //      through (the page never moves the whole body). The pose's master goes to brand/renders/cast.
@@ -37,6 +42,7 @@ import {
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { shrinkGlb } from "./shrink-glb.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const INCOMING = join(root, "brand", "models-incoming");
@@ -174,9 +180,10 @@ function publish(buf, name) {
  * Publishes the rigged model from the frames folder as public/models/<who>.<hash>.glb (a new address
  * whenever it changes, so no browser or hot reload keeps an old rig) and removes older copies.
  */
-function publishModel(who, frames) {
+async function publishModel(who, frames) {
   const src = join(frames, "model.glb");
-  const buf = readFileSync(src);
+  // Textures no bigger than the cast is ever drawn (see shrink-glb.mjs).
+  const buf = await shrinkGlb(readFileSync(src), 512);
   const file = `${who}.${createHash("sha1").update(buf).digest("hex").slice(0, 8)}.glb`;
   writeFileSync(join(MODELS, file), buf);
   const mine = new RegExp(`^${who}(\\.[0-9a-f]{8})?\\.glb$`);
@@ -195,6 +202,9 @@ function prune(who, keep) {
 }
 
 /** Pack the wave frames: the pose with the arm's area cut out, and that area in every frame. */
+/** How tall each frame of a wave strip is: the arm is shown at most ~45 px tall, 3x on a phone. */
+const STRIP_H = 136;
+
 async function pack(who, dir) {
   const files = readdirSync(dir)
     .filter((f) => f.endsWith(".png"))
@@ -273,16 +283,23 @@ async function pack(who, dir) {
     who,
   );
 
-  // The arm's area in every frame, side by side. Each tile carries a few more pixels of its own
-  // frame on either side, so when the browser scales the strip, the pixels it blends in at a tile's
-  // edge are that frame's real neighbours (never the next frame, and never a transparent gap, which
-  // would draw a faint line).
-  const edge = 3;
+  // The arm's area in every frame, side by side, scaled down to the size it's shown at: the arm is
+  // drawn at most about 45 px tall, so a frame STRIP_H tall is sharp even on a 3x phone screen. (At
+  // the renders' full size the strips were over 9000 px wide and took about 8 MB of memory each
+  // once decoded, 14 of them on the page.) Each tile carries a few more pixels of its own frame on
+  // either side, so when the browser scales the strip, the pixels it blends in at a tile's edge are
+  // that frame's real neighbours (never the next frame, and never a transparent gap, which would
+  // draw a faint line).
+  const k = Math.min(1, STRIP_H / A.height);
+  const edge = Math.ceil(3 / k);
   const pitch = A.width + edge * 2;
+  const tileW = Math.round(pitch * k);
+  const tileH = Math.round(A.height * k);
   const tiles = await Promise.all(
     frames.map(({ data }) =>
       sharp(data, raw)
         .extract({ left: A.left - edge, top: A.top, width: pitch, height: A.height })
+        .resize(tileW, tileH, { fit: "fill" })
         .png()
         .toBuffer(),
     ),
@@ -290,17 +307,19 @@ async function pack(who, dir) {
   const wave = publish(
     await sharp({
       create: {
-        width: pitch * tiles.length,
-        height: A.height,
+        width: tileW * tiles.length,
+        height: tileH,
         channels: 4,
         background: { r: 0, g: 0, b: 0, alpha: 0 },
       },
     })
-      .composite(tiles.map((input, i) => ({ input, left: i * pitch, top: 0 })))
-      .webp({ quality: 86, alphaQuality: 90, effort: 6 })
+      .composite(tiles.map((input, i) => ({ input, left: i * tileW, top: 0 })))
+      .webp({ quality: 88, alphaQuality: 92, effort: 6 })
       .toBuffer(),
     `${who}-wave`,
   );
+  // The arm's area as it lands in a scaled tile, for the ratios below.
+  const area = A.width * k;
 
   const pct = (v, of) => Math.round((v / of) * 10000) / 100;
   return {
@@ -315,8 +334,8 @@ async function pack(who, dir) {
       h: pct(A.height, T.height),
       n: tiles.length,
       // The strip's width in arm-areas, and how far each tile's margin reaches past the area.
-      span: Math.round(((pitch * tiles.length) / A.width) * 10000) / 10000,
-      pad: Math.round((edge / A.width) * 100000) / 100000,
+      span: Math.round(((tileW * tiles.length) / area) * 10000) / 10000,
+      pad: Math.round(((tileW - area) / 2 / area) * 100000) / 100000,
     },
   };
 }
@@ -345,7 +364,7 @@ for (const who of cast) {
     const art = await pack(who, frames);
     const face = await portrait(who);
     prune(who, [art.pose, art.wave, face]);
-    manifest[who] = { ...art, face, model: publishModel(who, frames) };
+    manifest[who] = { ...art, face, model: await publishModel(who, frames) };
     writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
     console.log("repacked", who, JSON.stringify(manifest[who]));
     continue;
@@ -375,6 +394,23 @@ for (const who of cast) {
     "--samples",
     "64",
   ]);
+  const joints = join(root, "scripts", "blender", "joints", `${who}.json`);
+  const rigged = join(INCOMING, `${who}-rigged-source.glb`);
+  const bones = join(root, "scripts", "blender", "joints", `${who}-rig.json`);
+  if (existsSync(rigged) && existsSync(bones)) {
+    console.log("rig body (Meshy's rig)", who);
+    blender("rig_body.py", ["--in", rigged, "--bones", bones, "--out", join(frames, "model.glb")]);
+  } else if (existsSync(joints)) {
+    console.log("rig body", who);
+    blender("rig_body.py", [
+      "--in",
+      source,
+      "--joints",
+      joints,
+      "--out",
+      join(frames, "model.glb"),
+    ]);
+  }
   console.log("pack", who);
   const art = await pack(who, frames);
 
@@ -397,7 +433,7 @@ for (const who of cast) {
   const face = await portrait(who);
   prune(who, [art.pose, art.wave, face]);
 
-  manifest[who] = { ...art, face, model: publishModel(who, frames) };
+  manifest[who] = { ...art, face, model: await publishModel(who, frames) };
   writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
   console.log("exported", who, JSON.stringify(art));
 }

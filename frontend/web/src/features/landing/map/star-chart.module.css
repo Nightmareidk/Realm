@@ -138,6 +138,14 @@
     visibility 0s;
 }
 
+/* While a panel is folded away, its preview's little animations (typing dots, live pulses) rest:
+   hidden, they couldn't run on the compositor, so they ticked on the main thread every frame. */
+.panel:not([data-open]) *,
+.panel:not([data-open]) *::before,
+.panel:not([data-open]) *::after {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .panel,
   .panel[data-open] {

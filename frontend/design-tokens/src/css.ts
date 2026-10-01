@@ -26,7 +26,7 @@ const indent = (lines: string[], n: number) => lines.map((l) => `${" ".repeat(n)
  * Dark first: the night edition is everyone's default. The day edition applies only when
  * a person chooses it (`data-theme="day"` on <html>, set from their Appearance setting).
  * `data-edition="night"` on any element keeps the night colours inside it whatever the page's
- * edition, for surfaces that are always dark (the day hero is a film of a night sky).
+ * edition, for surfaces that are always dark (the hero, which is deep space in both editions).
  */
 export function buildCss(): string {
   const day = editionVars(editions.day);

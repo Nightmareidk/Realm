@@ -71,7 +71,14 @@ export async function resolveSession(deps: Deps, token: string): Promise<Resolve
 
   let cached: CachedSession | null = null;
   const raw = await deps.kv.get(cacheKey(tokenHash));
-  if (raw) cached = JSON.parse(raw) as CachedSession;
+  if (raw) {
+    try {
+      cached = JSON.parse(raw) as CachedSession;
+    } catch {
+      // A damaged cache entry is only a cache miss: drop it and read the database.
+      await deps.kv.del(cacheKey(tokenHash));
+    }
+  }
 
   if (!cached) {
     const [row] = await deps.db

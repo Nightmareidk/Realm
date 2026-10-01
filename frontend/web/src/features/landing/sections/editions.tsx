@@ -80,7 +80,7 @@ function StoreButton({
     <>
       <Icon size={26} weight="fill" />
       <span className="flex flex-col leading-tight">
-        <span className="text-[0.68rem] uppercase tracking-[0.08em] text-ink-muted">{kicker}</span>
+        <span className="text-[0.75rem] uppercase tracking-[0.08em] text-ink-muted">{kicker}</span>
         <span className="stretch-semi-expanded text-base font-bold">{store}</span>
       </span>
     </>

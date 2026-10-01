@@ -1,0 +1,87 @@
+diff --git a/ScrollTrigger.js b/ScrollTrigger.js
+index 6a738383cd39d225d140fbd18520639fd2e7e523..d559b6eefdcd89a7c3b885d7f6ee6a1a25ac2b7e 100644
+--- a/ScrollTrigger.js
++++ b/ScrollTrigger.js
+@@ -58,9 +58,17 @@ _startup = 1,
+     _keepClamp = function _keepClamp(value, clamp) {
+   return clamp && (!_isString(value) || value.substr(0, 6) !== "clamp(") ? "clamp(" + value + ")" : value;
+ },
++    _rafLoopUntil = 0,
++    _rafLooping = 0,
++    // Patched for Realm: the loop runs only while the page is being scrolled (for a second after the last scroll), not forever. Endless, it made the browser draw every frame at the display's full rate even at rest, which on a heavy page kept the main thread busy. _onScroll restarts it.
+     _rafBugFix = function _rafBugFix() {
+-  return _enabled && requestAnimationFrame(_rafBugFix);
+-},
++  _rafLooping = _enabled && _getTime() < _rafLoopUntil ? requestAnimationFrame(_rafBugFix) : 0;
++  return _rafLooping;
++    },
++    _keepRafAlive = function _keepRafAlive() {
++  _rafLoopUntil = _getTime() + 1000;
++  _rafLooping || _rafBugFix();
++    },
+     // in some browsers (like Firefox), screen repaints weren't consistent unless we had SOMETHING queued up in requestAnimationFrame()! So this just creates a super simple loop to keep it alive and smooth out repaints.
+ _pointerDownHandler = function _pointerDownHandler() {
+   return _pointerIsDown = 1;
+@@ -384,7 +392,8 @@ _pointerDownHandler = function _pointerDownHandler() {
+ 
+     }
+ 
+-    _lastScrollTime || _dispatch("scrollStart");
++    _keepRafAlive();
++  _lastScrollTime || _dispatch("scrollStart");
+     _lastScrollTime = _getTime();
+   }
+ },
+@@ -2028,7 +2037,7 @@ export var ScrollTrigger = /*#__PURE__*/function () {
+ 
+         _refresh100vh();
+ 
+-        _rafBugFix();
++        _keepRafAlive();
+ 
+         Observer.register(gsap); // isTouch is 0 if no touch, 1 if ONLY touch, and 2 if it can accommodate touch but also other types like mouse/pointer.
+ 
+diff --git a/dist/ScrollTrigger.js b/dist/ScrollTrigger.js
+index 2042737a35713091a39cf1bd818aa7f62dd590d4..88db3c6779d842bda84d8edafe7250188c1c2244 100644
+--- a/dist/ScrollTrigger.js
++++ b/dist/ScrollTrigger.js
+@@ -755,9 +755,17 @@
+       _keepClamp = function _keepClamp(value, clamp) {
+     return clamp && (!_isString(value) || value.substr(0, 6) !== "clamp(") ? "clamp(" + value + ")" : value;
+   },
+-      _rafBugFix = function _rafBugFix() {
+-    return _enabled && requestAnimationFrame(_rafBugFix);
+-  },
++      _rafLoopUntil = 0,
++        _rafLooping = 0,
++        // Patched for Realm: the loop runs only while the page is being scrolled (for a second after the last scroll), not forever. Endless, it made the browser draw every frame at the display's full rate even at rest, which on a heavy page kept the main thread busy. _onScroll restarts it.
++        _rafBugFix = function _rafBugFix() {
++    _rafLooping = _enabled && _getTime() < _rafLoopUntil ? requestAnimationFrame(_rafBugFix) : 0;
++    return _rafLooping;
++        },
++        _keepRafAlive = function _keepRafAlive() {
++    _rafLoopUntil = _getTime() + 1000;
++    _rafLooping || _rafBugFix();
++        },
+       _pointerDownHandler = function _pointerDownHandler() {
+     return _pointerIsDown = 1;
+   },
+@@ -1076,7 +1084,8 @@
+         _updateAll();
+       }
+ 
+-      _lastScrollTime || _dispatch("scrollStart");
++      _keepRafAlive();
++    _lastScrollTime || _dispatch("scrollStart");
+       _lastScrollTime = _getTime$1();
+     }
+   },
+@@ -2628,7 +2637,7 @@
+ 
+           _refresh100vh();
+ 
+-          _rafBugFix();
++          _keepRafAlive();
+ 
+           Observer.register(gsap$1);
+           ScrollTrigger.isTouch = Observer.isTouch;

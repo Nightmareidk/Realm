@@ -15,6 +15,7 @@ import { SUN_RADIUS, Sun } from "./sun";
 import { type DayMix, ease, lerp, useDayMix } from "./theme";
 import styles from "./three.module.css";
 import { Explorers, Orbits, PLANETS } from "./universe";
+import { quietShaderChecks, warmScene } from "./warm";
 
 type Anchors = RefObject<(THREE.Object3D | null)[]>;
 type Targets = RefObject<(HTMLElement | null)[]>;
@@ -45,9 +46,18 @@ const LOOK_FAR = new THREE.Vector3(0, 0, 0);
  * headline. During the scroll intro (`intro` 0 → 1) it starts close on the black hole, centred in
  * the whole view, and pulls back through space into that framing.
  */
-function Camera({ layout, intro }: { layout: LayoutRef; intro: RefObject<number> }) {
+function Camera({
+  layout,
+  intro,
+  descent,
+}: {
+  layout: LayoutRef;
+  intro: RefObject<number>;
+  descent?: RefObject<number>;
+}) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const eased = useRef(intro.current ?? 1);
+  const down = useRef(descent?.current ?? 0);
   const look = useRef(new THREE.Vector3());
   const near = useRef(CAM_NEAR.clone());
   useFrame((_, delta) => {
@@ -66,6 +76,14 @@ function Camera({ layout, intro }: { layout: LayoutRef; intro: RefObject<number>
     near.current.z = lerp(9.6, CAM_NEAR.z, THREE.MathUtils.clamp((cw / ch - 0.45) / 0.8, 0, 1));
     camera.position.lerpVectors(near.current, CAM_FAR, t);
     look.current.lerpVectors(SUN_AT, LOOK_FAR, t);
+    // By day, the descent: the camera drops toward the world below, tipping down a little, so the
+    // sun, the worlds and the crew rise up and away out of view.
+    down.current += ((descent?.current ?? 0) - down.current) * Math.min(1, delta * 6);
+    const k = ease(down.current / 0.55);
+    // On a tall, narrow screen the scene sits low, so it has further to rise before it's gone.
+    const drop = cw < 1024 ? 26 : 13;
+    camera.position.y -= k * drop;
+    look.current.y -= k * drop * 1.15;
     camera.lookAt(look.current);
     camera.updateProjectionMatrix();
   });
@@ -238,11 +256,9 @@ function Warmup({ onWarm }: { onWarm: () => void }) {
   const { gl, scene, camera } = useThree();
   useEffect(() => {
     let live = true;
-    gl.compileAsync(scene, camera)
-      .catch(() => {})
-      .then(() => {
-        if (live) onWarm();
-      });
+    warmScene(gl, scene, camera).then(() => {
+      if (live) onWarm();
+    });
     return () => {
       live = false;
     };
@@ -255,6 +271,7 @@ function World({
   warm,
   layout,
   intro,
+  descent,
   planetAnchors,
   crewAnchors,
   planetLabels,
@@ -264,6 +281,7 @@ function World({
   warm: boolean;
   layout: LayoutRef;
   intro: RefObject<number>;
+  descent?: RefObject<number>;
   planetAnchors: Anchors;
   crewAnchors: Anchors;
   planetLabels: Targets;
@@ -289,14 +307,16 @@ function World({
 
   return (
     <>
-      <Camera layout={layout} intro={intro} />
+      <Camera layout={layout} intro={intro} descent={descent} />
       <SkyBackdrop
         mix={mix}
         still={still}
         hole={hole}
+        sun={sun}
         centre={centre}
         layout={layout}
         scroll={intro}
+        descent={descent}
       />
       <Studio mix={mix} />
       <Rig still={still}>
@@ -326,11 +346,11 @@ function World({
 
 /**
  * The live 3D hero, filling the whole hero stage: at night the sky (aurora, stars, the cosmic
- * river) and the black hole covering the sun; by day the hole slides away and the sky gives way to
- * the day film behind a clear canvas. Four worlds and the crew in both. Shaders compile in the background before the
+ * river) and the black hole covering the sun; by day the hole slides away and the sky becomes dawn
+ * seen from orbit, the sun just clear of a cloud-wrapped world's horizon. Four worlds and the crew in both. Shaders compile in the background before the
  * first frame. Rendering pauses off screen, in a hidden tab, or while the day edition is showing;
- * reduced motion / Pause motion renders single frames. On a GPU that can't keep up, the canvas
- * drops to a lower pixel ratio rather than stutter.
+ * reduced motion / Pause motion renders single frames. The canvas starts at a pixel ratio of 1
+ * and sharpens once the GPU shows it can keep up.
  *
  * Shadows are asked for as PCF by name: three r186 dropped "soft" shadow maps and switches the type
  * on the first frame, which made every shader compiled in the background compile again, blocking.
@@ -339,17 +359,41 @@ export default function HeroWorld({
   stage,
   layout,
   intro,
+  descent,
   onReady,
 }: {
   stage: RefObject<HTMLElement | null>;
   layout: LayoutRef;
   intro: RefObject<number>;
+  descent?: RefObject<number>;
   onReady?: () => void;
 }) {
   const [visible, setVisible] = useState(true);
+  // While the opening covers the page (intro.tsx), the hero draws its first frame and then rests,
+  // so the opening has the GPU to itself; it wakes as the opening reveals it.
+  const [covered, setCovered] = useState(false);
+  useEffect(() => {
+    const html = document.documentElement;
+    const sync = () =>
+      setCovered(
+        html.dataset.intro === "play" &&
+          "heroReady" in html.dataset &&
+          !("introReveal" in html.dataset),
+      );
+    sync();
+    const mo = new MutationObserver(sync);
+    mo.observe(html, {
+      attributes: true,
+      attributeFilter: ["data-intro", "data-hero-ready", "data-intro-reveal"],
+    });
+    return () => mo.disconnect();
+  }, []);
   const [still, setStill] = useState(false);
   const [warm, setWarm] = useState(false);
-  const [dpr, setDpr] = useState(1.5);
+  // Starts at 1 and sharpens only if the GPU keeps up: starting sharp on an integrated GPU (the
+  // common laptop) meant seconds of stutter before it backed off. If even 1 is too much it steps
+  // down to 0.8 (a touch softer, every effect intact) until frames recover.
+  const [dpr, setDpr] = useState(1);
   const planetAnchors = useRef<(THREE.Object3D | null)[]>([]);
   const crewAnchors = useRef<(THREE.Object3D | null)[]>([]);
   const planetLabels = useRef<(HTMLElement | null)[]>([]);
@@ -392,17 +436,18 @@ export default function HeroWorld({
       <Canvas
         className="!absolute inset-0"
         shadows="percentage"
-        dpr={[1, dpr]}
+        dpr={[Math.min(1, dpr), dpr]}
         camera={{ position: [0, 0.4, 14], fov: 36, manual: true }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         eventSource={stage as RefObject<HTMLElement>}
         eventPrefix="client"
-        frameloop={!warm || !visible ? "never" : still ? "demand" : "always"}
+        frameloop={!warm || !visible || covered ? "never" : still ? "demand" : "always"}
+        onCreated={({ gl }) => quietShaderChecks(gl)}
       >
         <PerformanceMonitor
           flipflops={3}
-          onDecline={() => setDpr(1)}
-          onIncline={() => setDpr(1.5)}
+          onDecline={() => setDpr((d) => (d > 1 ? 1 : 0.8))}
+          onIncline={() => setDpr((d) => (d < 1 ? 1 : 1.5))}
           onFallback={() => setDpr(1)}
         />
         <Warmup onWarm={onWarm} />
@@ -411,6 +456,7 @@ export default function HeroWorld({
           warm={warm}
           layout={layout}
           intro={intro}
+          descent={descent}
           planetAnchors={planetAnchors}
           crewAnchors={crewAnchors}
           planetLabels={planetLabels}

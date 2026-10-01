@@ -11,7 +11,8 @@ export function registerErrorHandling(app: FastifyInstance) {
     const body: ApiErrorBody = {
       error: {
         code: "NOT_FOUND",
-        message: `No route for ${req.method} ${req.url}`,
+        // The path only (no query string, which can carry tokens), and not too much of it.
+        message: `No route for ${req.method} ${req.url.split("?")[0]?.slice(0, 200)}`,
         requestId: req.id,
       },
     };

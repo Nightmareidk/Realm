@@ -3,9 +3,10 @@ import { inGamut, type Oklch, oklch } from "./color";
 /**
  * Realm's visual world: another universe.
  * Night is the eclipse: deep ink-indigo surfaces, violet and electric-blue light, and one molten
- * amber accent that only ever marks something you can act on. Day is golden hour: a sky that runs
- * from peach through rose to lilac as you scroll, warm pearl surfaces, deep plum type and a coral
- * accent. Night is the default edition.
+ * amber accent that only ever marks something you can act on. Day is the stratosphere: the hero
+ * watches the sun rise over a planet from orbit, and the page below is the bright high sky you
+ * descend into: ice blue turning pale cyan and, at the very end, a trace of dawn gold; crisp
+ * white-blue surfaces, deep navy type, and sunrise orange for actions. Night is the default.
  */
 
 export type Edition = "night" | "day";
@@ -48,7 +49,7 @@ export interface EditionTokens {
   ink: Oklch;
   inkSoft: Oklch;
   inkMuted: Oklch;
-  /** The action colour: molten amber by night, crimson coral by day. Actions only. */
+  /** The action colour: molten amber by night, sunrise orange by day. Actions only. */
   overprint: Oklch;
   /** Overprint used as a fill behind text (buttons). */
   overprintFill: Oklch;
@@ -148,29 +149,29 @@ const rawEditions: Record<Edition, EditionTokens> = {
     },
   },
   day: {
-    // Golden hour, never plain white: a peach sky at the top of the page that turns rose, then
-    // lilac, as you scroll; warm pearl cards floating on it with rose-tinted shadows; deep plum
-    // type; and a coral action colour taken from the sunset.
-    ground: oklch(0.925, 0.045, 55),
-    groundMid: oklch(0.915, 0.042, 12),
-    groundEnd: oklch(0.905, 0.04, 305),
-    panel: oklch(0.972, 0.016, 42),
-    panelRaised: oklch(0.99, 0.008, 50),
-    land: oklch(0.9, 0.04, 38),
-    rule: oklch(0.86, 0.035, 25),
-    ruleStrong: oklch(0.58, 0.065, 350),
-    ink: oklch(0.25, 0.075, 345),
-    inkSoft: oklch(0.36, 0.07, 345),
-    inkMuted: oklch(0.44, 0.065, 345),
-    // Coral buttons with white text; the same hue, deeper, for links and focus.
-    overprint: oklch(0.5, 0.18, 26),
-    overprintFill: oklch(0.575, 0.19, 30),
-    overprintFillHover: oklch(0.52, 0.19, 27),
-    onOverprint: oklch(0.995, 0.005, 60),
-    focus: oklch(0.5, 0.18, 26),
-    danger: oklch(0.5, 0.2, 12),
-    success: oklch(0.46, 0.12, 160),
-    shadow: oklch(0.42, 0.1, 355),
+    // The stratosphere, never plain white: ice blue at the top of the page, pale cyan part-way
+    // down, a trace of dawn gold at the very end; white-blue surfaces floating on it with cool
+    // navy shadows; deep navy type; and sunrise orange for actions, with navy text on it.
+    ground: oklch(0.962, 0.018, 228),
+    groundMid: oklch(0.948, 0.026, 205),
+    groundEnd: oklch(0.95, 0.03, 85),
+    panel: oklch(0.985, 0.009, 228),
+    panelRaised: oklch(0.995, 0.004, 228),
+    land: oklch(0.935, 0.024, 222),
+    rule: oklch(0.885, 0.022, 232),
+    ruleStrong: oklch(0.56, 0.06, 252),
+    ink: oklch(0.235, 0.068, 262),
+    inkSoft: oklch(0.34, 0.06, 258),
+    inkMuted: oklch(0.43, 0.052, 255),
+    // Sunrise orange buttons with navy text; a deeper burnt orange for links and focus.
+    overprint: oklch(0.52, 0.155, 45),
+    overprintFill: oklch(0.645, 0.18, 50),
+    overprintFillHover: oklch(0.7, 0.17, 56),
+    onOverprint: oklch(0.2, 0.06, 262),
+    focus: oklch(0.52, 0.155, 45),
+    danger: oklch(0.5, 0.2, 18),
+    success: oklch(0.46, 0.11, 165),
+    shadow: oklch(0.38, 0.075, 255),
     regions: {
       spaces: region("day", REGION_HUES.spaces),
       feed: region("day", REGION_HUES.feed),

@@ -66,6 +66,13 @@ float fbm(vec2 p) {
   for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + 17.0; a *= 0.5; }
   return v;
 }
+// Three octaves, for the softer layers: the fine ones don't show there, and cost the most.
+float fbm3(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 3; i++) { v += a * noise(p); p = p * 2.03 + 17.0; a *= 0.5; }
+  return v / 0.875;
+}
 vec3 cycle(vec3 a, vec3 b, vec3 c, float t) {
   float x = fract(t) * 3.0;
   if (x < 1.0) return mix(a, b, smoothstep(0.0, 1.0, x));
@@ -103,8 +110,8 @@ vec3 disk(float r, float a, float approach) {
   float s2 = a - omega(r) * ph2 * LIFE;
   float turb = fbm(vec2(r * 1.5, 0.0) + vec2(sin(s1), cos(s1)) * 1.8 + o1) * w1
              + fbm(vec2(r * 1.5, 0.0) + vec2(sin(s2), cos(s2)) * 1.8 + o2) * (1.0 - w1);
-  float streak = fbm(vec2(r * 2.2 + 5.0, 3.0) + vec2(sin(s1 * 2.0), cos(s1 * 2.0)) * 1.4 + o1) * w1
-               + fbm(vec2(r * 2.2 + 5.0, 3.0) + vec2(sin(s2 * 2.0), cos(s2 * 2.0)) * 1.4 + o2) * (1.0 - w1);
+  float streak = fbm3(vec2(r * 2.2 + 5.0, 3.0) + vec2(sin(s1 * 2.0), cos(s1 * 2.0)) * 1.4 + o1) * w1
+               + fbm3(vec2(r * 2.2 + 5.0, 3.0) + vec2(sin(s2 * 2.0), cos(s2 * 2.0)) * 1.4 + o2) * (1.0 - w1);
   // Averaging two patterns flattens them; restore their contrast around the middle.
   turb = 0.5 + (turb - 0.5) * 1.35;
   streak = 0.5 + (streak - 0.5) * 1.35;
@@ -165,9 +172,11 @@ void main() {
   // Infalling gas: a soft violet and blue glow, slowly turning, thinning with distance.
   vec3 hazeA = cycle(vec3(0.5, 0.32, 1.0), vec3(0.3, 0.5, 1.0), vec3(0.85, 0.3, 0.8), uPhase);
   vec3 hazeB = cycle(vec3(0.3, 0.55, 1.0), vec3(0.8, 0.35, 0.9), vec3(0.55, 0.35, 1.0), uPhase);
-  float swirl = fbm(vec2(cos(ang + uTime * 0.03), sin(ang + uTime * 0.03)) * 1.3 + vec2(rho * 0.9 - uTime * 0.06, 0.0));
   float haze = exp(-(rho - 1.0) * 1.1) * smoothstep(0.98, 1.4, rho) * edge;
-  col += mix(hazeA, hazeB, swirl) * haze * (0.08 + 0.12 * swirl);
+  if (haze > 0.002) {
+    float swirl = fbm3(vec2(cos(ang + uTime * 0.03), sin(ang + uTime * 0.03)) * 1.3 + vec2(rho * 0.9 - uTime * 0.06, 0.0)) * 0.94;
+    col += mix(hazeA, hazeB, swirl) * haze * (0.08 + 0.12 * swirl);
+  }
 
   // Polar jets: two thin beams of blue-white plasma, knots of light running outward along them.
   float h = abs(p.y);
@@ -242,12 +251,15 @@ export function BlackHole({
   mix,
   still,
   anchor,
+  ignite,
   ...props
 }: {
   mix: DayMix;
   still: boolean;
   /** Marks the hole's centre as it moves, for the sky's lens and the label occluders. */
   anchor?: RefObject<THREE.Object3D | null>;
+  /** Extra flare on top of the edition switch's (the opening, as the hole ignites). */
+  ignite?: { current: number };
 } & ThreeElements["group"]) {
   const materials = useMemo(() => {
     const uniforms = () => ({
@@ -293,7 +305,7 @@ export function BlackHole({
       const u = mat.uniforms as Record<string, THREE.IUniform<number>>;
       u.uTime.value = t;
       u.uPhase.value = phase;
-      u.uIgnite.value = flare;
+      u.uIgnite.value = flare + (ignite?.current ?? 0);
     }
     // By day it slides off the sun, up and away, shrinking a little with distance.
     const g = body.current;

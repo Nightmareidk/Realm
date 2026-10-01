@@ -18,7 +18,7 @@ const all = (sel: string, root: ParentNode = document) =>
  * is paused (turning Pause motion on puts every element back where it belongs).
  *
  * - `words`     a headline's words rise out of their masks one after another (words.tsx)
- * - `fade`      rises in softly, unblurring (lead paragraphs)
+ * - `fade`      rises in softly, fading up (lead paragraphs)
  * - `rise`      rises in and settles from a little smaller (cards, previews)
  * - `stagger`   its children arrive one after another (`data-from="right"` slides them in)
  * - `pop`       springs in from small (characters, icons)
@@ -45,15 +45,15 @@ function setup() {
       scrollTrigger: { trigger: el, start: "top 88%", once: true },
     });
   }
+  // Up and in (transform and opacity only: an animated blur here was redrawn every frame, heavy on
+  // integrated graphics).
   for (const el of all("[data-fx~=fade]")) {
     gsap.from(el, {
       y: 38,
       opacity: 0,
-      filter: "blur(8px)",
       duration: 1.2,
       ease: EASE,
       delay: Number(el.dataset.delay ?? 0.1),
-      clearProps: "filter",
       scrollTrigger: { trigger: el, start: "top 90%", once: true },
     });
   }
@@ -97,7 +97,9 @@ function setup() {
   for (const el of all("[data-fx~=tilt]")) {
     gsap.fromTo(
       el,
-      { rotateX: 30, scale: 0.8, y: 120, transformPerspective: 1600, transformOrigin: "50% 0%" },
+      // Gentle: at 30 degrees under a strong perspective, the window's 3D bounds blew up into a
+      // layer hundreds of thousands of pixels across, and Chrome kept tiles for it.
+      { rotateX: 14, scale: 0.88, y: 100, transformPerspective: 2400, transformOrigin: "50% 0%" },
       {
         rotateX: 0,
         scale: 1,
@@ -188,7 +190,8 @@ function setup() {
     });
   }
 
-  // Chat rows that run faster the faster you scroll, then ease back to their cruising speed.
+  // Chat rows that run faster the faster you scroll, then ease back to their cruising speed. They
+  // only run while they're on screen.
   const rows = all("[data-marquee]");
   if (rows.length) {
     const tweens = rows.map((row, i) => {
@@ -198,14 +201,21 @@ function setup() {
         ? gsap.fromTo(
             row,
             { xPercent: -50 },
-            { xPercent: 0, duration: dur, ease: "none", repeat: -1 },
+            { xPercent: 0, duration: dur, ease: "none", repeat: -1, paused: true },
           )
-        : gsap.to(row, { xPercent: -50, duration: dur, ease: "none", repeat: -1 });
+        : gsap.to(row, { xPercent: -50, duration: dur, ease: "none", repeat: -1, paused: true });
     });
     ScrollTrigger.create({
       trigger: rows[0],
+      endTrigger: rows[rows.length - 1],
       start: "top bottom",
       end: "bottom top",
+      onToggle(self) {
+        for (const t of tweens) {
+          if (self.isActive) t.play();
+          else t.pause();
+        }
+      },
       onUpdate(self) {
         const boost = 1 + Math.min(Math.abs(self.getVelocity()) / 250, 8);
         for (const t of tweens) {
@@ -224,7 +234,7 @@ function setup() {
   );
 
   // The page's nebula drifts up a little over the whole page, behind everything.
-  const nebula = document.querySelector<HTMLElement>(".realm-nebula");
+  const nebula = document.querySelector<HTMLElement>(".realm-nebula > canvas");
   if (nebula) {
     gsap.to(nebula, {
       yPercent: -7,

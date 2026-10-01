@@ -3,8 +3,9 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
+import { SafeBoundary } from "@/components/safe-boundary";
 import { cx } from "@/lib/cx";
-import { DaySky } from "./day-sky";
+import { useSkyIsDay } from "@/lib/edition";
 import { useStageLayout } from "./layout";
 import styles from "./three.module.css";
 
@@ -23,13 +24,19 @@ function hasWebGL() {
  * The hero, with a scroll intro. The section is taller than the screen and its stage stays pinned
  * while you scroll through it: it opens close on the centrepiece (the black hole at night, the sun
  * by day) under a title card, then the camera pulls back through space, the worlds and the crew
- * come into frame, and the headline slides in. Progress is written to `--p` (for the copy and the
- * day film's slow zoom) and a ref (for the camera). Reduced motion skips the intro and shows the
+ * come into frame, and the headline slides in. Progress is written to `--p` (for the copy) and a
+ * ref (for the camera). Reduced motion skips the intro and shows the
  * finished composition. Until the scene's first frame is ready (and on devices without WebGL) a
  * rendered poster stands in over a CSS sky.
  *
- * At night the sky is drawn in the canvas (the aurora); by day the canvas clears from the horizon
- * up onto a filmed summer day behind it, with the brick gateway glowing on the hills.
+ * The sky is drawn in the canvas: the aurora storm at night, dawn from orbit by day. Both are deep
+ * space, so the hero keeps the night edition's inks (light type, amber actions) in both.
+ *
+ * By day the stage stays pinned a while longer after the intro, for the descent (`--d` and a ref,
+ * 0 → 1): the camera comes down toward the world below, the headline and the crew drift up and
+ * away, the horizon climbs out of view and the clouds grow; then we drop through the cloud, puffs
+ * streaming past, and come out into the bright sky, which is the page itself (the canvas clears
+ * onto it). Reduced motion and Pause motion skip it.
  */
 export function HeroScene({ copy }: { copy: ReactNode }) {
   const section = useRef<HTMLElement>(null);
@@ -37,60 +44,123 @@ export function HeroScene({ copy }: { copy: ReactNode }) {
   const text = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const intro = useRef(0);
+  const descent = useRef(0);
+  const day = useSkyIsDay();
   const layout = useStageLayout(stage, box, text);
   const [webgl, setWebgl] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setWebgl(hasWebGL());
+    const ok = hasWebGL();
+    setWebgl(ok);
+    // Without WebGL the poster is the hero, and it's ready now.
+    if (!ok) setReady(true);
   }, []);
+
+  // Tell the opening (intro.tsx) the hero has drawn, so it can fly through into it.
+  useEffect(() => {
+    if (!ready) return;
+    document.documentElement.dataset.heroReady = "";
+    window.dispatchEvent(new Event("realm:hero-ready"));
+  }, [ready]);
 
   useEffect(() => {
     const el = section.current;
-    if (!el) return;
+    const st = stage.current;
+    if (!el || !st) return;
+    const root = document.documentElement;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const narrow = window.matchMedia("(width < 64rem)");
     let frame = 0;
+    // The section's place and size on the page, measured only when something changes size, so
+    // scrolling reads nothing but the scroll position; and the last values written, so a frame
+    // that changes nothing (anywhere past the hero) doesn't restyle the whole hero.
+    let top = 0;
+    let height = 0;
+    let h = 0;
+    let stale = true;
+    let wrote = "";
     const update = () => {
       frame = 0;
-      const r = el.getBoundingClientRect();
-      const span = r.height - window.innerHeight;
-      const p = reduce.matches || span <= 0 ? 1 : Math.min(1, Math.max(0, -r.top / span));
+      // The descent only by day, and only with motion on. The section's height follows it (CSS).
+      const descend = day && !reduce.matches && root.dataset.motion !== "paused";
+      if (descend !== el.hasAttribute("data-descent")) {
+        el.toggleAttribute("data-descent", descend);
+        stale = true;
+        // The page below moved: let the scroll effects measure it again.
+        window.dispatchEvent(new Event("resize"));
+      }
+      if (stale) {
+        stale = false;
+        const r = el.getBoundingClientRect();
+        top = r.top + window.scrollY;
+        height = r.height;
+        h = st.offsetHeight || window.innerHeight;
+      }
+      // The intro takes the first stretch (the section's height, less the descent, less a screen).
+      const introSpan = h * (narrow.matches ? 1.1 : 1.6);
+      const scrolled = window.scrollY - top;
+      const p =
+        reduce.matches || introSpan <= 0 ? 1 : Math.min(1, Math.max(0, scrolled / introSpan));
+      // A beat on the finished hero, then the rest of the section is the descent.
+      const hold = h * 0.25;
+      const span = height - h - introSpan - hold;
+      const d =
+        descend && span > 0 ? Math.min(1, Math.max(0, (scrolled - introSpan - hold) / span)) : 0;
       intro.current = p;
-      el.style.setProperty("--p", p.toFixed(4));
+      descent.current = d;
+      const next = `${p.toFixed(4)} ${d.toFixed(4)}`;
+      if (next !== wrote) {
+        wrote = next;
+        el.style.setProperty("--p", p.toFixed(4));
+        el.style.setProperty("--d", d.toFixed(4));
+      }
     };
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(update);
     };
+    const remeasure = () => {
+      stale = true;
+      schedule();
+    };
     update();
     window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    reduce.addEventListener("change", schedule);
-    // Also when the section appears (it's hidden by day, and measures nothing while hidden).
-    const ro = new ResizeObserver(schedule);
+    window.addEventListener("resize", remeasure);
+    reduce.addEventListener("change", remeasure);
+    narrow.addEventListener("change", remeasure);
+    const mo = new MutationObserver(remeasure);
+    mo.observe(root, { attributes: true, attributeFilter: ["data-motion"] });
+    // Also when the section appears (it's hidden by day, and measures nothing while hidden), or
+    // anything above it changes size.
+    const ro = new ResizeObserver(remeasure);
     ro.observe(el);
+    ro.observe(document.body);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      reduce.removeEventListener("change", schedule);
+      window.removeEventListener("resize", remeasure);
+      reduce.removeEventListener("change", remeasure);
+      narrow.removeEventListener("change", remeasure);
+      mo.disconnect();
       ro.disconnect();
     };
-  }, []);
+  }, [day]);
 
   return (
     <section
       ref={section}
       data-hero=""
+      data-edition="night"
       aria-labelledby="hero-title"
       className={cx(styles.pin, "relative -mt-16")}
-      style={{ "--p": 0 } as CSSProperties}
+      style={{ "--p": 0, "--d": 0 } as CSSProperties}
     >
       <div
         ref={stage}
+        data-live={webgl && ready ? "" : undefined}
         className={cx(styles.hero, styles.stage, "isolate overflow-clip")}
         style={{ viewTransitionName: "realm-hero" }}
       >
-        <DaySky />
         {webgl && (
           <div
             className={cx(
@@ -98,12 +168,22 @@ export function HeroScene({ copy }: { copy: ReactNode }) {
               ready ? "opacity-100" : "opacity-0",
             )}
           >
-            <HeroWorld
-              stage={stage}
-              layout={layout}
-              intro={intro}
-              onReady={() => setTimeout(() => setReady(true), 150)}
-            />
+            {/* If the scene fails (a model that didn't download, a GPU that gave out), the poster
+                is the hero, as it is without WebGL. */}
+            <SafeBoundary
+              onError={() => {
+                setWebgl(false);
+                setReady(true);
+              }}
+            >
+              <HeroWorld
+                stage={stage}
+                layout={layout}
+                intro={intro}
+                descent={descent}
+                onReady={() => setTimeout(() => setReady(true), 150)}
+              />
+            </SafeBoundary>
           </div>
         )}
 

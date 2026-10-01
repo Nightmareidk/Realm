@@ -27,7 +27,7 @@ const COLUMNS = [
 
 export function SiteFooter() {
   return (
-    <footer className="relative overflow-clip border-t border-rule">
+    <footer className="site-footer relative overflow-clip border-t border-rule">
       <div className="mx-auto grid max-w-[90rem] gap-10 px-4 py-14 md:grid-cols-12 md:px-8">
         <div className="flex flex-col items-start gap-5 md:col-span-6">
           <Wordmark />
@@ -54,15 +54,15 @@ export function SiteFooter() {
           </nav>
         ))}
       </div>
-      <div className="mx-auto max-w-[90rem] px-4 py-6 text-xs text-ink-muted md:px-8">
-        © 2026 Realm
+      <div className="mx-auto max-w-[90rem] px-4 md:px-8">
+        <p className="border-t border-rule py-6 text-xs text-ink-muted">© 2026 Realm</p>
       </div>
-      {/* The name, huge and faded, like a signature under the page. */}
+      {/* The name, huge, carved into whatever the page ends on, like a signature under it. */}
       <p
         aria-hidden="true"
         data-fx="parallax"
         data-speed="-0.25"
-        className="pointer-events-none -mt-4 select-none text-center font-display text-[clamp(6rem,26vw,24rem)] leading-[0.8] font-bold tracking-[-0.04em] text-[color-mix(in_oklch,var(--r-ink)_14%,transparent)] [mask-image:linear-gradient(180deg,#000,transparent_85%)]"
+        className="site-signature pointer-events-none -mt-4 select-none text-center font-display text-[clamp(6rem,26vw,24rem)] leading-[0.8] font-bold tracking-[-0.04em]"
       >
         realm
       </p>

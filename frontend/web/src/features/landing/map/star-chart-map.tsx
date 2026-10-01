@@ -92,34 +92,42 @@ export function StarChartMap({
       }}
     >
       <div className="relative">
-        {/* The stars twinkle in their own layer, so the chart above (with its blurred glows) isn't
-            repainted every time one of them changes. */}
-        <svg
-          viewBox={`0 0 ${g.width} ${g.height}`}
-          className="pointer-events-none absolute inset-0 block size-full"
-          aria-hidden="true"
-        >
-          <g fill="#dbe8ff" className={styles.stars} aria-hidden="true">
-            {g.stars.map((s) => (
-              <circle
-                key={`${s.x},${s.y}`}
-                cx={s.x}
-                cy={s.y}
-                r={s.r}
-                opacity={s.twinkle ? 1 : 0.5}
-                className={s.twinkle ? "twinkle" : undefined}
-                style={
-                  s.twinkle
-                    ? ({
-                        "--twinkle-delay": `${(s.x % 40) / 10}s`,
-                        "--twinkle-dur": `${3 + (s.y % 30) / 10}s`,
-                      } as CSSProperties)
-                    : undefined
-                }
-              />
-            ))}
-          </g>
-        </svg>
+        {/* The stars: the still ones in one layer, and the twinkling ones in three more, each of
+            which fades as a whole on its own rhythm. (Twinkling each star inside one SVG made the
+            browser repaint the whole chart every frame, even off screen.) */}
+        {[-1, 0, 1, 2].map((group) => (
+          <svg
+            key={group}
+            viewBox={`0 0 ${g.width} ${g.height}`}
+            className={cx(
+              "pointer-events-none absolute inset-0 block size-full",
+              group >= 0 && "twinkle",
+            )}
+            style={
+              group >= 0
+                ? ({
+                    "--twinkle-delay": `${-group * 1.7}s`,
+                    "--twinkle-dur": `${4 + group * 1.1}s`,
+                  } as CSSProperties)
+                : undefined
+            }
+            aria-hidden="true"
+          >
+            <g fill="#dbe8ff" className={styles.stars}>
+              {g.stars
+                .filter((s, i) => (s.twinkle ? i % 3 : -1) === group)
+                .map((s) => (
+                  <circle
+                    key={`${s.x},${s.y}`}
+                    cx={s.x}
+                    cy={s.y}
+                    r={s.r}
+                    opacity={s.twinkle ? 1 : 0.5}
+                  />
+                ))}
+            </g>
+          </svg>
+        ))}
         {/* biome-ignore lint/a11y/useSemanticElements: an SVG chart can't be a <fieldset>; role="group" names the interactive planet set. */}
         <svg
           viewBox={`0 0 ${g.width} ${g.height}`}

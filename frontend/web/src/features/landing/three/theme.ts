@@ -14,8 +14,8 @@ const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 
 
 /**
  * A night-to-day value that plays the change as one eased move (about three seconds): the black
- * hole slides off the sun (or back across it), the sky brightens from the horizon up into the day
- * film (or night falls back over it). It starts the moment a switch is asked for, a beat before
+ * hole slides off the sun (or back across it), the dawn rises from the horizon up (or night falls
+ * back over it). It starts the moment a switch is asked for, a beat before
  * the rest of the page changes. Components read `.current` inside useFrame. With motion stilled
  * it jumps straight to the new value.
  */

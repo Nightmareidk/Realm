@@ -26,8 +26,9 @@ raised arm's joints for each are listed at the top of that script, read off a fr
   from the fingertips back to the elbow), so every finger moves whole and nothing merely near the
   hand (a head, an ear) moves with it; crisp joints; and a baked "Wave" (the forearm swings from
   the elbow as one firm piece, leaning outward, the hand following a touch behind);
-- writes `public/models/<who>.glb` for the live hero: about 60k triangles, skinned, with the Wave
-  animation, 1024 px WebP textures, Draco (decoder served from `public/draco/`, copied from three);
+- writes `public/models/<who>.<hash>.glb` for the live hero: about 60k triangles, skinned, with the
+  Wave animation, 512 px WebP textures, Draco (decoder served from `public/draco/`, copied from
+  three);
 - renders the wave's 41 frames with Cycles on the GPU, in the cast's studio light (a warm key, cool
   fill and two coloured rims), and packs them: `public/art/cast/<who>.webp` is the pose with the
   arm's area cut out and `<who>-wave.webp` is that area in every frame side by side, which the page
@@ -37,19 +38,64 @@ raised arm's joints for each are listed at the top of that script, read off a fr
   product preview);
 - records each figure's size and the arm's area in `src/features/landing/cast.json`.
 
+The astronaut moves its whole body in the opening (it floats, swims, flails and tumbles as well as
+waving), so its live model is rigged head to toe by `scripts/blender/rig_body.py`. The product
+owner rigged it in Meshy (`models-incoming/astro-teal-rigged-source.glb`: Meshy's auto-rig, 29
+bones, its own skin weights), and the script keeps that skeleton and those weights, naming the
+bones from `scripts/blender/joints/astro-teal-rig.json`, then keys the actions by hand. Meshy's
+remesh fused the hanging left arm to the suit down its inner side, and its auto-weights let the
+glove, hip and belt pull on each other, so the script tidies the weights first: that side of the
+body takes the other side's weights mirrored (the raised arm left it clean), each forearm and hand
+is traced as one surface and follows only its own arm, and the helmet follows no arm. The raised
+right arm then swings free from the shoulder; the left strokes forward and back more than out.
+(Without a Meshy rig, the script builds a skeleton on joints read off a front view instead:
+`joints/<who>.json`.)
+
 `scripts/blender/optimize_glb.py` still slims a model on its own (no rig) when needed.
 
-## Day sky (`public/video/`)
+## Day sky
 
-`day-sky.mp4` is a summer day: towering clouds over rolling green hills and an old red-brick
-gateway glowing like a portal. Made with Higgsfield for the product owner: a Soul Cinema still,
-edited with Nano Banana Pro to light the gateway, animated with Kling 3.0 (pro, locked camera,
-everything in motion), then made seamless and web-sized with Blender's sequencer
-(`scripts/blender/video_loop.py --width 1920 --fade 1.5 --crf HIGH --sharpen 0.6`: a 1.5 s
-crossfade loop, a gentle unsharp mask on every frame, H.264 at high quality). The page plays it at
-2.1x so the clouds race, leans it away from the pointer, and draws live sun rays and drifting motes
-of light over it in the hero's sky shader. `day-sky.jpg` is its first frame, the poster and CSS
-fallback.
+The day hero is drawn live in the sky shader (`src/features/landing/three/sky.tsx`): dawn seen from
+orbit over a sea of cloud. Its one asset is `public/art/cloud-tops.webp`, a seamless 1024px
+height map of cumulus tops seen from above (white is high), made from scratch by
+`scripts/make-cloud-tops.mjs` (round domes at three sizes gathered into fields with gaps, all
+tileable noise; no source imagery). The shader lights it with the low sun and streams it toward
+the camera.
+
+The sky behind the page (`src/features/landing/sky-life.tsx`) has these:
+
+- `public/art/sky/cloud-*.webp`: cumulus rendered from scratch in Blender
+  (`scripts/blender/render_clouds.py`: heaps of spheres turned into volumes, billowed by noise, lit
+  by a warm sun with cool sky light in the shade, many volume bounces so they're white), then
+  cropped and lifted a little brighter by `scripts/make-sky-sprites.mjs`.
+- `public/art/sky/birds.webp`: a gull's wingbeat in eight frames, drawn as vectors by
+  `scripts/make-sky-sprites.mjs`.
+- `public/art/sky/hill.webp`: the meadow the cast stands on at the end of the page, rendered from
+  scratch in Blender (`scripts/blender/render_meadow.py`): the page's own hill curve, grass instanced
+  blade by blade over it (tapered, bent blades, each leaning and turning at random, darker at the
+  root and gold-green at the tip, translucent against the sun behind the crest), straw-coloured
+  patches and a few small flowers, lit like the cast. Packed by `scripts/make-sky-sprites.mjs`.
+- `public/art/sky/grass.webp`: the same grass further down the slope, a seamless tile
+  (`render_meadow.py --tile 25.6`: the scatter repeated on a wall with eight copies round it).
+- `public/art/sky/moon.webp`: the Moon the cast stands on by night, rendered from scratch in
+  Blender (`scripts/blender/render_moon.py`): the page's hill curve built as a patch of the
+  ellipsoid the camera sees, cratered by geometry nodes (a bowl-and-rim profile on Voronoi cells
+  at three sizes, each crater a random size, over regolith noise), the smallest craters and the
+  grain in the shading, boulders strewn over it, lit by a low sun from the left with a faint cool
+  earthshine. Its foot fades out (`scripts/make-sky-sprites.mjs`) where the footer carries it on.
+- `public/art/sky/jet.webp`, `rocket.webp`, and the frame strips `ufo.webp`,
+  `ufo-2.webp` and `satellite.webp` (16 frames of a turn each): the product owner's own models,
+  made in Meshy (image to 3D) and downloaded from their account into `models-incoming/sky-*.glb`
+  (large, not committed), rendered in the cast's studio light by
+  `scripts/blender/render_props.py` (the rocket upright, for CSS to lean) and packed by
+  `scripts/make-sky-sprites.mjs`.
+- `public/art/sky/flame.webp`: the rocket's fire, eight flickering frames of a layered teardrop
+  flame drawn as vectors (with a fixed seed) by `scripts/make-sky-sprites.mjs`.
+
+It replaced a filmed summer day (clouds over hills and a glowing brick gateway, made with
+Higgsfield for the product owner: a Soul Cinema still, a Nano Banana Pro edit, Kling 3.0
+animation, looped with `scripts/blender/video_loop.py`). That film is kept, unused, in
+`brand/films/` (`day-sky.mp4` and its first frame `day-sky.jpg`).
 
 ## Preview media (`public/media/`)
 

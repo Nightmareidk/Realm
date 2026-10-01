@@ -1,0 +1,167 @@
+/*
+ * The opening, "The Crossing" (intro.tsx, crossing.tsx): the astronaut adrift while the site loads,
+ * a black hole that takes him, and the far side, where he's flung out of the hero's black hole.
+ *
+ * Server-rendered, so it covers the page from the first paint, and it looks after itself without
+ * JavaScript: if nothing takes it over, it fades away on its own after a few seconds. The boot
+ * script in the root layout marks it to skip before anything paints: for the rest of the session
+ * once seen, and always with reduced motion or Pause motion.
+ */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  color: #f4f3ff;
+  animation: intro-fallback 0.8s ease 6s forwards;
+}
+.intro[data-live] {
+  animation: none;
+}
+:global(:root[data-intro="skip"]) .intro,
+:global(:root[data-intro="done"]) .intro {
+  display: none;
+}
+@keyframes intro-fallback {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* The dark of space. On the far side a hole opens in it (from the hero's black hole) onto the site. */
+.space {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(90% 80% at 50% 45%, #0d0b2a 0%, #05051a 55%, #020210 100%);
+  --hole: 0px;
+  --hx: 50%;
+  --hy: 50%;
+}
+.space[data-open] {
+  mask-image: radial-gradient(
+    circle at var(--hx) var(--hy),
+    transparent var(--hole),
+    #000 calc(var(--hole) + 2px)
+  );
+}
+
+/* The 3D scene: the sky, the astronaut and the black hole; clear on the far side. */
+.stage {
+  position: absolute;
+  inset: 0;
+}
+.stage canvas {
+  display: block;
+}
+
+/* The white-hole burst on the far side: a flash, and a ring of light racing out with the opening. */
+.flash {
+  position: absolute;
+  left: var(--hx, 50%);
+  top: var(--hy, 50%);
+  width: 180vmax;
+  height: 180vmax;
+  translate: -50% -50%;
+  background: radial-gradient(
+    circle,
+    #fffaf0 0%,
+    #ffe2a8cc 5%,
+    #ffb23d55 14%,
+    #a76ef822 30%,
+    transparent 48%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+}
+.ring {
+  position: absolute;
+  left: var(--hx, 50%);
+  top: var(--hy, 50%);
+  width: 10px;
+  height: 10px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px #fff4dd,
+    0 0 24px 6px #ffb23d,
+    0 0 70px 18px #a76ef888,
+    inset 0 0 40px 8px #4998fe66;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* While it loads: the name, a line that fills as the page loads, and how far along it is. */
+.loader {
+  position: absolute;
+  inset-inline: 0;
+  bottom: clamp(2rem, 8vh, 4.5rem);
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  pointer-events: none;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+.brand svg {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+.track {
+  position: relative;
+  width: clamp(9rem, 22vw, 14rem);
+  height: 2px;
+  border-radius: 2px;
+  background: #ffffff1a;
+  overflow: hidden;
+}
+.fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #ffb23d, #a76ef8, #4998fe);
+  transform-origin: 0 50%;
+  transform: scaleX(0.04);
+}
+.status {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: #b9b4dc;
+}
+.pct {
+  min-width: 2.6em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #e6e3ff;
+}
+
+.skip {
+  position: absolute;
+  right: clamp(1rem, 3vw, 2rem);
+  top: clamp(1rem, 3vw, 2rem);
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid #ffffff2e;
+  background: #ffffff0d;
+  color: #d9d6f2;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--r-ease-out),
+    border-color 160ms var(--r-ease-out);
+}
+.skip:hover {
+  background: #ffffff1c;
+  border-color: #ffffff55;
+}

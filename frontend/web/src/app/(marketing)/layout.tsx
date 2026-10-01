@@ -1,3 +1,4 @@
+import { OffscreenStill } from "@/components/offscreen-still";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -13,6 +14,7 @@ export default function MarketingLayout({ children }: LayoutProps<"/">) {
       <SiteHeader />
       <main id="main">{children}</main>
       <SiteFooter />
+      <OffscreenStill />
     </>
   );
 }

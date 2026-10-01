@@ -64,7 +64,14 @@ export class RedisEventBus implements EventBus {
       } catch {
         return;
       }
-      for (const h of set) h(topic, event);
+      // One failing subscriber mustn't stop the others, or take the process down with it.
+      for (const h of set) {
+        try {
+          h(topic, event);
+        } catch (err) {
+          console.error(`event bus: a handler for ${topic} failed`, err);
+        }
+      }
     });
   }
 

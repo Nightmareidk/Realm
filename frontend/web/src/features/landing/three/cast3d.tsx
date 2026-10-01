@@ -10,7 +10,9 @@ import cast from "../cast.json";
 /**
  * A member of Realm's cast, live in 3D. The characters are made in Meshy (image to 3D); their
  * raised arm is rigged and given a "Wave" by scripts/render-cast.mjs (Blender), so with `wave` the
- * forearm swings from the elbow every few seconds, hand firm, while the body just floats. A model that brings an idle clip loops it between waves. `still` freezes it.
+ * forearm swings from the elbow every few seconds, hand firm. A model rigged head to toe
+ * (scripts/blender/rig_body.py) also brings a "Float": he treads space the whole time, and the
+ * wave plays on top of it. `still` freezes it.
  */
 export type CastName = keyof typeof cast;
 
@@ -24,7 +26,7 @@ const url = (who: CastName) => `/models/${cast[who].model}`;
  * second time, every frame, just to see through them. Blending gives the same see-through read at
  * the size the cast appears, without that pass.
  */
-function softenGlass(m: THREE.Material) {
+export function softenGlass(m: THREE.Material) {
   if (!(m instanceof THREE.MeshPhysicalMaterial) || m.transmission <= 0) return;
   m.opacity = 1 - m.transmission * 0.55;
   m.transmission = 0;
@@ -59,7 +61,7 @@ export function CastMember({
   useEffect(() => {
     if (!animations.length) return;
     const find = (re: RegExp) => animations.find((c) => re.test(c.name));
-    const idleClip = find(/idle|breath|stand/i);
+    const idleClip = find(/idle|float|breath|stand/i);
     const waveClip = find(/wave|hello|greet|hi\b/i);
     const idle = idleClip ? mixer.clipAction(idleClip).play() : null;
     const first = animations[0];
@@ -69,16 +71,22 @@ export function CastMember({
         mixer.stopAllAction();
       };
     }
-    const hello = mixer.clipAction(waveClip);
+    // Over an idle, the wave is layered on (only the arm and head move differently); alone, it
+    // plays as it is.
+    const hello = idle
+      ? mixer.clipAction(
+          THREE.AnimationUtils.makeClipAdditive(waveClip.clone()),
+          undefined,
+          THREE.AdditiveAnimationBlendMode,
+        )
+      : mixer.clipAction(waveClip);
     hello.setLoop(THREE.LoopOnce, 1);
     let timer = 0;
     const greet = () => {
       hello.reset().fadeIn(0.3).play();
-      idle?.fadeOut(0.3);
     };
     const onDone = (e: { action: THREE.AnimationAction }) => {
       if (e.action !== hello) return;
-      idle?.reset().fadeIn(0.45).play();
       hello.fadeOut(0.45);
       timer = window.setTimeout(greet, 1800);
     };

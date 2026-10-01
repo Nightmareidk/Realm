@@ -22,17 +22,20 @@
    (`absolute`, `max-lg:hidden`), so art.tsx sets both as utilities. */
 .crew {
   transform-origin: 50% 100%;
-  filter: drop-shadow(0 22px 24px color-mix(in oklch, var(--r-shadow) 55%, transparent));
 }
+/* The shadow is on the still pose only: on the whole figure it was blurred again for every frame
+   of the wave. The arm, on its own layer, steps through its frames without touching it. */
 .crew > img {
   display: block;
   width: 100%;
   height: auto;
+  filter: drop-shadow(0 22px 24px color-mix(in oklch, var(--r-shadow) 55%, transparent));
 }
 /* The raised arm's area, over the pose: a strip of the wave's frames, stepped through. */
 .arm {
   position: absolute;
   overflow: hidden;
+  will-change: transform;
 }
 .frames {
   display: block;
@@ -114,6 +117,11 @@
   .marqueeWrap:hover .marquee {
     animation-play-state: paused;
   }
+}
+/* On their own layers: the rows are moved every frame (by GSAP, see scroll-fx.tsx), and moving an
+   element without one repaints everything around it. */
+.marquee {
+  will-change: transform;
 }
 @keyframes marquee {
   to {
@@ -212,7 +220,7 @@
   transform-origin: 0 100%;
 }
 
-/* ── Closing: the cast on a glowing horizon (an aurora by night, the sunset by day) ─ */
+/* ── Closing: the cast on a glowing horizon (an aurora by night, a world's lit limb by day) ─ */
 .closing {
   background:
     radial-gradient(60% 45% at 50% 100%, oklch(0.62 0.2 300 / 0.3), transparent 70%),
@@ -221,16 +229,16 @@
 }
 :global(:root[data-theme="day"]) .closing {
   background:
-    radial-gradient(60% 45% at 50% 100%, oklch(0.84 0.13 55 / 0.55), transparent 70%),
-    radial-gradient(40% 40% at 12% 55%, oklch(0.84 0.09 355 / 0.35), transparent 70%),
-    radial-gradient(40% 40% at 88% 45%, oklch(0.83 0.08 305 / 0.4), transparent 70%);
+    radial-gradient(60% 45% at 50% 100%, oklch(0.85 0.09 210 / 0.55), transparent 70%),
+    radial-gradient(40% 40% at 12% 55%, oklch(0.9 0.08 80 / 0.4), transparent 70%),
+    radial-gradient(40% 40% at 88% 45%, oklch(0.84 0.06 270 / 0.4), transparent 70%);
 }
 /* The ground they stand on: the rim of a world, lit from behind like the eclipse. */
 .horizon {
   position: absolute;
   left: 50%;
-  /* The rim sits just under their feet (the lineup leaves 4rem, 6rem on large screens, below). */
-  top: calc(100% - 4.4rem);
+  /* The rim runs just above the foot of the row (which leaves --closing-foot of ground below). */
+  top: calc(100% - var(--closing-foot) - 0.4rem);
   width: 150vw;
   height: 70vw;
   translate: -50% 0;
@@ -241,13 +249,112 @@
     0 -2px 0 color-mix(in oklch, var(--r-spaces-solid) 70%, transparent),
     0 -30px 90px -10px color-mix(in oklch, var(--r-profiles-solid) 55%, transparent);
 }
-@media (width >= 64rem) {
-  .horizon {
-    top: calc(100% - 6.4rem);
-  }
+/* By night they stand on the Moon: its horizon curving away under them on the page's own curve
+   (scripts/blender/render_moon.py), grey regolith in a low sun from the left, every crater rim lit
+   and throwing its shadow, boulders breaking the skyline. The plate starts 2vw above the crest (for
+   them) and runs on down into the footer (globals.css). The rim's glow stays behind it; its line
+   goes, since the Moon's sunlit edge is the line now. */
+.moon {
+  display: none;
+}
+:global(:root:not([data-theme="day"])) .moon {
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: calc(100% - var(--closing-foot) - 0.4rem - 2vw);
+  width: 100vw;
+  aspect-ratio: 100 / 60;
+  translate: -50% 0;
+  pointer-events: none;
+}
+.moon > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+:global(:root:not([data-theme="day"])) .horizon {
+  box-shadow: 0 -30px 90px -10px color-mix(in oklch, var(--r-profiles-solid) 55%, transparent);
+}
+
+/* By day you've landed on a meadow: grass rendered blade by blade on the page's own curve
+   (scripts/blender/render_meadow.py), lit gold along the crest, where the tips stand up against the
+   sky. The plate starts 2vw above the crest (for those tips). Below the crest it's all ground: the
+   grass falls into shade down the slope and runs on into the footer (globals.css), so no sky shows
+   under it. */
+.meadow,
+.meadowFront {
+  display: none;
 }
 :global(:root[data-theme="day"]) .horizon {
-  box-shadow:
-    0 -2px 0 oklch(0.88 0.12 70 / 0.9),
-    0 -30px 90px -10px oklch(0.8 0.14 45 / 0.6);
+  display: none;
+}
+:global(:root[data-theme="day"]) .meadow,
+:global(:root[data-theme="day"]) .meadowFront {
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: calc(100% - var(--closing-foot) - 0.4rem - 2vw);
+  width: 100vw;
+  aspect-ratio: 100 / 40;
+  translate: -50% 0;
+  pointer-events: none;
+}
+.meadow > img,
+.meadowFront > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* In front of the cast: just the blade tips standing up along the crest, so their feet are in
+   the grass. */
+:global(:root[data-theme="day"]) .meadowFront {
+  mask-image: radial-gradient(75vw 35vw at 50% 37vw, transparent 99.3%, #000 99.8%);
+}
+
+/* Each of the cast stands on the curve of the hill: hill-lineup.tsx works out how far the ground
+   has fallen away under them (--drop) and its slope there (--tilt). The ground line runs 0.4rem
+   above the row's foot; --sink is how far past it their feet go: by night a little down in the Moon's
+   dust, by day up among the blade tips (which stand about 1.5vw tall), so the grass comes over
+   their shoes. A soft shadow lies on the ground under them. They don't float, so the idle bob is
+   off here. */
+.stand {
+  --sink: 0.3rem;
+  position: relative;
+  display: block;
+  transform: translateY(calc(var(--drop, 0px) - 0.4rem + var(--sink))) rotate(var(--tilt, 0deg));
+  transform-origin: 50% 100%;
+}
+:global(:root[data-theme="day"]) .stand {
+  --sink: -0.8vw;
+}
+.stand::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 10%;
+  right: 10%;
+  bottom: calc(var(--sink) - 0.35rem);
+  height: 0.7rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, oklch(0.08 0.04 290 / 0.6), transparent);
+}
+:global(:root[data-theme="day"]) .stand::before {
+  height: 1.1rem;
+  bottom: calc(var(--sink) - 0.55rem);
+  background: radial-gradient(closest-side, oklch(0.18 0.06 145 / 0.38), transparent);
+}
+.stand > .crew {
+  display: block;
+  animation: none;
+}
+.stand > .crew:hover {
+  animation: crew-hop 560ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .stand > .crew:hover {
+    animation: none;
+  }
+}
+.stand > .crew > img {
+  filter: drop-shadow(0 6px 8px color-mix(in oklch, var(--r-shadow) 35%, transparent));
 }

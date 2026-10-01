@@ -27,6 +27,11 @@ export function registerSunLocator(edition: Edition, where: () => Point | null) 
   };
 }
 
+/** Where the current edition's centrepiece is on screen now (viewport pixels), if the hero knows. */
+export function locateCentrepiece(): Point | null {
+  return locators[currentEdition()]?.() ?? null;
+}
+
 export const SKY_EVENT = "realm:sky";
 
 /** How long the hero gets to react before the new edition is revealed. */

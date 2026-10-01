@@ -5,80 +5,42 @@
     radial-gradient(25% 30% at 72% 40%, rgb(255 150 60 / 0.16), transparent 70%),
     linear-gradient(180deg, #04041a 0%, #0c0a2c 60%, var(--r-ground) 100%);
 }
+/* By day: dawn from orbit, roughly (the live sky draws it for real): space, the atmosphere's
+   teal band, the sun's gold on the horizon, the cloud sea glowing and falling into shadow. */
 :global(:root[data-theme="day"]) .hero {
-  background: #6fa8e6 url("/video/day-sky.jpg") center 60% / cover no-repeat;
-}
-
-/* ── Day sky: the film behind the clear canvas, easing out as the intro pulls back ───────── */
-.daySky {
-  visibility: hidden;
-}
-.daySky[data-shown],
-:global(:root[data-theme="day"]) .daySky {
-  visibility: visible;
-}
-/* The glowing gateway sits in the middle of the film. The intro opens with it under the sun at
-   the centre; as the camera pulls back it slides right, to stand under the sun again between the
-   explorer and the monster (and clear of the headline). Phones keep it centred. */
-.dayFilm {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 60%;
-  transform: translate(
-      calc(var(--p) * 8.5% - var(--mx, 0) * 1.2%),
-      calc(var(--p) * -2% - var(--my, 0) * 0.9%)
-    )
-    scale(calc(1.4 - var(--p) * 0.16));
-  transform-origin: 50% 60%;
-}
-@media (width < 64rem) {
-  .dayFilm {
-    transform: scale(calc(1.12 - var(--p) * 0.12));
-  }
-}
-/* A soft light haze behind the headline column, so plum type stays readable over the film. */
-.dayCopyHaze {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    oklch(0.98 0.02 80 / 0.62) 0%,
-    oklch(0.98 0.02 80 / 0.42) 30%,
-    oklch(0.98 0.02 80 / 0) 50%
-  );
-  opacity: clamp(0, calc((var(--p) - 0.3) * 3), 1);
-}
-@media (width < 64rem) {
-  .dayCopyHaze {
-    background: linear-gradient(
+  background:
+    radial-gradient(30% 22% at 70% 47%, rgb(255 190 110 / 0.55), transparent 70%),
+    linear-gradient(
       180deg,
-      oklch(0.98 0.02 80 / 0.55) 0%,
-      oklch(0.98 0.02 80 / 0.35) 45%,
-      oklch(0.98 0.02 80 / 0) 65%
+      #02040d 0%,
+      #051330 32%,
+      #0d4a66 44%,
+      #ffd27a 47.5%,
+      #f07a36 50%,
+      #6a2e40 66%,
+      #1c0c18 100%
     );
-  }
-}
-/* The film's grass meets the page's apricot through a soft warm haze. */
-.dayFade {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 30%;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    color-mix(in oklch, var(--page-ground) 40%, transparent) 45%,
-    color-mix(in oklch, var(--page-ground) 85%, transparent) 80%,
-    var(--page-ground) 100%
-  );
 }
 
 /* The hero meets the page below in the page's own colour. */
 .toPage {
   background: linear-gradient(180deg, transparent, var(--page-ground));
+}
+/* By day that's a long way, from the cloud sea's shadows to the bright high sky below, so the
+   fade is longer and lifts through a cool haze on the way, like coming down through the air. */
+:global(:root[data-theme="day"]) .toPage {
+  height: 13rem;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    oklch(0.42 0.06 318 / 0.42) 34%,
+    oklch(0.78 0.045 250 / 0.82) 68%,
+    var(--page-ground) 100%
+  );
+}
+/* ...unless the descent runs, which carries you down into the page itself. */
+:global(:root[data-theme="day"]) .pin[data-descent] .toPage {
+  display: none;
 }
 
 /* ── Scroll intro: the stage stays pinned while --p (0 → 1) plays the pull-back ───────── */
@@ -94,6 +56,20 @@
   .pin {
     height: 210svh;
   }
+}
+/* By day, a longer stretch after the intro for the descent through the cloud (hero-3d.tsx). */
+.pin[data-descent] {
+  height: 400svh;
+}
+@media (width < 64rem) {
+  .pin[data-descent] {
+    height: 330svh;
+  }
+}
+/* Once the live sky is up it's the whole backdrop, and at the end of the descent it clears onto
+   the page itself, so the CSS stand-in goes. */
+:global(:root[data-theme="day"]) .hero[data-live] {
+  background: none;
 }
 
 /* The title card: the brand, big, under the eclipse. It lifts away as the camera pulls back. */
@@ -141,41 +117,43 @@
   color: var(--r-ink-muted);
 }
 .scrollCue i {
+  position: relative;
   width: 1px;
   height: 44px;
-  background: linear-gradient(var(--r-ink-soft), transparent);
+  overflow: hidden;
+}
+/* The line sweeps down through its window, over and over: transform only, so the compositor runs
+   it (animating transform-origin, as before, repainted the hero every frame). */
+.scrollCue i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent, var(--r-ink-soft) 55%, transparent);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .scrollCue i {
+  .scrollCue i::after {
     animation: cue 2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   }
 }
 @keyframes cue {
-  0% {
-    transform: scaleY(0);
-    transform-origin: top;
+  from {
+    transform: translateY(-100%);
   }
-  50% {
-    transform: scaleY(1);
-    transform-origin: top;
-  }
-  50.1% {
-    transform-origin: bottom;
-  }
-  100% {
-    transform: scaleY(0);
-    transform-origin: bottom;
+  to {
+    transform: translateY(100%);
   }
 }
 
 /* The headline arrives once the camera has pulled back; the name tags follow. */
 .copy {
   --q: clamp(0, calc((var(--p) - 0.3) * 3.2), 1);
-  opacity: var(--q);
-  transform: translateY(calc((1 - var(--q)) * 36px));
+  /* It rises away as the descent begins. */
+  --away: clamp(0, calc(var(--d, 0) * 3.5), 1);
+  opacity: calc(var(--q) * (1 - var(--away)));
+  transform: translateY(calc((1 - var(--q)) * 36px - var(--away) * 140px));
 }
 .tags {
-  opacity: clamp(0, calc((var(--p) - 0.5) * 4), 1);
+  opacity: calc(clamp(0, calc((var(--p) - 0.5) * 4), 1) * (1 - clamp(0, calc(var(--d, 0) * 4), 1)));
 }
 
 /* No intro for reduced motion, or if scripts don't run: the finished hero, straight away. */

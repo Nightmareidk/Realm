@@ -12,3 +12,6 @@ allowBuilds:
 # pnpm holds back very fresh releases (supply-chain safety); explicit exceptions only.
 minimumReleaseAgeExclude:
   - "@types/node@26.6.3"
+
+patchedDependencies:
+  gsap@3.15.0: patches/gsap@3.15.0.patch

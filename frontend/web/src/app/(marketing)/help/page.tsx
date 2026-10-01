@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { DocPage } from "@/components/doc-page";
 
-export const metadata: Metadata = { title: "Help" };
+export const metadata: Metadata = {
+  title: "Help",
+  description:
+    "Getting started with Realm: what Spaces, Messages and the Feed are for, and how to jump anywhere in the app with Ctrl K.",
+  alternates: { canonical: "/help" },
+};
 
 export default function HelpPage() {
   return (

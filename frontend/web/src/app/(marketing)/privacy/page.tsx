@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DocPage } from "@/components/doc-page";
 
-export const metadata: Metadata = { title: "Privacy" };
+export const metadata: Metadata = {
+  title: "Privacy",
+  description:
+    "What Realm protects today, in plain language: encryption in transit and at rest, when end-to-end encrypted messages arrive, and your controls.",
+  alternates: { canonical: "/privacy" },
+};
 
 // Plain facts only. The full privacy policy is written with counsel before public launch.
 export default function PrivacyPage() {

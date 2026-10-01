@@ -31,36 +31,57 @@
   }
 }
 
-/* A live dot that breathes, for presence and the voice room. */
-@media (prefers-reduced-motion: no-preference) {
-  .live {
-    animation: live 2.4s ease-in-out infinite;
-  }
-  .speaking {
-    animation: speaking 1.2s ease-out infinite;
-  }
+/* A live dot that breathes, for presence and the voice room. The pulse is a ring that grows and
+   fades (transform and opacity, which the compositor runs): an animated box-shadow made the whole
+   preview repaint on every frame. */
+.live,
+.speaking {
+  position: relative;
+}
+.live::after,
+.speaking::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+}
+.live::after {
+  background: var(--r-success);
 }
 .speaking {
   box-shadow: 0 0 0 2px var(--r-success);
 }
-@keyframes live {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in oklch, var(--r-success) 60%, transparent);
+.speaking::after {
+  box-shadow: 0 0 0 2px var(--r-success);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .live::after {
+    animation: live 2.4s ease-out infinite;
   }
-  50% {
-    box-shadow: 0 0 0 4px color-mix(in oklch, var(--r-success) 0%, transparent);
+  .speaking::after {
+    animation: speaking 1.2s ease-out infinite;
+  }
+}
+@keyframes live {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  60%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
   }
 }
 @keyframes speaking {
   0% {
-    box-shadow:
-      0 0 0 2px var(--r-success),
-      0 0 0 2px color-mix(in oklch, var(--r-success) 50%, transparent);
+    transform: scale(1);
+    opacity: 0.55;
   }
   100% {
-    box-shadow:
-      0 0 0 2px var(--r-success),
-      0 0 0 8px color-mix(in oklch, var(--r-success) 0%, transparent);
+    transform: scale(1.3);
+    opacity: 0;
   }
 }

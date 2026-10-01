@@ -16,7 +16,7 @@ const WORDS = [
 
 /**
  * First viewport: the headline with a word that keeps changing, over the live 3D universe. At night
- * the black hole in an aurora sky; by day the sun over a filmed summer day with a glowing gateway.
+ * the black hole in an aurora sky; by day the sun rising over a sea of cloud, seen from orbit.
  */
 export function Hero() {
   return (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Intro } from "@/features/landing/intro/intro";
 import { buildStarChart } from "@/features/landing/map/star-chart";
 import { ScrollFX } from "@/features/landing/scroll-fx";
 import { ClosingSection } from "@/features/landing/sections/closing";
@@ -10,6 +11,7 @@ import { PrivacySection } from "@/features/landing/sections/privacy";
 import { WorldsSection } from "@/features/landing/sections/regions";
 import { ShowcaseSection } from "@/features/landing/sections/showcase";
 import { StatementSection } from "@/features/landing/sections/statement";
+import { SkyLife } from "@/features/landing/sky-life";
 import { getReleases } from "@/lib/releases";
 import { SITE } from "@/lib/site";
 
@@ -62,7 +64,9 @@ export default async function LandingPage() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: static, first-party structured data, with "<" escaped.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, "\\u003c") }}
       />
+      <Intro />
       <Hero />
+      <SkyLife />
       <StickerMarquee />
       <StatementSection />
       <ShowcaseSection />

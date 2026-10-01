@@ -3,136 +3,136 @@
     "w": 414,
     "h": 577,
     "pose": "astro-teal.f95095b2.webp",
-    "wave": "astro-teal-wave.669ef0e5.webp",
+    "wave": "astro-teal-wave.5ad29bf9.webp",
     "arm": {
       "x": 54.83,
       "y": 18.37,
       "w": 45.17,
       "h": 38.99,
       "n": 41,
-      "span": 42.3155,
-      "pad": 0.01604
+      "span": 43.1651,
+      "pad": 0.0264
     },
     "face": "astro-teal-face.85422ee4.webp",
-    "model": "astro-teal.70e038a6.glb"
+    "model": "astro-teal.3462951e.glb"
   },
   "alien-zib": {
     "w": 346,
     "h": 606,
     "pose": "alien-zib.8e6a5ac8.webp",
-    "wave": "alien-zib-wave.dacda516.webp",
+    "wave": "alien-zib-wave.5eb6c98c.webp",
     "arm": {
       "x": 54.62,
       "y": 33.66,
       "w": 45.38,
       "h": 31.35,
       "n": 41,
-      "span": 42.5669,
-      "pad": 0.01911
+      "span": 43.7804,
+      "pad": 0.03391
     },
     "face": "alien-zib-face.f5b5aada.webp",
-    "model": "alien-zib.64cde62f.glb"
+    "model": "alien-zib.d8b97b7f.glb"
   },
   "alien-nova": {
     "w": 282,
     "h": 615,
     "pose": "alien-nova.658dc14c.webp",
-    "wave": "alien-nova-wave.bae14632.webp",
+    "wave": "alien-nova-wave.df874e56.webp",
     "arm": {
       "x": 47.16,
       "y": 28.46,
       "w": 52.84,
       "h": 28.13,
       "n": 41,
-      "span": 42.651,
-      "pad": 0.02013
+      "span": 43.0536,
+      "pad": 0.02504
     },
     "face": "alien-nova-face.39257490.webp",
-    "model": "alien-nova.bb051482.glb"
+    "model": "alien-nova.bb712279.glb"
   },
   "alien-meshy": {
     "w": 369,
     "h": 612,
     "pose": "alien-meshy.9a8a744c.webp",
-    "wave": "alien-meshy-wave.d5c0c7e1.webp",
+    "wave": "alien-meshy-wave.1278415e.webp",
     "arm": {
       "x": 0,
       "y": 32.19,
       "w": 40.92,
       "h": 28.76,
       "n": 41,
-      "span": 42.6291,
-      "pad": 0.01987
+      "span": 43.2201,
+      "pad": 0.02707
     },
     "face": "alien-meshy-face.9241027c.webp",
-    "model": "alien-meshy.118ee132.glb"
+    "model": "alien-meshy.2376b0e7.glb"
   },
   "monster-bruno": {
     "w": 582,
     "h": 580,
     "pose": "monster-bruno.29842e99.webp",
-    "wave": "monster-bruno-wave.342ccffd.webp",
+    "wave": "monster-bruno-wave.0748b099.webp",
     "arm": {
       "x": 66.84,
       "y": 24.83,
       "w": 33.16,
       "h": 35.34,
       "n": 41,
-      "span": 42.2746,
-      "pad": 0.01554
+      "span": 43.229,
+      "pad": 0.02718
     },
     "face": "monster-bruno-face.a994d687.webp",
-    "model": "monster-bruno.7b1ff19b.glb"
+    "model": "monster-bruno.8951ab96.glb"
   },
   "monster-gloop": {
     "w": 518,
     "h": 560,
     "pose": "monster-gloop.47958cc9.webp",
-    "wave": "monster-gloop-wave.313372b7.webp",
+    "wave": "monster-gloop-wave.ec3ad60b.webp",
     "arm": {
       "x": 58.3,
       "y": 19.46,
       "w": 41.7,
       "h": 41.43,
       "n": 41,
-      "span": 42.1389,
-      "pad": 0.01389
+      "span": 43.3894,
+      "pad": 0.02914
     },
     "face": "monster-gloop-face.cd6833cb.webp",
-    "model": "monster-gloop.83d5475a.glb"
+    "model": "monster-gloop.60edf6e5.glb"
   },
   "human-maya": {
     "w": 334,
     "h": 604,
     "pose": "human-maya.a2538d65.webp",
-    "wave": "human-maya-wave.05338f39.webp",
+    "wave": "human-maya-wave.8ea7d8f1.webp",
     "arm": {
       "x": 55.09,
       "y": 24.83,
       "w": 44.91,
       "h": 30.13,
       "n": 41,
-      "span": 42.64,
-      "pad": 0.02
+      "span": 43.8941,
+      "pad": 0.03529
     },
     "face": "human-maya-face.399f5b46.webp",
-    "model": "human-maya.c64b3e5a.glb"
+    "model": "human-maya.8ac2478e.glb"
   },
   "human-leo": {
     "w": 323,
     "h": 602,
     "pose": "human-leo.9b8d21fe.webp",
-    "wave": "human-leo-wave.9aeb8034.webp",
+    "wave": "human-leo-wave.aeeaed59.webp",
     "arm": {
       "x": 54.8,
       "y": 30.4,
       "w": 45.2,
       "h": 29.24,
       "n": 41,
-      "span": 42.6849,
-      "pad": 0.02055
+      "span": 43.2466,
+      "pad": 0.0274
     },
     "face": "human-leo-face.e64351d7.webp",
-    "model": "human-leo.5d6f8af1.glb"
+    "model": "human-leo.05726e75.glb"
   }
 }

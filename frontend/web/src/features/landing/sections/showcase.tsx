@@ -28,11 +28,12 @@ export function ShowcaseSection() {
         </div>
 
         <div className="relative mx-auto mt-28 max-w-[74rem] md:mt-24">
-          {/* The light the window sits in: the four worlds' inks, soft and wide. */}
+          {/* The light the window sits in: the four worlds' inks, soft and wide. Its own layer, so
+              the scroll's zoom scales the blurred light rather than blurring it again each frame. */}
           <div
             aria-hidden="true"
             data-fx="zoom"
-            className="pointer-events-none absolute inset-x-[4%] top-[6%] bottom-[-6%] -z-10 rounded-[50%] opacity-80 blur-3xl"
+            className="pointer-events-none absolute inset-x-[4%] top-[6%] bottom-[-6%] -z-10 rounded-[50%] opacity-80 blur-3xl will-change-transform"
             style={{
               background:
                 "radial-gradient(50% 60% at 30% 40%, color-mix(in oklch, var(--r-spaces-solid) 45%, transparent), transparent 70%), radial-gradient(45% 55% at 72% 35%, color-mix(in oklch, var(--r-profiles-solid) 45%, transparent), transparent 70%), radial-gradient(40% 50% at 55% 90%, color-mix(in oklch, var(--r-overprint-fill) 30%, transparent), transparent 70%)",

@@ -162,6 +162,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  gsap@3.15.0: e0e9a5b51e538ffaca6f1b1c1e69f33da0f229e5c1d834f8c56b812415015d10
+
 importers:
 
   .:
@@ -333,7 +336,7 @@ importers:
         version: link:../design-tokens
       gsap:
         specifier: 3.15.0
-        version: 3.15.0
+        version: 3.15.0(patch_hash=e0e9a5b51e538ffaca6f1b1c1e69f33da0f229e5c1d834f8c56b812415015d10)
       next:
         specifier: 16.3.6
         version: 16.3.6(@types/node@26.6.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -4546,7 +4549,7 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  gsap@3.15.0: {}
+  gsap@3.15.0(patch_hash=e0e9a5b51e538ffaca6f1b1c1e69f33da0f229e5c1d834f8c56b812415015d10): {}
 
   helmet@8.3.0: {}
 

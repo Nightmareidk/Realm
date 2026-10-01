@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { cx } from "@/lib/cx";
 import cast from "./cast.json";
 import styles from "./fun.module.css";
+import { WaveStrip } from "./wave-strip";
 
 /** Realm's cast: an astronaut, aliens, monsters and people, made in Meshy. */
 export type CastName = keyof typeof cast;
@@ -77,12 +78,9 @@ export function Explorer({
           className={styles.arm}
           style={{ left: `${arm.x}%`, top: `${arm.y}%`, width: `${arm.w}%`, height: `${arm.h}%` }}
         >
-          {/* biome-ignore lint/performance/noImgElement: a frame strip stepped through by CSS; next/image would resize it. */}
-          <img
+          <WaveStrip
             src={`/art/cast/${wave}`}
-            alt=""
-            loading={priority ? "eager" : "lazy"}
-            decoding="async"
+            eager={priority}
             className={cx(styles.frames, waving && styles.waving)}
             style={{ "--span": arm.span, "--pad": arm.pad } as CSSProperties}
           />

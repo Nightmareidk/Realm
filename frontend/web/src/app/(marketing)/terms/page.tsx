@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { DocPage } from "@/components/doc-page";
 
-export const metadata: Metadata = { title: "Terms" };
+export const metadata: Metadata = {
+  title: "Terms",
+  description:
+    "Realm's terms during early access: who can join, the ground rules, and when the full terms of service will be published.",
+  alternates: { canonical: "/terms" },
+};
 
 export default function TermsPage() {
   return (
