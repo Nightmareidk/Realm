@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="_world.css" />
+    <link rel="stylesheet" href="_app.css" />
+    <link rel="stylesheet" href="_hybrid.css" />
+    <script src="_parts.js"></script>
+    <script src="_hybrid.js"></script>
+  </head>
+  <body>
+    <div class="field-bg dim"></div>
+    <div class="grain"></div>
+    <div class="hb-top" id="tb"></div>
+    <div class="frame hb-side" id="sd"></div>
+    <div class="frame hb-main col" style="right: 320px">
+      <div class="row" style="gap: 14px; height: 64px; padding: 0 18px; border-bottom: 1px solid var(--hair)">
+        <span style="width: 36px; height: 36px; border-radius: 11px; background: #ff8a5c; display: grid; place-items: center; font-family: var(--display); font-weight: 800; color: #1d0904; font-size: 14px">LN</span>
+        <div class="display" style="font-size: 1.35rem; letter-spacing: -0.03em; white-space: nowrap">Late Night Lobby</div>
+        <nav class="row" style="gap: 4px; margin-left: 12px" id="rooms"></nav>
+        <span class="row" style="margin-left: auto; gap: 6px"><span class="chip" style="height: 36px; white-space: nowrap"><i class="dot"></i>4 here now</span><span class="ghost" style="height: 36px; padding: 0 14px; font-size: 0.88rem">Invite</span></span>
+      </div>
+      <div class="scrollend" style="padding: 6px 28px 0" id="ms"></div>
+      <div style="padding: 10px 28px 16px">
+        <div class="composer"><span class="iconbtn" id="pl"></span><span class="ph">Message #general</span><span class="iconbtn" id="sm"></span><span class="send" id="se"></span></div>
+      </div>
+    </div>
+    <div class="frame hb-right" id="rt"></div>
+    <script>
+      tb.innerHTML = hbTop("Spaces");
+      sd.innerHTML = hbSide("Late Night Lobby");
+      rooms.innerHTML = [
+        ["# general", 1],
+        ["# clips", 0, '<span class="ndot"></span>'],
+        ["# lfg", 0],
+        ["▤ builds", 0, '<span class="count n" style="height:20px;min-width:20px">2</span>'],
+      ]
+        .map(([n, on, b]) => `<span class="roomtab ${on ? "on" : ""}">${n}${b || ""}</span>`)
+        .join("");
+      ms.innerHTML = spaceMessages(true);
+      pl.innerHTML = ic("plus");
+      sm.innerHTML = ic("smile");
+      se.innerHTML = ic("send", "sm");
+      rt.innerHTML = members();
+    </script>
+  </body>
+</html>

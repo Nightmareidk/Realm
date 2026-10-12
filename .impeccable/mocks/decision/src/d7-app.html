@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Category standard — inside the app</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&family=Atkinson+Hyperlegible+Next:wght@400;700&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: #313338; color: #dbdee1; font-family: "Atkinson Hyperlegible Next", sans-serif; display: grid; grid-template-columns: 72px 240px 1fr 240px; font-size: 15px; }
+  .rail { background: #1e1f22; padding: 12px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .rail i { width: 48px; height: 48px; border-radius: 50%; background: #313338; display: block; }
+  .rail i.on { border-radius: 16px; background: #4b4fe6; }
+  .rail hr { width: 32px; border: 0; border-top: 2px solid #35363c; }
+  .list { background: #2b2d31; display: flex; flex-direction: column; }
+  .list header { height: 48px; padding: 0 16px; display: flex; align-items: center; font-family: "Figtree"; font-weight: 800; color: #fff; box-shadow: 0 1px 0 #1f2023; }
+  .list .cat { padding: 18px 16px 4px; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #949ba4; }
+  .list span.ch { margin: 1px 8px; padding: 6px 10px; border-radius: 4px; color: #949ba4; }
+  .list span.ch.on { background: #404249; color: #fff; }
+  .list .me { margin-top: auto; background: #232428; height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 10px; color: #fff; font-weight: 700; }
+  .list .me i { width: 32px; height: 32px; border-radius: 50%; background: #e86a92; display: block; }
+  main { display: flex; flex-direction: column; min-width: 0; }
+  main header { height: 48px; padding: 0 16px; display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 700; box-shadow: 0 1px 0 #26272b; }
+  main header span { color: #949ba4; font-weight: 400; font-size: 14px; margin-left: 8px; }
+  .chat { flex: 1; padding: 18px 16px; display: flex; flex-direction: column; gap: 18px; }
+  .m { display: flex; gap: 14px; }
+  .m i { width: 40px; height: 40px; border-radius: 50%; flex: none; display: block; }
+  .m b { color: #fff; } .m small { color: #949ba4; margin-left: 8px; }
+  .m p { margin-top: 2px; line-height: 1.45; }
+  .clip { margin-top: 8px; width: 380px; height: 200px; border-radius: 8px; background: #1e1f22; display: grid; place-items: center; }
+  .clip span { width: 54px; height: 54px; border-radius: 50%; background: rgb(0 0 0 / .6); display: block; }
+  .composer { margin: 0 16px 22px; height: 46px; border-radius: 8px; background: #383a40; display: flex; align-items: center; padding: 0 16px; color: #8a8f98; }
+  aside { background: #2b2d31; padding: 18px 12px; }
+  aside h4 { font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #949ba4; margin: 0 8px 10px; }
+  aside div { display: flex; align-items: center; gap: 10px; padding: 6px 8px; color: #dbdee1; }
+  aside div i { width: 32px; height: 32px; border-radius: 50%; display: block; }
+  aside div small { display: block; color: #949ba4; font-size: 12px; }
+</style>
+</head>
+<body>
+  <nav class="rail"><i style="background:#4b4fe6;border-radius:16px"></i><hr><i class="on"></i><i></i><i></i><i></i></nav>
+  <nav class="list"><header>Late Night Lobby</header><div class="cat">TEXT CHANNELS</div><span class="ch on"># general</span><span class="ch"># clips</span><span class="ch"># lfg</span><span class="ch"># builds</span><div class="cat">VOICE CHANNELS</div><span class="ch">🔊 Squad</span><div class="me"><i></i>you</div></nav>
+  <main>
+    <header># general <span>Hang out and plan the night</span></header>
+    <section class="chat">
+      <div class="m"><i style="background:#f2a541"></i><div><b>Noor</b><small>Today at 9:02 PM</small><p>anyone on tonight? ranked at 9</p></div></div>
+      <div class="m"><i style="background:#5fc9a8"></i><div><b>Kenji</b><small>Today at 9:04 PM</small><p>in. also this, from last night</p><div class="clip"><span></span></div></div></div>
+      <div class="m"><i style="background:#e86a92"></i><div><b>you</b><small>Today at 9:05 PM</small><p>same, give me ten</p></div></div>
+    </section>
+    <div class="composer">Message #general</div>
+  </main>
+  <aside><h4>ONLINE — 3</h4><div><i style="background:#f2a541"></i><span>Noor<small>Playing Valorant</small></span></div><div><i style="background:#5fc9a8"></i><span>Kenji<small>Cutting a clip</small></span></div><div><i style="background:#e86a92"></i><span>you</span></div><h4 style="margin-top:16px">OFFLINE — 1</h4><div style="opacity:.5"><i style="background:#888"></i><span>Leo</span></div></aside>
+</body>
+</html>

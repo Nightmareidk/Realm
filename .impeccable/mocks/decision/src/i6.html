@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Idea — Profile canvas</title>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800;900&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --g: #0b0b0d; --s: #15151a; --r: #1e1e25; --rule: #2a2a32; --ink: #f4f3f0; --ink2: #a8a6ad; --ink3: #6d6b73; --acc: #8b7bff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--g); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  .nav { position: absolute; left: 48px; right: 48px; top: 0; height: 76px; display: flex; align-items: center; gap: 30px; font-size: 15px; color: var(--ink2); }
+  .nav .logo { font-family: "Schibsted Grotesk"; font-weight: 900; font-size: 24px; color: var(--ink); }
+  .nav .r { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+  .btn { height: 44px; padding: 0 18px; border-radius: 12px; background: var(--acc); color: #0f0a2a; font-weight: 700; display: inline-flex; align-items: center; }
+  .copy { position: absolute; left: 48px; top: 160px; width: 480px; }
+  h1 { font-family: "Schibsted Grotesk"; font-weight: 900; font-size: 80px; line-height: .95; letter-spacing: -.04em; }
+  .lead { margin-top: 22px; font-size: 20px; line-height: 1.55; color: var(--ink2); }
+  .acts { margin-top: 30px; display: flex; gap: 12px; } .acts .btn { height: 56px; padding: 0 24px; font-size: 17px; }
+  .themes { margin-top: 40px; display: flex; gap: 10px; align-items: center; color: var(--ink3); font-size: 14px; }
+  .themes i { width: 34px; height: 34px; border-radius: 10px; display: block; }
+  .themes i.on { box-shadow: 0 0 0 2px var(--g), 0 0 0 4px var(--ink); }
+  /* A profile page as a canvas */
+  .page { position: absolute; right: 48px; top: 96px; width: 780px; height: 760px; border-radius: 28px; background: var(--s); border: 1px solid var(--rule); overflow: hidden; box-shadow: 0 60px 120px -40px rgb(0 0 0 / .9); }
+  .ban { height: 200px; background: radial-gradient(120% 140% at 0% 0%, #8b7bff, transparent 55%), radial-gradient(100% 120% at 100% 0%, #ff6a9e, transparent 55%), radial-gradient(120% 120% at 50% 100%, #22d3ee, #15151a 70%); }
+  .id { display: flex; align-items: flex-end; gap: 18px; padding: 0 28px; margin-top: -56px; }
+  .av { width: 116px; height: 116px; border-radius: 34px; background: linear-gradient(135deg, #ffd36b, #ff6a3d); border: 5px solid var(--s); display: grid; place-items: center; font-family: "Schibsted Grotesk"; font-weight: 900; font-size: 44px; color: #1d0904; }
+  .id h2 { font-family: "Schibsted Grotesk"; font-weight: 900; font-size: 36px; letter-spacing: -.03em; }
+  .id p { color: var(--ink2); font-size: 15px; padding-bottom: 6px; }
+  .id .follow { margin-left: auto; margin-bottom: 8px; }
+  .grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; padding: 22px 28px; }
+  .box { border-radius: 20px; background: var(--r); padding: 16px; }
+  .box h4 { font-size: 13px; color: var(--ink3); font-weight: 700; margin-bottom: 10px; }
+  .clip { height: 190px; border-radius: 14px; background: radial-gradient(100% 80% at 30% 20%, #4b3a8a, #1d1b2c 70%); position: relative; }
+  .clip i { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px; border-radius: 50%; background: rgb(255 255 255 / .9); }
+  .now { display: flex; gap: 12px; align-items: center; }
+  .now i { width: 54px; height: 54px; border-radius: 12px; background: linear-gradient(135deg, #22d3ee, #2b47ff); display: block; }
+  .now b { display: block; } .now small { color: var(--ink2); }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .badges span { height: 30px; padding: 0 11px; border-radius: 15px; background: var(--s); border: 1px solid var(--rule); font-size: 13px; display: flex; align-items: center; }
+  .spaces { display: flex; gap: 8px; margin-top: 4px; }
+  .spaces i { width: 46px; height: 46px; border-radius: 13px; display: block; }
+  .note { position: absolute; left: 48px; bottom: 24px; font-size: 13px; color: var(--ink3); width: 480px; }
+
+  .amb { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .amb i { position: absolute; border-radius: 50%; filter: blur(70px); display: block; }
+  .grain { position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); opacity: .9; mix-blend-mode: overlay; }
+  body > *:not(.amb):not(.grain) { position: absolute; z-index: 2; }
+  body > header.nav { z-index: 5; }
+</style></head><body>
+<div class="amb" style="background:linear-gradient(150deg,#0e0c18 0%,#0b0b10 50%,#0a1016 100%)">
+  <i style="width:800px;height:600px;left:700px;top:-160px;background:#8b7bff;opacity:.38"></i>
+  <i style="width:600px;height:500px;left:1100px;top:60px;background:#ff6a9e;opacity:.26"></i>
+  <i style="width:700px;height:600px;left:820px;top:560px;background:#22d3ee;opacity:.22"></i>
+  <div style="position:absolute;inset:0;background-image:radial-gradient(rgb(255 255 255 /.07) 1px,transparent 1.2px);background-size:26px 26px;mask-image:linear-gradient(90deg,#000 0%,transparent 45%)"></div>
+</div><div class="grain"></div>
+  <header class="nav"><span class="logo">realm</span><span>Spaces</span><span>Feed</span><span>Profiles</span><span>Boards</span><div class="r"><span>Sign in</span><span class="btn">Open Realm</span></div></header>
+  <div class="copy">
+    <h1>A profile that looks like you.</h1>
+    <p class="lead">Your clips, your Spaces, what you're into and what you're playing, laid out your way. Then talk to your people in the same app.</p>
+    <div class="acts"><span class="btn">Open Realm in your browser</span></div>
+    <div class="themes">Theme <i class="on" style="background:linear-gradient(135deg,#8b7bff,#ff6a9e)"></i><i style="background:linear-gradient(135deg,#22d3ee,#2b47ff)"></i><i style="background:linear-gradient(135deg,#ffd36b,#ff6a3d)"></i><i style="background:#e9e6f2"></i></div>
+  </div>
+  <section class="page">
+    <div class="ban"></div>
+    <div class="id"><span class="av">M</span><div><h2>Maya</h2><p>@maya · speedruns, sourdough, very long voice calls</p></div><span class="btn follow">Add friend</span></div>
+    <div class="grid">
+      <div class="box"><h4>PINNED CLIP</h4><div class="clip"><i></i></div></div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="box"><h4>RIGHT NOW</h4><div class="now"><i></i><div><b>Celeste, Chapter 7</b><small>speedrun practice · 1h</small></div></div></div>
+        <div class="box"><h4>SPACES</h4><div class="spaces"><i style="background:#ff5e3a"></i><i style="background:#f4ecd8"></i><i style="background:#2b47ff"></i><i style="background:#14532d"></i></div><div class="badges"><span>Founder</span><span>212 clips</span><span>Board MVP</span></div></div>
+      </div>
+    </div>
+  </section>
+  <p class="note">Scroll idea: the profile assembles piece by piece as you scroll, and the theme swaps live as you pass the swatches.</p>
+</body></html>

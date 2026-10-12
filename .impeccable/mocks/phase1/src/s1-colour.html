@@ -1,0 +1,25 @@
+<!doctype html><html class="t-orchid"><head><meta charset="utf-8"><link rel="stylesheet" href="_world.css"><link rel="stylesheet" href="_app.css"><script src="_parts.js"></script>
+<style>body{}</style></head>
+<body class="t-orchid"><div class="field-bg"></div><div class="grain"></div>
+<div class="row" style="position:absolute;left:56px;right:56px;top:34px;justify-content:space-between"><span class="mark" id="mk"></span><span class="ink2">Have an account? <u style="color:var(--ink)">Sign in</u></span></div>
+<div style="position:absolute;left:120px;top:150px;width:600px">
+  <h1 class="display" style="font-size:4.6rem">Pick your colour.</h1>
+  <p class="ink2" style="font-size:1.2rem;margin-top:18px;max-width:30ch">It's how Realm looks for you, and how your profile looks to friends. Change it any time.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:34px" id="sws"></div>
+  <div class="row" style="gap:20px;margin-top:30px"><span class="act" style="padding:0 34px">Next</span><span class="ink2">Step 1 of 3 · your birthday is next</span></div>
+</div>
+<div style="position:absolute;right:120px;top:150px;width:470px" id="pv"></div>
+<script>
+mk.innerHTML = MARK + "realm";
+const T=[["Mint","#1fbf8f","#2b47ff","#0f766e"],["Orchid","#8b6bff","#ff5f9a","#3a2a8a"],["Aqua","#14b8d6","#2b47ff","#1fbf8f"],["Ember","#ff6a3d","#ffb547","#c2185b"]];
+sws.innerHTML = T.map(([n,a,b,c],i)=>`<div class="sw ${i===1?"on":""}" style="background:radial-gradient(100% 120% at 0% 100%,${a},transparent 70%),radial-gradient(90% 110% at 100% 0%,${b},transparent 70%),${c}">${i===1?'<span class="chk"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>':""}<span style="font-size:1.05rem;text-shadow:0 1px 8px rgb(0 0 0/.5)">${n}</span></div>`).join("");
+pv.innerHTML = `<div class="panel" style="padding:12px;border-radius:28px">
+  <div style="height:150px;border-radius:20px;background:radial-gradient(120% 140% at 0% 0%,#8b6bff,transparent 58%),radial-gradient(100% 120% at 100% 10%,#ff5f9a,transparent 55%),radial-gradient(120% 120% at 50% 100%,#3a2a8a,#131318 78%)"></div>
+  <div class="row" style="gap:14px;padding:0 14px;margin-top:-26px;align-items:flex-end"><span style="width:84px;height:84px;border-radius:26px;border:5px solid #141419;background:linear-gradient(135deg,#cdb4ff,#ff9ac2);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:34px;color:#160a2e">Y</span><div style="padding-bottom:8px"><div class="display" style="font-size:1.6rem;letter-spacing:-0.03em">You</div><div class="small ink2">@you · your profile, in Orchid</div></div></div>
+  <div class="row" style="gap:8px;padding:16px 14px 6px"><span class="tag">Speedruns</span><span class="tag">Late-night calls</span><span class="tag">Clips</span></div>
+  <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px;padding:8px 6px 6px">
+    <div style="border-radius:16px;background:#1b1b22;padding:12px"><div class="small" style="font-weight:700;color:var(--ink-2)">Pinned clip</div><div style="height:96px;margin-top:8px;border-radius:12px;background:radial-gradient(90% 80% at 25% 20%,#8b6bff,transparent 60%),radial-gradient(90% 90% at 85% 90%,#ff5f9a,transparent 65%),#15151b"></div></div>
+    <div style="border-radius:16px;background:#1b1b22;padding:12px"><div class="small" style="font-weight:700;color:var(--ink-2)">Right now</div><div class="row" style="gap:10px;margin-top:10px"><i class="dot"></i><span class="small">Around</span></div><div class="row" style="gap:6px;margin-top:22px"><span class="act" style="height:34px;padding:0 14px;font-size:0.85rem">Add friend</span></div></div>
+  </div></div>
+  <p class="small ink2" style="margin-top:14px;text-align:center">A preview. Your real profile is yours to fill in.</p>`;
+</script></body></html>

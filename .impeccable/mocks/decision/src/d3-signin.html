@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Arcade Cabinet — sign in</title>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=block" rel="stylesheet">
+<style>
+  :root { --black: #07080b; --tile: #141927; --line: #2a3350; --ink: #f4f1e8; --dim: #8a8f9c; --red: #ff3c5a; --cyan: #33e0ff; --gold: #ffd23f; --green: #3ddc84; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--black); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  body::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(180deg, rgb(0 0 0 / .25) 0 1px, transparent 1px 3px); }
+  .hud { position: absolute; left: 40px; right: 40px; top: 24px; display: flex; justify-content: space-between; font-family: "Silkscreen"; font-size: 18px; }
+  .hud b { display: block; font-weight: 400; color: var(--ink); }
+  .screen { position: absolute; left: 50%; top: 110px; width: 640px; transform: translateX(-50%); border: 6px solid var(--tile); background: #0b0d14; padding: 34px 44px 38px; box-shadow: 0 0 0 4px #05060a; }
+  h1 { font-family: "Silkscreen"; font-weight: 700; font-size: 42px; text-align: center; color: var(--gold); text-shadow: 4px 4px 0 #4a3a00; }
+  .sub { text-align: center; font-family: "Silkscreen"; color: var(--dim); margin-top: 8px; font-size: 15px; }
+  .f { margin-top: 26px; }
+  .f label { display: flex; justify-content: space-between; font-family: "Silkscreen"; font-size: 15px; margin-bottom: 8px; }
+  .f label a { color: var(--cyan); }
+  .box { height: 54px; border: 4px solid var(--line); display: flex; align-items: center; padding: 0 14px; font-size: 18px; }
+  .box.focus { border-color: var(--ink); }
+  .box.focus::after { content: ""; width: 12px; height: 22px; background: var(--ink); margin-left: 4px; }
+  .box span { margin-left: auto; font-family: "Silkscreen"; font-size: 13px; color: var(--dim); }
+  .start { margin-top: 30px; height: 62px; background: var(--red); color: var(--black); display: flex; align-items: center; justify-content: center; font-family: "Silkscreen"; font-size: 24px; box-shadow: inset -5px -5px 0 #a51d33, inset 5px 5px 0 #ff8597; }
+  .alt { margin-top: 20px; text-align: center; font-family: "Silkscreen"; font-size: 14px; color: var(--dim); }
+  .alt b { color: var(--green); font-weight: 400; }
+  .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: repeating-linear-gradient(90deg, #1a2032 0 40px, #151a2a 40px 80px); border-top: 4px solid var(--line); }
+  canvas { position: absolute; image-rendering: pixelated; }
+</style></head><body>
+  <div class="hud"><span style="color:var(--red)">1UP<b>REALM</b></span><span style="color:var(--gold)">ONLINE NOW<b>4 FRIENDS</b></span><span style="color:var(--cyan)">CREDITS<b>FREE PLAY</b></span></div>
+  <div class="screen">
+    <h1>PLAYER LOGIN</h1><p class="sub">CONTINUE? 9</p>
+    <div class="f"><label>EMAIL OR USERNAME</label><div class="box focus">noor.h</div></div>
+    <div class="f"><label>PASSWORD <a>FORGOT IT?</a></label><div class="box">••••••••••••<span>SHOW</span></div></div>
+    <div class="start">PRESS START</div>
+    <p class="alt">NEW PLAYER? <b>CREATE AN ACCOUNT</b></p>
+  </div>
+  <div class="floor"></div>
+  <script>
+    const base = "../../../../frontend/web/public/art/cast/";
+    [["human-maya.a2538d65.webp", 120], ["alien-zib.8e6a5ac8.webp", 260], ["monster-gloop.47958cc9.webp", 1120], ["astro-teal.f95095b2.webp", 1260]].forEach(([s, x]) => {
+      const img = new Image(); img.onload = () => { const h = 30, w = Math.round(img.width * (h / img.height)); const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, w, h); c.style.width = w * 6 + "px"; c.style.height = h * 6 + "px"; c.style.left = x - (w * 3) + "px"; c.style.bottom = "86px"; document.body.appendChild(c); }; img.src = base + s;
+    });
+  </script>
+</body></html>

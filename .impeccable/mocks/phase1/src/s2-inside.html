@@ -1,0 +1,36 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_world.css"><link rel="stylesheet" href="_app.css"><script src="_parts.js"></script>
+<style>
+.dock{position:absolute;left:10px;top:10px;bottom:10px;width:82px;display:flex;flex-direction:column;align-items:center;padding:16px 0 12px}
+.di{display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;padding:9px 0 7px;border-radius:16px;color:var(--ink-2);font-size:0.74rem;font-weight:700}
+.di.on{color:var(--ink);background:rgb(255 255 255/.08)}
+.app{position:absolute;inset:0}
+.sp{border-radius:20px;background:#131318;box-shadow:inset 0 0 0 1px rgb(255 255 255/.07);overflow:hidden}
+.sp .bn{height:150px}
+.scrim{position:absolute;inset:0;background:rgb(11 11 14/.72)}
+.modal{position:absolute;left:50%;top:50%;width:460px;translate:-50% -50%;padding:34px 36px 30px;border-radius:28px;background:#141419;box-shadow:inset 0 0 0 1px rgb(255 255 255/.1),0 60px 120px -40px #000}
+</style></head>
+<body><div class="field-bg dim"></div><div class="grain"></div>
+<div class="app">
+  <div class="frame dock"><span id="mk"></span><nav class="col" style="gap:6px;margin-top:22px" id="nav"></nav></div>
+  <div style="position:absolute;left:112px;right:24px;top:22px"><div class="row" style="justify-content:space-between"><h1 class="display" style="font-size:2.2rem;letter-spacing:-0.035em">Explore</h1><div class="travel" style="width:360px" id="tr"></div></div>
+  <div class="row" style="gap:8px;margin-top:18px"><span class="filter on">Popular</span><span class="filter">Games</span><span class="filter">Music</span><span class="filter">Making things</span><span class="filter">Study</span></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px" id="grid"></div></div>
+</div>
+<div class="scrim"></div>
+<div class="modal">
+  <span class="mark" id="mk2"></span>
+  <h2 class="display" style="font-size:2.7rem;margin-top:26px">Welcome back.</h2>
+  <div style="margin-top:26px"><label class="lbl">Email or username</label><div class="input focus">maya@example.com</div></div>
+  <div style="margin-top:18px"><label class="lbl">Password</label><div class="input"><span>••••••••••••</span><span class="end">Show</span></div><div style="margin-top:10px"><u class="small" style="color:var(--ink)">Forgot your password?</u></div></div>
+  <span class="act block" style="margin-top:24px">Sign in</span>
+  <p class="ink2" style="margin-top:20px;text-align:center">New here? <u style="color:var(--ink)">Create an account</u></p>
+</div>
+<script>
+const M = (s=32)=>'<span style="display:block;width:'+s+'px;height:'+s+'px">'+MARK.replace('viewBox','width="'+s+'" height="'+s+'" viewBox')+'</span>';
+mk.innerHTML = M();
+mk2.innerHTML = MARK + "realm";
+nav.innerHTML = [["home","Home"],["spaces","Spaces"],["messages","Messages"],["feed","Feed"],["explore","Explore"]].map(([i,l],k)=>`<span class="di ${k===4?"on":""}">${ic(i)}${l}</span>`).join("");
+tr.innerHTML = ic("search","sm") + "Search Spaces and people…" + '<span class="kbd">Ctrl K</span>';
+const S=[["Late Night Lobby","#ff6a3d","#ffb547","412 members · 38 here now"],["Speedrun Garage","#8b6bff","#ff5f9a","2.1k members · 140 here now"],["Clip club","#1fbf8f","#2b47ff","860 members · 52 here now"],["Sunday builds","#14b8d6","#1fbf8f","330 members · 12 here now"],["Lo-fi study hall","#3a2a8a","#ff5f9a","5.4k members · 610 here now"],["Indie dev nights","#ff6a3d","#c2185b","1.2k members · 77 here now"],["Climbing crew","#0f766e","#2b47ff","210 members · 9 here now"],["Board game table","#ffb547","#ff6a3d","540 members · 31 here now"],["Rhythm heads","#8b6bff","#14b8d6","980 members · 64 here now"],["Photo walk","#1fbf8f","#ffb547","150 members · 6 here now"],["Retro cabinet","#c2185b","#2b47ff","720 members · 41 here now"],["Book swap","#0f766e","#ff9ac2","260 members · 14 here now"]];
+grid.innerHTML = S.map(([n,a,b,m])=>`<div class="sp"><div class="bn" style="background:radial-gradient(100% 120% at 0% 0%,${a},transparent 65%),radial-gradient(100% 120% at 100% 100%,${b},#131318 80%)"></div><div style="padding:12px 14px 14px"><b>${n}</b><div class="small ink2" style="margin-top:2px">${m}</div></div></div>`).join("");
+</script></body></html>

@@ -47,7 +47,7 @@ flowchart LR
 |---|---|---|
 | `frontend/web` | Landing, download portal, the web app UI. SSR only for public pages (SEO, link previews). **No business logic.** | CDN + stateless Node |
 | `backend/api` | All reads/writes, validation, permissions, auth. REST `/v1` + OpenAPI. | Stateless, horizontal |
-| `backend/gateway` | Persistent WebSocket connections: dispatch events, presence, typing, resume. | Horizontal; sticky only per-connection |
+| gateway (`backend/api`, entry `gateway-main.ts`) | Persistent WebSocket connections: dispatch events, presence, typing, resume. Its own process in production; rides on the API's server in single-process development. | Horizontal; sticky only per-connection |
 | `backend/worker` | Async jobs: email, media processing, notification fan-out, counters, cleanup. | Queue depth |
 
 This is a **modular monolith**: one API codebase split into domain modules (`auth`, `users`, `communities`, `messages`, …) with clear boundaries. It is deliberately *not* microservices — a small team shipping microservices ships nothing. Module boundaries mean any hot module (messages, feed) can be carved into its own service later without a rewrite.
@@ -135,7 +135,8 @@ realm/
 │  ├─ web/                        Next.js: landing + download portal + web app
 │  │  └─ src/
 │  │     ├─ app/
-│  │     │  ├─ (marketing)/       /, /download, /privacy, /terms, /help
+│  │     │  ├─ (home)/            / (the front page: features/home)
+│  │     │  ├─ (marketing)/       /download, /privacy, /terms, /help
 │  │     │  ├─ (auth)/            /login, /signup, /verify, /forgot, /reset
 │  │     │  └─ (app)/             authenticated shell: /home, /s/[space]/[channel],
 │  │     │                        /messages/[channel], /u/[username], /settings/*
@@ -151,10 +152,11 @@ realm/
 │  ├─ api/                        Fastify REST API
 │  │  └─ src/
 │  │     ├─ modules/<domain>/     routes.ts · service.ts · *.test.ts
+│  │     ├─ gateway/              WebSocket gateway (connections, dispatch, presence)
 │  │     ├─ plugins/              auth context, security, errors
-│  │     ├─ lib/                  sessions, serializers, errors
-│  │     └─ server.ts
-│  ├─ gateway/                    WebSocket gateway (connections, dispatch, presence)
+│  │     ├─ lib/                  sessions, serializers, presence, errors
+│  │     ├─ server.ts             the API (plus /gateway when there's no Redis)
+│  │     └─ gateway-main.ts       the gateway as its own process (needs Redis)
 │  ├─ worker/                     BullMQ processors (email, media, notifications)
 │  ├─ db/                         Drizzle schema, migrations, seed, PGlite test harness
 │  └─ server-core/                config, logger, snowflake IDs, crypto, KV store,
@@ -222,6 +224,8 @@ In-house, following the well-trodden [Copenhagen Book](https://thecopenhagenbook
 - **Email verification**: 6-digit code (works across devices) *and* a link; hashed, 15-minute expiry, 5 attempts.
 - **Password reset**: single-use, hashed token, 60-minute expiry; all other sessions revoked on reset.
 - **Age gate**: date of birth collected at signup; under-13s are refused (COPPA); regional minimums handled in Phase 2.
+- **Web app**: the browser calls the API same-origin through the web app (`/api/*` is rewritten to `REALM_API_URL`), so the cookie stays first-party and the API's Origin check applies. Signed-in pages are guarded twice: `src/proxy.ts` turns away requests with no session cookie (to `/login?next=…`, only ever a same-site path), and the `(app)` layout asks the API who's signed in (`getViewer`). That server-side check sends `X-Realm-Peek: 1`, so it never extends the session (it couldn't pass a renewed cookie on to the browser); the app frame's own browser request does. After signing in, up or out the web app does a full page load, so nothing cached from the other state carries over.
+- **Sign-up order**: people are let in first and verify their email after (a banner with the code box stays across the app until they do). Under-13 answers hold the sign-up form on that device for a day (a neutral age screen: the form doesn't name the age until after it's answered).
 - **Gateway auth**: native clients send their token in `IDENTIFY`. Web clients fetch a 60-second single-use **gateway ticket** (`POST /v1/gateway/tickets`, cookie-authenticated) and send it in `IDENTIFY` — avoiding cross-origin cookie problems and WebSocket CSRF entirely.
 - **Later**: TOTP + passkeys (WebAuthn) in Phase 2; OAuth (Google, Apple, Discord-import) in Phase 3.
 
@@ -286,3 +290,8 @@ A UGC platform has legal duties that shape the architecture:
 | 2026-09-26 | E2EE for DMs/group DMs lands in **Phase 2, before public launch**; MLS via OpenMLS (user decision on timing). |
 | 2026-09-26 | TypeScript 6.0 until the lint toolchain supports TS 7. Drizzle 0.45 stable until 1.0 GA. |
 | 2026-09-26 | Local infra via Docker Compose (Docker Desktop, user decision). Repo lives in OneDrive (user decision). |
+| 2026-10-02 | Phase 1 starts on an **embedded Postgres** (PGlite, `DATABASE_URL=pglite:<folder>`) for local development, so nothing needs installing; Docker Compose stays the full-stack path. The API refuses `pglite:` in production (user decision). |
+| 2026-10-02 | Sign-up lets people in before they verify their email (user decision). Account screens put the landing's live 3D world beside the form (user decision, "Full spectacle"). |
+| 2026-10-04 | **Outside services** (owner's MVP plan): Postgres on Neon or Supabase, Redis on Upstash, uploads on Cloudflare R2, calls on LiveKit, maps on Mapbox, email through Resend, push through Firebase Cloud Messaging. Each is optional with a local stand-in (docs/SERVICES.md). No vendor SDKs on the server: R2 signing (SigV4), LiveKit passes (HS256) and FCM auth (RS256) use Node's crypto; the browser loads livekit-client, mapbox-gl and firebase only when a call, a map or push is used. Background jobs go through a small Redis-list queue with a separate worker (`worker-main.ts`). Moderation is automated and Space-run, with a pluggable scanner and no platform review queue except the gravest category (owner: "do not design a system that requires me to manually review every post or message"). Location: one-time place cards and nearby Spaces, never live tracking, with under-18 limits (owner: "Both"). |
+| 2026-10-04 | **Spaces, invites and room chat** built (owner: "build it"). The realtime gateway lives in `backend/api/src/gateway/` and shares the API's services (permissions, serializers), with its own entry point (`gateway-main.ts`) so production still runs it as a separate process over Redis; without Redis (single-process development) the API serves it at `/gateway`. Invites are made per Space (`POST /communities/:id/invites`), not per channel. Teen defaults apply at sign-up for under-18s (private profile, DMs from friends, requests from friends of friends), their presence shows only in Spaces of 200 or fewer, and they can't join adult-marked Spaces. |
+| 2026-10-02 | New front page, chosen from rendered previews (user decision): "Phones in motion" (a scroll tour where one 3D phone turns through the app's screens) plus "Profile canvas" (a profile that builds itself, then changes theme, and the whole page follows). Native scroll, GSAP ScrollTrigger scrubbing sticky stages, R3F rendering only while on screen; a plain sequence for reduced motion, Pause motion and no WebGL. Research behind it is in `docs/research/2026-10-*`. |

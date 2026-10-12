@@ -1,647 +1,1390 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-28T17:30:00Z",
+  "generatedAt": "2026-10-10T12:00:00.000Z",
   "title": "Design System: Realm",
   "extensions": {
     "colorMeta": {
-      "ink-night-ground": {
+      "ink-ground": {
         "role": "neutral",
-        "displayName": "Ink Night Ground",
-        "canonical": "oklch(0.135 0.036 280)",
+        "displayName": "Ink Ground",
+        "canonical": "#0b0b0e",
+        "oklch": "oklch(0.151 0.006 285.6)",
         "tonalRamp": [
-          "oklch(0.15 0.036 280.0)",
-          "oklch(0.264 0.036 280.0)",
-          "oklch(0.379 0.036 280.0)",
-          "oklch(0.493 0.036 280.0)",
-          "oklch(0.607 0.036 280.0)",
-          "oklch(0.721 0.036 280.0)",
-          "oklch(0.836 0.036 280.0)",
-          "oklch(0.95 0.036 280.0)"
-        ]
+          "oklch(0.150 0.006 285.6)",
+          "oklch(0.264 0.006 285.6)",
+          "oklch(0.379 0.006 285.6)",
+          "oklch(0.493 0.006 285.6)",
+          "oklch(0.607 0.006 285.6)",
+          "oklch(0.721 0.006 285.6)",
+          "oklch(0.836 0.006 285.6)",
+          "oklch(0.950 0.006 285.6)"
+        ],
+        "publicRole": "base (--r-bg)"
       },
-      "deep-blue-sky": {
+      "ink": {
         "role": "neutral",
-        "displayName": "Deep Blue Sky",
-        "canonical": "oklch(0.13 0.042 268)",
+        "displayName": "Ink",
+        "canonical": "#f5f4f2",
+        "oklch": "oklch(0.967 0.003 84.6)",
         "tonalRamp": [
-          "oklch(0.15 0.042 268.0)",
-          "oklch(0.264 0.042 268.0)",
-          "oklch(0.379 0.042 268.0)",
-          "oklch(0.493 0.042 268.0)",
-          "oklch(0.607 0.042 268.0)",
-          "oklch(0.721 0.042 268.0)",
-          "oklch(0.836 0.042 268.0)",
-          "oklch(0.95 0.042 268.0)"
-        ]
+          "oklch(0.150 0.003 84.6)",
+          "oklch(0.264 0.003 84.6)",
+          "oklch(0.379 0.003 84.6)",
+          "oklch(0.493 0.003 84.6)",
+          "oklch(0.607 0.003 84.6)",
+          "oklch(0.721 0.003 84.6)",
+          "oklch(0.836 0.003 84.6)",
+          "oklch(0.950 0.003 84.6)"
+        ],
+        "publicRole": "fg (--r-text)"
       },
-      "violet-sky": {
+      "ink-2": {
         "role": "neutral",
-        "displayName": "Violet Sky",
-        "canonical": "oklch(0.14 0.05 296)",
+        "displayName": "Ink 2",
+        "canonical": "#c8c6cf",
+        "oklch": "oklch(0.831 0.013 296.3)",
         "tonalRamp": [
-          "oklch(0.15 0.05 296.0)",
-          "oklch(0.264 0.05 296.0)",
-          "oklch(0.379 0.05 296.0)",
-          "oklch(0.493 0.05 296.0)",
-          "oklch(0.607 0.05 296.0)",
-          "oklch(0.721 0.05 296.0)",
-          "oklch(0.836 0.05 296.0)",
-          "oklch(0.95 0.05 296.0)"
-        ]
+          "oklch(0.150 0.013 296.3)",
+          "oklch(0.264 0.013 296.3)",
+          "oklch(0.379 0.013 296.3)",
+          "oklch(0.493 0.013 296.3)",
+          "oklch(0.607 0.013 296.3)",
+          "oklch(0.721 0.013 296.3)",
+          "oklch(0.836 0.013 296.3)",
+          "oklch(0.950 0.013 296.3)"
+        ],
+        "publicRole": "fg-soft (--r-text-soft)"
       },
-      "panel": {
+      "ink-3": {
         "role": "neutral",
-        "displayName": "Panel",
-        "canonical": "oklch(0.175 0.04 282)",
+        "displayName": "Ink 3",
+        "canonical": "#c0bec8",
+        "oklch": "oklch(0.806 0.014 295.3)",
         "tonalRamp": [
-          "oklch(0.15 0.04 282.0)",
-          "oklch(0.264 0.04 282.0)",
-          "oklch(0.379 0.04 282.0)",
-          "oklch(0.493 0.04 282.0)",
-          "oklch(0.607 0.04 282.0)",
-          "oklch(0.721 0.04 282.0)",
-          "oklch(0.836 0.04 282.0)",
-          "oklch(0.95 0.04 282.0)"
-        ]
+          "oklch(0.150 0.014 295.3)",
+          "oklch(0.264 0.014 295.3)",
+          "oklch(0.379 0.014 295.3)",
+          "oklch(0.493 0.014 295.3)",
+          "oklch(0.607 0.014 295.3)",
+          "oklch(0.721 0.014 295.3)",
+          "oklch(0.836 0.014 295.3)",
+          "oklch(0.950 0.014 295.3)"
+        ],
+        "publicRole": "fg-muted (--r-text-muted)"
       },
-      "panel-raised": {
+      "surface": {
         "role": "neutral",
-        "displayName": "Panel Raised",
-        "canonical": "oklch(0.215 0.045 284)",
+        "displayName": "Surface",
+        "canonical": "#141419",
+        "oklch": "oklch(0.194 0.010 285.4)",
         "tonalRamp": [
-          "oklch(0.15 0.045 284.0)",
-          "oklch(0.264 0.045 284.0)",
-          "oklch(0.379 0.045 284.0)",
-          "oklch(0.493 0.045 284.0)",
-          "oklch(0.607 0.045 284.0)",
-          "oklch(0.721 0.045 284.0)",
-          "oklch(0.836 0.045 284.0)",
-          "oklch(0.95 0.045 284.0)"
-        ]
+          "oklch(0.150 0.010 285.4)",
+          "oklch(0.264 0.010 285.4)",
+          "oklch(0.379 0.010 285.4)",
+          "oklch(0.493 0.010 285.4)",
+          "oklch(0.607 0.010 285.4)",
+          "oklch(0.721 0.010 285.4)",
+          "oklch(0.836 0.010 285.4)",
+          "oklch(0.950 0.010 285.4)"
+        ],
+        "publicRole": "surface (--r-surface)"
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "canonical": "#1d1d24",
+        "oklch": "oklch(0.234 0.013 285.3)",
+        "tonalRamp": [
+          "oklch(0.150 0.013 285.3)",
+          "oklch(0.264 0.013 285.3)",
+          "oklch(0.379 0.013 285.3)",
+          "oklch(0.493 0.013 285.3)",
+          "oklch(0.607 0.013 285.3)",
+          "oklch(0.721 0.013 285.3)",
+          "oklch(0.836 0.013 285.3)",
+          "oklch(0.950 0.013 285.3)"
+        ],
+        "publicRole": "surface-raised (--r-surface-raised)"
       },
       "rule": {
         "role": "neutral",
         "displayName": "Rule",
-        "canonical": "oklch(0.29 0.04 284)",
+        "canonical": "#2a2a33",
+        "oklch": "oklch(0.289 0.016 285.3)",
         "tonalRamp": [
-          "oklch(0.15 0.04 284.0)",
-          "oklch(0.264 0.04 284.0)",
-          "oklch(0.379 0.04 284.0)",
-          "oklch(0.493 0.04 284.0)",
-          "oklch(0.607 0.04 284.0)",
-          "oklch(0.721 0.04 284.0)",
-          "oklch(0.836 0.04 284.0)",
-          "oklch(0.95 0.04 284.0)"
-        ]
+          "oklch(0.150 0.016 285.3)",
+          "oklch(0.264 0.016 285.3)",
+          "oklch(0.379 0.016 285.3)",
+          "oklch(0.493 0.016 285.3)",
+          "oklch(0.607 0.016 285.3)",
+          "oklch(0.721 0.016 285.3)",
+          "oklch(0.836 0.016 285.3)",
+          "oklch(0.950 0.016 285.3)"
+        ],
+        "publicRole": "line (--r-border)"
       },
-      "rule-strong": {
+      "frame-surface": {
         "role": "neutral",
-        "displayName": "Rule Strong",
-        "canonical": "oklch(0.54 0.045 286)",
+        "displayName": "Frame Surface",
+        "canonical": "#131318",
+        "oklch": "oklch(0.189 0.010 285.4)",
         "tonalRamp": [
-          "oklch(0.15 0.045 286.0)",
-          "oklch(0.264 0.045 286.0)",
-          "oklch(0.379 0.045 286.0)",
-          "oklch(0.493 0.045 286.0)",
-          "oklch(0.607 0.045 286.0)",
-          "oklch(0.721 0.045 286.0)",
-          "oklch(0.836 0.045 286.0)",
-          "oklch(0.95 0.045 286.0)"
+          "oklch(0.150 0.010 285.4)",
+          "oklch(0.264 0.010 285.4)",
+          "oklch(0.379 0.010 285.4)",
+          "oklch(0.493 0.010 285.4)",
+          "oklch(0.607 0.010 285.4)",
+          "oklch(0.721 0.010 285.4)",
+          "oklch(0.836 0.010 285.4)",
+          "oklch(0.950 0.010 285.4)"
         ]
       },
-      "starlight-ink": {
+      "frame-box": {
         "role": "neutral",
-        "displayName": "Starlight Ink",
-        "canonical": "oklch(0.975 0.008 285)",
+        "displayName": "Frame Box",
+        "canonical": "#1b1b22",
+        "oklch": "oklch(0.225 0.014 285.3)",
         "tonalRamp": [
-          "oklch(0.15 0.008 285.0)",
-          "oklch(0.264 0.008 285.0)",
-          "oklch(0.379 0.008 285.0)",
-          "oklch(0.493 0.008 285.0)",
-          "oklch(0.607 0.008 285.0)",
-          "oklch(0.721 0.008 285.0)",
-          "oklch(0.836 0.008 285.0)",
-          "oklch(0.95 0.008 285.0)"
-        ]
+          "oklch(0.150 0.014 285.3)",
+          "oklch(0.264 0.014 285.3)",
+          "oklch(0.379 0.014 285.3)",
+          "oklch(0.493 0.014 285.3)",
+          "oklch(0.607 0.014 285.3)",
+          "oklch(0.721 0.014 285.3)",
+          "oklch(0.836 0.014 285.3)",
+          "oklch(0.950 0.014 285.3)"
+        ],
+        "publicRole": "surface-sunken (--r-surface-sunken), bubble-theirs"
       },
-      "ink-soft": {
+      "bezel": {
         "role": "neutral",
-        "displayName": "Ink Soft",
-        "canonical": "oklch(0.86 0.022 285)",
+        "displayName": "Bezel",
+        "canonical": "#3a3a44",
+        "oklch": "oklch(0.352 0.017 285.5)",
         "tonalRamp": [
-          "oklch(0.15 0.022 285.0)",
-          "oklch(0.264 0.022 285.0)",
-          "oklch(0.379 0.022 285.0)",
-          "oklch(0.493 0.022 285.0)",
-          "oklch(0.607 0.022 285.0)",
-          "oklch(0.721 0.022 285.0)",
-          "oklch(0.836 0.022 285.0)",
-          "oklch(0.95 0.022 285.0)"
+          "oklch(0.150 0.017 285.5)",
+          "oklch(0.264 0.017 285.5)",
+          "oklch(0.379 0.017 285.5)",
+          "oklch(0.493 0.017 285.5)",
+          "oklch(0.607 0.017 285.5)",
+          "oklch(0.721 0.017 285.5)",
+          "oklch(0.836 0.017 285.5)",
+          "oklch(0.950 0.017 285.5)"
         ]
       },
-      "ink-muted": {
+      "hairline": {
         "role": "neutral",
-        "displayName": "Ink Muted",
-        "canonical": "oklch(0.745 0.03 285)",
-        "tonalRamp": [
-          "oklch(0.15 0.03 285.0)",
-          "oklch(0.264 0.03 285.0)",
-          "oklch(0.379 0.03 285.0)",
-          "oklch(0.493 0.03 285.0)",
-          "oklch(0.607 0.03 285.0)",
-          "oklch(0.721 0.03 285.0)",
-          "oklch(0.836 0.03 285.0)",
-          "oklch(0.95 0.03 285.0)"
-        ]
+        "displayName": "Hairline",
+        "canonical": "rgb(255 255 255 / 0.1)"
       },
-      "molten-amber": {
+      "presence": {
+        "role": "tertiary",
+        "displayName": "Presence",
+        "canonical": "#4ee08a",
+        "oklch": "oklch(0.808 0.174 153.6)",
+        "tonalRamp": [
+          "oklch(0.150 0.174 153.6)",
+          "oklch(0.264 0.174 153.6)",
+          "oklch(0.379 0.174 153.6)",
+          "oklch(0.493 0.174 153.6)",
+          "oklch(0.607 0.174 153.6)",
+          "oklch(0.721 0.174 153.6)",
+          "oklch(0.836 0.174 153.6)",
+          "oklch(0.950 0.174 153.6)"
+        ],
+        "publicRole": "presence (--r-presence)"
+      },
+      "mint-action": {
         "role": "primary",
-        "displayName": "Molten Amber",
-        "canonical": "oklch(0.8 0.16 68)",
+        "displayName": "Mint Action",
+        "canonical": "#3ee6b0",
+        "oklch": "oklch(0.828 0.156 166.4)",
         "tonalRamp": [
-          "oklch(0.15 0.16 68.0)",
-          "oklch(0.264 0.16 68.0)",
-          "oklch(0.379 0.16 68.0)",
-          "oklch(0.493 0.16 68.0)",
-          "oklch(0.607 0.16 68.0)",
-          "oklch(0.721 0.16 68.0)",
-          "oklch(0.836 0.16 68.0)",
-          "oklch(0.95 0.16 68.0)"
-        ]
+          "oklch(0.150 0.156 166.4)",
+          "oklch(0.264 0.156 166.4)",
+          "oklch(0.379 0.156 166.4)",
+          "oklch(0.493 0.156 166.4)",
+          "oklch(0.607 0.156 166.4)",
+          "oklch(0.721 0.156 166.4)",
+          "oklch(0.836 0.156 166.4)",
+          "oklch(0.950 0.156 166.4)"
+        ],
+        "publicRole": "accent (--r-accent), focus, bubble-mine; Mint is the default theme"
       },
-      "molten-amber-hover": {
+      "on-mint": {
         "role": "primary",
-        "displayName": "Molten Amber (hover)",
-        "canonical": "oklch(0.86 0.14 76)",
+        "displayName": "On Mint",
+        "canonical": "#04150f",
+        "oklch": "oklch(0.178 0.028 169.0)",
         "tonalRamp": [
-          "oklch(0.15 0.14 76.0)",
-          "oklch(0.264 0.14 76.0)",
-          "oklch(0.379 0.14 76.0)",
-          "oklch(0.493 0.14 76.0)",
-          "oklch(0.607 0.14 76.0)",
-          "oklch(0.721 0.14 76.0)",
-          "oklch(0.836 0.14 76.0)",
-          "oklch(0.95 0.14 76.0)"
-        ]
+          "oklch(0.150 0.028 169.0)",
+          "oklch(0.264 0.028 169.0)",
+          "oklch(0.379 0.028 169.0)",
+          "oklch(0.493 0.028 169.0)",
+          "oklch(0.607 0.028 169.0)",
+          "oklch(0.721 0.028 169.0)",
+          "oklch(0.836 0.028 169.0)",
+          "oklch(0.950 0.028 169.0)"
+        ],
+        "publicRole": "on-accent (--r-on-accent), on-bubble-mine"
       },
-      "on-amber": {
-        "role": "primary",
-        "displayName": "On Amber",
-        "canonical": "oklch(0.22 0.06 50)",
-        "tonalRamp": [
-          "oklch(0.15 0.06 50.0)",
-          "oklch(0.264 0.06 50.0)",
-          "oklch(0.379 0.06 50.0)",
-          "oklch(0.493 0.06 50.0)",
-          "oklch(0.607 0.06 50.0)",
-          "oklch(0.721 0.06 50.0)",
-          "oklch(0.836 0.06 50.0)",
-          "oklch(0.95 0.06 50.0)"
-        ]
-      },
-      "peach-sky": {
-        "role": "neutral",
-        "displayName": "Peach Sky",
-        "canonical": "oklch(0.925 0.045 55)",
-        "tonalRamp": [
-          "oklch(0.15 0.045 55.0)",
-          "oklch(0.264 0.045 55.0)",
-          "oklch(0.379 0.045 55.0)",
-          "oklch(0.493 0.045 55.0)",
-          "oklch(0.607 0.045 55.0)",
-          "oklch(0.721 0.045 55.0)",
-          "oklch(0.836 0.045 55.0)",
-          "oklch(0.95 0.045 55.0)"
-        ]
-      },
-      "rose-sky": {
-        "role": "neutral",
-        "displayName": "Rose Sky",
-        "canonical": "oklch(0.915 0.042 12)",
-        "tonalRamp": [
-          "oklch(0.15 0.042 12.0)",
-          "oklch(0.264 0.042 12.0)",
-          "oklch(0.379 0.042 12.0)",
-          "oklch(0.493 0.042 12.0)",
-          "oklch(0.607 0.042 12.0)",
-          "oklch(0.721 0.042 12.0)",
-          "oklch(0.836 0.042 12.0)",
-          "oklch(0.95 0.042 12.0)"
-        ]
-      },
-      "lilac-sky": {
-        "role": "neutral",
-        "displayName": "Lilac Sky",
-        "canonical": "oklch(0.905 0.04 305)",
-        "tonalRamp": [
-          "oklch(0.15 0.04 305.0)",
-          "oklch(0.264 0.04 305.0)",
-          "oklch(0.379 0.04 305.0)",
-          "oklch(0.493 0.04 305.0)",
-          "oklch(0.607 0.04 305.0)",
-          "oklch(0.721 0.04 305.0)",
-          "oklch(0.836 0.04 305.0)",
-          "oklch(0.95 0.04 305.0)"
-        ]
-      },
-      "warm-pearl": {
-        "role": "neutral",
-        "displayName": "Warm Pearl",
-        "canonical": "oklch(0.972 0.016 42)",
-        "tonalRamp": [
-          "oklch(0.15 0.016 42.0)",
-          "oklch(0.264 0.016 42.0)",
-          "oklch(0.379 0.016 42.0)",
-          "oklch(0.493 0.016 42.0)",
-          "oklch(0.607 0.016 42.0)",
-          "oklch(0.721 0.016 42.0)",
-          "oklch(0.836 0.016 42.0)",
-          "oklch(0.95 0.016 42.0)"
-        ]
-      },
-      "plum-ink": {
-        "role": "neutral",
-        "displayName": "Plum Ink",
-        "canonical": "oklch(0.25 0.075 345)",
-        "tonalRamp": [
-          "oklch(0.15 0.075 345.0)",
-          "oklch(0.264 0.075 345.0)",
-          "oklch(0.379 0.075 345.0)",
-          "oklch(0.493 0.075 345.0)",
-          "oklch(0.607 0.075 345.0)",
-          "oklch(0.721 0.075 345.0)",
-          "oklch(0.836 0.075 345.0)",
-          "oklch(0.95 0.075 345.0)"
-        ]
-      },
-      "coral": {
-        "role": "primary",
-        "displayName": "Coral",
-        "canonical": "oklch(0.575 0.19 30)",
-        "tonalRamp": [
-          "oklch(0.15 0.19 30.0)",
-          "oklch(0.264 0.19 30.0)",
-          "oklch(0.379 0.19 30.0)",
-          "oklch(0.493 0.19 30.0)",
-          "oklch(0.607 0.19 30.0)",
-          "oklch(0.721 0.19 30.0)",
-          "oklch(0.836 0.19 30.0)",
-          "oklch(0.95 0.19 30.0)"
-        ]
-      },
-      "coral-ink": {
-        "role": "primary",
-        "displayName": "Coral Ink",
-        "canonical": "oklch(0.5 0.18 26)",
-        "tonalRamp": [
-          "oklch(0.15 0.18 26.0)",
-          "oklch(0.264 0.18 26.0)",
-          "oklch(0.379 0.18 26.0)",
-          "oklch(0.493 0.18 26.0)",
-          "oklch(0.607 0.18 26.0)",
-          "oklch(0.721 0.18 26.0)",
-          "oklch(0.836 0.18 26.0)",
-          "oklch(0.95 0.18 26.0)"
-        ]
-      },
-      "on-coral": {
-        "role": "primary",
-        "displayName": "On Coral",
-        "canonical": "oklch(0.995 0.005 60)",
-        "tonalRamp": [
-          "oklch(0.15 0.005 60.0)",
-          "oklch(0.264 0.005 60.0)",
-          "oklch(0.379 0.005 60.0)",
-          "oklch(0.493 0.005 60.0)",
-          "oklch(0.607 0.005 60.0)",
-          "oklch(0.721 0.005 60.0)",
-          "oklch(0.836 0.005 60.0)",
-          "oklch(0.95 0.005 60.0)"
-        ]
-      },
-      "spaces-cyan": {
+      "mint-light-1": {
         "role": "secondary",
-        "displayName": "Spaces Cyan",
-        "canonical": "oklch(0.72 0.13 196)",
+        "displayName": "Mint Light 1",
+        "canonical": "#1fbf8f",
+        "oklch": "oklch(0.716 0.143 166.2)",
         "tonalRamp": [
-          "oklch(0.15 0.13 196.0)",
-          "oklch(0.264 0.13 196.0)",
-          "oklch(0.379 0.13 196.0)",
-          "oklch(0.493 0.13 196.0)",
-          "oklch(0.607 0.13 196.0)",
-          "oklch(0.721 0.13 196.0)",
-          "oklch(0.836 0.13 196.0)",
-          "oklch(0.95 0.13 196.0)"
+          "oklch(0.150 0.143 166.2)",
+          "oklch(0.264 0.143 166.2)",
+          "oklch(0.379 0.143 166.2)",
+          "oklch(0.493 0.143 166.2)",
+          "oklch(0.607 0.143 166.2)",
+          "oklch(0.721 0.143 166.2)",
+          "oklch(0.836 0.143 166.2)",
+          "oklch(0.950 0.143 166.2)"
+        ],
+        "themeGlow": 0.6
+      },
+      "mint-light-2": {
+        "role": "secondary",
+        "displayName": "Mint Light 2",
+        "canonical": "#2b47ff",
+        "oklch": "oklch(0.519 0.268 267.4)",
+        "tonalRamp": [
+          "oklch(0.150 0.200 267.4)",
+          "oklch(0.264 0.200 267.4)",
+          "oklch(0.379 0.200 267.4)",
+          "oklch(0.493 0.200 267.4)",
+          "oklch(0.607 0.200 267.4)",
+          "oklch(0.721 0.200 267.4)",
+          "oklch(0.836 0.200 267.4)",
+          "oklch(0.950 0.200 267.4)"
+        ],
+        "themeGlow": 0.6
+      },
+      "mint-light-3": {
+        "role": "secondary",
+        "displayName": "Mint Light 3",
+        "canonical": "#0f766e",
+        "oklch": "oklch(0.511 0.086 186.4)",
+        "tonalRamp": [
+          "oklch(0.150 0.086 186.4)",
+          "oklch(0.264 0.086 186.4)",
+          "oklch(0.379 0.086 186.4)",
+          "oklch(0.493 0.086 186.4)",
+          "oklch(0.607 0.086 186.4)",
+          "oklch(0.721 0.086 186.4)",
+          "oklch(0.836 0.086 186.4)",
+          "oklch(0.950 0.086 186.4)"
+        ],
+        "themeGlow": 0.6
+      },
+      "orchid-action": {
+        "role": "primary",
+        "displayName": "Orchid Action",
+        "canonical": "#cdb4ff",
+        "oklch": "oklch(0.818 0.107 299.3)",
+        "tonalRamp": [
+          "oklch(0.150 0.107 299.3)",
+          "oklch(0.264 0.107 299.3)",
+          "oklch(0.379 0.107 299.3)",
+          "oklch(0.493 0.107 299.3)",
+          "oklch(0.607 0.107 299.3)",
+          "oklch(0.721 0.107 299.3)",
+          "oklch(0.836 0.107 299.3)",
+          "oklch(0.950 0.107 299.3)"
         ]
       },
-      "feed-electric-blue": {
-        "role": "secondary",
-        "displayName": "Feed Electric Blue",
-        "canonical": "oklch(0.72 0.14 256)",
+      "on-orchid": {
+        "role": "primary",
+        "displayName": "On Orchid",
+        "canonical": "#160a2e",
+        "oklch": "oklch(0.187 0.069 294.1)",
         "tonalRamp": [
-          "oklch(0.15 0.14 256.0)",
-          "oklch(0.264 0.14 256.0)",
-          "oklch(0.379 0.14 256.0)",
-          "oklch(0.493 0.14 256.0)",
-          "oklch(0.607 0.14 256.0)",
-          "oklch(0.721 0.14 256.0)",
-          "oklch(0.836 0.14 256.0)",
-          "oklch(0.95 0.14 256.0)"
+          "oklch(0.150 0.069 294.1)",
+          "oklch(0.264 0.069 294.1)",
+          "oklch(0.379 0.069 294.1)",
+          "oklch(0.493 0.069 294.1)",
+          "oklch(0.607 0.069 294.1)",
+          "oklch(0.721 0.069 294.1)",
+          "oklch(0.836 0.069 294.1)",
+          "oklch(0.950 0.069 294.1)"
         ]
       },
-      "profiles-violet": {
+      "orchid-light-1": {
         "role": "secondary",
-        "displayName": "Profiles Violet",
-        "canonical": "oklch(0.72 0.14 300)",
+        "displayName": "Orchid Light 1",
+        "canonical": "#8b6bff",
+        "oklch": "oklch(0.635 0.210 288.9)",
         "tonalRamp": [
-          "oklch(0.15 0.14 300.0)",
-          "oklch(0.264 0.14 300.0)",
-          "oklch(0.379 0.14 300.0)",
-          "oklch(0.493 0.14 300.0)",
-          "oklch(0.607 0.14 300.0)",
-          "oklch(0.721 0.14 300.0)",
-          "oklch(0.836 0.14 300.0)",
-          "oklch(0.95 0.14 300.0)"
+          "oklch(0.150 0.200 288.9)",
+          "oklch(0.264 0.200 288.9)",
+          "oklch(0.379 0.200 288.9)",
+          "oklch(0.493 0.200 288.9)",
+          "oklch(0.607 0.200 288.9)",
+          "oklch(0.721 0.200 288.9)",
+          "oklch(0.836 0.200 288.9)",
+          "oklch(0.950 0.200 288.9)"
+        ],
+        "themeGlow": 0.78
+      },
+      "orchid-light-2": {
+        "role": "secondary",
+        "displayName": "Orchid Light 2",
+        "canonical": "#ff5f9a",
+        "oklch": "oklch(0.709 0.200 0.8)",
+        "tonalRamp": [
+          "oklch(0.150 0.200 0.8)",
+          "oklch(0.264 0.200 0.8)",
+          "oklch(0.379 0.200 0.8)",
+          "oklch(0.493 0.200 0.8)",
+          "oklch(0.607 0.200 0.8)",
+          "oklch(0.721 0.200 0.8)",
+          "oklch(0.836 0.200 0.8)",
+          "oklch(0.950 0.200 0.8)"
+        ],
+        "themeGlow": 0.78
+      },
+      "orchid-light-3": {
+        "role": "secondary",
+        "displayName": "Orchid Light 3",
+        "canonical": "#3a2a8a",
+        "oklch": "oklch(0.368 0.151 283.7)",
+        "tonalRamp": [
+          "oklch(0.150 0.151 283.7)",
+          "oklch(0.264 0.151 283.7)",
+          "oklch(0.379 0.151 283.7)",
+          "oklch(0.493 0.151 283.7)",
+          "oklch(0.607 0.151 283.7)",
+          "oklch(0.721 0.151 283.7)",
+          "oklch(0.836 0.151 283.7)",
+          "oklch(0.950 0.151 283.7)"
+        ],
+        "themeGlow": 0.78
+      },
+      "aqua-action": {
+        "role": "primary",
+        "displayName": "Aqua Action",
+        "canonical": "#5fd8ef",
+        "oklch": "oklch(0.822 0.112 212.1)",
+        "tonalRamp": [
+          "oklch(0.150 0.112 212.1)",
+          "oklch(0.264 0.112 212.1)",
+          "oklch(0.379 0.112 212.1)",
+          "oklch(0.493 0.112 212.1)",
+          "oklch(0.607 0.112 212.1)",
+          "oklch(0.721 0.112 212.1)",
+          "oklch(0.836 0.112 212.1)",
+          "oklch(0.950 0.112 212.1)"
         ]
       },
-      "boards-magenta": {
-        "role": "secondary",
-        "displayName": "Boards Magenta",
-        "canonical": "oklch(0.72 0.14 350)",
+      "on-aqua": {
+        "role": "primary",
+        "displayName": "On Aqua",
+        "canonical": "#03161b",
+        "oklch": "oklch(0.186 0.028 216.4)",
         "tonalRamp": [
-          "oklch(0.15 0.14 350.0)",
-          "oklch(0.264 0.14 350.0)",
-          "oklch(0.379 0.14 350.0)",
-          "oklch(0.493 0.14 350.0)",
-          "oklch(0.607 0.14 350.0)",
-          "oklch(0.721 0.14 350.0)",
-          "oklch(0.836 0.14 350.0)",
-          "oklch(0.95 0.14 350.0)"
+          "oklch(0.150 0.028 216.4)",
+          "oklch(0.264 0.028 216.4)",
+          "oklch(0.379 0.028 216.4)",
+          "oklch(0.493 0.028 216.4)",
+          "oklch(0.607 0.028 216.4)",
+          "oklch(0.721 0.028 216.4)",
+          "oklch(0.836 0.028 216.4)",
+          "oklch(0.950 0.028 216.4)"
         ]
+      },
+      "aqua-light-1": {
+        "role": "secondary",
+        "displayName": "Aqua Light 1",
+        "canonical": "#14b8d6",
+        "oklch": "oklch(0.721 0.125 215.3)",
+        "tonalRamp": [
+          "oklch(0.150 0.125 215.3)",
+          "oklch(0.264 0.125 215.3)",
+          "oklch(0.379 0.125 215.3)",
+          "oklch(0.493 0.125 215.3)",
+          "oklch(0.607 0.125 215.3)",
+          "oklch(0.721 0.125 215.3)",
+          "oklch(0.836 0.125 215.3)",
+          "oklch(0.950 0.125 215.3)"
+        ],
+        "themeGlow": 0.55
+      },
+      "aqua-light-2": {
+        "role": "secondary",
+        "displayName": "Aqua Light 2",
+        "canonical": "#2b47ff",
+        "oklch": "oklch(0.519 0.268 267.4)",
+        "tonalRamp": [
+          "oklch(0.150 0.200 267.4)",
+          "oklch(0.264 0.200 267.4)",
+          "oklch(0.379 0.200 267.4)",
+          "oklch(0.493 0.200 267.4)",
+          "oklch(0.607 0.200 267.4)",
+          "oklch(0.721 0.200 267.4)",
+          "oklch(0.836 0.200 267.4)",
+          "oklch(0.950 0.200 267.4)"
+        ],
+        "themeGlow": 0.55
+      },
+      "aqua-light-3": {
+        "role": "secondary",
+        "displayName": "Aqua Light 3",
+        "canonical": "#1fbf8f",
+        "oklch": "oklch(0.716 0.143 166.2)",
+        "tonalRamp": [
+          "oklch(0.150 0.143 166.2)",
+          "oklch(0.264 0.143 166.2)",
+          "oklch(0.379 0.143 166.2)",
+          "oklch(0.493 0.143 166.2)",
+          "oklch(0.607 0.143 166.2)",
+          "oklch(0.721 0.143 166.2)",
+          "oklch(0.836 0.143 166.2)",
+          "oklch(0.950 0.143 166.2)"
+        ],
+        "themeGlow": 0.55
+      },
+      "ember-action": {
+        "role": "primary",
+        "displayName": "Ember Action",
+        "canonical": "#ffaf8a",
+        "oklch": "oklch(0.823 0.107 45.6)",
+        "tonalRamp": [
+          "oklch(0.150 0.107 45.6)",
+          "oklch(0.264 0.107 45.6)",
+          "oklch(0.379 0.107 45.6)",
+          "oklch(0.493 0.107 45.6)",
+          "oklch(0.607 0.107 45.6)",
+          "oklch(0.721 0.107 45.6)",
+          "oklch(0.836 0.107 45.6)",
+          "oklch(0.950 0.107 45.6)"
+        ]
+      },
+      "on-ember": {
+        "role": "primary",
+        "displayName": "On Ember",
+        "canonical": "#1d0904",
+        "oklch": "oklch(0.171 0.038 38.7)",
+        "tonalRamp": [
+          "oklch(0.150 0.038 38.7)",
+          "oklch(0.264 0.038 38.7)",
+          "oklch(0.379 0.038 38.7)",
+          "oklch(0.493 0.038 38.7)",
+          "oklch(0.607 0.038 38.7)",
+          "oklch(0.721 0.038 38.7)",
+          "oklch(0.836 0.038 38.7)",
+          "oklch(0.950 0.038 38.7)"
+        ]
+      },
+      "ember-light-1": {
+        "role": "secondary",
+        "displayName": "Ember Light 1",
+        "canonical": "#ff6a3d",
+        "oklch": "oklch(0.704 0.192 37.1)",
+        "tonalRamp": [
+          "oklch(0.150 0.192 37.1)",
+          "oklch(0.264 0.192 37.1)",
+          "oklch(0.379 0.192 37.1)",
+          "oklch(0.493 0.192 37.1)",
+          "oklch(0.607 0.192 37.1)",
+          "oklch(0.721 0.192 37.1)",
+          "oklch(0.836 0.192 37.1)",
+          "oklch(0.950 0.192 37.1)"
+        ],
+        "themeGlow": 0.6
+      },
+      "ember-light-2": {
+        "role": "secondary",
+        "displayName": "Ember Light 2",
+        "canonical": "#ffb547",
+        "oklch": "oklch(0.824 0.149 73.3)",
+        "tonalRamp": [
+          "oklch(0.150 0.149 73.3)",
+          "oklch(0.264 0.149 73.3)",
+          "oklch(0.379 0.149 73.3)",
+          "oklch(0.493 0.149 73.3)",
+          "oklch(0.607 0.149 73.3)",
+          "oklch(0.721 0.149 73.3)",
+          "oklch(0.836 0.149 73.3)",
+          "oklch(0.950 0.149 73.3)"
+        ],
+        "themeGlow": 0.6
+      },
+      "ember-light-3": {
+        "role": "secondary",
+        "displayName": "Ember Light 3",
+        "canonical": "#c2185b",
+        "oklch": "oklch(0.531 0.202 5.6)",
+        "tonalRamp": [
+          "oklch(0.150 0.200 5.6)",
+          "oklch(0.264 0.200 5.6)",
+          "oklch(0.379 0.200 5.6)",
+          "oklch(0.493 0.200 5.6)",
+          "oklch(0.607 0.200 5.6)",
+          "oklch(0.721 0.200 5.6)",
+          "oklch(0.836 0.200 5.6)",
+          "oklch(0.950 0.200 5.6)"
+        ],
+        "themeGlow": 0.6
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Line Strong",
+        "canonical": "#6f6c7b",
+        "oklch": "oklch(0.539 0.023 294.8)",
+        "tonalRamp": [
+          "oklch(0.150 0.023 294.8)",
+          "oklch(0.264 0.023 294.8)",
+          "oklch(0.379 0.023 294.8)",
+          "oklch(0.493 0.023 294.8)",
+          "oklch(0.607 0.023 294.8)",
+          "oklch(0.721 0.023 294.8)",
+          "oklch(0.836 0.023 294.8)",
+          "oklch(0.950 0.023 294.8)"
+        ],
+        "publicRole": "line-strong (--r-border-strong)"
       },
       "danger": {
-        "role": "neutral",
+        "role": "error",
         "displayName": "Danger",
-        "canonical": "oklch(0.72 0.17 22)",
+        "canonical": "#ffa8b2",
+        "oklch": "oklch(0.819 0.103 12.1)",
         "tonalRamp": [
-          "oklch(0.15 0.17 22.0)",
-          "oklch(0.264 0.17 22.0)",
-          "oklch(0.379 0.17 22.0)",
-          "oklch(0.493 0.17 22.0)",
-          "oklch(0.607 0.17 22.0)",
-          "oklch(0.721 0.17 22.0)",
-          "oklch(0.836 0.17 22.0)",
-          "oklch(0.95 0.17 22.0)"
-        ]
+          "oklch(0.150 0.103 12.1)",
+          "oklch(0.264 0.103 12.1)",
+          "oklch(0.379 0.103 12.1)",
+          "oklch(0.493 0.103 12.1)",
+          "oklch(0.607 0.103 12.1)",
+          "oklch(0.721 0.103 12.1)",
+          "oklch(0.836 0.103 12.1)",
+          "oklch(0.950 0.103 12.1)"
+        ],
+        "publicRole": "danger (--r-danger)"
+      },
+      "danger-line": {
+        "role": "error",
+        "displayName": "Danger Line",
+        "canonical": "#ff5c6c",
+        "oklch": "oklch(0.694 0.198 18.3)",
+        "tonalRamp": [
+          "oklch(0.150 0.198 18.3)",
+          "oklch(0.264 0.198 18.3)",
+          "oklch(0.379 0.198 18.3)",
+          "oklch(0.493 0.198 18.3)",
+          "oklch(0.607 0.198 18.3)",
+          "oklch(0.721 0.198 18.3)",
+          "oklch(0.836 0.198 18.3)",
+          "oklch(0.950 0.198 18.3)"
+        ],
+        "publicRole": "danger-line (--r-danger-line)"
       },
       "success": {
-        "role": "neutral",
+        "role": "success",
         "displayName": "Success",
-        "canonical": "oklch(0.84 0.14 165)",
+        "canonical": "#6ee7a8",
+        "oklch": "oklch(0.842 0.142 158.4)",
         "tonalRamp": [
-          "oklch(0.15 0.14 165.0)",
-          "oklch(0.264 0.14 165.0)",
-          "oklch(0.379 0.14 165.0)",
-          "oklch(0.493 0.14 165.0)",
-          "oklch(0.607 0.14 165.0)",
-          "oklch(0.721 0.14 165.0)",
-          "oklch(0.836 0.14 165.0)",
-          "oklch(0.95 0.14 165.0)"
-        ]
+          "oklch(0.150 0.142 158.4)",
+          "oklch(0.264 0.142 158.4)",
+          "oklch(0.379 0.142 158.4)",
+          "oklch(0.493 0.142 158.4)",
+          "oklch(0.607 0.142 158.4)",
+          "oklch(0.721 0.142 158.4)",
+          "oklch(0.836 0.142 158.4)",
+          "oklch(0.950 0.142 158.4)"
+        ],
+        "publicRole": "success (--r-success)"
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Hero and closing headlines, Bricolage Grotesque at 700."
+        "purpose": "The hero statement only."
+      },
+      "display-closing": {
+        "displayName": "Display Closing",
+        "purpose": "The send-off line; the largest type on the page."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Section headings, words rising in and unblurring on scroll."
+        "purpose": "Section statements, two short balanced lines."
       },
-      "lead": {
-        "displayName": "Lead",
-        "purpose": "The paragraph under a headline, a size up from body."
+      "headline-step": {
+        "displayName": "Headline Step",
+        "purpose": "Each tour step statement; clamp(1.9rem, 7vw, 2.6rem) on phones."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Card and panel titles, names in chat."
+        "purpose": "Row titles inside a section; the profile name."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "Lowercase \"realm\" beside the Mark."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "The line under a headline, Ink 2, 34-36ch."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "All reading copy, 38 to 52ch."
+        "purpose": "Reading text, 56-60ch max."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Planet names on the star chart and in the 3D hero."
+        "purpose": "Buttons, field labels, room tabs, status lines (bold)."
+      },
+      "tag": {
+        "displayName": "Tag",
+        "purpose": "Status pills, the nav column's \"Your Spaces\" head, the SoonTag, chat's day and \"New\" lines."
+      },
+      "screen-title-hero": {
+        "displayName": "Screen Title Hero",
+        "purpose": "\"Pick your colour.\", sign-up step 1: 2.9rem, 3.6rem from 40rem, 4.6rem from 80rem."
+      },
+      "screen-title": {
+        "displayName": "Screen Title",
+        "purpose": "The other sign-up steps: 2.6rem, 3.2rem from 40rem."
+      },
+      "card-title": {
+        "displayName": "Card Title",
+        "purpose": "The one title in an AuthCard: 2.4rem, 2.7rem from 40rem."
+      },
+      "place-title": {
+        "displayName": "Place Title",
+        "purpose": "A destination or settings page H1 at the top of the sheet: 1.75rem, 1.9rem from 48rem, bold. Home's greeting is set the same at 2rem from 48rem."
+      },
+      "empty-title": {
+        "displayName": "Empty Title",
+        "purpose": "An empty state heading on the sheet: 1.3rem bold."
+      },
+      "section-title": {
+        "displayName": "Section Title",
+        "purpose": "A settings section heading: 1.25rem bold."
+      },
+      "panel-title": {
+        "displayName": "Panel Title",
+        "purpose": "Here now's name: 1.25rem, still extrabold."
+      },
+      "lead-app": {
+        "displayName": "Lead App",
+        "purpose": "The line under a place title, Ink 2, 60ch."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Step descriptions, notices, field errors, the way across."
+      },
+      "hint": {
+        "displayName": "Hint",
+        "purpose": "Field hints and status lines, small notes, the auth footer."
+      },
+      "control-sm": {
+        "displayName": "Control Small",
+        "purpose": "Small pills, the Show switch, the birthday part labels."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Second lines in lists: who is here, Travel hints, the picker note."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Keyboard keys and the \"New\" chip on a poster."
+      },
+      "tab-label": {
+        "displayName": "Tab Label",
+        "purpose": "The phone tabs."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "The one-time code field, spaced digits."
+      },
+      "space-title": {
+        "displayName": "Space Title",
+        "purpose": "A Space's name in its header: 1.2rem, 1.5rem from 48rem, bold."
+      },
+      "dialog-title": {
+        "displayName": "Dialog Title",
+        "purpose": "A Dialog sheet's heading and a room's opening line."
+      },
+      "row-title": {
+        "displayName": "Row Title",
+        "purpose": "A Space's name in Explore's rows."
+      },
+      "bubble": {
+        "displayName": "Bubble",
+        "purpose": "Message text and the composer."
+      },
+      "chat-small": {
+        "displayName": "Chat Small",
+        "purpose": "Names over a run, reply quotes, addresses, error lines, presence lines."
+      },
+      "stamp": {
+        "displayName": "Stamp",
+        "purpose": "Message times, 'edited', role chips."
+      },
+      "live-title": {
+        "displayName": "Live Title",
+        "purpose": "A live voice room's name on a Live tile."
+      },
+      "shelf-title": {
+        "displayName": "Shelf Title",
+        "purpose": "Home's shelf heads (\"Live now\", \"Your Spaces\"); Atkinson, never Funnel."
+      },
+      "nav-label": {
+        "displayName": "Nav Label",
+        "purpose": "The nav column's destinations (1rem semibold); its Space rows and the settings list at 0.95rem."
       }
     },
     "shadows": [
       {
-        "name": "surface",
-        "value": "inset 0 1px 0 var(--surface-edge), 0 1px 2px shadow/18%, 0 40px 80px -40px shadow/60%",
-        "purpose": "Cards and tiles floating on the sky."
+        "name": "phone-drop",
+        "value": "0 0 0 1.5px #3a3a44, 0 50px 90px -40px rgb(0 0 0 / 0.95)",
+        "purpose": "Phone frames."
       },
       {
-        "name": "preview",
-        "value": "0 36px 70px -34px color-mix(in oklch, var(--r-shadow) 85%, transparent)",
-        "purpose": "Product windows."
+        "name": "frame-drop",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.08), 0 60px 120px -50px rgb(0 0 0 / 0.95)",
+        "purpose": "The app window frame."
       },
       {
-        "name": "float",
-        "value": "drop-shadow(0 22px 24px color-mix(in oklch, var(--r-shadow) 55%, transparent))",
-        "purpose": "Under every character render."
+        "name": "moment-lift",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 18px 40px -18px rgb(0 0 0 / 0.9)",
+        "purpose": "Floating moment pills beside the tour phone."
       },
       {
-        "name": "bubble-glow",
-        "value": "0 10px 30px -8px color-mix(in oklch, var(--tone) 55%, transparent)",
-        "purpose": "Speech bubbles and stickers, in their own tone."
+        "name": "inset-ring",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.12)",
+        "purpose": "Tags, boxes, badges (white at 0.06-0.12)."
+      },
+      {
+        "name": "header-glass",
+        "value": "background: rgb(11 11 14 / 0.72); backdrop-filter: blur(24px) saturate(1.5); border-bottom: 1px solid rgb(255 255 255 / 0.07)",
+        "purpose": "The header only: the one backdrop blur in the world."
+      },
+      {
+        "name": "card-drop",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.09), 0 60px 120px -40px #000",
+        "purpose": "The AuthCard on the lit ground."
+      },
+      {
+        "name": "sheet-rest",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.06), 0 40px 80px -50px #000",
+        "purpose": "The app's one content sheet."
+      },
+      {
+        "name": "overlay-lift",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.12), 0 24px 48px -12px rgb(0 0 0 / 0.7)",
+        "purpose": "Here now while it lies over the page, always with the panel scrim and the Raised fill."
+      },
+      {
+        "name": "popover",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 30px 70px -20px #000",
+        "purpose": "The You, Create and notifications panels."
+      },
+      {
+        "name": "dialog",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 40px 100px -30px #000",
+        "purpose": "Travel."
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 4px color-mix(in srgb, var(--r-accent) 22%, transparent)",
+        "purpose": "A focused field, with its edge in the accent. Spread only, no blur."
+      },
+      {
+        "name": "panel-scrim",
+        "value": "background: rgb(11 11 14 / 0.55)",
+        "purpose": "Under Here now when it opens over the page; a click on it closes."
+      },
+      {
+        "name": "dialog-veil",
+        "value": "background: rgb(11 11 14 / 0.7)",
+        "purpose": "Under Travel, and over the app sketch behind sign-in."
+      },
+      {
+        "name": "phone-chrome",
+        "value": "header: rgb(11 11 14 / 0.92); tabs: rgb(11 11 14 / 0.96); no backdrop blur",
+        "purpose": "The app's phone header and tabs: solid, so the app has no blur."
+      },
+      {
+        "name": "sheet",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.12), 0 40px 100px -30px rgb(0 0 0 / 0.8)",
+        "purpose": "Every Dialog sheet."
+      },
+      {
+        "name": "dropdown",
+        "value": "inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 24px 48px -12px rgb(0 0 0 / 0.7)",
+        "purpose": "A result list dropping over the page (Nearby's city search)."
+      },
+      {
+        "name": "speaking-ring",
+        "value": "inset 0 0 0 3px var(--r-text)",
+        "purpose": "A voice tile while that person talks; Ink, never the accent."
+      },
+      {
+        "name": "poster-lift",
+        "value": "0 18px 40px -16px rgb(0 0 0 / 0.8), inset 0 0 0 2px rgb(255 255 255 / 0.8)",
+        "purpose": "A Space poster on hover and focus, with a 4px rise. A white ring, never the accent."
       }
     ],
     "motion": [
       {
-        "name": "ease-out",
+        "name": "theme-crossfade",
+        "value": "0.8s ease on registered @property --acc, --on-acc, --l1..--l3",
+        "purpose": "Theme swap across the whole world."
+      },
+      {
+        "name": "light-blend",
+        "value": "900ms, cubic ease-out",
+        "purpose": "The light field moving to a new theme."
+      },
+      {
+        "name": "press",
+        "value": "150ms ease-out; scale(0.97) on active; brightness(1.1) on hover",
+        "purpose": "Buttons."
+      },
+      {
+        "name": "ease-out-quint",
         "value": "cubic-bezier(0.23, 1, 0.32, 1)",
-        "purpose": "Default for UI transitions."
+        "purpose": "Swatch lift, holo card tilt, loader mark."
       },
       {
-        "name": "ease-in-out",
-        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
-        "purpose": "On-screen movement."
+        "name": "reveal",
+        "value": "y 36px to 0, opacity 0 to 1, 0.9s power3.out, stagger 0.08s, once",
+        "purpose": "Headings and blocks arriving."
       },
       {
-        "name": "ease-drawer",
-        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
-        "purpose": "Sheets and drawers."
+        "name": "scrub",
+        "value": "GSAP ScrollTrigger on native scroll, scrub 0.6",
+        "purpose": "Sticky stages and the closing phone fan."
       },
       {
-        "name": "dur-fast",
-        "value": "160ms",
-        "purpose": "Hover and press feedback."
+        "name": "loader",
+        "value": "min 1000ms, max 3000ms, CSS failsafe at 6s",
+        "purpose": "The once-per-visit loading page."
       },
       {
-        "name": "dur-base",
-        "value": "220ms",
-        "purpose": "Panels, fold-outs, dimming."
+        "name": "theme-relight",
+        "value": "800ms cubic-bezier(0.77, 0, 0.175, 1) on registered @property --r-accent, --r-on-accent, --r-light-1..3, --r-glow",
+        "purpose": "The re-light outside the front page (the sign-up pick, the You menu, Appearance). Off for reduced motion and Pause motion."
       },
       {
-        "name": "flight",
-        "value": "1800ms",
-        "purpose": "The star chart's flight path draw, once."
+        "name": "ui-ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1); 150ms hover and press, 200ms swatches; never over 300ms",
+        "purpose": "Everything the person triggers in the account and app screens."
       },
       {
-        "name": "tilt-in",
-        "value": "view() entry 0% to cover 42%",
-        "purpose": "The product shot tipping up from 26 degrees as it scrolls in."
+        "name": "typing-dots",
+        "value": "realm-typing 1.2s ease-in-out infinite, 0.15s stagger; motion-safe only",
+        "purpose": "The typing indicator's dots."
       },
       {
-        "name": "deck",
-        "value": "view timeline of the next card, entry 0% to 100%",
-        "purpose": "The four world cards stacking: the covered card scales to 0.94 and dims."
+        "name": "recording-pulse",
+        "value": "pulse on a 10px Danger Line dot; still under reduced motion",
+        "purpose": "The voice recorder is live."
       },
       {
-        "name": "rise-in",
-        "value": "view() entry, staggered by --i",
-        "purpose": "The cast rising onto the horizon from the middle outwards."
+        "name": "speaking",
+        "value": "box-shadow 150ms",
+        "purpose": "The speaking ring in and out."
+      },
+      {
+        "name": "poster-lift",
+        "value": "transform and box-shadow 200ms ease-out; translateY(-4px) with motion allowed; banner scale 1.04 (posters) or 1.03 (live tiles) over 500ms",
+        "purpose": "Posters and Live tiles on hover."
       }
     ],
     "breakpoints": [
       {
         "name": "sm",
-        "value": "640px"
+        "value": "40rem"
       },
       {
         "name": "md",
-        "value": "768px"
+        "value": "48rem"
       },
       {
         "name": "lg",
-        "value": "1024px"
+        "value": "64rem"
       },
       {
-        "name": "xl",
-        "value": "1280px"
+        "name": "moments",
+        "value": "80rem"
+      },
+      {
+        "name": "portrait",
+        "value": "aspect-ratio <= 1"
+      },
+      {
+        "name": "app-nav-column",
+        "value": "48rem"
+      },
+      {
+        "name": "app-nav-wide",
+        "value": "64rem"
+      },
+      {
+        "name": "app-here-now-beside",
+        "value": "80rem"
+      },
+      {
+        "name": "messages-two-pane",
+        "value": "64rem"
+      },
+      {
+        "name": "messages-inbox-wide",
+        "value": "80rem"
       }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Action Button",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "The one action per view (Open Realm). A molten amber pill with deep brown text (coral with white text by day).",
-      "html": "<button class=\"ds-btn-primary\">Open Realm</button>",
-      "css": ".ds-btn-primary{display:inline-flex;align-items:center;height:52px;padding:0 24px;border:0;border-radius:999px;background:var(--r-overprint-fill,oklch(0.8 0.16 68));box-shadow:inset 0 1px 0 oklch(1 0 0/0.35),0 10px 24px -12px var(--r-overprint-fill,oklch(0.8 0.16 68));color:var(--r-on-overprint,oklch(0.2 0.05 145));font:600 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:background-color 160ms cubic-bezier(0.23,1,0.32,1),transform 160ms cubic-bezier(0.23,1,0.32,1)}.ds-btn-primary:hover{background:var(--r-overprint-fill-hover,oklch(0.93 0.17 128))}.ds-btn-primary:active{transform:scale(0.97)}.ds-btn-primary:focus-visible{outline:2px solid var(--r-focus,oklch(0.89 0.2 128));outline-offset:3px}"
+      "refersTo": "button-action",
+      "description": "The one pressable fill; follows the active theme.",
+      "html": "<a class=\"ds-btn-action\" href=\"#\">Open Realm in your browser</a>",
+      "css": ".ds-btn-action{display:inline-flex;align-items:center;justify-content:center;height:56px;padding:0 28px;border-radius:999px;background:var(--acc,#3ee6b0);color:var(--on-acc,#04150f);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:1.05rem;text-decoration:none;transition:transform 150ms ease-out,filter 150ms ease-out}.ds-btn-action:hover{filter:brightness(1.1)}.ds-btn-action:active{transform:scale(0.97)}.ds-btn-action:focus-visible{outline:2px solid var(--acc,#3ee6b0);outline-offset:3px}"
     },
     {
-      "name": "Secondary Button",
+      "name": "Ghost Button",
       "kind": "button",
-      "refersTo": "button-secondary",
-      "description": "Outline pill for the second choice (Download).",
-      "html": "<button class=\"ds-btn-secondary\">Download</button>",
-      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;height:52px;padding:0 24px;border:1px solid var(--r-rule-strong,oklch(0.54 0.045 286));border-radius:999px;background:transparent;color:var(--r-ink,oklch(0.965 0.008 240));font:600 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:background-color 160ms cubic-bezier(0.23,1,0.32,1),border-color 160ms}.ds-btn-secondary:hover{border-color:var(--r-ink-soft,oklch(0.84 0.02 245));background:var(--r-panel,oklch(0.19 0.027 256))}.ds-btn-secondary:active{transform:scale(0.97)}.ds-btn-secondary:focus-visible{outline:2px solid var(--r-focus,oklch(0.89 0.2 128));outline-offset:3px}"
+      "refersTo": "button-ghost",
+      "description": "Secondary action: ink text in a 1.5px ring.",
+      "html": "<a class=\"ds-btn-ghost\" href=\"#\">Sign in</a>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;height:56px;padding:0 28px;border-radius:999px;color:#f5f4f2;background:rgb(11 11 14 / 0.55);box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / 0.22);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:1.05rem;text-decoration:none;transition:transform 150ms ease-out,background-color 150ms ease-out}.ds-btn-ghost:hover{background:rgb(255 255 255 / 0.06)}.ds-btn-ghost:active{transform:scale(0.97)}.ds-btn-ghost:focus-visible{outline:2px solid var(--acc,#3ee6b0);outline-offset:3px}"
+    },
+    {
+      "name": "Header",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Fixed ink-glass bar: wordmark, nav, header action.",
+      "html": "<header class=\"ds-head\"><span class=\"ds-word\"><svg width=\"28\" height=\"28\" viewBox=\"0 0 28 28\" aria-hidden=\"true\"><circle cx=\"14\" cy=\"14\" r=\"11.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\"/><circle cx=\"17.5\" cy=\"11\" r=\"5\" fill=\"#3ee6b0\"/></svg>realm</span><nav><a href=\"#\">Spaces</a><a href=\"#\">Profiles</a><a href=\"#\">Privacy</a><a href=\"#\">Download</a></nav><a class=\"ds-head-cta\" href=\"#\">Open Realm</a></header>",
+      "css": ".ds-head{display:flex;align-items:center;gap:32px;height:64px;padding:0 32px;background:rgb(11 11 14 / 0.72);backdrop-filter:blur(24px) saturate(1.5);border-bottom:1px solid rgb(255 255 255 / 0.07);color:#f5f4f2;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-word{display:inline-flex;align-items:center;gap:10px;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800;font-size:1.55rem;letter-spacing:-0.03em;line-height:1}.ds-head nav{display:flex;gap:4px}.ds-head nav a{padding:8px 14px;border-radius:999px;color:#c8c6cf;font-size:0.95rem;text-decoration:none;transition:color 150ms}.ds-head nav a:hover{color:#f5f4f2}.ds-head nav a:focus-visible{outline:2px solid #3ee6b0}.ds-head-cta{margin-left:auto;display:inline-flex;align-items:center;height:40px;padding:0 20px;border-radius:999px;background:#3ee6b0;color:#04150f;font-weight:700;font-size:0.95rem;text-decoration:none}.ds-head-cta:hover{filter:brightness(1.1)}"
+    },
+    {
+      "name": "Status Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Dark pill at a row end; the now variant takes the action colour.",
+      "html": "<span class=\"ds-tag\">Coming soon</span> <span class=\"ds-tag ds-tag-now\">Available now</span>",
+      "css": ".ds-tag{display:inline-flex;align-items:center;height:1.8rem;padding:0 0.8rem;border-radius:999px;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-size:0.82rem;font-weight:700;color:#c8c6cf;background:rgb(11 11 14 / 0.6);box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.12)}.ds-tag-now{color:#04150f;background:#3ee6b0}"
+    },
+    {
+      "name": "Step Status",
+      "kind": "custom",
+      "description": "Said after the step text with a dot, never above the heading.",
+      "html": "<p class=\"ds-status\">First in early access</p><p class=\"ds-status ds-soon\">Coming soon</p>",
+      "css": ".ds-status{display:flex;align-items:center;gap:0.6rem;margin:0.5rem 0;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-size:0.98rem;font-weight:700;color:#3ee6b0}.ds-status::before{content:\"\";width:0.5rem;height:0.5rem;border-radius:50%;background:currentColor}.ds-soon{color:#c8c6cf}"
+    },
+    {
+      "name": "Moment",
+      "kind": "chip",
+      "refersTo": "moment",
+      "description": "Floats beside the tour phone, never over its screen.",
+      "html": "<span class=\"ds-moment\"><i></i>Noor · in a match</span>",
+      "css": ".ds-moment{display:inline-flex;align-items:center;height:2.6rem;padding:0 1rem;border-radius:999px;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-size:0.95rem;font-weight:700;color:#f5f4f2;background:rgb(20 20 25 / 0.92);box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.1),0 18px 40px -18px rgb(0 0 0 / 0.9)}.ds-moment i{width:0.5rem;height:0.5rem;margin-right:0.55rem;border-radius:50%;background:#4ee08a}"
+    },
+    {
+      "name": "Theme Swatches",
+      "kind": "custom",
+      "refersTo": "theme-swatch",
+      "description": "Pick a profile theme; the page follows.",
+      "html": "<div class=\"ds-sw\"><button class=\"ds-swatch\" aria-label=\"Mint\" aria-pressed=\"true\" style=\"background:linear-gradient(135deg,#1fbf8f,#2b47ff)\"></button><button class=\"ds-swatch\" aria-label=\"Orchid\" aria-pressed=\"false\" style=\"background:linear-gradient(135deg,#8b6bff,#ff5f9a)\"></button><button class=\"ds-swatch\" aria-label=\"Aqua\" aria-pressed=\"false\" style=\"background:linear-gradient(135deg,#14b8d6,#2b47ff)\"></button><button class=\"ds-swatch\" aria-label=\"Ember\" aria-pressed=\"false\" style=\"background:linear-gradient(135deg,#ff6a3d,#ffb547)\"></button></div>",
+      "css": ".ds-sw{display:flex;gap:0.65rem;padding:8px;background:#0b0b0e}.ds-swatch{width:2.75rem;height:2.75rem;border:0;border-radius:0.85rem;cursor:pointer;transition:transform .25s cubic-bezier(0.23,1,0.32,1),box-shadow .25s}.ds-swatch[aria-pressed=\"true\"]{transform:translateY(-3px);box-shadow:0 0 0 2px #0b0b0e,0 0 0 4px #f5f4f2}.ds-swatch:focus-visible{outline:2px solid #3ee6b0;outline-offset:4px}"
+    },
+    {
+      "name": "Phone Frame",
+      "kind": "card",
+      "refersTo": "phone-frame",
+      "description": "Black-bezel frame around a real app screen.",
+      "html": "<figure class=\"ds-phone\"><div class=\"ds-screen\"></div></figure>",
+      "css": ".ds-phone{width:12rem;margin:0;padding:0.5rem;border-radius:2.4rem;background:#000;box-shadow:0 0 0 1.5px #3a3a44,0 50px 90px -40px rgb(0 0 0 / 0.95)}.ds-screen{aspect-ratio:390/844;border-radius:1.95rem;background:radial-gradient(90% 60% at 30% 20%,#1fbf8f,transparent 60%),#131318}"
+    },
+    {
+      "name": "App Window Frame",
+      "kind": "card",
+      "refersTo": "app-frame",
+      "description": "Rounded window holding real app UI in boxes.",
+      "html": "<div class=\"ds-frame\"><div class=\"ds-banner\"></div><div class=\"ds-box\"><b>Celeste, Chapter 7</b><small>speedrun practice</small></div></div>",
+      "css": ".ds-frame{width:20rem;padding:0.6rem;border-radius:1.8rem;background:#131318;box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.08),0 60px 120px -50px rgb(0 0 0 / 0.95);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;color:#f5f4f2}.ds-banner{height:6rem;border-radius:1.4rem;background:radial-gradient(120% 140% at 0% 0%,#1fbf8f,transparent 58%),radial-gradient(100% 120% at 100% 10%,#2b47ff,transparent 55%),radial-gradient(120% 120% at 50% 100%,#0f766e,#131318 78%)}.ds-box{margin-top:0.75rem;padding:0.9rem;border-radius:1.2rem;background:#1b1b22;box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.06)}.ds-box b{display:block;font-size:0.95rem}.ds-box small{color:#c8c6cf;font-size:0.85rem}"
+    },
+    {
+      "name": "Pill (action, ghost, quiet)",
+      "kind": "button",
+      "refersTo": "pill-action-md",
+      "description": "components/pill.ts: action is the one thing to press; ghost for secondary; quiet for the lowest stakes. Sizes sm 36px, md 44px, lg 56px.",
+      "html": "<a class=\"ds-pill ds-pill-action\" href=\"#\">Enter the code</a> <button class=\"ds-pill ds-pill-ghost\">Enter code</button> <button class=\"ds-pill ds-pill-quiet\">Later</button>",
+      "css": ".ds-pill{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border:0;border-radius:999px;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:0.95rem;background:transparent;text-decoration:none;cursor:pointer;transition:transform 150ms ease-out,filter 150ms ease-out,background-color 150ms ease-out}.ds-pill:active{transform:scale(0.97)}.ds-pill:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}.ds-pill-action{background:var(--r-accent,#3ee6b0);color:var(--r-on-accent,#04150f)}.ds-pill-action:hover{filter:brightness(1.1)}.ds-pill-ghost{color:#f5f4f2;box-shadow:inset 0 0 0 1.5px #6f6c7b}.ds-pill-ghost:hover{background:#1d1d24}.ds-pill-quiet{color:#c8c6cf}.ds-pill-quiet:hover{background:#1d1d24;color:#f5f4f2}"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "56px rounded field, Line Strong edge, accent focus edge and halo; the error under it with an icon.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Email or username</span><input class=\"ds-field-input\" placeholder=\"you@example.com\"><span class=\"ds-field-error\">Enter your email or username.</span></label>",
+      "css": ".ds-field{display:block;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;max-width:24rem}.ds-field-label{display:block;margin-bottom:8px;font-size:0.95rem;font-weight:700;color:#f5f4f2}.ds-field-input{display:block;width:100%;height:56px;padding:0 16px;border-radius:0.9rem;border:1.5px solid #6f6c7b;background:rgb(11 11 14 / 0.7);color:#f5f4f2;font:inherit;font-size:1.0625rem;transition:border-color 150ms ease-out,box-shadow 150ms ease-out}.ds-field-input::placeholder{color:#c0bec8}.ds-field-input:hover{border-color:#c0bec8}.ds-field-input:focus-visible{outline:none;border-color:var(--r-accent,#3ee6b0);box-shadow:0 0 0 4px color-mix(in srgb,var(--r-accent,#3ee6b0) 22%,transparent)}.ds-field-error{display:block;margin-top:8px;font-size:0.95rem;color:#ffa8b2}"
+    },
+    {
+      "name": "Notice",
+      "kind": "card",
+      "refersTo": "notice",
+      "description": "The form message: error, success or info, with a filled icon.",
+      "html": "<div class=\"ds-notice ds-notice-error\">That email and password don't match. Check them, or reset your password.</div>",
+      "css": ".ds-notice{display:flex;gap:10px;padding:14px 16px;border-radius:0.9rem;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-size:0.95rem;line-height:1.375;color:#f5f4f2;max-width:26rem}.ds-notice-error{background:rgb(255 92 108 / 0.12);box-shadow:inset 0 0 0 1px #ff5c6c}"
+    },
+    {
+      "name": "AuthCard",
+      "kind": "card",
+      "refersTo": "auth-card",
+      "description": "One card on the lit ground: the screen title, the form, the way across under a hairline. Built at 1.75rem (frame step 1.8rem).",
+      "html": "<div class=\"ds-auth\"><h1 class=\"ds-auth-title\">Welcome back.</h1><a class=\"ds-pill-wide\" href=\"#\">Sign in</a><p class=\"ds-auth-foot\">New here? <a href=\"#\">Create an account</a></p></div>",
+      "css": ".ds-auth{max-width:29rem;padding:40px 36px 28px;border-radius:1.75rem;background:#141419;box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.09),0 60px 120px -40px #000;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-auth-title{margin:0 0 28px;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800;font-size:2.7rem;line-height:0.95;letter-spacing:-0.045em;color:#f5f4f2}.ds-pill-wide{display:flex;align-items:center;justify-content:center;height:56px;border-radius:999px;background:var(--r-accent,#3ee6b0);color:var(--r-on-accent,#04150f);font-weight:700;text-decoration:none}.ds-pill-wide:hover{filter:brightness(1.1)}.ds-auth-foot{margin:28px 0 0;padding-top:24px;border-top:1px solid #2a2a33;text-align:center;color:#c8c6cf}.ds-auth-foot a{color:#f5f4f2;font-weight:700;text-underline-offset:0.22em}"
+    },
+    {
+      "name": "App Sheet",
+      "kind": "custom",
+      "refersTo": "app-sheet",
+      "description": "The Wall frame: a labelled nav column on the lit ground beside one Surface sheet (1.375rem, inset 0.625rem) holding a 4rem bar and the page.",
+      "html": "<div class=\"ds-wall\"><nav class=\"ds-wall-nav\"><b>realm</b><a aria-current=\"page\">Home</a><a>Spaces</a><a>Explore</a></nav><div class=\"ds-wall-sheet\"><div class=\"ds-wall-bar\"><span class=\"ds-wall-travel\">Search or jump to…</span></div></div></div>",
+      "css": ".ds-wall{display:flex;height:14rem;background:#0b0b0e;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;color:#c8c6cf}.ds-wall-nav{display:flex;flex-direction:column;gap:2px;width:9rem;padding:14px 8px}.ds-wall-nav b{margin:0 0 12px 10px;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800;font-size:1.3rem;color:#f5f4f2}.ds-wall-nav a{display:flex;align-items:center;height:40px;padding:0 12px;border-radius:0.9rem;font-weight:600;cursor:pointer}.ds-wall-nav a:hover{background:rgb(245 244 242/0.06);color:#f5f4f2}.ds-wall-nav a[aria-current]{background:rgb(245 244 242/0.08);color:#f5f4f2}.ds-wall-sheet{flex:1;margin:0.625rem 0.625rem 0.625rem 0;border-radius:1.375rem;background:#141419;box-shadow:inset 0 0 0 1px rgb(255 255 255/0.06),0 40px 80px -50px #000}.ds-wall-bar{display:flex;align-items:center;height:4rem;padding:0 1.25rem}.ds-wall-travel{display:flex;align-items:center;height:40px;width:min(22rem,100%);padding:0 14px;border-radius:999px;background:rgb(245 244 242/0.05)}"
+    },
+    {
+      "name": "Nav Column",
+      "kind": "nav",
+      "refersTo": "nav-row",
+      "description": "Destinations as 48px labelled rows, then Your Spaces with LiveBadge and an unread dot; never bare icons, current is a neutral fill.",
+      "html": "<nav class=\"ds-navc\"><a class=\"ds-navr\" aria-current=\"page\" href=\"#\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M224 120v96a8 8 0 0 1-8 8h-56a8 8 0 0 1-8-8v-52h-48v52a8 8 0 0 1-8 8H40a8 8 0 0 1-8-8v-96a16 16 0 0 1 4.69-11.31l80-80a16 16 0 0 1 22.62 0l80 80A16 16 0 0 1 224 120Z\"/></svg>Home</a><a class=\"ds-navr\" href=\"#\">Messages</a><p class=\"ds-navh\">Your Spaces</p><a class=\"ds-navs\" href=\"#\"><span class=\"ds-navb\">LN<i></i></span>Late Night Lobby<span class=\"ds-navdot\"></span></a></nav>",
+      "css": ".ds-navc{display:flex;flex-direction:column;gap:2px;width:15.5rem;padding:12px;background:#0b0b0e;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-navr{display:flex;align-items:center;gap:14px;height:48px;padding:0 12px;border-radius:0.9rem;font-size:1rem;font-weight:600;color:#c8c6cf;text-decoration:none;transition:background-color 150ms ease-out,color 150ms ease-out}.ds-navr:hover,.ds-navs:hover{background:rgb(245 244 242/0.06);color:#f5f4f2}.ds-navr[aria-current=page]{background:rgb(245 244 242/0.08);color:#f5f4f2}.ds-navr:focus-visible,.ds-navs:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:2px}.ds-navsoon{margin-left:auto;padding:2px 8px;border-radius:999px;font-size:0.75rem;font-weight:700;box-shadow:inset 0 0 0 1px #6f6c7b}.ds-navh{margin:14px 12px 4px;font-size:0.82rem;font-weight:700;color:#c8c6cf}.ds-navs{display:flex;align-items:center;gap:12px;height:44px;padding:0 10px;border-radius:0.8rem;font-size:0.95rem;font-weight:600;color:#f5f4f2;text-decoration:none}.ds-navb{position:relative;display:grid;place-items:center;width:28px;height:28px;border-radius:8.4px;background:#ffaf8a;color:#1d0904;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800;font-size:0.7rem}.ds-navb i{position:absolute;right:-4px;bottom:-4px;width:16px;height:16px;border-radius:999px;background:#4ee08a;box-shadow:0 0 0 2.5px #0b0b0e}.ds-navdot{margin-left:auto;width:8px;height:8px;border-radius:999px;background:#f5f4f2}"
+    },
+    {
+      "name": "Travel Field",
+      "kind": "input",
+      "refersTo": "travel-field",
+      "description": "Ctrl K from anywhere; always shows its words, filling the bar up to 22rem; opens the Travel combobox dialog.",
+      "html": "<button class=\"ds-travel\">Search or jump to… <kbd class=\"ds-key\">Ctrl K</kbd></button>",
+      "css": ".ds-travel{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;height:40px;width:22rem;padding:0 8px 0 14px;border:0;border-radius:999px;background:rgb(245 244 242 / 0.05);color:#c8c6cf;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-size:0.95rem;cursor:pointer;transition:background-color 150ms ease-out,color 150ms ease-out}.ds-travel:hover{background:rgb(245 244 242 / 0.08);color:#f5f4f2}.ds-travel:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}.ds-key{padding:2px 8px;border-radius:0.45rem;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:0.78rem;box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.14)}"
+    },
+    {
+      "name": "Soon Tag",
+      "kind": "chip",
+      "refersTo": "soon-tag",
+      "description": "An honest \"Coming soon\" on anything not built yet. Never a date.",
+      "html": "<span class=\"ds-soon\">Coming soon</span>",
+      "css": ".ds-soon{display:inline-flex;align-items:center;height:1.75rem;padding:0 12px;border-radius:999px;background:rgb(11 11 14 / 0.6);box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.12);color:#c8c6cf;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:0.82rem}"
+    },
+    {
+      "name": "Accent Picker",
+      "kind": "custom",
+      "refersTo": "accent-swatch-md",
+      "description": "The person's colour as a radio group; the chosen swatch shows a ring and a check, its name on a dark chip.",
+      "html": "<div class=\"ds-swatches\"><span class=\"ds-sw ds-on\" style=\"background:linear-gradient(135deg,#1fbf8f,#2b47ff 70%,#0f766e)\"><b>Mint</b></span><span class=\"ds-sw\" style=\"background:linear-gradient(135deg,#8b6bff,#ff5f9a 70%,#3a2a8a)\"><b>Orchid</b></span></div>",
+      "css": ".ds-swatches{display:flex;gap:12px;padding:8px;background:#1d1d24}.ds-sw{position:relative;width:7rem;height:5rem;border-radius:1rem;box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.12);transition:box-shadow 200ms cubic-bezier(0.23,1,0.32,1),transform 200ms cubic-bezier(0.23,1,0.32,1);cursor:pointer}.ds-sw:active{transform:scale(0.95)}.ds-sw b{position:absolute;left:8px;bottom:8px;padding:2px 8px;border-radius:999px;background:rgb(11 11 14 / 0.75);color:#f5f4f2;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:0.88rem}.ds-on{box-shadow:0 0 0 3px #1d1d24,0 0 0 5px #f5f4f2}"
+    },
+    {
+      "name": "Empty State",
+      "kind": "custom",
+      "refersTo": "empty-title",
+      "description": "Straight on the sheet under a hairline, never in a box of its own; a 1.3rem bold Funnel title.",
+      "html": "<section class=\"ds-empty\"><h2>No Spaces yet</h2><p>Your Spaces will be listed here, by name.</p><span class=\"ds-soon\">Coming soon</span></section>",
+      "css": ".ds-empty{border-top:1px solid #2a2a33;padding-top:2rem;background:#141419;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;color:#c8c6cf}.ds-empty h2{margin:0;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:-0.02em;color:#f5f4f2}.ds-empty p{margin:12px 0 20px;max-width:54ch}.ds-soon{display:inline-flex;align-items:center;height:1.75rem;padding:0 12px;border-radius:999px;background:rgb(11 11 14 / 0.6);box-shadow:inset 0 0 0 1px rgb(255 255 255 / 0.12);color:#c8c6cf;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:0.82rem}"
+    },
+    {
+      "name": "Danger Pill",
+      "kind": "button",
+      "refersTo": "pill-danger-sm",
+      "description": "A destructive action: a ghost pill with Danger text and a 1.5px Danger Line ring. Never a fill.",
+      "html": "<button class=\"ds-pill-danger\">Remove the message</button>",
+      "css": ".ds-pill-danger{display:inline-flex;align-items:center;height:36px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:var(--r-danger,#ffa8b2);box-shadow:inset 0 0 0 1.5px var(--r-danger-line,#ff5c6c);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;transition:transform 150ms ease-out,background-color 150ms ease-out}.ds-pill-danger:hover{background:var(--r-surface-raised,#1d1d24)}.ds-pill-danger:active{transform:scale(0.97)}.ds-pill-danger:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}"
+    },
+    {
+      "name": "Dialog Sheet",
+      "kind": "card",
+      "refersTo": "dialog-sheet",
+      "description": "components/dialog.tsx: the native <dialog> sheet. Raised, 1.2rem, the Sheet shadow; rises from the bottom on phones.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-sheet-head\"><h2>Report Kenji's message</h2><button class=\"ds-sheet-x\" aria-label=\"Close\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M205.66 194.34a8 8 0 0 1-11.32 11.32L128 139.31l-66.34 66.35a8 8 0 0 1-11.32-11.32L116.69 128 50.34 61.66a8 8 0 0 1 11.32-11.32L128 116.69l66.34-66.35a8 8 0 0 1 11.32 11.32L139.31 128Z\"/></svg></button></div><p class=\"ds-sheet-lead\">Reports go to this Space's moderators, or to Realm for the most serious ones. Nobody sees who sent them.</p></div>",
+      "css": ".ds-sheet{width:min(34rem,100%);padding:24px 28px;border-radius:1.2rem;background:var(--r-surface-raised,#1d1d24);color:var(--r-text,#f5f4f2);box-shadow:inset 0 0 0 1px rgb(255 255 255/0.12),0 40px 100px -30px rgb(0 0 0/0.8);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;}.ds-sheet-head{display:flex;align-items:flex-start;gap:16px}.ds-sheet-head h2{flex:1;margin:0;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800;font-size:1.6rem;line-height:1.25;letter-spacing:-0.03em}.ds-sheet-x{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;margin:-4px -8px 0 0;border:0;border-radius:999px;background:transparent;color:var(--r-text-soft,#c8c6cf);cursor:pointer}.ds-sheet-x:hover{background:var(--r-surface,#141419);color:var(--r-text,#f5f4f2)}.ds-sheet-x:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}.ds-sheet-lead{margin:8px 0 0;color:var(--r-text-soft,#c8c6cf)}"
     },
     {
       "name": "Room Tabs",
       "kind": "nav",
-      "refersTo": "chip-room",
-      "description": "A Space's rooms as pills along the top; an amber count only when something needs you.",
-      "html": "<nav class=\"ds-rooms\"><span class=\"ds-room ds-room-on\"># general</span><span class=\"ds-room\"># clips <b class=\"ds-count\">3</b></span><span class=\"ds-room\"># lfg</span></nav>",
-      "css": ".ds-rooms{display:flex;gap:6px}.ds-room{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--r-rule,oklch(0.31 0.03 256));border-radius:999px;color:var(--r-ink-soft,oklch(0.84 0.02 245));font:400 0.75rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer;transition:border-color 160ms}.ds-room:hover{border-color:var(--r-rule-strong,oklch(0.52 0.03 256))}.ds-room-on{background:var(--r-spaces-fill,oklch(0.33 0.06 182));border-color:var(--r-spaces-line,oklch(0.8 0.12 182));color:var(--r-spaces-text,oklch(0.84 0.11 182));font-weight:700}.ds-count{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--r-overprint-fill,oklch(0.88 0.2 128));color:var(--r-on-overprint,oklch(0.2 0.05 145));font-size:0.6rem}"
+      "refersTo": "room-tab",
+      "description": "A Space's room strip: its own row, scrolling sideways under a mask fade; the current room is a neutral raised pill.",
+      "html": "<nav class=\"ds-rooms\" aria-label=\"Rooms\"><a class=\"ds-room\" aria-current=\"page\" href=\"#\"><span class=\"ds-hash\">#</span>general</a><a class=\"ds-room ds-room-unread\" href=\"#\"><span class=\"ds-hash\">#</span>clips-and-lfg<span class=\"ds-dot\"></span></a><a class=\"ds-room\" href=\"#\"><span class=\"ds-hash\">#</span>hangout</a></nav>",
+      "css": ".ds-rooms{display:flex;gap:4px;padding:0 4px;overflow-x:auto;scrollbar-width:none;mask-image:linear-gradient(to right,transparent,black 0.75rem,black calc(100% - 2rem),transparent)}.ds-room{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;white-space:nowrap;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:0.95rem;color:var(--r-text-soft,#c8c6cf);text-decoration:none;transition:background-color 150ms ease-out,color 150ms ease-out}.ds-room:hover{background:rgb(245 244 242/0.06);color:var(--r-text,#f5f4f2)}.ds-room[aria-current=page]{background:rgb(245 244 242/0.08);color:var(--r-text,#f5f4f2);box-shadow:inset 0 0 0 1px rgb(255 255 255/0.1)}.ds-room:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}.ds-hash{color:var(--r-text-soft,#c8c6cf)}.ds-room-unread{color:var(--r-text,#f5f4f2)}.ds-dot{width:8px;height:8px;border-radius:999px;background:var(--r-text,#f5f4f2)}"
     },
     {
       "name": "Chat Bubbles",
       "kind": "custom",
       "refersTo": "bubble-mine",
-      "description": "Friends on the left in Panel Raised; you on the right in Spaces Teal.",
-      "html": "<div class=\"ds-chat\"><p class=\"ds-bubble ds-theirs\">anyone up for ranked after 9?</p><p class=\"ds-bubble ds-mine\">in. queue at 9:15?</p></div>",
-      "css": ".ds-chat{display:flex;flex-direction:column;gap:8px;width:280px}.ds-bubble{margin:0;max-width:78%;padding:6px 12px;border-radius:16px;font:400 0.875rem/1.35 'Atkinson Hyperlegible Next',system-ui,sans-serif}.ds-theirs{align-self:flex-start;border-bottom-left-radius:6px;background:var(--r-panel-raised,oklch(0.228 0.03 256));color:var(--r-ink,oklch(0.965 0.008 240))}.ds-mine{align-self:flex-end;border-bottom-right-radius:6px;background:var(--r-spaces-solid,oklch(0.72 0.13 182));color:var(--r-ground,oklch(0.155 0.024 256))}"
+      "description": "Yours on the right in the theme colour, theirs on the left in Frame Box; a run tucks its joined corners to 0.45rem; the time sits on the last of a run.",
+      "html": "<ol class=\"ds-chat\"><li class=\"ds-msg\"><p class=\"ds-who\">Kenji</p><div class=\"ds-b ds-theirs ds-first\">anyone up for ranked?</div></li><li class=\"ds-msg\"><div class=\"ds-b ds-theirs ds-last\">need one more<span class=\"ds-t\">9:14 PM</span></div></li><li class=\"ds-msg ds-me\"><div class=\"ds-b ds-mine\">on my way<span class=\"ds-t\">9:15 PM</span></div></li></ol>",
+      "css": ".ds-chat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;}.ds-msg{display:flex;flex-direction:column;align-items:flex-start;margin-top:2px}.ds-me{align-items:flex-end;margin-top:12px}.ds-who{margin:12px 0 4px;padding:0 4px;font-size:0.86rem;font-weight:700;color:var(--r-text-soft,#c8c6cf)}.ds-b{max-width:min(38rem,86%);padding:8px 14px;border-radius:1.15rem;font-size:1rem;line-height:1.375}.ds-theirs{background:var(--r-bubble-theirs,#1b1b22);color:var(--r-text,#f5f4f2);box-shadow:inset 0 0 0 1px rgb(255 255 255/0.06)}.ds-theirs.ds-first{border-bottom-left-radius:0.45rem}.ds-theirs.ds-last{border-top-left-radius:0.45rem}.ds-mine{background:var(--r-bubble-mine,#3ee6b0);color:var(--r-on-bubble-mine,#04150f)}.ds-t{margin-left:8px;font-size:0.74rem;opacity:0.7;white-space:nowrap}"
     },
     {
       "name": "Composer",
       "kind": "input",
-      "refersTo": "chip-room",
-      "description": "Floating pill composer with a round action-colour send button.",
-      "html": "<label class=\"ds-composer\"><input class=\"ds-composer-input\" placeholder=\"Say something in #general\"><button class=\"ds-send\" aria-label=\"Send\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M227.3 28.7a16 16 0 0 0-15.8-4L19.6 83.1a16 16 0 0 0-2.5 29.8l85.5 40.5 40.5 85.5a15.9 15.9 0 0 0 14.4 9.1h1.3a16 16 0 0 0 14.1-11.6l58.4-191.9a16 16 0 0 0-4-15.8Z\"/></svg></button></label>",
-      "css": ".ds-composer{display:flex;align-items:center;gap:8px;width:320px;height:40px;padding:0 4px 0 14px;border:1px solid var(--r-rule-strong,oklch(0.52 0.03 256));border-radius:999px;background:color-mix(in oklch,var(--r-ground,oklch(0.155 0.024 256)) 60%,transparent)}.ds-composer:focus-within{border-color:var(--r-focus,oklch(0.89 0.2 128))}.ds-composer-input{flex:1;min-width:0;border:0;background:transparent;color:var(--r-ink,oklch(0.965 0.008 240));font:400 0.875rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;outline:none}.ds-composer-input::placeholder{color:var(--r-ink-muted,oklch(0.71 0.025 248))}.ds-send{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;border-radius:999px;background:var(--r-overprint-fill,oklch(0.88 0.2 128));color:var(--r-on-overprint,oklch(0.2 0.05 145));cursor:pointer}.ds-send:hover{background:var(--r-overprint-fill-hover,oklch(0.93 0.17 128))}"
+      "refersTo": "composer",
+      "description": "A 1.5rem rectangle on 70% ground with a Line Strong ring that becomes a 2px focus ring; Send is the accent circle, the room's one action.",
+      "html": "<form class=\"ds-comp\"><button type=\"button\" class=\"ds-comp-icon\" aria-label=\"Attach\"><svg width=\"21\" height=\"21\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M209.66 122.34a8 8 0 0 1 0 11.32l-82.05 82a56 56 0 0 1-79.2-79.21l99.26-100.72a40 40 0 1 1 56.61 56.55L105 193a24 24 0 1 1-34-34l83.3-84.62a8 8 0 1 1 11.4 11.22L82.39 170.43a8 8 0 1 0 11.27 11.36L192.93 81A24 24 0 1 0 159 47L59.76 147.68a40 40 0 1 0 56.53 56.62l82.06-82a8 8 0 0 1 11.31.04Z\"/></svg></button><input class=\"ds-comp-text\" placeholder=\"Message #general\" aria-label=\"Message #general\"><button type=\"button\" class=\"ds-send\" aria-label=\"Send\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M205.66 117.66a8 8 0 0 1-11.32 0L136 59.31V216a8 8 0 0 1-16 0V59.31l-58.34 58.35a8 8 0 0 1-11.32-11.32l72-72a8 8 0 0 1 11.32 0l72 72a8 8 0 0 1 0 11.32Z\"/></svg></button></form>",
+      "css": ".ds-comp{display:flex;align-items:center;gap:6px;padding:6px;border-radius:1.5rem;background:rgb(11 11 14/0.7);box-shadow:inset 0 0 0 1.5px var(--r-border-strong,#6f6c7b);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;}.ds-comp:focus-within{box-shadow:inset 0 0 0 2px var(--r-focus,#3ee6b0)}.ds-comp-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;border-radius:999px;background:transparent;color:var(--r-text-soft,#c8c6cf);cursor:pointer}.ds-comp-icon:hover{background:rgb(245 244 242/0.08);color:var(--r-text,#f5f4f2)}.ds-comp-text{flex:1;min-width:0;border:0;background:transparent;color:var(--r-text,#f5f4f2);font:inherit;font-size:1rem;outline:none}.ds-comp-text::placeholder{color:var(--r-text-muted,#c0bec8)}.ds-send{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;border-radius:999px;background:var(--r-accent,#3ee6b0);color:var(--r-on-accent,#04150f);cursor:pointer;transition:filter 150ms ease-out,transform 150ms ease-out}.ds-send:hover{filter:brightness(1.1)}.ds-send:active{transform:scale(0.95)}.ds-send:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}"
     },
     {
-      "name": "Speech Bubble",
+      "name": "Report Reasons",
+      "kind": "custom",
+      "refersTo": "choice-selected",
+      "description": "Radio rows, two columns from 40rem; the selected one fills with Surface and takes a 1.5px Ink ring; the gravest spans the row.",
+      "html": "<div class=\"ds-reasons\"><label class=\"ds-reason ds-on\"><input type=\"radio\" name=\"r\" checked> Spam or scams</label><label class=\"ds-reason\"><input type=\"radio\" name=\"r\"> Harassment or bullying</label><label class=\"ds-reason ds-wide\"><input type=\"radio\" name=\"r\"> Sexual content involving someone under 18</label></div>",
+      "css": ".ds-reasons{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;}.ds-reason{display:flex;align-items:center;gap:12px;min-height:44px;padding:8px 14px;border-radius:0.8rem;color:var(--r-text,#f5f4f2);cursor:pointer;transition:background-color 150ms,box-shadow 150ms}.ds-reason:hover{background:var(--r-surface,#141419)}.ds-reason:has(:focus-visible){outline:2px solid var(--r-focus,#3ee6b0);outline-offset:2px}.ds-reason input{accent-color:var(--r-text,#f5f4f2);width:16px;height:16px}.ds-on{background:var(--r-surface,#141419);box-shadow:inset 0 0 0 1.5px var(--r-text,#f5f4f2)}.ds-wide{grid-column:span 2}"
+    },
+    {
+      "name": "Manage Tabs",
+      "kind": "nav",
+      "refersTo": "room-tab-current",
+      "description": "ARIA tabs in the Manage sheet; the selected tab is a neutral raised pill, never the accent.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\" aria-label=\"Manage the Space\"><button role=\"tab\" class=\"ds-tab\" aria-selected=\"false\">Settings</button><button role=\"tab\" class=\"ds-tab\" aria-selected=\"false\">Members</button><button role=\"tab\" class=\"ds-tab\" aria-selected=\"true\">Reports</button><button role=\"tab\" class=\"ds-tab\" aria-selected=\"false\">Activity</button></div>",
+      "css": ".ds-tabs{display:flex;flex-wrap:wrap;gap:6px}.ds-tab{height:40px;padding:0 16px;border:0;border-radius:999px;background:transparent;color:var(--r-text-soft,#c8c6cf);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:color 150ms}.ds-tab:hover{color:var(--r-text,#f5f4f2)}.ds-tab[aria-selected=true]{background:rgb(245 244 242/0.1);color:var(--r-text,#f5f4f2);box-shadow:inset 0 0 0 1px rgb(255 255 255/0.12)}.ds-tab:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}"
+    },
+    {
+      "name": "Voice Note",
       "kind": "custom",
       "refersTo": "bubble-theirs",
-      "description": "Glassy aurora-edged bubbles pinned to the explorers in the 3D hero, and the marquee stickers.",
-      "html": "<div class=\"ds-say\">who&#39;s on tonight?</div>",
-      "css": ".ds-say{display:inline-block;padding:10px 14px;border:1px solid #2dd4bf;border-radius:14px 14px 14px 4px;background:rgb(10 20 34 / 0.72);color:#eaf6ff;font:700 0.95rem 'Atkinson Hyperlegible Next',system-ui,sans-serif;box-shadow:0 10px 30px -8px color-mix(in oklch,#2dd4bf 55%,transparent);backdrop-filter:blur(8px)}"
+      "description": "Inside the bubble: a round play button and a track drawn in currentColor under an invisible range input.",
+      "html": "<div class=\"ds-b2\"><span class=\"ds-vn\"><button class=\"ds-play\" aria-label=\"Play voice message\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M240 128a15.74 15.74 0 0 1-7.6 13.51L88.32 229.65a16 16 0 0 1-16.2.3A15.86 15.86 0 0 1 64 216.13V39.87a15.86 15.86 0 0 1 8.12-13.82 16 16 0 0 1 16.2.3l144.08 88.14A15.74 15.74 0 0 1 240 128Z\"/></svg></button><span class=\"ds-track\"><span class=\"ds-rail\"></span><span class=\"ds-fill\"></span><span class=\"ds-knob\"></span></span><span class=\"ds-len\">0:12</span></span></div>",
+      "css": ".ds-b2{display:inline-block;padding:8px 14px;border-radius:1.15rem;background:var(--r-bubble-theirs,#1b1b22);color:var(--r-text,#f5f4f2);box-shadow:inset 0 0 0 1px rgb(255 255 255/0.06);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;}.ds-vn{display:flex;align-items:center;gap:10px;min-width:15rem}.ds-play{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;border-radius:999px;background:rgb(245 244 242/0.1);color:inherit;cursor:pointer}.ds-play:hover{background:rgb(245 244 242/0.16)}.ds-play:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:2px}.ds-track{position:relative;flex:1;height:24px;display:flex;align-items:center}.ds-rail{width:100%;height:4px;border-radius:999px;background:currentColor;opacity:0.3}.ds-fill{position:absolute;left:0;width:35%;height:4px;border-radius:999px;background:currentColor}.ds-knob{position:absolute;left:35%;width:12px;height:12px;border-radius:999px;background:currentColor;transform:translateX(-50%)}.ds-len{width:40px;text-align:right;font-size:0.82rem;font-variant-numeric:tabular-nums;color:var(--r-text-soft,#c8c6cf)}"
+    },
+    {
+      "name": "Space Poster",
+      "kind": "card",
+      "refersTo": "space-poster",
+      "description": "A Space as a 4:5 poster: its banner or own lights under a bottom scrim, badge, name, one status line; an accent \"New\" chip; a lift and white ring on hover and focus.",
+      "html": "<a class=\"ds-poster\" href=\"#\"><span class=\"ds-poster-new\">New</span><span class=\"ds-poster-b\">LN</span><b>Late Night Lobby</b><small><i></i>hangout</small></a>",
+      "css": ".ds-poster{position:relative;display:flex;flex-direction:column;justify-content:flex-end;width:11.75rem;aspect-ratio:4/5;padding:0.875rem;border-radius:1.25rem;overflow:hidden;text-decoration:none;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;background:linear-gradient(180deg,transparent 35%,rgb(11 11 14/0.9)),radial-gradient(120% 140% at 0% 0%,#ff6a3d,transparent 58%),radial-gradient(100% 120% at 100% 10%,#ffb547,transparent 55%),radial-gradient(120% 120% at 50% 100%,#c2185b,#141419 78%);transition:transform 200ms ease-out,box-shadow 200ms ease-out}.ds-poster:hover,.ds-poster:focus-visible{transform:translateY(-4px);box-shadow:0 18px 40px -16px rgb(0 0 0/0.8),inset 0 0 0 2px rgb(255 255 255/0.8);outline:none}.ds-poster-new{position:absolute;top:12px;right:12px;padding:2px 10px;border-radius:999px;background:var(--r-accent,#3ee6b0);color:var(--r-on-accent,#04150f);font-size:0.78rem;font-weight:700}.ds-poster-b{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#ffaf8a;color:#1d0904;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800;font-size:0.8rem}.ds-poster b{margin-top:10px;font-size:1rem;line-height:1.25;color:#f5f4f2}.ds-poster small{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.82rem;font-weight:700;color:#4ee08a}.ds-poster small i{width:8px;height:8px;border-radius:999px;background:#4ee08a}"
+    },
+    {
+      "name": "Live Tile",
+      "kind": "card",
+      "refersTo": "live-tile",
+      "description": "A voice room with people in it on Home: the Space's banner or lights under a left scrim, the room name in Funnel, who's in, avatars and an accent Join.",
+      "html": "<a class=\"ds-live\" href=\"#\"><span class=\"ds-live-t\"><b>hangout</b><small>Late Night Lobby · Kenji is in</small></span><span class=\"ds-live-join\">Join</span></a>",
+      "css": ".ds-live{display:flex;align-items:flex-end;gap:16px;min-height:10.5rem;padding:1.5rem;border-radius:1.375rem;text-decoration:none;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;background:linear-gradient(90deg,rgb(11 11 14/0.86),rgb(11 11 14/0.35) 60%,rgb(11 11 14/0.1)),radial-gradient(120% 140% at 0% 0%,#ff6a3d,transparent 58%),radial-gradient(100% 120% at 100% 10%,#ffb547,transparent 55%),radial-gradient(120% 120% at 50% 100%,#c2185b,#141419 78%)}.ds-live:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:4px}.ds-live-t{flex:1;min-width:0}.ds-live-t b{display:block;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:700;font-size:1.6rem;letter-spacing:-0.02em;color:#f5f4f2}.ds-live-t small{display:block;margin-top:4px;font-size:0.95rem;color:#c8c6cf}.ds-live-join{display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:999px;background:var(--r-accent,#3ee6b0);color:var(--r-on-accent,#04150f);font-weight:700;font-size:0.95rem;transition:filter 150ms ease-out}.ds-live:hover .ds-live-join{filter:brightness(1.1)}"
+    },
+    {
+      "name": "Faces Row",
+      "kind": "custom",
+      "refersTo": "face",
+      "description": "Who from your Spaces is around: pictures in presence rings, a speaker badge while in voice, an Invite face at the end.",
+      "html": "<ul class=\"ds-faces\"><li><span class=\"ds-face ds-on\">K<i></i></span><b>Kenji</b><small>hangout</small></li><li><span class=\"ds-face ds-away\">A</span><b>Ana</b><small>Away</small></li><li><span class=\"ds-face ds-inv\">+</span><b>Invite</b><small>Bring friends</small></li></ul>",
+      "css": ".ds-faces{display:flex;gap:16px;margin:0;padding:8px;list-style:none;background:#141419;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;text-align:center}.ds-faces li{width:4.75rem}.ds-face{position:relative;display:grid;place-items:center;width:4.25rem;height:4.25rem;margin:0 auto;border-radius:999px;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800;font-size:1.3rem;color:#f5f4f2;background:radial-gradient(circle,#2a2a33 58%,transparent 59%)}.ds-on{box-shadow:inset 0 0 0 2.5px #4ee08a}.ds-away{box-shadow:inset 0 0 0 2.5px #6f6c7b}.ds-inv{background:none;border:1.5px dashed #6f6c7b;color:#c8c6cf}.ds-face i{position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:999px;background:#4ee08a;box-shadow:0 0 0 3px #141419}.ds-faces b{display:block;margin-top:6px;font-size:0.85rem;color:#f5f4f2}.ds-faces small{font-size:0.75rem;color:#c8c6cf}"
+    },
+    {
+      "name": "Live Strip",
+      "kind": "custom",
+      "refersTo": "live-strip",
+      "description": "In a room, under the tabs: who's in another voice room of this Space, with an accent Join.",
+      "html": "<div class=\"ds-strip\"><span class=\"ds-strip-t\"><b>hangout</b> · Kenji is in</span><a class=\"ds-strip-join\" href=\"#\">Join</a></div>",
+      "css": ".ds-strip{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 14px;border-radius:1.1rem;background:linear-gradient(100deg,rgb(78 224 138/0.1),rgb(78 224 138/0.02) 70%),#141419;box-shadow:inset 0 0 0 1px rgb(78 224 138/0.24);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-strip-t{flex:1;font-size:0.95rem;color:#c8c6cf}.ds-strip-t b{color:#f5f4f2}.ds-strip-join{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:999px;background:var(--r-accent,#3ee6b0);color:var(--r-on-accent,#04150f);font-weight:700;font-size:0.9rem;text-decoration:none}.ds-strip-join:hover{filter:brightness(1.1)}.ds-strip-join:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}"
+    },
+    {
+      "name": "Inbox Search and Filters",
+      "kind": "input",
+      "refersTo": "search-pill",
+      "description": "The inbox's 40px search pill on Ink at 5%, then All / Unread / Groups as a fieldset of pressed pills.",
+      "html": "<div class=\"ds-ib\"><label class=\"ds-ib-s\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M229.66 218.34l-50.07-50.06a88.11 88.11 0 1 0-11.31 11.31l50.06 50.07a8 8 0 0 0 11.32-11.32ZM40 112a72 72 0 1 1 72 72 72.08 72.08 0 0 1-72-72Z\"/></svg><input placeholder=\"Search people and groups\" aria-label=\"Search your messages\"></label><fieldset class=\"ds-ib-f\"><legend>Show</legend><button aria-pressed=\"true\">All</button><button aria-pressed=\"false\">Unread</button><button aria-pressed=\"false\">Groups</button></fieldset></div>",
+      "css": ".ds-ib{width:20rem;padding:12px;background:#141419;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-ib-s{position:relative;display:block;color:#c8c6cf}.ds-ib-s svg{position:absolute;left:14px;top:50%;transform:translateY(-50%)}.ds-ib-s input{width:100%;height:40px;padding:0 12px 0 40px;border:0;border-radius:999px;background:rgb(245 244 242/0.05);color:#f5f4f2;font:inherit;font-size:0.95rem;outline:none}.ds-ib-s input::placeholder{color:#c0bec8}.ds-ib-s input:focus-visible{box-shadow:inset 0 0 0 2px var(--r-focus,#3ee6b0)}.ds-ib-f{display:flex;gap:6px;margin:12px 0 0;padding:0;border:0}.ds-ib-f legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.ds-ib-f button{height:32px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:#c8c6cf;font:inherit;font-size:0.88rem;font-weight:600;box-shadow:inset 0 0 0 1px #2a2a33;cursor:pointer;transition:color 150ms ease-out,background-color 150ms ease-out}.ds-ib-f button:hover{color:#f5f4f2}.ds-ib-f button[aria-pressed=true]{background:rgb(245 244 242/0.1);color:#f5f4f2;box-shadow:none}.ds-ib-f button:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}"
+    },
+    {
+      "name": "Conversation Row",
+      "kind": "custom",
+      "refersTo": "conversation-row",
+      "description": "A 52px ConversationAvatar (two overlapped for a group), title and time, then the preview and pinned or muted marks; Ink at 8% when current.",
+      "html": "<ul class=\"ds-cr\"><li><a href=\"#\" aria-current=\"page\"><span class=\"ds-cr-av\"><span>K</span><i></i></span><span class=\"ds-cr-t\"><span class=\"ds-cr-l\"><b>Kenji</b><time>9:39 PM</time></span><span class=\"ds-cr-p\">in. bringing snacks</span></span></a></li><li><a href=\"#\"><span class=\"ds-cr-g\"><span>N</span><span>A</span></span><span class=\"ds-cr-t\"><span class=\"ds-cr-l\"><b>Ranked night</b><time>Mon</time></span><span class=\"ds-cr-p\">Ama: who has the lobby code</span></span></a></li></ul>",
+      "css": ".ds-cr{width:21rem;margin:0;padding:8px;list-style:none;background:#141419;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-cr a{display:flex;align-items:center;gap:12px;padding:10px;border-radius:1rem;color:#f5f4f2;text-decoration:none;transition:background-color 150ms ease-out}.ds-cr a:hover{background:rgb(245 244 242/0.05)}.ds-cr a[aria-current=page]{background:rgb(245 244 242/0.08)}.ds-cr a:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:2px}.ds-cr-av{position:relative;flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:999px;background:#cdb4ff;color:#160a2e;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800}.ds-cr-av i{position:absolute;right:0;bottom:0;width:13px;height:13px;border-radius:999px;background:#4ee08a;box-shadow:0 0 0 2.5px #1e1e24}.ds-cr-g{position:relative;flex:none;width:52px;height:52px}.ds-cr-g span{position:absolute;display:grid;place-items:center;width:36px;height:36px;border-radius:999px;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800;font-size:0.85rem}.ds-cr-g span:first-child{top:0;left:0;background:#ffaf8a;color:#1d0904}.ds-cr-g span:last-child{right:0;bottom:0;background:#5fd8ef;color:#03161b;box-shadow:0 0 0 2.5px #141419}.ds-cr-t{flex:1;min-width:0}.ds-cr-l{display:flex;gap:6px;align-items:center}.ds-cr-l b{flex:1;font-size:0.98rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-cr-l time{font-size:0.78rem;color:#c8c6cf}.ds-cr-p{display:block;margin-top:2px;font-size:0.88rem;color:#c8c6cf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+    },
+    {
+      "name": "Encryption Chip",
+      "kind": "chip",
+      "refersTo": "not-e2ee-chip",
+      "description": "\"Not end-to-end encrypted yet\": a quiet dark pill in Ink 2 that opens the explainer. Never a lock, never a warning colour.",
+      "html": "<button class=\"ds-e2ee\" type=\"button\">Not end-to-end encrypted yet</button>",
+      "css": ".ds-e2ee{display:inline-flex;align-items:center;height:1.75rem;padding:0 12px;border:0;border-radius:999px;background:rgb(11 11 14/0.6);box-shadow:inset 0 0 0 1px rgb(255 255 255/0.12);color:#c8c6cf;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-size:0.8rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:color 150ms ease-out}.ds-e2ee:hover{color:#f5f4f2}.ds-e2ee:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:3px}"
+    },
+    {
+      "name": "Conversation Peek",
+      "kind": "custom",
+      "refersTo": "composer",
+      "description": "In a DM, the other person's face and \"Kenji is here\" in the status line above the composer; never over the messages.",
+      "html": "<div class=\"ds-peek\"><span class=\"ds-peek-f\"><span>K</span></span>Kenji is here</div>",
+      "css": ".ds-peek{display:flex;align-items:center;gap:8px;height:1.75rem;padding:0 8px;background:#141419;color:#4ee08a;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif;font-size:0.85rem;font-weight:600}.ds-peek-f{display:grid;place-items:center;width:24px;height:24px;border-radius:999px;box-shadow:inset 0 0 0 1.5px #4ee08a}.ds-peek-f span{display:grid;place-items:center;width:20px;height:20px;border-radius:999px;background:#cdb4ff;color:#160a2e;font-family:\"Funnel Display\",system-ui,sans-serif;font-weight:800;font-size:0.6rem}"
+    },
+    {
+      "name": "Reactions",
+      "kind": "chip",
+      "refersTo": "reaction-chip",
+      "description": "Reaction chips under a bubble, and the react popover: the quick six, then + for any emoji. (Your own chip's accent ring and fill is an open question under the One Action Rule, so it is not shown here.)",
+      "html": "<div class=\"ds-rx\"><ul aria-label=\"Reactions\"><li><button aria-pressed=\"false\"><span aria-hidden=\"true\">🔥</span>3</button></li><li><button aria-pressed=\"false\"><span aria-hidden=\"true\">😂</span>1</button></li></ul><div class=\"ds-rx-pop\"><button>❤️</button><button>😂</button><button>👍</button><button>😮</button><button>😢</button><button>🔥</button><button class=\"ds-rx-more\" aria-label=\"More emoji\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z\"/></svg></button></div></div>",
+      "css": ".ds-rx{display:flex;flex-direction:column;gap:16px;padding:12px;background:#141419;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-rx ul{display:flex;gap:4px;margin:0;padding:0;list-style:none}.ds-rx ul button{display:inline-flex;align-items:center;gap:4px;height:1.75rem;padding:0 8px;border:0;border-radius:999px;background:#1d1d24;box-shadow:inset 0 0 0 1px #2a2a33;color:#c8c6cf;font:inherit;font-size:0.85rem;font-weight:700;font-variant-numeric:tabular-nums;cursor:pointer;transition:background-color 150ms ease-out,box-shadow 150ms ease-out,transform 150ms ease-out}.ds-rx ul button span{font-size:1rem;line-height:1}.ds-rx ul button:hover{color:#f5f4f2}.ds-rx ul button:active{transform:scale(0.95)}.ds-rx button:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:2px}.ds-rx-pop{display:inline-flex;align-self:flex-start;gap:2px;padding:6px;border-radius:1.2rem;background:#1d1d24;box-shadow:inset 0 0 0 1px rgb(255 255 255/0.1),0 30px 70px -20px #000}.ds-rx-pop button{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:999px;background:transparent;font-size:1.4rem;cursor:pointer;transition:transform 150ms ease-out,background-color 150ms ease-out}.ds-rx-pop button:hover{background:rgb(245 244 242/0.08);transform:scale(1.25)}.ds-rx-pop .ds-rx-more{color:#c8c6cf}.ds-rx-pop .ds-rx-more:hover{transform:none;color:#f5f4f2}"
+    },
+    {
+      "name": "Emoji Picker",
+      "kind": "custom",
+      "refersTo": "emoji-picker",
+      "description": "Search, group tabs and an 8-column grid that is one tab stop with arrow keys; recent emoji first. Shared by reactions and the composer.",
+      "html": "<div class=\"ds-ep\"><input placeholder=\"Search emoji\" aria-label=\"Search emoji\"><div class=\"ds-ep-tabs\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\">😀</button><button role=\"tab\" aria-selected=\"false\">👋</button><button role=\"tab\" aria-selected=\"false\">🎮</button><button role=\"tab\" aria-selected=\"false\">🍕</button></div><div class=\"ds-ep-grid\"><button tabindex=\"0\">😀</button><button tabindex=\"-1\">😃</button><button tabindex=\"-1\">😄</button><button tabindex=\"-1\">😁</button><button tabindex=\"-1\">😆</button><button tabindex=\"-1\">😅</button><button tabindex=\"-1\">🤣</button><button tabindex=\"-1\">😂</button><button tabindex=\"-1\">🙂</button><button tabindex=\"-1\">😉</button><button tabindex=\"-1\">😊</button><button tabindex=\"-1\">😇</button><button tabindex=\"-1\">🥰</button><button tabindex=\"-1\">😍</button><button tabindex=\"-1\">🤩</button><button tabindex=\"-1\">😘</button></div></div>",
+      "css": ".ds-ep{width:19.5rem;padding:8px;border-radius:1.2rem;background:#1d1d24;box-shadow:inset 0 0 0 1px rgb(255 255 255/0.1),0 30px 70px -20px #000;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-ep input{width:100%;height:40px;padding:0 12px;border:0;border-radius:999px;background:rgb(245 244 242/0.06);color:#f5f4f2;font:inherit;font-size:0.95rem;outline:none}.ds-ep input::placeholder{color:#c0bec8}.ds-ep input:focus-visible{box-shadow:inset 0 0 0 2px var(--r-focus,#3ee6b0)}.ds-ep-tabs{display:flex;gap:2px;margin-top:8px}.ds-ep-tabs button{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:0.6rem;background:transparent;font-size:1.05rem;opacity:0.6;cursor:pointer}.ds-ep-tabs button:hover{opacity:1;background:rgb(245 244 242/0.06)}.ds-ep-tabs button[aria-selected=true]{opacity:1;background:rgb(245 244 242/0.1)}.ds-ep-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;margin-top:8px}.ds-ep-grid button{aspect-ratio:1;display:grid;place-items:center;border:0;border-radius:0.6rem;background:transparent;font-size:1.45rem;line-height:1;cursor:pointer;transition:transform 100ms ease-out}.ds-ep-grid button:hover,.ds-ep-grid button:focus-visible{background:rgb(245 244 242/0.08);transform:scale(1.1);outline:none}"
+    },
+    {
+      "name": "Pinned Bar",
+      "kind": "custom",
+      "refersTo": "pinned-bar",
+      "description": "The newest pinned message at the top of a chat on a 4% Ink strip, with an \"N pinned\" popover of them all.",
+      "html": "<div class=\"ds-pin\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M235.32 81.37 174.63 20.69a16 16 0 0 0-22.63 0L98.37 74.49c-10.66-3.34-35-7.37-60.4 13.14a16 16 0 0 0-1.29 23.78L85 159.71l-42.66 42.63a8 8 0 0 0 11.32 11.32L96.29 171l48.29 48.29A16 16 0 0 0 155.9 224c.38 0 .75 0 1.13 0a15.93 15.93 0 0 0 11.64-6.33c19.64-26.1 17.75-47.32 13.19-60L235.33 104a16 16 0 0 0-.01-22.63Z\"/></svg><button class=\"ds-pin-m\"><b>Kenji:</b> lobby code is 4417</button><button class=\"ds-pin-n\">3 pinned</button></div>",
+      "css": ".ds-pin{display:flex;align-items:center;gap:8px;width:30rem;padding:6px 6px 6px 12px;border-radius:1rem;background:rgb(245 244 242/0.04);box-shadow:inset 0 0 0 1px #2a2a33;color:#c8c6cf;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-pin svg{flex:none}.ds-pin-m{flex:1;min-width:0;border:0;background:none;color:#c8c6cf;font:inherit;font-size:0.92rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}.ds-pin-m b{color:#f5f4f2}.ds-pin-n{height:32px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:#c8c6cf;font:inherit;font-size:0.85rem;font-weight:700;cursor:pointer}.ds-pin-n:hover{background:rgb(245 244 242/0.08);color:#f5f4f2}.ds-pin button:focus-visible{outline:2px solid var(--r-focus,#3ee6b0);outline-offset:2px}"
     }
   ],
   "narrative": {
-    "northStar": "The Eclipse Hour",
-    "overview": "**Creative North Star: \"The Eclipse Hour\"**\n\nRealm is the moment a dark world lights up at its rim: the Eclipse mark, the instant before you arrive somewhere new. By night the page is deep ink-indigo lit by violet and electric-blue light around a black hole whose accretion disk burns molten amber. By day it is golden hour: a sky that runs from peach through rose to lilac as you scroll, warm pearl surfaces with rose-tinted shadows, deep plum type and a coral action colour. Never plain white. Light comes from the edges and gathers where something matters: the primary action, the world you are in, the person who needs you.\n\nThe public face is a spectacle and the app is calm. The landing page is a universe: a live 3D black hole with four planets in orbit and the cast floating and waving around it, then a page that keeps moving as you scroll: headlines rise in word by word, the product tips up to face you, the four worlds stack up like a deck of cards, the cast rises onto a glowing horizon at the end. The two editions are two different skies around the same universe. At night the black hole hangs in an aurora over stars that twinkle in colour. By day the sun takes its place over a filmed summer day (towering clouds drifting fast over rolling hills, an old brick gateway glowing like a portal; made with Higgsfield: Soul Cinema still, Nano Banana Pro edit, Kling 3.0 animation). Switching editions plays out an eclipse: the black hole slides off the sun, or back across it. It carries a lot of information, so it leans on motion and imagery to keep dyslexic and short-attention readers moving through it, and every bit of that motion can be paused. Inside the app the same world becomes quiet motifs: orbit rings, a soft glow on the active Space, star-chart locators.\n\nIt is premium and a little playful: editorial type, big confident headlines, generous space, and a cast of glossy 3D characters who are cute in form and precise in finish.",
+    "northStar": "The Lit Room",
+    "overview": "Realm's world is a dark room lit by the colour of whoever's profile is in view. The ground is a near-black ink (the ink ground), and behind everything three soft colour fields glow, taken from the active profile theme (Mint by default; Orchid, Aqua and Ember when the theme swaps) under a fine grain. On the front page they drift as you scroll; everywhere else they hold still. The page does not decorate itself: the real app does the showing, while big tight Funnel Display headlines carry the story and Atkinson Hyperlegible Next carries every word you read.\n\nThe world has one moving idea: your colour takes over the page. The action colour, the light, the mark's inner dot, the focus ring, the selection and the 3D rim light all read from the same theme variables, and a theme change cross-fades all of them together (0.8s). On the front page those variables sit on the world root (`[data-world=\"canvas\"]`) and follow the profile in view; on every other screen they are the person's own theme, set on `<html>` (`data-accent`), so sign-in and the app wear the colour you picked. Night is the default and only edition of this world for now; a day edition and user-made themes come later, under the paid \"make it yours\" theming plan in `docs/THEMING.md` (the plan lives there, not here).\n\nIt rejects the previous world (the space diorama, molten amber, aurora and nebula, astronauts and mascots floating loose as stickers), the template dark SaaS page of feature cards on black, and, inside the app, both a Discord-style server rail and the generic sidebar-plus-cards dashboard. Density is low and cinematic on the front page (one statement per viewport, the product beside it) and in the app it should feel like a real app: a labelled nav column on the lit ground beside one solid sheet, what's live with your people up front, hairlines inside, and little to press besides joining what's live. In the app the Instagram and Threads feel (faces, posters, a wall of what your people are doing) leads a little over the Discord feel (rooms, voice, who's in), which stays present; Realm clones neither (the owner, 2026-10-05).",
     "keyCharacteristics": [
-      "A sky, not a flat colour: the page's ground shifts as you scroll (ink, deep blue, violet by night; peach, rose, lilac by day), under a slow nebula and a fine grain.",
-      "One action colour (molten amber by night, coral by day); four identity inks for the four worlds.",
-      "Surfaces float: pearl or ink-glass panels with a lit top edge, a hairline and a soft shadow tinted by the page.",
-      "Bricolage Grotesque for headlines, Atkinson Hyperlegible Next for everything you read.",
-      "Real 3D, rendered live or pre-rendered to transparent WebP; real imagery from Realm's own films in the product previews.",
-      "Lots of scroll-driven motion, all of it pausable, none of it required to understand anything."
+      "Ink ground lit by three theme-coloured fields plus grain; never flat black, never a starfield. Moving on the front page, still everywhere else.",
+      "One action colour per screen, and it is the person's own theme.",
+      "The real app UI, framed in black-bezel phones and rounded window frames, is the imagery.",
+      "Funnel Display set tight and huge for statements and names; Atkinson Hyperlegible Next for reading.",
+      "Pills everywhere you act or read a status; generous rounded rectangles for frames and panels.",
+      "In the app: a labelled nav column on the lit ground beside one solid Surface sheet; content straight on the sheet under hairlines, never boxes in boxes.",
+      "Native scroll; scrubbed sticky stages; a full static fallback for anyone who isn't moving."
     ],
     "rules": [
       {
+        "name": "The Worst Point Rule",
+        "body": "Every grey text tone must pass 4.5:1 against the light field's brightest possible point, held at relative luminance 0.075. That is why Ink 2 and Ink 3 are as light as they are, and why each theme carries a `glow` factor solved so its brightest point stays at 0.075. `tokens.test.ts` checks it for every theme. A new theme ships with its glow solved, or it doesn't ship.",
+        "section": "colors"
+      },
+      {
         "name": "The One Action Rule",
-        "body": "Amber (or coral by day) means \"do this\" or \"this needs you\". It never decorates, never washes a panel, and never marks plain unread.",
+        "body": "The theme colour is the person's, and it appears only on: the one action per screen (the one action pill), focus (rings and the field's focus edge), \"needs you\" (the \"New\" chip on a Space poster and the \"New\" line in chat: a word, never a number), the Me avatar, and your own chat bubbles (decided by the owner on 2026-10-04, and shipped: `bubble-mine` and `on-bubble-mine` follow the accent). Something live you can drop into carries Join as an action pill (the owner, 2026-10-05): each Live tile on Home and the Live strip in a room. In a room, the one action is the composer's round Send; on a voice room before you join, Join voice; in a sheet, its submit (Add this place, Send report). Everything else that acts is a ghost or quiet pill or a text link. Product previews (the sign-up profile card, the front page's frames) show it as the product wears it; they are inert art, never controls. Messages (built 2026-10) puts the accent on four things this list does not name, and the owner has not ruled on them: the count of waiting conversations on Messages in the nav column and the phone tab (a number, where this rule says a word), the unread dot on an inbox row (a Space row's unread dot is Ink), your own reaction chips (a 1.5px accent ring on a 15% accent fill), and the picked check circle in New message (a selection, which elsewhere is never the accent). Until they are ruled on, don't copy them to other surfaces.",
         "section": "colors"
       },
       {
-        "name": "The Rim Light Rule",
-        "body": "Glows sit at edges and corners, the way the eclipse is lit, led by the world's own ink. A world's card is lit from the corner where its planet sits.",
+        "name": "The Light Is The Colour Rule",
+        "body": "Hue enters the page as light (the field, the banner, the 3D rim light, the swatches), never as tinted panels or coloured box-shadow glows on UI.",
         "section": "colors"
       },
       {
-        "name": "The Living Sky Rule",
-        "body": "Colour behind the page moves: a fixed nebula of three soft colour fields crossfades on a 48-second cycle in step with the hero's aurora, over the scrolling sky, under a fine grain. It is ambient only: text, surfaces and actions keep their fixed tokens.",
+        "name": "The Re-light Rule",
+        "body": "A colour change is never a snap. The accent, its \"on\" colour, the three lights and the glow are registered with `@property` and cross-fade over 0.8s (the in-out curve outside the front page, `ease` on it), and stop for reduced motion and Pause motion.",
         "section": "colors"
       },
       {
-        "name": "The Four Worlds Rule",
-        "body": "Cyan, electric blue, violet and magenta are identities (a Space, a region), never ornament. A screen uses its own world's ink, plus the action colour for actions.",
-        "section": "colors"
-      },
-      {
-        "name": "The Readable First Rule",
-        "body": "Anything longer than a headline is set in Atkinson Hyperlegible Next. Bricolage never sets a paragraph, a button label or a UI list.",
+        "name": "The Two Voices Rule",
+        "body": "Funnel Display is for statements and names only: one title per screen, plus place, section and panel names, profile names and initials. Anything a person reads for meaning is Atkinson, including every label, hint, error and link. Never set body copy in Funnel, never set a headline in Atkinson. Inside the app it is bold, at product sizes (1.2–2rem), and reserved for greetings, page titles and Space or room names (the owner, 2026-10-05); the settings section, empty-state, Here now and dialog headings still set in it predate that ruling.",
         "section": "typography"
       },
       {
-        "name": "The No Eyebrow Rule",
-        "body": "No kicker or label above a heading. A section locates itself with a star-chart locator graphic, or not at all.",
+        "name": "The One Title Rule",
+        "body": "Each screen has one Funnel title, and it is the H1. Settings pages take their own name as the H1 (the settings list beside it already says \"Settings\").",
         "section": "typography"
       },
       {
-        "name": "The Light Source Rule",
-        "body": "Only things that emit light glow. Cards, text and buttons never glow.",
+        "name": "The Said After Rule",
+        "body": "A step's status (\"First in early access\", \"Coming soon\") is a bold line with a dot after its text, or a tag at the row's end, never a pill or eyebrow stamped above the heading.",
+        "section": "typography"
+      },
+      {
+        "name": "The Black Shadows Rule",
+        "body": "Shadows are black, long and soft, offset straight down. No coloured glow shadows, no hard offsets. The one coloured ring is focus: a field's 4px accent halo at 22%, spread only, no blur.",
         "section": "elevation"
+      },
+      {
+        "name": "The Lifted Overlay Rule",
+        "body": "A panel that opens over the page always gets all three: the scrim, the Raised fill with the 12% ring, and the overlay shadow, so it reads as lifted over the page, not as the page cut short.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Blur Rule",
+        "body": "At most one small backdrop blur per screen, and the header owns it: the front page's ink glass (72% ink ground, blur-xl, saturate 150%). The app has none: its phone header is solid ink ground at 92% and its phone tabs at 96%. Nothing else blurs what's behind it; menus, popovers, dialogs, the sheet and Here now are solid.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Outside The Bubble Rule",
+        "body": "Photos and videos stand on their own beside the words, at their own ratio, with the Media corner; they never sit on a coloured mat inside a bubble. Files, voice notes and places are the bubble's own content, with no card inside it.",
+        "section": "components"
+      },
+      {
+        "name": "The Outline Danger Rule",
+        "body": "A destructive action is a ghost pill with Danger text and a 1.5px Danger Line ring, or a Danger row in a menu. Danger never fills a button.",
+        "section": "components"
+      },
+      {
+        "name": "The Honest Control Rule",
+        "body": "Never offer a control that can't do anything. When a service isn't configured, say so plainly (\"Voice calls aren't set up on this Realm yet.\", \"Push notifications aren't set up on this Realm yet.\", \"Maps aren't set up on this Realm yet.\") and hide the control, or label it Coming soon.",
+        "section": "components"
+      },
+      {
+        "name": "The Short Line Rule",
+        "body": "A live region speaks one short status line: the newest message from someone else, \"Recording started\", the pick, the result count. Never a whole list, never history as it loads.",
+        "section": "components"
       }
     ],
     "dos": [
-      "Do keep the action colour for the primary action, send, focus and \"needs you\" counts only.",
-      "Do float content on `surface` panels over the sky, lit from an edge or corner.",
-      "Do render 3D for real (live React Three Fiber, or transparent WebP from `scripts/render-assets.mjs` and `scripts/render-cast.mjs`) and record provenance in `frontend/web/brand/README.md`.",
-      "Do set every paragraph in Atkinson Hyperlegible Next at 17px / 1.6 or larger.",
-      "Do make every animation pausable (Pause motion, reduced motion) and never required for understanding.",
-      "Do show Spaces as one place with room tabs, bubble chat and a \"Here now\" panel."
+      "Do read colours through the role names (`bg-surface`, `text-fg-soft`, `bg-accent`, `--r-*`) outside the front page, and through `--acc`, `--on-acc`, `--l1`–`--l3` on the front page's world root, so a theme change moves the whole screen at once.",
+      "Do check any new grey against luminance 0.075 at 4.5:1, and solve a `glow` for any new theme.",
+      "Do keep the theme colour to the one action per screen, Join on live tiles and the Live strip, focus, \"needs you\" (\"New\"), the Me avatar and your own chat bubbles.",
+      "Do put tags and chips on dark pills (60% ink ground with a hairline ring).",
+      "Do show the real app inside phone or window frames, or as a still sketch, instead of illustrating it.",
+      "Do say status after a step's text, with a dot, or as a tag at the row's end: \"First in early access\" in the action colour, \"Coming soon\" in Ink 2.",
+      "Do label everything not built yet \"Coming soon\" plainly (SoonTag, Create's list), and say what will go there.",
+      "Do say plainly that direct messages are not end-to-end encrypted yet, wherever DMs are offered or described, and call a community a \"Space\".",
+      "Do put content straight on the sheet, divided by hairlines: empty states, settings sections, Home's shelves.",
+      "Do give anything that opens over the page the scrim, the Raised fill, the 12% ring and the overlay shadow, and close it on Escape and a click outside, with focus moved in and back.",
+      "Do list Spaces by name in the nav column, with their badge, a speaker while someone's in voice and a dot when something's new.",
+      "Do keep navigation labelled at every width: the nav column's rows always carry their names, and the phone tabs their labels.",
+      "Do hold the app's content in one Surface sheet beside the nav column, with the nav and the lit ground around it.",
+      "Do set display type only for greetings, page titles and Space or room names, bold, at product sizes (1.2–2rem).",
+      "Do show only real live things on Home: real faces, rooms with people in them right now, your actual Spaces; unread is the word \"New\".",
+      "Do let the Instagram and Threads feel (faces, posters, live tiles) lead a little over the Discord feel, and keep Discord's live parts (voice rooms, who's in, Join) present.",
+      "Do ship a plain static sequence for reduced motion, Pause motion and no WebGL, decided in CSS before first paint.",
+      "Do keep the 3D phone rendering only while on screen, turning through its edge, with moments beside it.",
+      "Do let photos and videos stand outside the bubble at their own ratio, and keep files, voice notes and places inside it as plain content.",
+      "Do make every destructive action an outline: a ghost pill with Danger text and a 1.5px Danger Line ring, or a Danger menu row in its own group.",
+      "Do say plainly when something isn't set up (\"Voice calls aren't set up on this Realm yet.\") or label it \"Coming soon\", and hide the control that can't work.",
+      "Do send a person's position in a request body, for one search, rounded, and say so where it's asked for.",
+      "Do keep a live region to one short status line, and keep empty live regions in place without taking room (`empty:absolute`).",
+      "Do put the room you're in into view in the room tabs, on their own row under the Space's name.",
+      "Do show the current tab, room, sort or reason as a neutral raised pill or an Ink ring, never in the accent.",
+      "Do set Messages as the inbox beside the conversation from 64rem (the inbox 22rem, 23.5rem from 80rem, a hairline on its right), and let them take turns below that.",
+      "Do label every DM and group chat with the quiet \"Not end-to-end encrypted yet\" chip (a dark pill in Ink 2) that opens the explainer, and say it again in the Conversation start.",
+      "Do offer the quick six reactions (❤️ 😂 👍 😮 😢 🔥) first and any emoji behind the +, and let a double-click heart someone else's message.",
+      "Do say \"Seen\" as text under your newest message, and only between people who both share read receipts.",
+      "Do put the peek (\"Kenji is here\") in the status line above the composer, giving way to reconnecting and typing.",
+      "Do leave the name off runs in a one-to-one DM; in a group chat, put the author's avatar beside the last bubble of their run."
     ],
     "donts": [
-      "Don't build a server-icon rail with a channel list; it reads as a Discord clone.",
-      "Don't wash a panel in the action colour, or use additive glow on a transparent canvas (it bands and clips).",
-      "Don't put a kicker or eyebrow label above a heading.",
-      "Don't use Unicode glyphs or emoji as icons; icons come from Phosphor. Emoji are fine as chat content and reactions.",
-      "Don't fake material with CSS (gradient spheres, bevels, embossing) where a real render exists.",
-      "Don't let floating art cover text, or hang past the viewport edge on phones.",
-      "Don't use gradient text, coloured side borders on cards or list items, or glass behind reading copy.",
-      "Don't make day plain white: it's a peach-to-lilac sky with pearl surfaces.",
-      "Don't show the aurora by day, or the day film at night: each edition has its own sky.",
-      "Don't use stock photography in the product previews; use Realm's own imagery.",
-      "Don't scatter cartoon props around sections; the 3D world and the cast carry the personality, the page stays composed."
+      "Don't use a smooth-scroll library or hijack the wheel.",
+      "Don't add a second backdrop blur to a screen; the header owns the only one.",
+      "Don't put coloured glow shadows on buttons, cards, panels or frames.",
+      "Don't stamp a status pill or eyebrow above a heading.",
+      "Don't nest boxes inside the sheet: no card around an empty state, a settings section or a list.",
+      "Don't collapse navigation to bare icons, at any width.",
+      "Don't break the app into floating boxed panels: one content sheet, not a sidebar box, a centre box and a side box.",
+      "Don't use display type for labels, shelf heads or reading text, or at hero sizes inside the app.",
+      "Don't build a Discord-style icon rail of Spaces; Spaces are listed by name.",
+      "Don't show the current destination, a selected row or a tab in the accent; current is a neutral fill.",
+      "Don't pretend a feature works: no fake counts, no fake people, no dates we can't keep. On Home nothing is padded out, and unread is never a number.",
+      "Don't clone Instagram, Threads or Discord: take the feel, keep Realm's own frame, type, colour and words.",
+      "Don't let a moment or overlay cover the phone's screen, or show the phone's back.",
+      "Don't use translucent white fills for tags or chips.",
+      "Don't mark a conversation's encryption with a lock, a shield, a warning colour or the word \"encrypted\" on its own while it isn't end-to-end encrypted.",
+      "Don't show read receipts as ticks or faces, or to someone who doesn't share their own.",
+      "Don't float the peek, or any presence, over the messages.",
+      "Don't put a photo or video on a coloured mat, or a card inside a bubble.",
+      "Don't fill a button with Danger or Danger Line.",
+      "Don't ship a dead control: no switch, button or menu item for a service that isn't configured.",
+      "Don't put anyone's location in a URL, query string or route.",
+      "Don't announce whole lists, history or every keystroke through a live region.",
+      "Don't put holo foil anywhere but the profile card's edge, or float mascots or stickers loose on the page.",
+      "Don't bring back the old world's sky, stars, aurora, amber or Bricolage Grotesque, or use the legacy alias names, in any screen of this world.",
+      "Don't use a text size or corner outside the scales above. Built today and not part of the scales (align on next touch): the AuthCard and sign-up preview at 1.75rem (frame is 1.8rem); menu heads at 0.85rem (use Tag, 0.82rem); account and device lines at 0.94rem (use Hint or Body Small); sign-up leads at 1.1–1.15rem (use Lead App); Since Spaces and media: the voice room's title at 1.7rem (use Dialog Title); the Space-not-found and invite-card titles at 2rem; the \"can't post here\" note at 1.4rem corners (the composer is 1.5rem); the invite card at 1.75rem (frame is 1.8rem); the invite page's action built by hand at 56px with 36px sides instead of `pill(\"action\", \"lg\")`. Since the Wall frame (2026-10-05): the settings list's title at 1.1rem and its group heads at 0.8rem (use Panel Title and Tag); the chat's Delete confirm at 32px and 0.86rem (use the danger ghost sm); colours written as literals: On Mint `#04150f` on the Presence speaker badges whatever the theme, and the avatar cut rings on Live tiles (`rgb(20 14 14)`), the Live strip (`#15201b`) and the current nav row (`#1a1a1f`). Since Messages (2026-10): the conversation header's title at 1.15rem and 1.3rem, Conversation start's at 1.5rem, the empty pane's at 1.35rem and the missing conversation's at 1.4rem; conversation row titles at 0.98rem; presence lines, picker handles and reaction counts at 0.85rem (use Chat Small); the encryption chip at 0.8rem (use Tag); the phone tab's count at 0.65rem; the group name and rename fields at 44px (fields are 56px); and the current inbox row's avatar cut ring as the literal `#1e1e24`."
     ]
   }
 }

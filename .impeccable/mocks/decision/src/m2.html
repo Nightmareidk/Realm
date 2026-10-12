@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Messaging B — Stage</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --ground: #0d0c12; --surface: #15131c; --raised: #1f1c28; --rule: #2a2735; --ink: #f4f2f8; --ink-2: #aaa5b9; --ink-3: #726c84; --gold: #ffc94d; --on-gold: #1c1406; --noor: #ff8a5c; --kenji: #c86bff; --maya: #3fd2c8; --leo: #6f8cff; --live: #4ee08a; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--ground); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; display: grid; grid-template-columns: 240px 1fr; }
+  /* Sidebar: your Spaces and DMs with real previews (not an icon rail) */
+  .side { border-right: 1px solid var(--rule); display: flex; flex-direction: column; padding: 16px 12px; gap: 4px; background: var(--surface); }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: "Space Grotesk"; font-weight: 700; font-size: 20px; padding: 2px 8px 14px; }
+  .nav { display: flex; gap: 4px; padding: 0 4px 12px; border-bottom: 1px solid var(--rule); margin-bottom: 10px; }
+  .nav span { flex: 1; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-3); font-size: 12px; font-weight: 700; }
+  .nav span.on { background: var(--raised); color: var(--ink); }
+  .lbl { font-size: 12px; font-weight: 700; color: var(--ink-3); padding: 8px 8px 4px; }
+  .sp { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 14px; }
+  .sp.on { background: var(--raised); }
+  .sp .ic { width: 38px; height: 38px; border-radius: 12px; flex: none; display: grid; place-items: center; font-family: "Space Grotesk"; font-weight: 700; font-size: 14px; color: #160f22; }
+  .sp b { font-size: 14.5px; display: block; } .sp small { font-size: 12.5px; color: var(--ink-3); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+  .sp .u { margin-left: auto; min-width: 20px; height: 20px; border-radius: 10px; background: var(--gold); color: var(--on-gold); font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 6px; }
+  .sp .dot { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+  .side .me { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-top: 1px solid var(--rule); }
+  .side .me i { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; position: relative; display: block; background: #ffd9a0; }
+  .side .me img { position: absolute; width: 150%; left: -25%; top: -5%; }
+  .side .me small { display: block; color: var(--live); font-size: 12px; }
+  /* Stage */
+  main { display: flex; flex-direction: column; min-width: 0; position: relative; }
+  .glow { position: absolute; left: 0; right: 0; top: 0; height: 240px; background: radial-gradient(60% 100% at 30% 0%, rgb(200 107 255 / .16), transparent 70%), radial-gradient(50% 100% at 80% 0%, rgb(255 138 92 / .12), transparent 70%); pointer-events: none; }
+  .head { position: relative; display: flex; align-items: center; gap: 12px; padding: 18px 28px 0; }
+  .head h1 { font-family: "Space Grotesk"; font-weight: 700; font-size: 26px; letter-spacing: -.02em; }
+  .head .r { margin-left: auto; display: flex; gap: 8px; }
+  .ghost { height: 38px; padding: 0 14px; border-radius: 12px; background: var(--raised); display: flex; align-items: center; font-size: 14px; color: var(--ink-2); }
+  .btn { height: 38px; padding: 0 16px; border-radius: 12px; background: var(--gold); color: var(--on-gold); display: flex; align-items: center; font-weight: 700; font-size: 14px; }
+  /* The party bar: who's here, as people, not a member list */
+  .party { position: relative; display: flex; gap: 10px; padding: 16px 28px 14px; }
+  .pc { width: 168px; height: 74px; border-radius: 18px; background: var(--raised); border: 1px solid var(--rule); display: flex; align-items: center; gap: 10px; padding: 0 12px; position: relative; overflow: hidden; }
+  .pc .p { width: 46px; height: 46px; border-radius: 50%; padding: 2px; flex: none; }
+  .pc .p span { display: block; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; position: relative; border: 2px solid var(--raised); }
+  .pc .p img { position: absolute; width: 150%; left: -25%; top: -5%; }
+  .pc b { font-size: 14.5px; display: block; } .pc small { font-size: 12px; color: var(--ink-2); }
+  .pc .speak { position: absolute; right: 10px; top: 10px; display: flex; gap: 2px; align-items: flex-end; height: 12px; }
+  .pc .speak i { width: 3px; border-radius: 2px; background: var(--live); display: block; }
+  .pc.add { border-style: dashed; background: transparent; justify-content: center; color: var(--ink-2); font-weight: 700; font-size: 14px; width: 120px; }
+  .rooms { position: relative; display: flex; gap: 22px; padding: 0 28px; border-bottom: 1px solid var(--rule); }
+  .room { padding: 10px 0 12px; font-size: 15px; color: var(--ink-3); display: flex; gap: 8px; align-items: center; }
+  .room.on { color: var(--ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--ink); }
+  .room b { min-width: 18px; height: 18px; border-radius: 9px; background: var(--gold); color: var(--on-gold); font-size: 11px; display: grid; place-items: center; }
+  .chat { flex: 1; padding: 18px 28px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; max-width: 900px; }
+  .m { display: flex; gap: 12px; }
+  .m .av { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; position: relative; flex: none; }
+  .m .av img { position: absolute; width: 150%; left: -25%; top: -5%; }
+  .m .who { font-size: 14px; font-weight: 700; } .m .who span { color: var(--ink-3); font-weight: 400; font-size: 12.5px; margin-left: 8px; }
+  .m p { font-size: 16px; line-height: 1.5; margin-top: 1px; }
+  .reply { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); margin-bottom: 4px; }
+  .reply i { width: 18px; height: 10px; border-left: 2px solid var(--rule); border-top: 2px solid var(--rule); border-top-left-radius: 6px; display: block; margin-top: 6px; }
+  .reacts { display: flex; gap: 4px; margin-top: 6px; }
+  .reacts span { height: 26px; padding: 0 9px; border-radius: 13px; background: var(--raised); font-size: 13px; display: flex; align-items: center; gap: 5px; color: var(--ink-2); }
+  .reacts span.mine { box-shadow: inset 0 0 0 1px var(--gold); color: var(--ink); }
+  .poll { margin-top: 8px; width: 420px; border-radius: 18px; background: var(--surface); border: 1px solid var(--rule); padding: 14px; }
+  .poll b { font-family: "Space Grotesk"; font-size: 16px; }
+  .opt { margin-top: 8px; height: 40px; border-radius: 12px; background: var(--raised); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 14.5px; }
+  .opt i { position: absolute; left: 0; top: 0; bottom: 0; background: rgb(255 201 77 / .22); display: block; }
+  .opt span { position: relative; } .opt.mine span:first-child::after { content: "  ✓"; color: var(--gold); }
+  .composer { margin: 0 28px 18px; height: 56px; border-radius: 18px; background: var(--raised); display: flex; align-items: center; padding: 0 8px 0 18px; gap: 10px; color: var(--ink-3); font-size: 16px; max-width: 900px; }
+  .composer .chips { margin-left: auto; display: flex; gap: 6px; }
+  .composer .chips span { height: 34px; padding: 0 12px; border-radius: 10px; background: var(--surface); display: flex; align-items: center; font-size: 13px; color: var(--ink-2); }
+  .composer .send { height: 40px; padding: 0 16px; border-radius: 12px; background: var(--gold); color: var(--on-gold); font-weight: 700; font-size: 14px; display: flex; align-items: center; }
+</style>
+</head>
+<body>
+  <aside class="side">
+    <div class="brand"><svg width="28" height="28" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#f4f2f8" stroke-width="2"/><circle cx="15.5" cy="11" r="7.5" fill="#ffc94d"/></svg>Realm</div>
+    <div class="nav"><span>Home</span><span class="on">Spaces</span><span>Feed</span><span>Explore</span></div>
+    <span class="lbl">SPACES</span>
+    <div class="sp on"><span class="ic" style="background:linear-gradient(135deg,#ff8a5c,#c86bff)">LN</span><div><b>Late Night Lobby</b><small>Kenji: in. also this…</small></div><span class="u">3</span></div>
+    <div class="sp"><span class="ic" style="background:#3fd2c8">SB</span><div><b>Sourdough Bros</b><small>Maya: crumb shot 🍞</small></div><span class="dot"></span></div>
+    <div class="sp"><span class="ic" style="background:#6f8cff">SR</span><div><b>Speedrun Club</b><small>new PB in #runs</small></div></div>
+    <span class="lbl">MESSAGES</span>
+    <div class="sp"><span class="ic" style="background:#ff8a5c;border-radius:50%">N</span><div><b>Noor</b><small>see you at 9</small></div><span class="u">1</span></div>
+    <div class="sp"><span class="ic" style="background:#c86bff;border-radius:50%">KM</span><div><b>Kenji, Maya</b><small>lol no</small></div></div>
+    <div class="me"><i><img src="../../../../frontend/web/public/art/cast/human-leo-face.e64351d7.webp" alt=""></i><div><b style="font-size:14px">You</b><small>Online</small></div></div>
+  </aside>
+  <main>
+    <span class="glow"></span>
+    <header class="head"><h1>Late Night Lobby</h1><div class="r"><span class="ghost">Search ⌘K</span><span class="btn">Invite</span></div></header>
+    <section class="party">
+      <div class="pc"><span class="p" style="background:conic-gradient(var(--noor),#ffc94d,var(--noor))"><span><img src="../../../../frontend/web/public/art/cast/human-maya-face.399f5b46.webp" alt=""></span></span><div><b>Noor</b><small>In a match · 12m</small></div><span class="speak"><i style="height:6px"></i><i style="height:12px"></i><i style="height:8px"></i></span></div>
+      <div class="pc"><span class="p" style="background:var(--kenji)"><span><img src="../../../../frontend/web/public/art/cast/alien-zib-face.f5b5aada.webp" alt=""></span></span><div><b>Kenji</b><small>Cutting a clip</small></div></div>
+      <div class="pc"><span class="p" style="background:var(--maya)"><span style="background:#173a3c;display:grid;place-items:center;font-weight:700;font-size:14px">MA</span></span><div><b>Maya</b><small>Around</small></div></div>
+      <div class="pc"><span class="p" style="background:#ffc94d"><span><img src="../../../../frontend/web/public/art/cast/human-leo-face.e64351d7.webp" alt=""></span></span><div><b>You</b><small>Just got here</small></div></div>
+      <div class="pc add">+ Invite</div>
+    </section>
+    <nav class="rooms"><span class="room on"># general</span><span class="room"># clips <b>3</b></span><span class="room"># lfg</span><span class="room">Builds board</span><span class="room">More</span></nav>
+    <section class="chat">
+      <div class="m"><span class="av"><img src="../../../../frontend/web/public/art/cast/human-maya-face.399f5b46.webp" alt=""></span><div><div class="who" style="color:var(--noor)">Noor<span>9:02 PM</span></div><p>ranked at 9. who's in? 🙋</p><div class="poll"><b>Which map first?</b><div class="opt mine"><i style="width:62%"></i><span>Ascent</span><span>5</span></div><div class="opt"><i style="width:25%"></i><span>Lotus</span><span>2</span></div><div class="opt"><i style="width:12%"></i><span>Surprise me</span><span>1</span></div></div></div></div>
+      <div class="m"><span class="av"><img src="../../../../frontend/web/public/art/cast/alien-zib-face.f5b5aada.webp" alt=""></span><div><div class="reply"><i></i>Replying to Noor</div><div class="who" style="color:var(--kenji)">Kenji<span>9:04 PM</span></div><p>Ascent or I'm not playing</p><div class="reacts"><span class="mine">😂 4</span><span>💯 2</span></div></div></div>
+    </section>
+    <div class="composer">Message #general<div class="chips"><span>Poll</span><span>Clip</span><span>GIF</span></div><span class="send">Send</span></div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Realm — The Manual (direction comp)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --stock: #121110;
+    --stock-2: #1a1917;
+    --ink: #ece6da;
+    --ink-2: #a9a296;
+    --ink-3: #6f6a61;
+    --rule: #3a3731;
+    --spot: #ff5a1f;
+    --on-spot: #121110;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body {
+    background: var(--stock);
+    color: var(--ink);
+    font-family: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+    position: relative;
+  }
+  /* Paper: a fine fibre grain over the stock. */
+  body::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .92 0 0 0 0 .9 0 0 0 0 .85 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .display { font-family: "Archivo", sans-serif; font-variation-settings: "wdth" 112; }
+  .cond { font-family: "Archivo", sans-serif; font-variation-settings: "wdth" 72; }
+
+  /* Running head */
+  .head {
+    position: absolute; left: 40px; right: 40px; top: 26px; height: 44px;
+    display: flex; align-items: center; gap: 28px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .mark { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .02em; font-size: 20px; }
+  .mark svg { display: block; }
+  .nav { display: flex; gap: 26px; margin-left: 28px; font-size: 15px; color: var(--ink-2); }
+  .nav b { color: var(--ink); font-weight: 500; }
+  .head .right { margin-left: auto; display: flex; align-items: center; gap: 22px; font-size: 15px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 16px;
+    border-radius: 3px; font-weight: 700; font-size: 15px;
+  }
+  .btn.spot { background: var(--spot); color: var(--on-spot); }
+  .btn.line { border: 1.5px solid var(--ink); color: var(--ink); }
+  .btn.lg { height: 54px; padding: 0 22px; font-size: 17px; }
+
+  /* Cover copy */
+  .cover { position: absolute; left: 40px; top: 128px; width: 640px; }
+  h1 {
+    font-family: "Archivo", sans-serif; font-variation-settings: "wdth" 118;
+    font-weight: 820; font-size: 104px; line-height: .9; letter-spacing: -.035em;
+  }
+  h1 em { font-style: normal; color: var(--spot); }
+  .lead { margin-top: 30px; width: 520px; font-size: 20px; line-height: 1.55; color: var(--ink-2); }
+  .actions { margin-top: 34px; display: flex; gap: 14px; }
+
+  /* Spec box, like the cell grid on a game box */
+  .spec {
+    position: absolute; left: 40px; top: 676px; width: 640px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--rule);
+  }
+  .spec div { padding: 12px 14px 13px; border-right: 1px solid var(--rule); }
+  .spec div:last-child { border-right: 0; }
+  .spec small { display: block; font-family: "Archivo"; font-variation-settings: "wdth" 72; font-weight: 600; font-size: 12px; letter-spacing: .12em; color: var(--ink-3); }
+  .spec span { display: block; margin-top: 4px; font-size: 16px; font-weight: 700; }
+
+  /* Figure 1: a Space, drawn as a diagram */
+  .fig { position: absolute; left: 744px; top: 112px; width: 656px; height: 620px; }
+  .crop { position: absolute; width: 18px; height: 18px; border-color: var(--ink-3); border-style: solid; }
+  .crop.tl { left: -10px; top: -10px; border-width: 1px 0 0 1px; }
+  .crop.tr { right: -10px; top: -10px; border-width: 1px 1px 0 0; }
+  .crop.bl { left: -10px; bottom: -10px; border-width: 0 0 1px 1px; }
+  .crop.br { right: -10px; bottom: -10px; border-width: 0 1px 1px 0; }
+  .win {
+    position: absolute; left: 40px; top: 70px; width: 474px; height: 446px;
+    border: 1.5px solid var(--ink); border-radius: 10px; overflow: hidden;
+    background: var(--stock-2);
+  }
+  .win .bar { height: 46px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 10px; padding: 0 16px; font-size: 14px; }
+  .badge { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--ink); display: grid; place-items: center; font-family: "Archivo"; font-weight: 800; font-size: 10px; }
+  .win .bar .here { margin-left: auto; color: var(--ink-2); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--spot); display: inline-block; }
+  .tabs { display: flex; gap: 6px; padding: 10px 16px; border-bottom: 1px solid var(--rule); font-size: 13px; }
+  .tab { height: 26px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 13px; display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+  .tab.on { border-color: var(--spot); color: var(--ink); font-weight: 700; }
+  .tab i { font-style: normal; font-size: 11px; color: var(--on-spot); background: var(--ink); border-radius: 8px; padding: 0 5px; font-weight: 700; }
+  .body { display: grid; grid-template-columns: 1fr 150px; height: calc(100% - 46px - 47px); }
+  .chat { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; position: relative; }
+  .msg { display: flex; gap: 8px; align-items: flex-start; }
+  .av { width: 24px; height: 24px; border-radius: 7px; border: 1.5px solid var(--ink-2); flex: none; display: grid; place-items: center; font-size: 9px; font-weight: 700; color: var(--ink-2); }
+  .msg .b { border: 1px solid var(--rule); border-radius: 12px 12px 12px 4px; padding: 6px 10px; max-width: 220px; }
+  .msg .b small { display: block; font-size: 11px; color: var(--ink-3); font-weight: 700; margin-bottom: 1px; }
+  .msg.me { justify-content: flex-end; }
+  .msg.me .b { border-color: var(--ink); border-radius: 12px 12px 4px 12px; }
+  .clip { margin-top: 6px; height: 64px; border: 1px dashed var(--ink-3); border-radius: 6px; display: grid; place-items: center; color: var(--ink-3); font-size: 11px; letter-spacing: .08em; font-family: "Archivo"; font-variation-settings: "wdth" 72; font-weight: 600; }
+  .composer { position: absolute; left: 16px; right: 16px; bottom: 14px; height: 36px; border: 1.5px solid var(--ink); border-radius: 18px; display: flex; align-items: center; padding: 0 6px 0 14px; color: var(--ink-3); font-size: 13px; }
+  .composer .send { margin-left: auto; width: 26px; height: 26px; border-radius: 50%; background: var(--spot); }
+  .side { border-left: 1px solid var(--rule); padding: 12px 12px; font-size: 12.5px; }
+  .side h4 { font-family: "Archivo"; font-variation-settings: "wdth" 72; font-weight: 700; font-size: 11px; letter-spacing: .14em; color: var(--ink-3); margin-bottom: 10px; }
+  .who { margin-bottom: 11px; }
+  .who b { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .who span { display: block; color: var(--ink-3); padding-left: 13px; font-size: 12px; }
+  .who .off { background: transparent; border: 1.5px solid var(--ink-3); }
+
+  /* Callouts */
+  .co { position: absolute; display: flex; align-items: flex-start; gap: 10px; width: 210px; font-size: 14.5px; line-height: 1.35; color: var(--ink); }
+  .num { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--spot); color: var(--on-spot); display: grid; place-items: center; font-family: "Archivo"; font-weight: 800; font-size: 14px; }
+  .co p span { color: var(--ink-2); display: block; font-size: 13px; }
+  svg.leaders { position: absolute; inset: 0; overflow: visible; }
+  .figcap { position: absolute; left: 56px; bottom: 26px; font-size: 13px; color: var(--ink-3); }
+  .figcap b { font-family: "Archivo"; font-variation-settings: "wdth" 72; letter-spacing: .12em; font-weight: 700; color: var(--ink-2); margin-right: 8px; }
+
+  /* Thumb index along the foot, like the tabs cut into a manual's edge */
+  .index { position: absolute; left: 744px; right: 40px; bottom: 34px; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--rule); }
+  .index div { padding: 12px 12px 0; border-left: 1px solid var(--rule); }
+  .index div:first-child { border-left: 0; padding-left: 0; }
+  .index b { font-family: "Archivo"; font-variation-settings: "wdth" 72; font-weight: 700; font-size: 13px; letter-spacing: .12em; display: flex; gap: 8px; align-items: center; }
+  .index b i { font-style: normal; width: 20px; height: 20px; border: 1.5px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font-size: 11px; letter-spacing: 0; }
+  .index div.on b i { background: var(--spot); border-color: var(--spot); color: var(--on-spot); }
+  .index span { display: block; margin-top: 5px; font-size: 13.5px; color: var(--ink-2); }
+  .folio { position: absolute; left: 40px; bottom: 34px; font-family: "Archivo"; font-variation-settings: "wdth" 72; font-weight: 700; font-size: 12px; letter-spacing: .14em; color: var(--ink-3); }
+</style>
+</head>
+<body>
+  <header class="head">
+    <div class="mark">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11.5" fill="none" stroke="#ece6da" stroke-width="1.5"/><circle cx="15.5" cy="11.5" r="8.5" fill="#121110"/><circle cx="15.5" cy="11.5" r="8.5" fill="none" stroke="#ff5a1f" stroke-width="1.5" stroke-dasharray="20 60" transform="rotate(120 15.5 11.5)"/></svg>
+      <span class="display">REALM</span>
+    </div>
+    <nav class="nav"><b>Spaces</b><span>Feed</span><span>Profiles</span><span>Boards</span><span>Download</span></nav>
+    <div class="right"><span>Sign in</span><span class="btn spot">Open Realm →</span></div>
+  </header>
+
+  <section class="cover">
+    <h1>One app<br>instead of<br><em>four.</em></h1>
+    <p class="lead">Your group chat, your feed, your profiles and your boards, in one place built for the people you actually play with.</p>
+    <div class="actions"><span class="btn spot lg">Open Realm in your browser →</span><span class="btn line lg">Download</span></div>
+  </section>
+
+  <div class="spec">
+    <div><small>PLAYERS</small><span>2 and up</span></div>
+    <div><small>AGES</small><span>13 and up</span></div>
+    <div><small>PLAYS ON</small><span>Web, apps soon</span></div>
+    <div><small>ACCESS</small><span>Early, open</span></div>
+  </div>
+
+  <figure class="fig">
+    <i class="crop tl"></i><i class="crop tr"></i><i class="crop bl"></i><i class="crop br"></i>
+    <div class="win">
+      <div class="bar"><span class="badge">LN</span><b>Late Night Lobby</b><span style="color:var(--ink-3)">▾</span><span class="here"><span class="dot"></span>4 here now</span></div>
+      <div class="tabs"><span class="tab on"># general</span><span class="tab"># clips <i>3</i></span><span class="tab"># lfg</span><span class="tab">builds</span></div>
+      <div class="body">
+        <div class="chat">
+          <div class="msg"><span class="av">NH</span><div class="b"><small>Noor</small>anyone on tonight? ranked at 9</div></div>
+          <div class="msg"><span class="av">KS</span><div class="b"><small>Kenji</small>in. finishing this match first<div class="clip">CLIP · 0:14</div></div></div>
+          <div class="msg me"><div class="b">same, give me ten</div></div>
+          <div class="composer">Say something in #general<span class="send"></span></div>
+        </div>
+        <div class="side">
+          <h4>HERE NOW</h4>
+          <div class="who"><b><span class="dot"></span>Noor</b><span>in a match, 12m</span></div>
+          <div class="who"><b><span class="dot"></span>Kenji</b><span>cutting a clip</span></div>
+          <div class="who"><b><span class="dot"></span>Maya</b><span>around</span></div>
+          <div class="who"><b><span class="dot off"></span>Leo</b><span>away</span></div>
+        </div>
+      </div>
+    </div>
+
+    <svg class="leaders" aria-hidden="true">
+      <polyline points="66,140 18,140 18,14 118,14" fill="none" stroke="#ece6da" stroke-width="1"/>
+      <circle cx="66" cy="140" r="3" fill="#ece6da"/>
+      <polyline points="488,197 528,197" fill="none" stroke="#ece6da" stroke-width="1"/>
+      <circle cx="488" cy="197" r="3" fill="#ece6da"/>
+      <polyline points="128,300 14,300 14,562 26,562" fill="none" stroke="#ece6da" stroke-width="1"/>
+      <circle cx="128" cy="300" r="3" fill="#ece6da"/>
+      <polyline points="300,498 300,562 328,562" fill="none" stroke="#ece6da" stroke-width="1"/>
+      <circle cx="300" cy="498" r="3" fill="#ece6da"/>
+    </svg>
+    <div class="co" style="left:124px;top:0px"><span class="num">1</span><p>Rooms sit as tabs<span>One place per group, no server maze.</span></p></div>
+    <div class="co" style="left:534px;top:184px;width:122px;flex-direction:column;gap:8px"><span class="num">2</span><p>Here now<span>Who's around, and what they're up to.</span></p></div>
+    <div class="co" style="left:32px;top:549px"><span class="num">3</span><p>Chat and clips together<span>Your clip lands where the talk is.</span></p></div>
+    <div class="co" style="left:334px;top:549px"><span class="num">4</span><p>Say something<span>Replies, reactions, files.</span></p></div>
+  </figure>
+
+  <nav class="index">
+    <div class="on"><b><i>1</i>SPACES</b><span>Chat with your group</span></div>
+    <div><b><i>2</i>FEED</b><span>Posts and clips</span></div>
+    <div><b><i>3</i>PROFILES</b><span>Yours, made your way</span></div>
+    <div><b><i>4</i>BOARDS</b><span>Threads and votes</span></div>
+  </nav>
+  <div class="folio">P. 01 — HOW TO PLAY</div>
+</body>
+</html>

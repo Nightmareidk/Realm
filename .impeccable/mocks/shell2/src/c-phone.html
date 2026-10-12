@@ -1,0 +1,300 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="_base.css" />
+    <script src="_data.js"></script>
+    <style>
+      /* C · Wall on a phone: a slim header, faces and posters that scroll sideways, five tabs.
+         Inside a room the tabs step aside so the chat gets the screen; a back arrow returns. */
+      body {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      .head {
+        height: 58px;
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 8px 0 16px;
+      }
+      .scroll {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        padding: 4px 0 0;
+      }
+      .pad {
+        padding: 0 16px;
+      }
+      h2.sec {
+        margin: 22px 16px 12px;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .faces {
+        display: flex;
+        gap: 14px;
+        padding: 0 16px;
+        margin-top: 18px;
+        overflow: hidden;
+      }
+      .face {
+        width: 68px;
+        flex: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .ring {
+        position: relative;
+        padding: 3px;
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 2.5px var(--presence);
+      }
+      .ring.voice::after {
+        content: "";
+        position: absolute;
+        right: -3px;
+        bottom: -1px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--presence)
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2304150f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 9.5h3l4.5-4v13l-4.5-4h-3z'/%3E%3Cpath d='M15.5 9a4.2 4.2 0 0 1 0 6'/%3E%3C/svg%3E")
+          center / 13px no-repeat;
+        box-shadow: 0 0 0 3px var(--ground);
+      }
+      .ring.idle {
+        box-shadow: inset 0 0 0 2.5px var(--rule-2);
+      }
+      .face .fn {
+        margin-top: 6px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .face .fs {
+        font-size: 11.5px;
+        color: var(--ink-3);
+      }
+      .livetile {
+        position: relative;
+        margin: 0 16px;
+        height: 176px;
+        border-radius: 22px;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center 30%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 16px 16px 16px 18px;
+        --stack-cut: #1a1112;
+      }
+      .livetile::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgb(11 11 14 / 0.05), rgb(11 11 14 / 0.85));
+      }
+      .livetile > * {
+        position: relative;
+      }
+      .posters {
+        display: flex;
+        gap: 12px;
+        padding: 0 16px;
+        overflow: hidden;
+      }
+      .poster {
+        position: relative;
+        width: 148px;
+        flex: none;
+        aspect-ratio: 4 / 5;
+        border-radius: 18px;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 12px;
+      }
+      .poster::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 35%, rgb(11 11 14 / 0.9));
+      }
+      .poster > * {
+        position: relative;
+      }
+      .poster .count {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+      .tabs {
+        flex: none;
+        height: 74px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        background: rgb(11 11 14 / 0.96);
+        border-top: 1px solid var(--rule);
+        padding-bottom: 8px;
+      }
+      .tabs a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ink-3);
+      }
+      .tabs a.on {
+        color: var(--ink);
+      }
+      .tabs .ic {
+        width: 24px;
+        height: 24px;
+      }
+      .tabs a.on .ic {
+        stroke-width: 2.1;
+      }
+      /* Room */
+      .rtabs {
+        display: flex;
+        gap: 6px;
+        padding: 6px 12px 10px;
+        overflow: hidden;
+        border-bottom: 1px solid var(--rule);
+        flex: none;
+      }
+      .rtabs a {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--ink-3);
+        white-space: nowrap;
+      }
+      .rtabs a.on {
+        background: rgb(255 255 255 / 0.08);
+        color: var(--ink);
+      }
+      .rtabs a.unread {
+        color: var(--ink);
+      }
+      .stage {
+        margin: 10px 12px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 8px 8px 12px;
+        border-radius: 16px;
+        background: linear-gradient(100deg, rgb(78 224 138 / 0.1), rgb(78 224 138 / 0.02) 70%);
+        box-shadow: inset 0 0 0 1px rgb(78 224 138 / 0.24);
+        flex: none;
+        --stack-cut: #15201b;
+      }
+      .chat {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 0 12px 6px;
+      }
+      .bub {
+        font-size: 15px;
+        max-width: 17rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="glow"></div>
+    <div id="app" style="display: contents"></div>
+    <script>
+      const view = new URLSearchParams(location.search).get("view") || "home";
+      const TABS = [
+        ["home", "Home"],
+        ["spaces", "Spaces"],
+        ["feed", "Feed"],
+        ["messages", "Messages"],
+      ];
+      const tabs = (cur) =>
+        `<nav class="tabs">${TABS.map(([k, l]) => `<a class="${k === cur ? "on" : ""}">${ic(k)}${l}</a>`).join("")}<a>${av("noor", 26, { dot: false })}You</a></nav>`;
+
+      if (view === "home") {
+        const faces = [
+          ["kenji", "hangout", "voice"],
+          ["ama", "hangout", "voice"],
+          ["sol", "hangout", "voice"],
+          ["jun", "#clips", ""],
+          ["mira", "#routes", ""],
+        ];
+        app.innerHTML = `
+        <header class="head">${WORD(24)}<span class="grow"></span><span class="iconbtn" style="width:42px;height:42px">${ic("people", "", 22)}</span><span class="iconbtn" style="width:42px;height:42px">${ic("search", "", 22)}</span><span class="iconbtn" style="width:42px;height:42px">${ic("bell", "", 22)}</span></header>
+        <div class="scroll">
+          <div class="pad"><h1 class="display" style="font-size:26px;font-weight:700;line-height:1.15">Good evening, Noor</h1>
+            <p class="soft" style="font-size:14px;margin-top:6px">${ic("mail", "", 15).replace('class="ic', 'style="vertical-align:-3px;color:var(--acc)" class="ic')} Confirm your email · <b style="color:var(--ink);text-decoration:underline;text-underline-offset:.22em">Enter the code</b></p></div>
+          <div class="faces">${faces.map(([p, s, k]) => `<div class="face"><span class="ring ${k}">${av(p, 56)}</span><span class="fn">${P[p].n}</span><span class="fs">${s}</span></div>`).join("")}</div>
+          <h2 class="sec">Live now</h2>
+          <div class="livetile" style="background-image:${img(S[0].pic)}">
+            <div class="live" style="font-size:13px">Live · 3 talking</div>
+            <div class="row" style="gap:12px;margin-top:4px"><div class="grow"><div class="display" style="font-size:24px;font-weight:700">hangout</div><div class="soft" style="font-size:14px">Late Night Lobby</div></div>
+              ${stack(["kenji", "ama", "sol"], 34)}<span class="btn act" style="height:40px;padding:0 16px">Join</span></div>
+          </div>
+          <h2 class="sec">Your Spaces <span class="faint" style="font-size:13.5px;font-weight:600">4</span></h2>
+          <div class="posters">${S.map(
+            (s) => `<div class="poster" style="background-image:${img(s.pic)}">${s.unread ? `<span class="count">${s.unread} new</span>` : ""}
+              ${badge(s, 30, 9)}<div style="font-weight:700;font-size:15px;margin-top:8px;line-height:1.2">${s.n}</div>
+              <div class="soft" style="font-size:12.5px;margin-top:2px">${s.voice ? '<span class="live" style="font-size:12.5px">hangout</span>' : s.here.length ? `${s.here.length} here now` : "Quiet"}</div></div>`,
+          ).join("")}</div>
+        </div>
+        ${tabs("home")}`;
+      } else {
+        const rooms = [
+          ["hash", "general", "on"],
+          ["hash", "clips-and-lfg", "unread"],
+          ["hash", "routes", ""],
+        ];
+        app.innerHTML = `
+        <header class="head" style="padding-left:4px;gap:8px">
+          <span class="iconbtn" style="width:40px;height:40px;transform:scaleX(-1)">${ic("chev", "", 22)}</span>
+          ${badge(S[0], 34, 10)}<div class="grow" style="min-width:0"><div class="display trunc" style="font-size:18px;font-weight:700;line-height:1.15">Late Night Lobby</div><div class="live" style="font-size:12.5px">4 here now</div></div>
+          <span class="iconbtn" style="width:40px;height:40px">${ic("invite", "", 21)}</span><span class="iconbtn" style="width:40px;height:40px">${ic("more", "", 22)}</span></header>
+        <nav class="rtabs">${rooms.map(([i, n, st]) => `<a class="${st}">${ic(i, "", 16)}${n}</a>`).join("")}<a>${ic("speaker", "", 16)}hangout</a></nav>
+        <div class="stage"><span style="color:var(--presence);display:flex">${ic("speaker", "", 18)}</span><div class="grow" style="font-size:14px"><b>hangout</b> <span class="soft">· 3 talking</span></div>${stack(["kenji", "ama", "sol"], 26)}<span class="btn act" style="height:34px;padding:0 14px;font-size:14px">Join</span></div>
+        <div class="chat" id="chat"></div>
+        <div style="padding:6px 10px 14px;flex:none"><div class="composer" style="height:50px"><span class="iconbtn">${ic("clip")}</span><span class="ph" style="font-size:15px">Message #general</span><span class="send">${ic("send", "", 19)}</span></div></div>`;
+        let h = "";
+        for (const m of CHAT.slice(3)) {
+          const mine = m.who === "noor";
+          h += `<div class="row" style="align-items:flex-end;gap:8px;margin-top:10px;${mine ? "justify-content:flex-end" : ""}">
+            ${mine ? "" : av(m.who, 28)}
+            <div class="col" style="gap:3px;${mine ? "align-items:flex-end" : "align-items:flex-start"}">
+              ${mine ? "" : `<span style="font-size:12.5px;font-weight:700;color:var(--ink-2);margin:0 0 1px 4px">${P[m.who].n}</span>`}
+              ${m.pic ? `<span style="width:260px;aspect-ratio:16/9;border-radius:16px;background:${img(m.pic)} center/cover"></span>` : ""}
+              ${m.t.map((t) => `<span class="bub ${mine ? "mine" : ""}">${t}</span>`).join("")}
+            </div></div>`;
+        }
+        chat.innerHTML = h;
+      }
+    </script>
+  </body>
+</html>

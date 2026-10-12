@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Realm — category standard (direction comp)</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800;900&family=Atkinson+Hyperlegible+Next:wght@400;700&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: #4b4fe6; color: #fff; font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  .top { display: flex; align-items: center; height: 80px; padding: 0 56px; gap: 40px; font-family: "Figtree"; font-weight: 600; font-size: 16px; }
+  .logo { font-weight: 900; font-size: 24px; display: flex; gap: 10px; align-items: center; letter-spacing: -.01em; }
+  .top nav { display: flex; gap: 32px; margin: 0 auto; }
+  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 44px; padding: 0 20px; border-radius: 22px; font-family: "Figtree"; font-weight: 600; font-size: 15px; }
+  .white { background: #fff; color: #23272f; }
+  .dark { background: #1c1d22; color: #fff; }
+  .hero { text-align: center; margin-top: 54px; }
+  h1 { font-family: "Figtree"; font-weight: 900; font-size: 76px; line-height: 1; letter-spacing: -.02em; text-transform: uppercase; }
+  .lead { margin: 22px auto 0; width: 700px; font-size: 20px; line-height: 1.6; color: #e6e7ff; }
+  .acts { margin-top: 30px; display: flex; gap: 16px; justify-content: center; }
+  .acts .pill { height: 56px; padding: 0 30px; font-size: 18px; border-radius: 28px; }
+  /* The product, big, as the proof */
+  .app { position: absolute; left: 50%; top: 500px; width: 1080px; height: 520px; transform: translateX(-50%); background: #1f2026; border-radius: 16px; box-shadow: 0 40px 80px -20px rgb(16 15 60 / .55), 0 0 0 1px rgb(255 255 255 / .08); display: grid; grid-template-columns: 72px 240px 1fr 220px; overflow: hidden; color: #dbdee1; font-size: 14px; }
+  .rail { background: #17181d; padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .rail i { width: 46px; height: 46px; border-radius: 16px; background: #2b2d34; display: block; }
+  .rail i.on { background: #4b4fe6; border-radius: 14px; }
+  .list { background: #1b1c21; padding: 16px 12px; }
+  .list b { display: block; color: #fff; font-family: "Figtree"; font-size: 15px; margin-bottom: 14px; }
+  .list span { display: block; padding: 7px 10px; border-radius: 6px; color: #9aa0a8; }
+  .list span.on { background: #2b2d34; color: #fff; }
+  .chat { padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+  .m { display: flex; gap: 12px; }
+  .m i { width: 38px; height: 38px; border-radius: 50%; flex: none; }
+  .m b { color: #fff; margin-right: 8px; } .m small { color: #80868e; }
+  .m p { margin-top: 3px; }
+  .members { background: #1b1c21; padding: 16px 14px; }
+  .members h4 { font-family: "Figtree"; font-size: 12px; letter-spacing: .08em; color: #80868e; margin-bottom: 12px; }
+  .members div { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .members i { width: 30px; height: 30px; border-radius: 50%; }
+  .spark { position: absolute; width: 10px; height: 10px; background: #fff; transform: rotate(45deg); opacity: .8; }
+</style>
+</head>
+<body>
+  <header class="top"><div class="logo"><svg width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="13" fill="#fff"/><circle cx="18" cy="12.5" r="9" fill="#4b4fe6"/></svg>Realm</div>
+    <nav><span>Download</span><span>Spaces</span><span>Safety</span><span>Support</span><span>Blog</span></nav><span class="pill white">Open Realm</span></header>
+  <section class="hero">
+    <h1>Group chat that's<br>all fun &amp; games</h1>
+    <p class="lead">Realm is great for playing games and hanging out with friends, or building a community. Chat, clips, profiles and boards, in one place.</p>
+    <div class="acts"><span class="pill white">Download for Windows</span><span class="pill dark">Open Realm in your browser</span></div>
+  </section>
+  <i class="spark" style="left:180px;top:250px"></i><i class="spark" style="left:1230px;top:200px;width:7px;height:7px"></i><i class="spark" style="left:1300px;top:400px"></i><i class="spark" style="left:120px;top:440px;width:6px;height:6px"></i>
+  <div class="app">
+    <div class="rail"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+    <div class="list"><b>Late Night Lobby</b><span class="on"># general</span><span># clips</span><span># lfg</span><span># builds</span></div>
+    <div class="chat">
+      <div class="m"><i style="background:#f2a541"></i><div><b>Noor</b><small>Today at 8:41 PM</small><p>anyone on tonight? ranked at 9</p></div></div>
+      <div class="m"><i style="background:#5fc9a8"></i><div><b>Kenji</b><small>Today at 8:43 PM</small><p>in. finishing this match first</p></div></div>
+      <div class="m"><i style="background:#e86a92"></i><div><b>Maya</b><small>Today at 8:44 PM</small><p>save me a spot</p></div></div>
+    </div>
+    <div class="members"><h4>ONLINE — 3</h4><div><i style="background:#f2a541"></i>Noor</div><div><i style="background:#5fc9a8"></i>Kenji</div><div><i style="background:#e86a92"></i>Maya</div></div>
+  </div>
+</body>
+</html>

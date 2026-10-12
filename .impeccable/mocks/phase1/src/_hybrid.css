@@ -1,0 +1,94 @@
+/* Hybrid frame (owner's spec): top bar + slim contextual sidebar + center + optional right panel. */
+.hb-top {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px 0 22px;
+}
+.hb-side {
+  position: absolute;
+  left: 10px;
+  top: 64px;
+  bottom: 10px;
+  width: 252px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+}
+.hb-main {
+  position: absolute;
+  left: 272px;
+  top: 64px;
+  bottom: 10px;
+}
+.hb-right {
+  position: absolute;
+  right: 10px;
+  top: 64px;
+  bottom: 10px;
+  width: 300px;
+  padding: 16px 8px;
+}
+.sideh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  padding: 0 8px;
+  margin: 4px 0 6px;
+}
+.sitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 8px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  color: var(--ink-2);
+  font-weight: 700;
+}
+.sitem.on {
+  color: var(--ink);
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+.sitem .sp {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  flex: none;
+}
+.sitem .r {
+  margin-left: auto;
+}
+.roomtab {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.roomtab.on {
+  color: var(--ink);
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+.who {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  margin: 10px 0 2px;
+}

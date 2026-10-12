@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Messaging on phones</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --ground: #0d0c12; --surface: #15131c; --raised: #1f1c28; --rule: #2a2735; --ink: #f4f2f8; --ink-2: #aaa5b9; --ink-3: #726c84; --gold: #ffc94d; --on-gold: #1c1406; --noor: #ff8a5c; --kenji: #c86bff; --maya: #3fd2c8; --live: #4ee08a; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: #08070b; color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; display: flex; justify-content: center; align-items: center; gap: 56px; }
+  .phone { width: 372px; height: 806px; border-radius: 52px; background: #000; padding: 11px; box-shadow: 0 0 0 2px #2a2735, 0 40px 80px -30px rgb(0 0 0 / .8); }
+  .scr { width: 100%; height: 100%; border-radius: 42px; background: var(--ground); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+  .status { height: 48px; display: flex; justify-content: space-between; align-items: center; padding: 0 28px; font-size: 14px; font-weight: 700; flex: none; }
+  .bar { display: flex; align-items: center; gap: 10px; padding: 6px 16px 10px; flex: none; }
+  .bar h1 { font-family: "Space Grotesk"; font-weight: 700; font-size: 26px; letter-spacing: -.02em; }
+  .bar .r { margin-left: auto; width: 38px; height: 38px; border-radius: 12px; background: var(--raised); display: grid; place-items: center; color: var(--ink-2); font-size: 20px; }
+  .tabs { margin-top: auto; height: 78px; border-top: 1px solid var(--rule); display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: 14px; flex: none; background: var(--surface); }
+  .tabs span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--ink-3); }
+  .tabs span i { width: 22px; height: 22px; border-radius: 7px; border: 2px solid currentColor; display: block; }
+  .tabs span.on { color: var(--ink); } .tabs span.on i { background: var(--gold); border-color: var(--gold); }
+  .st { display: flex; gap: 12px; padding: 0 16px 12px; flex: none; }
+  .st div { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11.5px; color: var(--ink-2); }
+  .st i { width: 56px; height: 56px; border-radius: 50%; padding: 2.5px; display: block; }
+  .st i span { display: block; width: 100%; height: 100%; border-radius: 50%; border: 2.5px solid var(--ground); overflow: hidden; position: relative; }
+  .st img { position: absolute; width: 150%; left: -25%; top: -5%; }
+  .c { display: flex; gap: 12px; align-items: center; padding: 10px 16px; }
+  .c .ic { width: 52px; height: 52px; border-radius: 16px; flex: none; display: grid; place-items: center; font-family: "Space Grotesk"; font-weight: 700; color: #160f22; position: relative; overflow: hidden; }
+  .c .ic img { position: absolute; width: 150%; left: -25%; top: -5%; }
+  .c b { font-size: 15.5px; display: block; } .c small { font-size: 13.5px; color: var(--ink-2); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+  .c .meta { margin-left: auto; text-align: right; font-size: 12px; color: var(--ink-3); display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .u { min-width: 20px; height: 20px; border-radius: 10px; background: var(--gold); color: var(--on-gold); font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 6px; }
+  /* Chat screen */
+  .ch { display: flex; align-items: center; gap: 10px; padding: 4px 12px 10px; border-bottom: 1px solid var(--rule); flex: none; }
+  .ch .back { font-size: 26px; color: var(--ink-2); width: 24px; }
+  .ch .ic { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #ff8a5c, #c86bff); display: grid; place-items: center; font-family: "Space Grotesk"; font-weight: 700; color: #160f22; font-size: 13px; }
+  .ch b { font-size: 15.5px; display: block; } .ch small { color: var(--live); font-size: 12px; }
+  .ch .people { margin-left: auto; display: flex; }
+  .ch .people i { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--ground); margin-left: -8px; overflow: hidden; position: relative; display: block; }
+  .ch .people img { position: absolute; width: 150%; left: -25%; top: -5%; }
+  .rooms { display: flex; gap: 6px; padding: 10px 12px; overflow: hidden; flex: none; }
+  .rooms span { height: 32px; padding: 0 12px; border-radius: 16px; background: var(--raised); display: flex; align-items: center; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+  .rooms span.on { background: var(--ink); color: var(--ground); font-weight: 700; }
+  .msgs { flex: 1; padding: 6px 12px; display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+  .b { background: var(--raised); border-radius: 20px; padding: 8px 13px; font-size: 15.5px; line-height: 1.45; max-width: 78%; align-self: flex-start; }
+  .b small { display: block; font-size: 12px; font-weight: 700; }
+  .b.me { align-self: flex-end; background: linear-gradient(135deg, #ffc94d, #ff9a5c); color: #1c1406; }
+  .clip { align-self: flex-start; width: 230px; height: 150px; border-radius: 18px; background: linear-gradient(135deg, #3b2b6e, #ff8a5c); position: relative; }
+  .clip::after { content: "▶"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 42px; height: 42px; border-radius: 50%; background: rgb(255 255 255 / .9); color: #15131c; display: grid; place-items: center; font-size: 14px; }
+  .comp { display: flex; gap: 8px; align-items: center; padding: 8px 12px 26px; flex: none; }
+  .comp .box { flex: 1; height: 46px; border-radius: 23px; background: var(--raised); display: flex; align-items: center; padding: 0 16px; color: var(--ink-3); font-size: 15px; }
+  .comp .send { width: 46px; height: 46px; border-radius: 50%; background: var(--gold); display: grid; place-items: center; }
+  /* Here-now sheet */
+  .dim { position: absolute; inset: 0; background: rgb(0 0 0 / .55); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 520px; border-radius: 28px 28px 0 0; background: var(--surface); padding: 10px 18px 0; }
+  .grab { width: 40px; height: 5px; border-radius: 3px; background: #3a3646; margin: 0 auto 14px; }
+  .sheet h2 { font-family: "Space Grotesk"; font-weight: 700; font-size: 20px; display: flex; justify-content: space-between; align-items: baseline; }
+  .sheet h2 span { font-family: "Atkinson Hyperlegible Next"; font-size: 13px; color: var(--ink-3); font-weight: 500; }
+  .p { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+  .p .mini { width: 44px; height: 60px; border-radius: 9px; padding: 2px; flex: none; }
+  .p .mini span { display: block; height: 100%; border-radius: 7px; overflow: hidden; position: relative; }
+  .p .mini img { position: absolute; width: 140%; left: -20%; top: 3%; }
+  .p b { font-size: 15.5px; display: block; } .p small { font-size: 13px; color: var(--ink-2); }
+  .p .go { margin-left: auto; height: 34px; padding: 0 12px; border-radius: 10px; background: var(--raised); font-size: 13px; font-weight: 700; display: flex; align-items: center; }
+</style>
+</head>
+<body>
+  <div class="phone"><div class="scr">
+    <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+    <div class="bar"><h1>Chats</h1><span class="r">+</span></div>
+    <div class="st">
+      <div><i style="background:conic-gradient(#ff8a5c,#ffc94d,#c86bff,#ff8a5c)"><span><img src="../../../../frontend/web/public/art/cast/human-maya-face.399f5b46.webp" alt=""></span></i>Noor</div>
+      <div><i style="background:conic-gradient(#c86bff,#3fd2c8,#c86bff)"><span><img src="../../../../frontend/web/public/art/cast/alien-zib-face.f5b5aada.webp" alt=""></span></i>Kenji</div>
+      <div><i style="background:#3a3646"><span style="background:#173a3c;display:grid;place-items:center;font-weight:700">MA</span></i>Maya</div>
+      <div><i style="background:#3a3646"><span style="background:#22304f;display:grid;place-items:center;font-weight:700">PR</span></i>Priya</div>
+    </div>
+    <div class="c"><span class="ic" style="background:linear-gradient(135deg,#ff8a5c,#c86bff)">LN</span><div><b>Late Night Lobby</b><small>Kenji: Ascent or I'm not playing</small></div><div class="meta">9:04<span class="u">3</span></div></div>
+    <div class="c"><span class="ic" style="border-radius:50%"><img src="../../../../frontend/web/public/art/cast/human-maya-face.399f5b46.webp" alt=""></span><div><b>Noor</b><small>see you at 9</small></div><div class="meta">8:51<span class="u">1</span></div></div>
+    <div class="c"><span class="ic" style="background:#3fd2c8">SB</span><div><b>Sourdough Bros</b><small>Maya: the crumb on this one</small></div><div class="meta">7:30</div></div>
+    <div class="c"><span class="ic" style="background:#c86bff;border-radius:50%">KM</span><div><b>Kenji, Maya</b><small>You: lol no</small></div><div class="meta">Tue</div></div>
+    <div class="tabs"><span><i></i>Home</span><span><i></i>Spaces</span><span><i></i>Feed</span><span class="on"><i></i>Chats</span><span><i></i>You</span></div>
+  </div></div>
+
+  <div class="phone"><div class="scr">
+    <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+    <div class="ch"><span class="back">‹</span><span class="ic">LN</span><div><b>Late Night Lobby</b><small>● 4 here now</small></div><span class="people"><i><img src="../../../../frontend/web/public/art/cast/human-maya-face.399f5b46.webp" alt=""></i><i><img src="../../../../frontend/web/public/art/cast/alien-zib-face.f5b5aada.webp" alt=""></i><i style="background:var(--maya)"></i></span></div>
+    <div class="rooms"><span class="on"># general</span><span># clips 3</span><span># lfg</span><span>Board</span></div>
+    <div class="msgs">
+      <span class="b"><small style="color:var(--noor)">Noor</small>anyone on tonight?</span>
+      <span class="b">ranked at 9 🙋</span>
+      <span class="b" style="margin-top:8px"><small style="color:var(--kenji)">Kenji</small>in. clip from last night</span>
+      <span class="clip"></span>
+      <span class="b me" style="margin-top:8px">HOW</span>
+      <span class="b me">same, give me ten</span>
+    </div>
+    <div class="comp"><span class="box">Message #general</span><span class="send"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1c1406" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+  </div></div>
+
+  <div class="phone"><div class="scr">
+    <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+    <div class="ch"><span class="back">‹</span><span class="ic">LN</span><div><b>Late Night Lobby</b><small>● 4 here now</small></div></div>
+    <div class="msgs"><span class="b"><small style="color:var(--noor)">Noor</small>anyone on tonight?</span></div>
+    <span class="dim"></span>
+    <div class="sheet"><div class="grab"></div><h2>Here now <span>4 of 7</span></h2>
+      <div class="p"><span class="mini" style="background:linear-gradient(160deg,#ffc94d,#ff8a5c 45%,#b25cff)"><span style="background:#ffd9a0"><img src="../../../../frontend/web/public/art/cast/human-maya.a2538d65.webp" alt=""></span></span><div><b>Noor</b><small>In a match · 12m</small></div><span class="go">Message</span></div>
+      <div class="p"><span class="mini" style="background:#c86bff"><span style="background:#2a2050"><img src="../../../../frontend/web/public/art/cast/alien-zib.8e6a5ac8.webp" alt=""></span></span><div><b>Kenji</b><small>Cutting a clip</small></div><span class="go">Message</span></div>
+      <div class="p"><span class="mini" style="background:#3fd2c8"><span style="background:#173a3c;display:grid;place-items:center;font-weight:700">MA</span></span><div><b>Maya</b><small>Around</small></div><span class="go">Message</span></div>
+      <div class="p" style="opacity:.55"><span class="mini" style="background:#4a4659"><span style="background:#24212e;display:grid;place-items:center;font-weight:700">LE</span></span><div><b>Leo</b><small>Away since 6 PM</small></div></div>
+    </div>
+  </div></div>
+</body>
+</html>

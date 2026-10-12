@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Realm — Arcade Cabinet (challenger comp)</title>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=block" rel="stylesheet">
+<style>
+  :root { --black: #07080b; --ink: #f4f1e8; --dim: #8a8f9c; --red: #ff3c5a; --cyan: #33e0ff; --gold: #ffd23f; --green: #3ddc84; --violet: #9d6bff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--black); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  .px { font-family: "Silkscreen", monospace; }
+  /* Scanlines over everything, phosphor black between. */
+  body::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(180deg, rgb(0 0 0 / .28) 0 1px, transparent 1px 3px); }
+  .hud { position: absolute; left: 40px; right: 40px; top: 24px; display: flex; justify-content: space-between; font-family: "Silkscreen"; font-size: 18px; letter-spacing: .04em; }
+  .hud .p1 { color: var(--red); } .hud .hi { color: var(--gold); }
+  .hud b { display: block; color: var(--ink); font-weight: 400; }
+  .nav { position: absolute; left: 40px; top: 92px; display: flex; gap: 28px; font-family: "Silkscreen"; font-size: 16px; color: var(--dim); }
+  .nav span:first-child { color: var(--ink); }
+  .nav span:first-child::before { content: "▶ "; color: var(--red); }
+  h1 { position: absolute; left: 40px; top: 170px; width: 700px; font-family: "Silkscreen"; font-weight: 700; font-size: 70px; line-height: 1.02; letter-spacing: -.01em; text-shadow: 4px 4px 0 #3a0d1a; }
+  h1 em { font-style: normal; color: var(--gold); }
+  .lead { position: absolute; left: 40px; top: 440px; width: 520px; font-size: 20px; line-height: 1.6; color: #c9c8c2; }
+  .start { position: absolute; left: 40px; top: 560px; display: flex; gap: 18px; align-items: center; }
+  .btn { font-family: "Silkscreen"; font-size: 20px; padding: 16px 22px; background: var(--red); color: var(--black); box-shadow: inset -4px -4px 0 #a51d33, inset 4px 4px 0 #ff8597; }
+  .btn2 { font-family: "Silkscreen"; font-size: 18px; padding: 14px 18px; border: 3px solid var(--ink); }
+  .blink { position: absolute; left: 40px; top: 660px; font-family: "Silkscreen"; font-size: 18px; color: var(--gold); }
+  /* The party: sprites on a tile floor */
+  .stage { position: absolute; left: 760px; top: 150px; width: 640px; height: 560px; border: 4px solid #1d2230; background: #0b0d14; }
+  .stage .title { position: absolute; left: 0; right: 0; top: 0; height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #141927; font-family: "Silkscreen"; font-size: 15px; }
+  .stage .title .here { color: var(--green); }
+  .tiles { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: repeating-linear-gradient(90deg, #1a2032 0 40px, #151a2a 40px 80px); border-top: 4px solid #2a3350; }
+  canvas { position: absolute; image-rendering: pixelated; }
+  .tag { position: absolute; font-family: "Silkscreen"; font-size: 13px; padding: 4px 8px; background: #141927; border: 2px solid; white-space: nowrap; }
+  .chat { position: absolute; left: 16px; right: 16px; top: 60px; font-family: "Silkscreen"; font-size: 14px; line-height: 1.9; color: var(--dim); }
+  .chat b { font-weight: 400; }
+  .credits { position: absolute; right: 40px; bottom: 40px; font-family: "Silkscreen"; font-size: 16px; color: var(--dim); }
+  .credits b { color: var(--ink); font-weight: 400; }
+</style>
+</head>
+<body>
+  <div class="hud"><div class="p1">1UP<b>REALM</b></div><div class="hi">ONLINE NOW<b>4 FRIENDS</b></div><div style="color:var(--cyan)">ROOMS<b>12</b></div></div>
+  <nav class="nav"><span>SPACES</span><span>FEED</span><span>PROFILES</span><span>BOARDS</span><span>DOWNLOAD</span></nav>
+  <h1>One app.<br>Your whole<br><em>party.</em></h1>
+  <p class="lead">Group chat, clips, profiles and boards in one place, for the people you actually play with.</p>
+  <div class="start"><span class="btn">PRESS START</span><span class="btn2">DOWNLOAD</span></div>
+  <div class="blink">▶ OPEN REALM IN YOUR BROWSER</div>
+  <div class="stage">
+    <div class="title"><span>LATE NIGHT LOBBY</span><span class="here">● 4 HERE</span></div>
+    <div class="chat"><p><b style="color:var(--cyan)">NOOR:</b> RANKED AT 9?</p><p><b style="color:var(--red)">KENJI:</b> CLIP IS UP IN #CLIPS</p><p><b style="color:var(--gold)">YOU:</b> SAVE ME A SPOT</p></div>
+    <div class="tiles"></div>
+  </div>
+  <div class="credits">CREDITS <b>13+</b> &nbsp; DMS NOT E2EE YET</div>
+  <script>
+    // The cast as sprites: each render drawn tiny, then scaled up in whole pixels.
+    const cast = [
+      ["../../../../frontend/web/public/art/cast/human-maya.a2538d65.webp", 800, "NOOR", "#33e0ff"],
+      ["../../../../frontend/web/public/art/cast/alien-zib.8e6a5ac8.webp", 950, "KENJI", "#ff3c5a"],
+      ["../../../../frontend/web/public/art/cast/monster-gloop.47958cc9.webp", 1100, "MAYA", "#3ddc84"],
+      ["../../../../frontend/web/public/art/cast/astro-teal.f95095b2.webp", 1250, "YOU", "#ffd23f"],
+    ];
+    cast.forEach(([src, x, name, color]) => {
+      const img = new Image();
+      img.onload = () => {
+        const h = 34, w = Math.round(img.width * (h / img.height));
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        const g = c.getContext("2d");
+        g.imageSmoothingEnabled = false;
+        g.drawImage(img, 0, 0, w, h);
+        const s = 6;
+        c.style.width = w * s + "px"; c.style.height = h * s + "px";
+        c.style.left = x - (w * s) / 2 + "px"; c.style.top = 710 - h * s - 116 + "px";
+        document.body.appendChild(c);
+        const t = document.createElement("span");
+        t.className = "tag"; t.textContent = name; t.style.color = color; t.style.borderColor = color;
+        t.style.left = x - 30 + "px"; t.style.top = 710 - h * s - 150 + "px";
+        document.body.appendChild(t);
+      };
+      img.src = src;
+    });
+  </script>
+</body>
+</html>

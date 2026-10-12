@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Idea — Space covers</title>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800;900&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --g: #0b0b0d; --ink: #f4f3f0; --ink2: #a8a6ad; --ink3: #6d6b73; --acc: #ffd23f; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--g); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  .nav { position: absolute; z-index: 3; left: 48px; right: 48px; top: 0; height: 76px; display: flex; align-items: center; gap: 30px; font-size: 15px; color: var(--ink2); }
+  .nav .logo { font-family: "Schibsted Grotesk"; font-weight: 900; font-size: 24px; color: var(--ink); }
+  .nav .r { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+  .btn { height: 44px; padding: 0 18px; border-radius: 10px; background: var(--acc); color: #171307; font-weight: 700; display: inline-flex; align-items: center; }
+  .copy { position: absolute; z-index: 2; left: 48px; top: 150px; width: 560px; }
+  h1 { font-family: "Schibsted Grotesk"; font-weight: 900; font-size: 86px; line-height: .95; letter-spacing: -.04em; }
+  .lead { margin-top: 24px; font-size: 20px; line-height: 1.55; color: var(--ink2); width: 470px; }
+  .acts { margin-top: 32px; display: flex; gap: 12px; }
+  .acts .btn { height: 56px; padding: 0 24px; font-size: 17px; }
+  .ghost { height: 56px; padding: 0 22px; border-radius: 10px; box-shadow: inset 0 0 0 1.5px #38363e; display: inline-flex; align-items: center; font-weight: 700; }
+  .wall { position: absolute; right: -40px; top: 70px; width: 820px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; transform: rotate(-4deg); }
+  .cov { aspect-ratio: 1; border-radius: 14px; position: relative; overflow: hidden; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 30px 60px -30px rgb(0 0 0 / .8); }
+  .cov h3 { font-family: "Schibsted Grotesk"; font-weight: 900; font-size: 34px; line-height: .92; letter-spacing: -.035em; }
+  .cov .meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; }
+  .cov .meta span { background: rgb(0 0 0 / .28); padding: 4px 9px; border-radius: 10px; }
+  .faces { display: flex; } .faces i { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgb(0 0 0 / .25); margin-left: -7px; display: block; }
+  .shape { position: absolute; border-radius: 50%; }
+  .note { position: absolute; left: 48px; bottom: 26px; font-size: 13px; color: var(--ink3); }
+
+  .amb { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .amb i { position: absolute; border-radius: 50%; filter: blur(70px); display: block; }
+  .grain { position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); opacity: .9; mix-blend-mode: overlay; }
+  body > *:not(.amb):not(.grain) { position: absolute; z-index: 2; }
+  body > header.nav { z-index: 5; }
+</style></head><body>
+<div class="amb" style="background:linear-gradient(120deg,#0d0b0b 0%,#151012 40%,#0b0d14 100%)">
+  <i style="width:700px;height:700px;left:700px;top:-100px;background:#ff5e3a;opacity:.38"></i>
+  <i style="width:600px;height:600px;left:1050px;top:350px;background:#2b47ff;opacity:.34"></i>
+  <i style="width:600px;height:500px;left:600px;top:520px;background:#ffd23f;opacity:.22"></i>
+  <i style="width:500px;height:500px;left:-150px;top:-150px;background:#0f766e;opacity:.25"></i>
+</div><div class="grain"></div>
+  <header class="nav"><span class="logo">realm</span><span>Spaces</span><span>Feed</span><span>Profiles</span><span>Boards</span><div class="r"><span>Sign in</span><span class="btn">Open Realm</span></div></header>
+  <div class="copy">
+    <h1>Every group gets its own place.</h1>
+    <p class="lead">Gaming squads, flatmates, book clubs, bands. Make a Space for yours: chat, clips, posts and boards, together.</p>
+    <div class="acts"><span class="btn">Open Realm in your browser</span><span class="ghost">Download</span></div>
+  </div>
+  <section class="wall">
+    <div class="cov" style="background:#ff5e3a;color:#1d0904"><h3>Late Night Lobby</h3><div class="meta"><span>● 4 here</span><span class="faces"><i style="background:#ffd23f"></i><i style="background:#fff"></i><i style="background:#1d0904"></i></span></div></div>
+    <div class="cov" style="background:#f4ecd8;color:#2a2116"><h3>Sourdough Bros</h3><span class="shape" style="width:120px;height:120px;right:-20px;top:40px;background:#e2b778"></span><div class="meta"><span style="background:rgb(0 0 0 /.08)">2 here</span></div></div>
+    <div class="cov" style="background:#2b47ff;color:#fff"><h3>Speedrun Club</h3><div class="meta"><span>new PB</span></div></div>
+    <div class="cov" style="background:#14532d;color:#d9ffb0"><h3>Book Club, 2am</h3><div class="meta"><span>ch. 12 thread</span></div></div>
+    <div class="cov" style="background:#ffd23f;color:#1b1607"><h3>Uni Flat 4B</h3><span class="shape" style="width:160px;height:160px;left:-40px;bottom:-60px;background:#ff5e3a"></span><div class="meta"><span style="background:rgb(0 0 0 /.1)">bins day</span></div></div>
+    <div class="cov" style="background:#1d1b24;color:#f4f3f0;box-shadow:inset 0 0 0 1px #34313d"><h3>Band Practice</h3><div class="meta"><span style="background:#ff5e3a;color:#1d0904">● live</span></div></div>
+    <div class="cov" style="background:#c4b5fd;color:#1e1338"><h3>Climbing Crew</h3><div class="meta"><span style="background:rgb(0 0 0 /.1)">Sat 9am</span></div></div>
+    <div class="cov" style="background:#0f766e;color:#ccfbf1"><h3>Fantasy League</h3><div class="meta"><span>week 6</span></div></div>
+    <div class="cov" style="background:#f472b6;color:#3b0a24"><h3>Cousins</h3><div class="meta"><span style="background:rgb(0 0 0 /.1)">12 here</span></div></div>
+  </section>
+  <p class="note">Scroll idea: the covers drift as a slow mosaic; scrolling zooms into one cover and it opens into that Space.</p>
+</body></html>

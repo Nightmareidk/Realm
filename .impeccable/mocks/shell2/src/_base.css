@@ -1,0 +1,260 @@
+/* Shell round 2 previews: DESIGN.md's world (ink ground, Orchid theme, Funnel Display for names,
+   Atkinson Hyperlegible Next for everything else), with the glow kept but much fainter.
+   Demo people, Spaces and pictures are illustrative. */
+@import url("https://fonts.googleapis.com/css2?family=Funnel+Display:wght@600;700;800&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=block");
+
+:root {
+  --ground: #0b0b0e;
+  --side: #0e0e12;
+  --sheet: #131318;
+  --raised: #1c1c23;
+  --sunken: #1a1a20;
+  --rule: #24242c;
+  --rule-2: #2e2e38;
+  --ink: #f5f4f2;
+  --ink-2: #c8c6cf;
+  --ink-3: #9d9aa8;
+  --presence: #4ee08a;
+  --idle: #f5c451;
+  --acc: #cdb4ff;
+  --on-acc: #160a2e;
+  --l1: #8b6bff;
+  --l2: #ff5f9a;
+  --display: "Funnel Display", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --media: "../../../../frontend/web/public/media/";
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--ground);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+/* The glow, much fainter than today: two theme lights at the far corners. */
+.glow {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(55% 70% at 0% 0%, rgb(139 107 255 / 0.13), transparent 70%),
+    radial-gradient(45% 60% at 100% 100%, rgb(255 95 154 / 0.07), transparent 70%), var(--ground);
+}
+.ic {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.ic.fill {
+  fill: currentColor;
+  stroke: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+}
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+.trunc {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.soft {
+  color: var(--ink-2);
+}
+.faint {
+  color: var(--ink-3);
+}
+.display {
+  font-family: var(--display);
+  letter-spacing: -0.02em;
+}
+/* Avatars: a picture or initials on the person's colour, with a presence dot cut out of the ground. */
+.av {
+  position: relative;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #120c1c;
+  background-size: cover;
+  background-position: center;
+}
+.av .dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 32%;
+  height: 32%;
+  min-width: 9px;
+  min-height: 9px;
+  border-radius: 50%;
+  background: var(--presence);
+  box-shadow: 0 0 0 2.5px var(--dot-cut, var(--sheet));
+}
+.av .dot.idle {
+  background: var(--idle);
+}
+.stack {
+  display: flex;
+}
+.stack .av {
+  box-shadow: 0 0 0 2.5px var(--stack-cut, var(--sheet));
+}
+.stack .av + .av {
+  margin-left: -8px;
+}
+.badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-weight: 800;
+  color: #160a14;
+  background-size: cover;
+  background-position: center;
+}
+.count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  background: var(--acc);
+  color: var(--on-acc);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+  font-variant-numeric: tabular-nums;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14.5px;
+  white-space: nowrap;
+}
+.btn.act {
+  background: var(--acc);
+  color: var(--on-acc);
+}
+.btn.ghost {
+  box-shadow: inset 0 0 0 1.5px var(--rule-2);
+  color: var(--ink);
+}
+.btn.quiet {
+  color: var(--ink-2);
+}
+.iconbtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  flex: none;
+}
+.kbd {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  padding: 2px 6px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--rule-2);
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+  box-shadow: inset 0 0 0 1px var(--rule-2);
+}
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--presence);
+  font-weight: 700;
+  font-size: 13px;
+}
+.live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* Chat */
+.bub {
+  max-width: 34rem;
+  padding: 8px 14px;
+  border-radius: 18px;
+  font-size: 15.5px;
+  line-height: 1.4;
+  background: #1f1f27;
+}
+.bub.mine {
+  background: var(--acc);
+  color: var(--on-acc);
+}
+.stamp {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 52px;
+  padding: 0 7px 0 8px;
+  border-radius: 26px;
+  background: rgb(11 11 14 / 0.6);
+  box-shadow: inset 0 0 0 1.5px var(--rule-2);
+}
+.composer .ph {
+  flex: 1;
+  color: var(--ink-3);
+  font-size: 15.5px;
+}
+.composer .send {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgb(205 180 255 / 0.22);
+  color: var(--acc);
+}

@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_world.css"><link rel="stylesheet" href="_app.css"><script src="_parts.js"></script>
+<style>.grid{position:absolute;inset:66px 10px 10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}.cap{position:absolute;top:18px;font-weight:700;font-size:1.05rem}</style></head>
+<body><div class="field-bg dim"></div><div class="grain"></div>
+<div class="cap" style="left:24px">A · Your messages in neutral grey <span class="ink2" style="font-weight:400">(research's pick)</span></div>
+<div class="cap" style="left:735px">B · Your messages in your theme colour <span class="ink2" style="font-weight:400">(like iMessage)</span></div>
+<div class="grid">
+  <div class="frame col"><div id="h1"></div><div class="scrollend" style="padding:6px 22px 0" id="m1"></div><div style="padding:10px 22px 16px" id="c1"></div></div>
+  <div class="frame col"><div id="h2"></div><div class="scrollend" style="padding:6px 22px 0" id="m2"></div><div style="padding:10px 22px 16px" id="c2"></div></div>
+</div>
+<script>
+h1.innerHTML = convoHeader(); h2.innerHTML = convoHeader();
+m1.innerHTML = messages(); m2.innerHTML = messages({accent:true});
+c1.innerHTML = composer(true); c2.innerHTML = composer(true);
+</script></body></html>

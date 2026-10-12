@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Realm app intro mocks</title>
+<script src="icons.js"></script>
+<style>
+@font-face { font-family: "Funnel"; font-weight: 800; src: url("../../../frontend/mobile/node_modules/@expo-google-fonts/funnel-display/800ExtraBold/FunnelDisplay_800ExtraBold.ttf"); }
+@font-face { font-family: "Funnel"; font-weight: 700; src: url("../../../frontend/mobile/node_modules/@expo-google-fonts/funnel-display/700Bold/FunnelDisplay_700Bold.ttf"); }
+@font-face { font-family: "Atkinson"; font-weight: 400; src: url("../../../frontend/mobile/node_modules/@expo-google-fonts/atkinson-hyperlegible-next/400Regular/AtkinsonHyperlegibleNext_400Regular.ttf"); }
+@font-face { font-family: "Atkinson"; font-weight: 700; src: url("../../../frontend/mobile/node_modules/@expo-google-fonts/atkinson-hyperlegible-next/700Bold/AtkinsonHyperlegibleNext_700Bold.ttf"); }
+
+:root {
+  --bg: #0b0b0e; --surface: #141419; --raised: #1d1d24; --sunken: #1b1b22; --line: #2a2a33; --line-strong: #6f6c7b;
+  --text: #f5f4f2; --soft: #c8c6cf; --muted: #c0bec8; --presence: #4ee08a;
+}
+[data-t="mint"]   { --acc: #3ee6b0; --on: #04150f; --l1: #1fbf8f; --l2: #2b47ff; --l3: #0f766e; --glow: 0.6; }
+[data-t="orchid"] { --acc: #cdb4ff; --on: #160a2e; --l1: #8b6bff; --l2: #ff5f9a; --l3: #3a2a8a; --glow: 0.78; }
+[data-t="aqua"]   { --acc: #5fd8ef; --on: #03161b; --l1: #14b8d6; --l2: #2b47ff; --l3: #1fbf8f; --glow: 0.55; }
+[data-t="ember"]  { --acc: #ffaf8a; --on: #1d0904; --l1: #ff6a3d; --l2: #ffb547; --l3: #c2185b; --glow: 0.6; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 412px; height: 915px; overflow: hidden; background: var(--bg); }
+body { font-family: "Atkinson", system-ui, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+.phone { position: relative; width: 412px; height: 915px; overflow: hidden; background: var(--bg); isolation: isolate; }
+/* The light field, as the account screens wear it (full strength), plus grain. */
+.phone::before { content: ""; position: absolute; inset: 0; z-index: -2; background:
+  radial-gradient(62% 80% at 18% 100%, color-mix(in srgb, var(--l1) calc(var(--glow) * 55%), transparent), color-mix(in srgb, var(--l1) calc(var(--glow) * 19%), transparent) 40%, transparent 72%),
+  radial-gradient(50% 70% at 86% 6%, color-mix(in srgb, var(--l2) calc(var(--glow) * 42%), transparent), color-mix(in srgb, var(--l2) calc(var(--glow) * 15%), transparent) 42%, transparent 72%),
+  radial-gradient(42% 60% at 60% 62%, color-mix(in srgb, var(--l3) calc(var(--glow) * 28%), transparent), transparent 70%); }
+.phone::after { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .18; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+/* Android system bars (edge to edge). */
+.sb { position: absolute; top: 0; left: 0; right: 0; height: 36px; padding: 10px 22px 0; display: flex; justify-content: space-between; font: 600 14px/1 "Roboto", system-ui, sans-serif; color: var(--text); z-index: 20; }
+.sb .ic { display: flex; gap: 6px; align-items: center; }
+.gh { position: absolute; bottom: 0; left: 0; right: 0; height: 26px; display: grid; place-items: center; z-index: 20; }
+.gh i { width: 108px; height: 4px; border-radius: 99px; background: rgb(245 244 242 / .55); }
+
+.ico { width: 1em; height: 1em; display: inline-block; vertical-align: middle; flex: none; }
+
+/* Top bar: the Mark, the wordmark, and Sign in. */
+.top { position: absolute; top: 44px; left: 20px; right: 20px; height: 48px; display: flex; align-items: center; justify-content: space-between; z-index: 10; }
+.brand { display: flex; align-items: center; gap: 9px; }
+.mark { position: relative; width: 24px; height: 24px; border-radius: 50%; border: 2.4px solid var(--text); }
+.mark::after { content: ""; position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--acc); top: 2.5px; right: 2px; }
+.word { font: 800 23px/1 "Funnel"; letter-spacing: -0.03em; }
+.link { font: 700 16px/1 "Atkinson"; color: var(--text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; padding: 14px 4px; }
+
+.title { font: 800 40px/0.98 "Funnel"; letter-spacing: -0.035em; text-wrap: balance; }
+.lead { font: 400 17px/1.55 "Atkinson"; color: var(--soft); max-width: 34ch; text-wrap: pretty; }
+.hint { font: 400 14px/1.4 "Atkinson"; color: var(--soft); }
+.tag { display: inline-flex; align-items: center; gap: 6px; font: 700 12.5px/1 "Atkinson"; color: var(--soft); padding: 7px 11px; border-radius: 999px; background: rgb(11 11 14 / .65); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .1); }
+
+.action { height: 56px; border-radius: 999px; background: var(--acc); color: var(--on); font: 700 17px/1 "Atkinson"; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ghost { height: 56px; border-radius: 999px; color: var(--text); font: 700 17px/1 "Atkinson"; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1.5px var(--line-strong); }
+
+/* Faces. */
+.face { position: relative; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 800 14px/1 "Funnel"; color: #0b0b0e; flex: none; }
+.face.on::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; box-shadow: 0 0 0 2.5px var(--presence); }
+.f1 { background: #ffb547; } .f2 { background: #8bd3ff; } .f3 { background: #ff8fb1; } .f4 { background: #b9f27c; }
+
+/* ---------- A · The group chat ---------- */
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-radius: 22px 22px 0 0; box-shadow: inset 0 1px 0 rgb(255 255 255 / .06), 0 -20px 50px rgb(0 0 0 / .35); display: flex; flex-direction: column; }
+.chead { display: flex; align-items: center; gap: 12px; padding: 16px 18px 14px; border-bottom: 1px solid var(--line); }
+.stack { display: flex; }
+.stack .face { width: 30px; height: 30px; font-size: 12px; box-shadow: 0 0 0 2.5px var(--surface); }
+.stack .face + .face { margin-left: -9px; }
+.chead b { display: block; font: 700 18px/1.1 "Funnel"; letter-spacing: -0.01em; }
+.chead small { display: block; font: 400 13px/1.3 "Atkinson"; color: var(--soft); margin-top: 3px; }
+.msgs { flex: 1; padding: 6px 16px 0; display: flex; flex-direction: column; gap: 4px; overflow: hidden; justify-content: flex-end; }
+.day { align-self: center; margin: 8px 0 6px; }
+.run { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; }
+.run .face { width: 28px; height: 28px; font-size: 11.5px; }
+.run .col { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; max-width: 78%; }
+.who { font: 700 13px/1 "Atkinson"; color: var(--soft); margin: 0 0 4px 12px; }
+.b { background: var(--sunken); padding: 10px 14px; border-radius: 18px; font: 400 16px/1.38 "Atkinson"; }
+.col .b:not(:last-child) { border-bottom-left-radius: 7px; }
+.col .b + .b { border-top-left-radius: 7px; }
+.b .t { font: 400 12px/1 "Atkinson"; color: var(--soft); margin-left: 8px; }
+.mine { align-self: flex-end; background: var(--acc); color: var(--on); border-radius: 18px; padding: 10px 14px; font: 400 16px/1.38 "Atkinson"; }
+.seen { align-self: flex-end; font: 700 12px/1 "Atkinson"; color: var(--soft); margin: 4px 4px 0 0; }
+.reacts { display: flex; gap: 6px; margin: 2px 0 0 4px; }
+.chip { font: 700 13px/1 "Atkinson"; color: var(--text); padding: 6px 10px; border-radius: 999px; background: var(--raised); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08); }
+.typing { display: flex; align-items: center; gap: 8px; margin: 10px 0 0 36px; }
+.dots { display: flex; gap: 4px; padding: 12px 14px; background: var(--sunken); border-radius: 18px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--soft); opacity: .8; }
+.dots i:nth-child(2) { opacity: .55; } .dots i:nth-child(3) { opacity: .3; }
+.sys { display: flex; align-items: center; gap: 10px; align-self: stretch; margin: 12px 0 4px; padding: 10px 12px; border-radius: 16px; background: linear-gradient(90deg, rgb(78 224 138 / .1), rgb(78 224 138 / .02)); box-shadow: inset 0 0 0 1px rgb(78 224 138 / .24); }
+.sys .ico { color: var(--presence); font-size: 20px; }
+.sys p { font: 700 14px/1.3 "Atkinson"; flex: 1; }
+.sys p span { display: block; font-weight: 400; color: var(--soft); font-size: 13px; margin-top: 2px; }
+.sys .stack .face { box-shadow: 0 0 0 2.5px #15201b; }
+.status { padding: 10px 20px 8px; }
+.composer { margin: 0 12px 38px; min-height: 58px; border-radius: 24px; background: var(--sunken); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08); display: flex; align-items: center; gap: 10px; padding: 7px 7px 7px 16px; }
+.composer .clip { color: var(--soft); font-size: 22px; }
+.composer .field { flex: 1; font: 400 16.5px/1.3 "Atkinson"; color: var(--text); }
+.composer .caret { display: inline-block; width: 2px; height: 20px; background: var(--acc); vertical-align: -4px; margin-left: 1px; }
+.send { width: 46px; height: 46px; border-radius: 50%; background: var(--acc); color: var(--on); display: grid; place-items: center; font-size: 22px; }
+.scrim { position: absolute; inset: 0; background: rgb(11 11 14 / .6); z-index: 12; }
+.bsheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 14; background: var(--raised); border-radius: 26px 26px 0 0; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12), 0 -24px 60px rgb(0 0 0 / .5); padding: 12px 22px 42px; }
+.grab { width: 40px; height: 4px; border-radius: 99px; background: var(--line-strong); margin: 0 auto 22px; }
+.sw { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 22px 0 22px; }
+.sw div { height: 92px; border-radius: 16px; position: relative; display: flex; align-items: flex-end; padding: 10px; font: 700 14px/1 "Atkinson"; color: #0b0b0e; }
+.sw div.pick { transform: translateY(-3px); box-shadow: 0 0 0 2px var(--raised), 0 0 0 4px var(--text); }
+.sw .s-mint { background: linear-gradient(135deg, #1fbf8f, #2b47ff 60%, #0f766e); color: #fff; }
+.sw .s-orchid { background: linear-gradient(135deg, #8b6bff, #ff5f9a 60%, #3a2a8a); color: #fff; }
+.sw .s-aqua { background: linear-gradient(135deg, #14b8d6, #2b47ff 60%, #1fbf8f); color: #fff; }
+.sw .s-ember { background: linear-gradient(135deg, #ff6a3d, #ffb547 60%, #c2185b); color: #fff; }
+.sw div span { text-shadow: 0 1px 2px rgb(0 0 0 / .4); }
+
+/* ---------- B · Your profile, in your hand ---------- */
+.stage { position: absolute; top: 108px; left: 0; right: 0; height: 470px; display: grid; place-items: center; perspective: 1100px; }
+.card { width: 292px; height: 432px; border-radius: 15px; padding: 7px; position: relative; transform-style: preserve-3d;
+  background: #121217; box-shadow: 0 30px 60px rgb(0 0 0 / .55), 0 8px 18px rgb(0 0 0 / .4); }
+/* Holo foil only along the card's edge (DESIGN: never on the face). */
+.card::before { content: ""; position: absolute; inset: 0; border-radius: 15px; padding: 7px; mix-blend-mode: color-dodge; opacity: .5;
+  background: conic-gradient(from var(--foil, 210deg), var(--l1), var(--l2), #ffffff, var(--l3), var(--l1), #ffffff, var(--l2), var(--l1));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.face-in { height: 100%; border-radius: 10px; overflow: hidden; background: var(--surface); position: relative; }
+.banner { height: 128px; background: linear-gradient(135deg, var(--l1), var(--l2) 58%, var(--l3)); position: relative; }
+.banner::after { content: ""; position: absolute; inset: 0; background: radial-gradient(80% 120% at 85% 0%, rgb(255 255 255 / .22), transparent 60%); }
+.pfp { position: absolute; top: 84px; left: 18px; width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font: 800 34px/1 "Funnel"; color: #0b0b0e; background: #ffb547; box-shadow: 0 0 0 5px var(--surface); }
+.pfp.on::after { content: ""; position: absolute; right: 2px; bottom: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--presence); box-shadow: 0 0 0 4px var(--surface); }
+.pbody { padding: 54px 18px 0; }
+.pname { font: 800 28px/1 "Funnel"; letter-spacing: -0.03em; }
+.phandle { font: 400 14px/1 "Atkinson"; color: var(--soft); margin-top: 7px; }
+.pnow { display: flex; align-items: center; gap: 8px; margin-top: 16px; font: 700 14px/1.2 "Atkinson"; }
+.pnow .ico { color: var(--presence); font-size: 18px; }
+.psec { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.psec h4 { font: 700 12.5px/1 "Atkinson"; color: var(--soft); margin-bottom: 10px; }
+.badges { display: flex; gap: 8px; }
+.badge { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; font: 800 15px/1 "Funnel"; color: #0b0b0e; }
+.ex { position: absolute; top: 12px; right: 12px; z-index: 2; }
+.pager { position: absolute; top: 590px; left: 0; right: 0; display: flex; justify-content: center; gap: 12px; }
+.pager i { width: 30px; height: 30px; border-radius: 50%; display: block; }
+.pager i.pick { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text); }
+.btxt { position: absolute; left: 24px; right: 24px; top: 650px; }
+.btxt .lead { margin-top: 12px; min-height: 52px; }
+.bact { position: absolute; left: 20px; right: 20px; bottom: 42px; }
+.back-card .face-in { padding: 18px; }
+
+/* ---------- C · Four apps, one Realm ---------- */
+.ctop { position: absolute; top: 116px; left: 24px; right: 24px; }
+.grid4 { position: absolute; top: 300px; left: 34px; right: 34px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.tile { height: 150px; border-radius: 20px; background: var(--raised); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08), 0 14px 30px rgb(0 0 0 / .35); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+.tile .ico { font-size: 34px; color: var(--text); }
+.tile b { font: 700 16px/1.2 "Atkinson"; }
+.tile small { display: block; font: 400 13px/1.3 "Atkinson"; color: var(--soft); margin-top: 3px; }
+.tile em { position: absolute; top: 14px; right: 14px; font: 700 12.5px/1 "Atkinson"; font-style: normal; color: var(--text); background: rgb(11 11 14 / .7); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .1); padding: 6px 9px; border-radius: 999px; }
+.ring { position: absolute; left: 50%; width: 132px; height: 132px; margin-left: -66px; border-radius: 50%; border: 4px solid var(--text); }
+.ring::after { content: ""; position: absolute; width: 34px; height: 34px; border-radius: 50%; background: var(--acc); top: 14px; right: 12px; }
+.ring.target { border-style: dashed; border-color: var(--line-strong); border-width: 2.5px; }
+.ring.target::after { opacity: .9; }
+.flying .tile { position: absolute; width: 150px; transition: none; }
+.home { position: absolute; top: 100px; left: 12px; right: 12px; height: 420px; border-radius: 22px; background: var(--surface); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .06); overflow: hidden; padding: 18px 16px; }
+.home h3 { font: 700 24px/1 "Funnel"; letter-spacing: -0.02em; }
+.shelf { font: 700 14.5px/1 "Atkinson"; margin: 20px 0 12px; display: flex; justify-content: space-between; }
+.faces { display: flex; gap: 14px; }
+.faces div { display: flex; flex-direction: column; align-items: center; gap: 7px; font: 400 12.5px/1 "Atkinson"; color: var(--soft); }
+.faces .face { width: 54px; height: 54px; font-size: 20px; }
+.live { border-radius: 18px; padding: 14px; background: linear-gradient(160deg, rgb(78 224 138 / .12), rgb(78 224 138 / .02)); box-shadow: inset 0 0 0 1px rgb(78 224 138 / .24); display: flex; align-items: center; gap: 12px; }
+.live .sp { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font: 800 12px/1 "Funnel"; color: #0b0b0e; background: #8bd3ff; }
+.live p { flex: 1; font: 700 15px/1.25 "Atkinson"; }
+.live p span { display: block; font-weight: 400; font-size: 13px; color: var(--presence); margin-top: 3px; }
+.live .j { height: 36px; padding: 0 14px; border-radius: 999px; display: grid; place-items: center; font: 700 14px/1 "Atkinson"; color: var(--text); box-shadow: inset 0 0 0 1.5px var(--line-strong); }
+.posters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.poster { height: 110px; border-radius: 20px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; background: var(--sunken); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .06); }
+.poster b { font: 700 14.5px/1.2 "Atkinson"; }
+.cbot { position: absolute; left: 24px; right: 24px; bottom: 42px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const D = q.get("d") || "a", F = q.get("f") || "1";
+const icon = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">${(ICONS[n] || []).map((d) => `<path d="${d}"/>`).join("")}</svg>`;
+const sb = `<div class="sb"><span>21:04</span><span class="ic">
+  <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5 0 3.2C2.2 1.2 5 0 8 0s5.8 1.2 8 3.2z" fill="#f5f4f2"/></svg>
+  <svg width="14" height="12" viewBox="0 0 14 12"><path d="M14 0v12H0z" fill="#f5f4f2"/></svg>
+  <svg width="10" height="16" viewBox="0 0 10 16"><rect x="2.5" y="0" width="5" height="2" rx="1" fill="#f5f4f2"/><rect x="0" y="2" width="10" height="14" rx="2" fill="#f5f4f2"/></svg></span></div>`;
+const gh = `<div class="gh"><i></i></div>`;
+const topBar = `<div class="top"><div class="brand"><span class="mark"></span><span class="word">realm</span></div><span class="link">Sign in</span></div>`;
+
+function chatHead() {
+  return `<div class="chead"><div class="stack"><span class="face f1">A</span><span class="face f2">T</span><span class="face f3">K</span></div>
+    <div style="flex:1"><b>the late crew</b><small>4 people · an example chat</small></div>${icon("Info", "")}</div>`;
+}
+const run = (f, who, bubbles, extra = "") => `<div class="run"><span class="face ${f}">${who[0]}</span><div class="col"><span class="who">${who}</span>${bubbles.map((b) => `<div class="b">${b}</div>`).join("")}${extra}</div></div>`;
+
+const frames = {
+  a1: () => `<div class="phone" data-t="mint">${sb}${topBar}
+    <div style="position:absolute;top:118px;left:24px;right:24px">
+      <h1 class="title">Where your group hangs out.</h1>
+      <p class="lead" style="margin-top:14px">Chat, drop into voice and keep your Spaces in one place.</p>
+    </div>
+    <div class="sheet" style="top:330px">${chatHead()}
+      <div class="msgs">
+        <span class="tag day">Tonight</span>
+        ${run("f1", "Ama", ["ranked at 9?"])}
+        ${run("f2", "Theo", ["only if Kenji brings the good headset", "the one that doesn't crackle"])}
+        ${run("f3", "Kenji", ["packed 🎧<span class='t'>20:58</span>"], `<div class="reacts"><span class="chip">😂 2</span><span class="chip">🔥 1</span></div>`)}
+        <div class="typing"><div class="dots"><i></i><i></i><i></i></div><span class="hint">Ama is typing…</span></div>
+      </div>
+      <div class="status"><span class="hint">Send it to join Realm</span></div>
+      <div class="composer"><span class="clip">${icon("Plus")}</span><span class="field">I'm in<span class="caret"></span></span><span class="send">${icon("ArrowUp")}</span></div>
+    </div>${gh}</div>`,
+
+  a2: () => `<div class="phone" data-t="mint">${sb}
+    <div class="sheet" style="top:40px">${chatHead()}
+      <div class="msgs">
+        ${run("f2", "Theo", ["only if Kenji brings the good headset", "the one that doesn't crackle"])}
+        ${run("f3", "Kenji", ["packed 🎧<span class='t'>20:58</span>"], `<div class="reacts"><span class="chip">😂 2</span><span class="chip">🔥 1</span></div>`)}
+        ${run("f1", "Ama", ["lobby's open, come through"])}
+        <div class="sys">${icon("SpeakerHigh")}<p>Ama, Theo and Kenji are in Squad room<span>Late Night Lobby · 3 here now</span></p><div class="stack"><span class="face f1 on">A</span><span class="face f2">T</span><span class="face f3">K</span></div></div>
+        ${run("f2", "Theo", ["noor are you on realm yet", "we stopped using four apps for this"])}
+        ${run("f1", "Ama", ["just send it 👇"])}
+      </div>
+      <div class="status"><span class="hint">Send it to join Realm</span></div>
+      <div class="composer"><span class="clip">${icon("Plus")}</span><span class="field">I'm in<span class="caret"></span></span><span class="send">${icon("ArrowUp")}</span></div>
+    </div>${gh}</div>`,
+
+  a3: () => `<div class="phone" data-t="mint">${sb}
+    <div class="sheet" style="top:40px">${chatHead()}
+      <div class="msgs">
+        ${run("f2", "Theo", ["noor are you on realm yet", "we stopped using four apps for this"])}
+        ${run("f1", "Ama", ["just send it 👇"])}
+        <div class="mine" style="margin-top:12px">I'm in</div><span class="seen">Seen</span>
+      </div>
+      <div class="status"><span class="hint">&nbsp;</span></div>
+      <div class="composer"><span class="clip">${icon("Plus")}</span><span class="field" style="color:var(--muted)">Message the late crew</span><span class="send" style="opacity:.5">${icon("ArrowUp")}</span></div>
+    </div>
+    <div class="scrim"></div>
+    <div class="bsheet"><div class="grab"></div>
+      <h1 class="title" style="font-size:38px">Welcome in.</h1>
+      <p class="lead" style="margin-top:12px">First, pick your colour. It lights up everything you do on Realm.</p>
+      <div class="sw"><div class="s-mint pick"><span>Mint</span></div><div class="s-orchid"><span>Orchid</span></div><div class="s-aqua"><span>Aqua</span></div><div class="s-ember"><span>Ember</span></div></div>
+      <div class="action">Next</div>
+      <p class="hint" style="text-align:center;margin-top:18px">Have an account? <span class="link" style="font-size:14px;padding:0">Sign in</span></p>
+    </div>${gh}</div>`,
+
+  b: (t, tilt, foil, lead, back) => `<div class="phone" data-t="${t}">${sb}${topBar}
+    <div class="stage"><div class="card${back ? " back-card" : ""}" style="transform:${tilt};--foil:${foil}">
+      <span class="tag ex">Example</span>
+      <div class="face-in">${back ? backFace() : frontFace(t)}</div></div></div>
+    <div class="pager">${["#1fbf8f", "#8b6bff", "#14b8d6", "#ff6a3d"].map((c, i) => `<i class="${["mint", "orchid", "aqua", "ember"][i] === t ? "pick" : ""}" style="background:linear-gradient(135deg,${c},${["#2b47ff", "#ff5f9a", "#2b47ff", "#ffb547"][i]})"></i>`).join("")}</div>
+    <div class="btxt"><h1 class="title" style="font-size:42px">Make it yours.</h1><p class="lead">${lead}</p></div>
+    <div class="bact"><div class="action">Create your profile</div></div>${gh}</div>`,
+
+  c1: () => `<div class="phone" data-t="mint">${sb}${topBar}
+    <div class="ctop"><h1 class="title">Four apps for one friend group?</h1><p class="lead" style="margin-top:12px">Drag them into the ring.</p></div>
+    <div class="grid4">
+      <div class="tile"><em>12</em>${icon("ChatsCircle")}<div><b>Group chat</b><small>where the plans are</small></div></div>
+      <div class="tile"><em>3</em>${icon("Microphone")}<div><b>Voice calls</b><small>where the game is</small></div></div>
+      <div class="tile"><em>40</em>${icon("UsersThree")}<div><b>Communities</b><small>where the big groups are</small></div></div>
+      <div class="tile">${icon("User")}<div><b>Profiles</b><small>where you are</small></div></div>
+    </div>
+    <div class="ring target" style="top:650px"></div>
+    <div class="cbot" style="bottom:46px"><p class="hint" style="text-align:center">or <span class="link" style="font-size:14px;padding:0">put them together for me</span></p></div>${gh}</div>`,
+
+  c2: () => `<div class="phone" data-t="mint">${sb}${topBar}
+    <div class="ctop"><h1 class="title">Chat. Voice. Spaces. You.</h1></div>
+    <div class="flying">
+      <div class="tile" style="top:380px;left:40px;transform:rotate(-14deg) scale(.82);opacity:.95">${icon("ChatsCircle")}<div><b>Group chat</b></div></div>
+      <div class="tile" style="top:420px;left:214px;transform:rotate(11deg) scale(.66);opacity:.85">${icon("Microphone")}<div><b>Voice calls</b></div></div>
+      <div class="tile" style="top:520px;left:70px;transform:rotate(22deg) scale(.5);opacity:.7">${icon("UsersThree")}<div><b>Communities</b></div></div>
+      <div class="tile" style="top:560px;left:170px;transform:rotate(-30deg) scale(.36);opacity:.55">${icon("User")}<div><b>Profiles</b></div></div>
+    </div>
+    <div class="ring" style="top:650px;box-shadow:0 0 0 10px rgb(245 244 242 / .04)"></div>${gh}</div>`,
+
+  c3: () => `<div class="phone" data-t="mint">${sb}
+    <div class="home" style="top:52px">
+      <h3>Hey, you</h3>
+      <div class="shelf"><span>Around now</span></div>
+      <div class="faces"><div><span class="face f1 on">A</span>Ama</div><div><span class="face f2 on">T</span>Theo</div><div><span class="face f3 on">K</span>Kenji</div><div><span class="face f4">N</span>Noor</div></div>
+      <div class="shelf"><span>Live now</span></div>
+      <div class="live"><span class="sp">LN</span><p>Squad room<span>3 here now</span></p><span class="j">Join</span></div>
+      <div class="shelf"><span>Your Spaces</span></div>
+      <div class="posters"><div class="poster"><span class="badge" style="width:34px;height:34px;border-radius:10px;font-size:12px;background:#8bd3ff">LN</span><b>Late Night Lobby</b></div><div class="poster"><span class="badge" style="width:34px;height:34px;border-radius:10px;font-size:12px;background:#ff8fb1">RF</span><b>Ranked Fridays</b></div></div>
+      <span class="tag" style="position:absolute;top:16px;right:14px">Example</span>
+    </div>
+    <div class="cbot"><h1 class="title" style="font-size:42px">One app instead of four.</h1>
+      <p class="lead" style="margin-top:12px">Chat, voice, Spaces and profiles, with your group.</p>
+      <div class="action" style="margin-top:24px">Create account</div>
+      <p class="hint" style="text-align:center;margin-top:16px">Have an account? <span class="link" style="font-size:14px;padding:0">Sign in</span></p></div>${gh}</div>`,
+};
+
+function frontFace(t) {
+  return `<div class="banner"></div><span class="pfp on">A</span>
+    <div class="pbody"><div class="pname">Ama</div><div class="phandle">@ama.plays</div>
+      <div class="pnow">${icon("SpeakerHigh")}In Squad room, Late Night Lobby</div>
+      <div class="psec"><h4>Spaces</h4><div class="badges"><span class="badge" style="background:#8bd3ff">LN</span><span class="badge" style="background:#ff8fb1">RF</span><span class="badge" style="background:#b9f27c">MC</span></div></div>
+    </div>`;
+}
+function backFace() {
+  return `<h4 style="font:700 12.5px/1 Atkinson;color:var(--soft)">Here now with Ama</h4>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:16px">
+      ${[["f2", "Theo", "In Squad room"], ["f3", "Kenji", "In Squad room"], ["f4", "Noor", "Typing in the late crew"], ["f1", "Ama", "In Squad room"]].map(([f, n, s]) => `<div style="display:flex;align-items:center;gap:12px"><span class="face ${f} on">${n[0]}</span><div><b style="font:700 15px/1.2 Atkinson;display:block">${n}</b><span style="font:400 13px/1.3 Atkinson;color:var(--soft)">${s}</span></div></div>`).join("")}
+    </div>
+    <div class="psec" style="margin-top:22px"><h4>Ama's colour</h4><div style="height:58px;border-radius:12px;background:linear-gradient(135deg,var(--l1),var(--l2) 58%,var(--l3))"></div></div>`;
+}
+
+const html = {
+  a1: frames.a1, a2: frames.a2, a3: frames.a3,
+  b1: () => frames.b("mint", "rotateY(-14deg) rotateX(7deg) rotateZ(-1.5deg)", "200deg", "Pick a colour and the whole app follows it. Swipe to try one, tilt the phone to catch the light."),
+  b2: () => frames.b("orchid", "rotateY(10deg) rotateX(4deg) rotateZ(1.5deg)", "320deg", "Your Spaces and what you're up to right now, on one profile."),
+  b3: () => frames.b("ember", "rotateY(-6deg) rotateX(-5deg) rotateZ(-1deg)", "90deg", "Turn it over: who's around right now, and where to find them.", true),
+  c1: frames.c1, c2: frames.c2, c3: frames.c3,
+}[D + F];
+document.getElementById("root").innerHTML = html();
+</script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+/* Shared base for the Phase 1 preview mocks: the world in DESIGN.md (ink ground lit by the Mint
+   light field, grain, Funnel Display + Atkinson Hyperlegible Next, the theme action colour). */
+@import url("https://fonts.googleapis.com/css2?family=Funnel+Display:wght@500;700;800&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block");
+
+:root {
+  --ground: #0b0b0e;
+  --ink: #f5f4f2;
+  --ink-2: #c8c6cf;
+  --ink-3: #c0bec8;
+  --surface: #141419;
+  --raised: #1d1d24;
+  --rule: #2a2a33;
+  --hair: rgb(255 255 255 / 0.1);
+  --presence: #4ee08a;
+  --acc: #3ee6b0;
+  --on-acc: #04150f;
+  --l1: #1fbf8f;
+  --l2: #2b47ff;
+  --l3: #0f766e;
+  --display: "Funnel Display", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--ground);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+/* The light field, approximated: three soft theme lights at the solved Mint glow. */
+.field-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(
+      62% 80% at 18% 100%,
+      rgb(31 191 143 / 0.33),
+      rgb(31 191 143 / 0.12) 40%,
+      transparent 72%
+    ),
+    radial-gradient(
+      50% 70% at 86% 6%,
+      rgb(43 71 255 / 0.26),
+      rgb(43 71 255 / 0.09) 42%,
+      transparent 72%
+    ),
+    radial-gradient(42% 60% at 60% 62%, rgb(15 118 110 / 0.17), transparent 70%), var(--ground);
+}
+.field-bg.dim {
+  opacity: 0.55;
+}
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.display {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+.h-xl {
+  font-size: 4.6rem;
+}
+.h-lg {
+  font-size: 3.2rem;
+}
+.h-md {
+  font-size: 2.1rem;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+.h-sm {
+  font-size: 1.35rem;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+.ink2 {
+  color: var(--ink-2);
+}
+.small {
+  font-size: 0.9rem;
+}
+.mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+}
+.mark svg {
+  width: 28px;
+  height: 28px;
+}
+/* Controls */
+.act,
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 26px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1.02rem;
+  border: 0;
+  white-space: nowrap;
+}
+.act {
+  background: var(--acc);
+  color: var(--on-acc);
+}
+.ghost {
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.22);
+  background: rgb(11 11 14 / 0.4);
+}
+.act.block,
+.ghost.block {
+  width: 100%;
+}
+.lbl {
+  display: block;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+.hint {
+  font-size: 0.88rem;
+  color: var(--ink-2);
+  margin-top: 7px;
+}
+.input {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  background: rgb(11 11 14 / 0.7);
+  box-shadow: inset 0 0 0 1.5px var(--rule);
+  color: var(--ink);
+  font-size: 1.02rem;
+}
+.input.focus {
+  box-shadow:
+    inset 0 0 0 1.5px var(--acc),
+    0 0 0 4px rgb(62 230 176 / 0.18);
+}
+.input .ph {
+  color: #8d8b97;
+}
+.input .end {
+  margin-left: auto;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.panel {
+  background: var(--surface);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    0 50px 100px -50px rgb(0 0 0 / 0.95);
+}
+.raised {
+  background: var(--raised);
+}
+.rule {
+  height: 1px;
+  background: var(--hair);
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  background: rgb(11 11 14 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+.tag.now {
+  color: var(--on-acc);
+  background: var(--acc);
+  box-shadow: none;
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--presence);
+  flex: none;
+}
+.av {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: var(--display);
+  font-weight: 800;
+  color: #10101a;
+}
+.row {
+  display: flex;
+  align-items: center;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+}
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--acc);
+}
+.status-line::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Theme variants for previews (the solved glow per theme). */
+.t-orchid {
+  --acc: #cdb4ff;
+  --on-acc: #160a2e;
+}
+.t-orchid .field-bg {
+  background:
+    radial-gradient(
+      62% 80% at 18% 100%,
+      rgb(139 107 255 / 0.36),
+      rgb(139 107 255 / 0.13) 40%,
+      transparent 72%
+    ),
+    radial-gradient(
+      50% 70% at 86% 6%,
+      rgb(255 95 154 / 0.28),
+      rgb(255 95 154 / 0.1) 42%,
+      transparent 72%
+    ),
+    radial-gradient(42% 60% at 60% 62%, rgb(58 42 138 / 0.22), transparent 70%), var(--ground);
+}
+.sw {
+  border-radius: 20px;
+  padding: 14px;
+  height: 128px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  font-weight: 700;
+}
+.sw.on {
+  box-shadow:
+    0 0 0 3px var(--ground),
+    0 0 0 5px var(--ink);
+}
+.sw .chk {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--ground);
+  display: grid;
+  place-items: center;
+}

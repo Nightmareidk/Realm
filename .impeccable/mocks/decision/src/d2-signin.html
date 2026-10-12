@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Party Lobby — sign in</title>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wdth,wght@50..125,100..900&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --bg: #0c0e11; --panel: #14171c; --panel-2: #1b1f26; --rule: #272c34; --ink: #f1f3f6; --ink-2: #9ba4af; --ink-3: #636c77; --volt: #d4ff3a; --on-volt: #0c0e11; --noor: #3fd2ff; --kenji: #ff5fd2; --maya: #ffb52e; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--bg); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; display: grid; grid-template-columns: 1fr 560px; }
+  .art { position: relative; overflow: hidden; border-right: 1px solid var(--rule); }
+  .art .logo { position: absolute; left: 40px; top: 30px; font-family: "Saira"; font-variation-settings: "wdth" 112; font-weight: 800; font-size: 22px; letter-spacing: .04em; display: flex; gap: 10px; align-items: center; }
+  .art h1 { position: absolute; left: 40px; top: 120px; font-family: "Saira"; font-weight: 800; font-size: 84px; line-height: .93; letter-spacing: -.02em; width: 600px; }
+  .art p { position: absolute; left: 40px; top: 312px; width: 460px; font-size: 18px; color: var(--ink-2); line-height: 1.55; }
+  .slots { position: absolute; left: 40px; right: 40px; bottom: 50px; height: 420px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .slot { position: relative; border: 1px solid var(--rule); background: linear-gradient(180deg, var(--panel), rgb(20 23 28 / .4)); clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%); overflow: hidden; }
+  .slot img { position: absolute; left: 50%; bottom: 60px; height: 290px; transform: translateX(-50%); filter: grayscale(1) contrast(1.2); }
+  .slot .t { position: absolute; inset: 0; mix-blend-mode: color; opacity: .85; }
+  .slot .meta { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px; background: var(--panel); border-top: 1px solid var(--rule); font-family: "Saira"; font-weight: 700; font-size: 16px; }
+  .slot .meta span { display: block; font-family: "Atkinson Hyperlegible Next"; font-weight: 400; font-size: 13px; color: var(--ink-2); }
+  .slot.you { border-style: dashed; background: transparent; display: grid; place-items: center; text-align: center; font-family: "Saira"; font-weight: 700; letter-spacing: .12em; color: var(--volt); }
+  .panel { padding: 0 56px; display: flex; flex-direction: column; justify-content: center; background: var(--panel); }
+  .panel h2 { font-family: "Saira"; font-weight: 800; font-size: 38px; }
+  .panel .sub { color: var(--ink-2); margin-top: 6px; font-size: 16px; }
+  .f { margin-top: 26px; }
+  .f label { display: flex; justify-content: space-between; font-family: "Saira"; font-weight: 700; font-size: 14px; letter-spacing: .12em; color: var(--ink-2); margin-bottom: 8px; }
+  .f label a { color: var(--volt); letter-spacing: .06em; }
+  .box { height: 54px; background: var(--bg); border: 1px solid #3a414c; display: flex; align-items: center; padding: 0 16px; font-size: 17px; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%); }
+  .box.focus { border-color: var(--volt); }
+  .box span { margin-left: auto; font-size: 13px; color: var(--ink-2); }
+  .cta { margin-top: 30px; height: 58px; background: var(--volt); color: var(--on-volt); display: flex; align-items: center; justify-content: center; font-family: "Saira"; font-weight: 800; font-size: 18px; letter-spacing: .12em; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); }
+  .alt { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 16px; }
+  .alt b { color: var(--ink); }
+</style></head><body>
+  <section class="art">
+    <span class="logo"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11.5" fill="none" stroke="#f1f3f6" stroke-width="2"/><circle cx="15.5" cy="11.5" r="8" fill="#0c0e11"/><path d="M6 20 A11.5 11.5 0 0 0 23 18" fill="none" stroke="#d4ff3a" stroke-width="2"/></svg>REALM</span>
+    <h1>Back in the lobby.</h1>
+    <p>Your crew's still here. Sign in and pick up where the night left off.</p>
+    <div class="slots">
+      <div class="slot"><img src="../../../../frontend/web/public/art/cast/human-maya.a2538d65.webp" alt=""><span class="t" style="background:var(--noor)"></span><div class="meta">Noor<span>In a match</span></div></div>
+      <div class="slot"><img src="../../../../frontend/web/public/art/cast/alien-zib.8e6a5ac8.webp" alt=""><span class="t" style="background:var(--kenji)"></span><div class="meta">Kenji<span>Cutting a clip</span></div></div>
+      <div class="slot"><img src="../../../../frontend/web/public/art/cast/astro-teal.f95095b2.webp" alt=""><span class="t" style="background:var(--maya)"></span><div class="meta">Maya<span>Around</span></div></div>
+      <div class="slot you">YOUR SLOT<br>IS WAITING</div>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>Sign in</h2><p class="sub">Use your email or username.</p>
+    <div class="f"><label>EMAIL OR USERNAME</label><div class="box focus">noor.h</div></div>
+    <div class="f"><label>PASSWORD <a>FORGOT IT?</a></label><div class="box">••••••••••••<span>Show</span></div></div>
+    <div class="cta">SIGN IN</div>
+    <p class="alt">New here? <b>Create an account</b>. Bring your crew over.</p>
+  </section>
+</body></html>

@@ -52,15 +52,17 @@
 | PUT | `/users/@me/relationships/:userId` | `{ type: "friend" }` send/accept request · `{ type: "blocked" }` |
 | DELETE | `/users/@me/relationships/:userId` | unfriend / cancel / unblock |
 | GET / PUT / DELETE | `/users/@me/mutes/...` | mute users/communities/channels |
-| GET | `/users/@me/communities` | joined communities (also in READY) |
+| GET | `/users/@me/communities` | joined communities, as `SpaceDetail` (also in READY) |
+| GET | `/users/@me/read-states` | your read position per room (also in READY) |
 | — | `/users/@me/export`, `DELETE /users/@me` | P2 (GDPR) |
 
 ### Communities — P1
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/communities` | creates community, `@everyone` role, default `#general` + board |
+| POST | `/communities` | `{ name, visibility?, accent?, slug? }` → creates the Space, its `@everyone` and Mods roles and `#general` (the board room waits for posts). *Built 2026-10-04.* |
 | GET / PATCH / DELETE | `/communities/:idOrSlug` | preview for non-members if public |
-| POST | `/communities/:id/join` | open communities; `request` policy → P2 |
+| POST | `/communities/:id/join` | open (public) communities, e.g. from Explore; `request` policy → P2 |
+| POST / GET | `/communities/:id/invites` | create `{ maxAgeSeconds: 1800\|3600\|86400\|604800\|0, maxUses: 0\|1\|5\|10\|25 }` / list live ones (all if you manage the Space, else your own) |
 | DELETE | `/communities/:id/members/@me` | leave |
 | GET | `/communities/:id/members?after=&limit=` | paginated |
 | PATCH / DELETE | `/communities/:id/members/:userId` | nickname, roles, timeout / kick |
@@ -78,17 +80,19 @@
 |---|---|---|
 | GET / PATCH / DELETE | `/channels/:id` | |
 | PUT / DELETE | `/channels/:id/overwrites/:targetId` | permission overwrites |
-| POST | `/channels/:id/invites` · GET `/invites/:code` · POST `/invites/:code` | create / preview / accept |
+| GET / POST / DELETE | `/invites/:code` | preview (no sign-in needed; a private Space shows no rooms) / accept / turn off. Dead invites answer `410` with `INVITE_EXPIRED`, `INVITE_USED_UP` or `INVITE_REVOKED` and a message naming who to ask. Invites are made per Space (above). |
 | GET | `/channels/:id/messages?before=\|after=\|around=&limit=` | |
 | POST | `/channels/:id/messages` | `{ content, replyToId?, attachmentIds?, nonce }` |
 | PATCH / DELETE | `/channels/:id/messages/:messageId` | edit (author) / delete (author or `MANAGE_MESSAGES`) |
-| PUT / DELETE | `/channels/:id/messages/:messageId/reactions/:emoji/@me` | |
-| GET | `/channels/:id/pins` · PUT / DELETE `/channels/:id/pins/:messageId` | |
+| PUT / DELETE | `/channels/:id/messages/:messageId/reactions/:emoji/@me` | any single emoji; at most 20 kinds per message → `MESSAGE_REACTION_ADD/REMOVE` |
+| GET | `/channels/:id/pins` · PUT / DELETE `/channels/:id/pins/:messageId` | up to 25 per room; pinning posts a `system_pin` line; needs `PIN_MESSAGES` (everyone has it in DMs) |
 | POST | `/channels/:id/ack` | `{ messageId }` → read state (+ read receipt in DMs) |
 | GET | `/channels/:id/messages/search?q=` | non-E2EE channels only (P2) |
-| GET | `/users/@me/channels` | DM + group DM list |
-| POST | `/users/@me/channels` | `{ recipientIds }` → open/reuse DM or create group DM (respects `dm_policy`, blocks) |
-| PUT / DELETE | `/channels/:id/recipients/:userId` | group DM add/remove |
+| GET | `/users/@me/channels` | your open DMs and group chats as `Conversation`s (recipients, last-message preview, your pin, `seen`), pinned first |
+| GET | `/users/@me/channels/:id` | one conversation (also a closed one, opened by its link) |
+| POST | `/users/@me/channels` | `{ recipientIds, name? }` → reuse the DM with one person, or start a group (up to 25). Follows each person's `dm_policy`; blocks win (`BLOCKED`); under-18s only meet friends and people who share a Space (`DM_NOT_ALLOWED`). A new DM shows up for the other person once something is said |
+| PATCH | `/users/@me/channels/:id` | `{ name?, pinned? }`: rename a group (posts `system_channel_rename`), pin it in your own list |
+| PUT / DELETE | `/users/@me/channels/:id/recipients/:userId` | add to a group (anyone in it), remove (its starter) or leave (`@me`); for a DM, DELETE `@me` closes it until something new is said |
 
 ### Posts, comments, feeds — P1
 | Method | Path | Notes |
@@ -106,18 +110,24 @@
 | PUT / DELETE | `/comments/:id/vote` | |
 | GET | `/users/@me/saved` | |
 
-### Media — P1
+### Media — P1 *(built 2026-10-04)*
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/media/uploads` | `{ kind, mimeType, sizeBytes, sha256 }` → `{ mediaId, uploadUrl, headers, expiresAt }` |
-| POST | `/media/:id/complete` | server verifies object, queues processing |
-| GET | `/media/:id` | status + variant URLs |
+| POST | `/media/uploads` | `{ kind: image\|video\|audio\|file, mimeType, sizeBytes, filename?, durationMs? }` → `{ mediaId, uploadUrl, headers, expiresAt }`. Type and exact size are signed into the upload URL. Limits: images 10 MB, video 100 MB, audio 15 MB (voice ≤ 5 min), files 25 MB; 500 MB a day per person. |
+| POST | `/media/:id/complete` | checks the real type from the first bytes (programs refused), reads image size, makes it usable |
+| GET | `/media/:id` | the upload's info (its owner, or anyone who can see it) |
+| GET | `/media/:id/raw` | `302` to a short-lived storage link, after an access check: owner; anyone for profile pictures; for a message's file, people who can read that room (moderators only while it's hidden). Files always download. |
+| PUT / GET | `/media/local/*` | development only: the local folder standing in for R2 (HMAC-signed links) |
+
+Messages take `attachmentIds` (your own ready uploads, once each) and `place: { name, address, lat, lng }` (shared once; under-18s only in Spaces ≤ 200). They come back with `attachments`, `place` and `hidden`.
 
 ### Discovery & search — P1 basic, P2/P3 richer
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/search?q=&type=users\|communities\|posts&cursor=` | Postgres FTS/trigram |
-| GET | `/discover/communities?category=` | curated + popular public communities |
+| GET | `/discover/communities?sort=active\|new\|members&limit=` | public Spaces with live `hereNow`; adult-marked ones are hidden from under-18s |
+| POST | `/discover/nearby` `{lat,lng,limit?}` | public Spaces within 150 km, closest first, with `distanceKm`; adults only. The point goes in the body (never a URL or log) and is rounded to 2 decimals |
+| GET | `/discover/capabilities` | `{voice, push}`: which optional services this Realm has, so clients never offer one that can't work |
 | GET | `/discover/trending` | P2 (topics) |
 | GET | `/discover/creators` | P3 |
 
@@ -129,12 +139,22 @@
 | GET / PATCH | `/users/@me/notification-prefs` | global + per-community/channel |
 | POST / DELETE | `/push-subscriptions` | P2 |
 
-### Moderation & safety — P1
+### Moderation & safety — P1 *(built 2026-10-04)*
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/reports` | `{ targetType, targetId, reason, details }` — snapshot stored as evidence |
-| GET | `/communities/:id/reports?status=` | community mod queue |
-| PATCH | `/reports/:id` | resolve (action/dismiss) |
+| POST | `/reports` | `{ targetType: message\|user\|community, targetId, reason, details?, communityId? }` → `{ hidden, goesTo: space\|realm }`. One report per person per thing. A message hides itself after 2 reports (Spaces ≤ 10) or 3; `sexual_minors` hides at once and goes to Realm. A public Space leaves Explore after 5. |
+| GET | `/communities/:id/reports` | the Space's queue, folded per item; reporters never shown |
+| POST | `/communities/:id/reports/:targetId` | `{ action: dismiss\|remove }` (logged) |
+| PATCH | `/communities/:id/members/:userId` | `{ roleIds?, timeoutUntil?, reason? }`; only on people below you |
+| DELETE | `/communities/:id/members/:userId` | remove (kick) |
+| GET · PUT · DELETE | `/communities/:id/bans/:userId` | ban `{ reason?, deleteMessagesHours: 0\|1\|24\|168 }` / lift |
+| GET | `/communities/:id/audit-log` | activity log |
+| GET | `/users/@me/safety` | blocked people and mutes |
+| PUT · DELETE | `/users/@me/blocks/:userId` · `/users/@me/mutes/:type/:id` | block, mute (user, community, channel) |
+| PUT · DELETE | `/users/@me/push-tokens` | this device's FCM token |
+| POST | `/channels/:id/voice` | a LiveKit pass `{ url, token, canSpeak, canVideo, expiresAt }` for a voice room; `503 SERVICE_UNAVAILABLE` when LiveKit isn't set up |
+
+Automatic spam limits on every message answer `429 SLOW_DOWN` with a plain reason.
 
 ### Releases — P1
 | GET | `/releases` | per-platform status for the download portal |

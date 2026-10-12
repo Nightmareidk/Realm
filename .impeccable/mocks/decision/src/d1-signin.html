@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>The Manual — sign in</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --stock: #121110; --stock-2: #1a1917; --ink: #ece6da; --ink-2: #a9a296; --ink-3: #6f6a61; --rule: #3a3731; --spot: #ff5a1f; --on-spot: #121110; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--stock); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  .cap { font-family: "Archivo"; font-variation-settings: "wdth" 72; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .head { position: absolute; left: 40px; right: 40px; top: 26px; height: 44px; display: flex; align-items: center; border-bottom: 1px solid var(--rule); font-size: 15px; color: var(--ink-2); }
+  .head b { font-family: "Archivo"; font-variation-settings: "wdth" 112; font-weight: 800; font-size: 20px; color: var(--ink); margin-right: auto; display: flex; gap: 10px; align-items: center; }
+  h1 { position: absolute; left: 40px; top: 140px; font-family: "Archivo"; font-variation-settings: "wdth" 118; font-weight: 820; font-size: 132px; line-height: .9; letter-spacing: -.035em; }
+  h1 em { font-style: normal; color: var(--spot); }
+  .steps { position: absolute; left: 40px; top: 430px; width: 540px; display: flex; flex-direction: column; border-top: 1px solid var(--rule); }
+  .steps div { display: flex; gap: 16px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--rule); font-size: 18px; }
+  .steps i { font-style: normal; width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--ink); display: grid; place-items: center; font-family: "Archivo"; font-weight: 800; font-size: 14px; flex: none; }
+  .steps span { color: var(--ink-2); margin-left: auto; font-size: 14px; }
+  .form { position: absolute; right: 40px; top: 130px; width: 600px; border: 1.5px solid var(--ink); padding: 0; }
+  .form .bar { display: flex; justify-content: space-between; padding: 12px 22px; border-bottom: 1px solid var(--rule); font-size: 12px; color: var(--ink-2); }
+  .form .in { padding: 30px 32px 34px; }
+  .f { margin-bottom: 26px; }
+  .f label { display: flex; justify-content: space-between; font-weight: 700; font-size: 17px; margin-bottom: 10px; }
+  .f label a { font-weight: 400; color: var(--spot); text-decoration: underline; text-underline-offset: 4px; font-size: 15px; }
+  .f .box { height: 56px; border: 1.5px solid var(--ink-2); border-radius: 3px; display: flex; align-items: center; padding: 0 16px; font-size: 18px; }
+  .f .box.focus { border-color: var(--spot); box-shadow: 0 0 0 3px rgb(255 90 31 / .25); }
+  .f .box span { margin-left: auto; font-size: 14px; color: var(--ink-2); }
+  .btn { height: 58px; border-radius: 3px; background: var(--spot); color: var(--on-spot); font-weight: 700; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .alt { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--rule); text-align: center; color: var(--ink-2); font-size: 16px; }
+  .alt a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+  .crop { position: absolute; width: 18px; height: 18px; border-color: var(--ink-3); border-style: solid; }
+  .folio { position: absolute; left: 40px; bottom: 34px; font-size: 12px; color: var(--ink-3); }
+  .foot { position: absolute; right: 40px; bottom: 34px; display: flex; gap: 22px; font-size: 14px; color: var(--ink-3); }
+</style></head><body>
+  <header class="head"><b><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11.5" fill="none" stroke="#ece6da" stroke-width="1.5"/><circle cx="15.5" cy="11.5" r="8.5" fill="#121110"/></svg>REALM</b><span>New here? &nbsp;<u>Create an account</u></span></header>
+  <h1>Welcome<br><em>back.</em></h1>
+  <div class="steps"><div><i>1</i>Your email or username</div><div><i>2</i>Your password<span>Show it while you type</span></div><div><i>3</i>Sign in. You're back in your Spaces.</div></div>
+  <section class="form">
+    <div class="bar cap"><span>Form 01 — Sign in</span><span>Realm</span></div>
+    <div class="in">
+      <div class="f"><label>Email or username</label><div class="box focus">noor.h</div></div>
+      <div class="f"><label>Password <a>Forgot it?</a></label><div class="box">••••••••••••<span>Show</span></div></div>
+      <div class="btn">Sign in →</div>
+      <p class="alt">New here? <a>Create an account</a>. It takes a minute.</p>
+    </div>
+  </section>
+  <i class="crop" style="right:28px;top:118px;border-width:1px 1px 0 0"></i><i class="crop" style="right:28px;top:600px;border-width:0 1px 1px 0"></i>
+  <span class="folio cap">P. 00 — Sign in</span>
+  <div class="foot"><span>Terms</span><span>Privacy</span><span>Help</span></div>
+</body></html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="_world.css" />
+    <link rel="stylesheet" href="_app.css" />
+    <link rel="stylesheet" href="_hybrid.css" />
+    <script src="_parts.js"></script>
+    <script src="_hybrid.js"></script>
+  </head>
+  <body>
+    <div class="field-bg dim"></div>
+    <div class="grain"></div>
+    <div class="hb-top" id="tb"></div>
+    <div class="frame hb-side" id="sd"></div>
+    <div class="frame hb-main col" style="right: 320px">
+      <div id="hd"></div>
+      <div class="scrollend" style="padding: 6px 28px 0" id="ms"></div>
+      <div style="padding: 10px 28px 16px" id="cp"></div>
+    </div>
+    <div class="frame hb-right" style="overflow: hidden" id="rt"></div>
+    <script>
+      tb.innerHTML = hbTop("Messages");
+      sd.innerHTML = hbSide("", "Noor");
+      hd.innerHTML = convoHeader();
+      ms.innerHTML = messages({ accent: true });
+      cp.innerHTML = composer(true);
+      rt.innerHTML = peek();
+    </script>
+  </body>
+</html>

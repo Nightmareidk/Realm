@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Arcade Cabinet — inside the app</title>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=block" rel="stylesheet">
+<style>
+  :root { --black: #07080b; --deep: #0d1018; --tile: #141927; --line: #2a3350; --ink: #f4f1e8; --dim: #8a8f9c; --red: #ff3c5a; --cyan: #33e0ff; --gold: #ffd23f; --green: #3ddc84; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--black); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; display: grid; grid-template-columns: 96px 1fr 320px; position: relative; }
+  body::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(180deg, rgb(0 0 0 / .22) 0 1px, transparent 1px 3px); }
+  .px { font-family: "Silkscreen", monospace; }
+  .rail { border-right: 4px solid var(--tile); display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 8px; font-family: "Silkscreen"; font-size: 12px; color: var(--dim); }
+  .ri { width: 76px; padding: 10px 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .ri .ic { width: 32px; height: 32px; border: 3px solid currentColor; }
+  .ri.on { color: var(--ink); background: var(--tile); box-shadow: inset -4px -4px 0 #0a0d16, inset 4px 4px 0 #222a40; }
+  .ri.on .ic { border-color: var(--red); background: var(--red); }
+  .rail .me { margin-top: auto; color: var(--gold); }
+  main { display: flex; flex-direction: column; min-width: 0; padding: 18px 22px; gap: 14px; }
+  .head { display: flex; align-items: center; gap: 16px; font-family: "Silkscreen"; }
+  .head h1 { font-size: 30px; font-weight: 700; }
+  .head .here { color: var(--green); font-size: 15px; }
+  .head .r { margin-left: auto; display: flex; gap: 10px; font-size: 14px; }
+  .k { padding: 8px 12px; border: 3px solid var(--line); color: var(--dim); }
+  .btn { padding: 8px 14px; background: var(--red); color: var(--black); box-shadow: inset -3px -3px 0 #a51d33, inset 3px 3px 0 #ff8597; }
+  .rooms { display: flex; gap: 8px; font-family: "Silkscreen"; font-size: 15px; }
+  .room { padding: 8px 12px; border: 3px solid var(--line); color: var(--dim); }
+  .room.on { border-color: var(--ink); color: var(--ink); }
+  .room.on::before { content: "▶ "; color: var(--red); }
+  .room b { color: var(--gold); font-weight: 400; }
+  .screen { flex: 1; border: 4px solid var(--tile); background: var(--deep); padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+  .m { display: flex; gap: 12px; }
+  .m canvas { flex: none; width: 40px; height: 40px; image-rendering: pixelated; background: var(--tile); }
+  .m .who { font-family: "Silkscreen"; font-size: 14px; } .m .who span { color: var(--dim); margin-left: 8px; font-size: 12px; }
+  .m p { font-size: 17px; line-height: 1.5; margin-top: 2px; }
+  .clip { margin-top: 8px; width: 360px; height: 170px; border: 3px solid var(--line); background: repeating-linear-gradient(90deg, #121726 0 20px, #0f1320 20px 40px); position: relative; }
+  .clip span { position: absolute; font-family: "Silkscreen"; }
+  .composer { height: 54px; border: 3px solid var(--ink); display: flex; align-items: center; padding: 0 8px 0 16px; color: var(--dim); font-size: 16px; }
+  .composer .btn { margin-left: auto; font-family: "Silkscreen"; font-size: 14px; }
+  aside { border-left: 4px solid var(--tile); padding: 18px 18px; font-family: "Silkscreen"; }
+  aside h2 { font-size: 16px; color: var(--gold); margin-bottom: 4px; }
+  aside small { color: var(--dim); font-size: 12px; }
+  .stage { margin-top: 16px; height: 300px; border: 4px solid var(--tile); background: #0b0d14; position: relative; overflow: hidden; }
+  .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 70px; background: repeating-linear-gradient(90deg, #1a2032 0 30px, #151a2a 30px 60px); border-top: 4px solid var(--line); }
+  .stage canvas { position: absolute; bottom: 62px; image-rendering: pixelated; }
+  .who2 { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+  .who2 div { display: flex; justify-content: space-between; }
+  .who2 span { color: var(--dim); }
+</style>
+</head>
+<body>
+  <nav class="rail"><span class="ri"><span class="ic"></span>HOME</span><span class="ri on"><span class="ic"></span>SPACES</span><span class="ri"><span class="ic"></span>DMS</span><span class="ri"><span class="ic"></span>FEED</span><span class="ri"><span class="ic"></span>EXPLORE</span><span class="ri me">1UP<br>YOU</span></nav>
+  <main>
+    <header class="head"><h1>LATE NIGHT LOBBY</h1><span class="here">● 4 HERE</span><div class="r"><span class="k">TRAVEL ⌘K</span><span class="btn">INVITE</span></div></header>
+    <nav class="rooms"><span class="room on">#GENERAL</span><span class="room">#CLIPS <b>3</b></span><span class="room">#LFG</span><span class="room">BUILDS</span></nav>
+    <section class="screen">
+      <div class="m"><canvas data-src="human-maya-face.399f5b46.webp"></canvas><div><div class="who" style="color:var(--cyan)">NOOR<span>9:02 PM</span></div><p>anyone on tonight? ranked at 9</p></div></div>
+      <div class="m"><canvas data-src="alien-zib-face.f5b5aada.webp"></canvas><div><div class="who" style="color:var(--red)">KENJI<span>9:04 PM</span></div><p>in. also this, from last night</p><div class="clip"><span style="left:10px;top:8px;color:var(--gold);font-size:13px">CLIP 0:14</span><span style="left:50%;top:50%;transform:translate(-50%,-50%);font-size:34px;color:var(--ink)">▶</span><span style="right:10px;bottom:8px;color:var(--dim);font-size:12px">HIGH SCORE JUMP</span></div></div></div>
+      <div class="m"><canvas data-src="astro-teal-face.85422ee4.webp"></canvas><div><div class="who" style="color:var(--gold)">YOU<span>9:05 PM</span></div><p>same, give me ten</p></div></div>
+    </section>
+    <div class="composer">Say something in #general<span class="btn">SEND</span></div>
+  </main>
+  <aside>
+    <h2>PARTY 4/5</h2><small>LATE NIGHT LOBBY</small>
+    <div class="stage"><div class="floor"></div></div>
+    <div class="who2"><div><b style="color:var(--cyan);font-weight:400">NOOR</b><span>IN A MATCH 12M</span></div><div><b style="color:var(--red);font-weight:400">KENJI</b><span>CUTTING A CLIP</span></div><div><b style="color:var(--green);font-weight:400">MAYA</b><span>AROUND</span></div><div><b style="color:var(--dim);font-weight:400">LEO</b><span>AWAY</span></div></div>
+  </aside>
+  <script>
+    const base = "../../../../frontend/web/public/art/cast/";
+    const pix = (src, h, scale, cb) => { const img = new Image(); img.onload = () => { const w = Math.round(img.width * (h / img.height)); const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, w, h); c.style.width = w * scale + "px"; c.style.height = h * scale + "px"; cb(c, w * scale, h * scale); }; img.src = base + src; };
+    document.querySelectorAll("canvas[data-src]").forEach((c) => { const img = new Image(); img.onload = () => { c.width = 12; c.height = 12; const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, 12, 12); }; img.src = base + c.dataset.src; });
+    const stage = document.querySelector(".stage");
+    [["human-maya.a2538d65.webp", 10], ["alien-zib.8e6a5ac8.webp", 80], ["monster-gloop.47958cc9.webp", 150], ["astro-teal.f95095b2.webp", 218]].forEach(([s, x]) => pix(s, 28, 4, (c) => { c.style.left = x + "px"; stage.appendChild(c); }));
+  </script>
+</body>
+</html>

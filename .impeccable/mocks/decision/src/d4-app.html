@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drop — inside the app</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Atkinson+Hyperlegible+Next:wght@400;700&display=block" rel="stylesheet">
+<style>
+  :root { --black: #0b0b0b; --panel: #131312; --ink: #f4f3ef; --ink-2: #9d9b95; --ink-3: #6a6863; --rule: #2a2a28; --hit: #2f4bff; --seam: #d9d7d1; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--black); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; display: grid; grid-template-columns: 200px 1fr 320px; }
+  .bs { font-family: "Big Shoulders Display", sans-serif; text-transform: uppercase; }
+  nav.side { border-right: 1px solid var(--rule); padding: 22px 22px; display: flex; flex-direction: column; gap: 4px; }
+  .logo { font-family: "Big Shoulders Display"; font-weight: 900; font-size: 30px; margin-bottom: 26px; }
+  .ni { font-family: "Big Shoulders Display"; font-weight: 800; font-size: 26px; text-transform: uppercase; color: var(--ink-3); padding: 4px 0; display: flex; justify-content: space-between; align-items: baseline; }
+  .ni small { font-family: "Atkinson Hyperlegible Next"; font-size: 12px; font-weight: 700; color: var(--ink-3); }
+  .ni.on { color: var(--ink); }
+  .ni.on small { color: var(--hit); }
+  .side .me { margin-top: auto; display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 14px; }
+  .side .me i { width: 38px; height: 38px; background: var(--seam); display: block; overflow: hidden; position: relative; }
+  .side .me img { position: absolute; width: 150%; left: -25%; top: -10%; }
+  main { display: flex; flex-direction: column; min-width: 0; }
+  .head { padding: 18px 28px 0; display: flex; align-items: flex-end; gap: 18px; }
+  .head h1 { font-family: "Big Shoulders Display"; font-weight: 900; font-size: 64px; line-height: .85; text-transform: uppercase; }
+  .head .meta { padding-bottom: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); display: flex; gap: 14px; }
+  .head .meta b { color: var(--hit); }
+  .head .r { margin-left: auto; display: flex; gap: 10px; padding-bottom: 6px; }
+  .btn { height: 38px; padding: 0 14px; background: var(--ink); color: var(--black); font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; display: flex; align-items: center; }
+  .ghost { height: 38px; padding: 0 14px; border: 1px solid var(--rule); color: var(--ink-2); font-size: 13px; display: flex; align-items: center; }
+  .rooms { margin: 16px 28px 0; display: flex; gap: 26px; border-bottom: 1px solid var(--rule); }
+  .room { padding: 0 0 10px; font-weight: 700; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+  .room.on { color: var(--ink); box-shadow: inset 0 -3px 0 var(--hit); }
+  .room b { color: var(--hit); }
+  .chat { flex: 1; padding: 22px 28px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; }
+  .m { display: grid; grid-template-columns: 90px 1fr; gap: 14px; }
+  .m .who { font-weight: 700; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; padding-top: 2px; }
+  .m .who span { display: block; color: var(--ink-3); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 12px; }
+  .m p { font-size: 17px; line-height: 1.5; }
+  .item { margin-top: 10px; width: 300px; background: radial-gradient(80% 70% at 50% 40%, #ecebe6, var(--seam) 80%); height: 200px; position: relative; overflow: hidden; }
+  .item img { position: absolute; left: 50%; bottom: 30px; height: 80%; transform: translateX(-50%); }
+  .item .num { position: absolute; left: 10px; top: 8px; font-family: "Big Shoulders Display"; font-weight: 900; font-size: 26px; color: #0b0b0b; }
+  .item .tag { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; background: var(--black); border: 1px solid var(--rule); border-top: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+  .m.me p { color: var(--ink); background: var(--panel); border: 1px solid var(--rule); display: inline-block; padding: 8px 12px; }
+  .composer { margin: 0 28px 22px; height: 54px; border-top: 1px solid var(--ink); display: flex; align-items: center; color: var(--ink-3); font-size: 16px; }
+  .composer .btn { margin-left: auto; background: var(--hit); color: #fff; }
+  aside { border-left: 1px solid var(--rule); padding: 22px; }
+  aside h2 { font-family: "Big Shoulders Display"; font-weight: 900; font-size: 34px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: baseline; }
+  aside h2 b { font-size: 14px; color: var(--hit); font-family: "Atkinson Hyperlegible Next"; letter-spacing: .08em; }
+  .p { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--rule); }
+  .p i { width: 64px; height: 64px; background: var(--seam); position: relative; overflow: hidden; display: block; }
+  .p img { position: absolute; width: 150%; left: -25%; top: -8%; }
+  .p b { font-size: 15px; display: block; } .p span { font-size: 13px; color: var(--ink-2); }
+  .p .live { display: inline-block; margin-top: 6px; background: var(--hit); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .1em; padding: 2px 6px; }
+  .p.away { opacity: .5; }
+</style>
+</head>
+<body>
+  <nav class="side">
+    <span class="logo">REALM</span>
+    <span class="ni">Home</span><span class="ni on">Spaces <small>06</small></span><span class="ni">Messages <small>2</small></span><span class="ni">Feed</span><span class="ni">Explore</span>
+    <div class="me"><i><img src="../../../../frontend/web/public/art/cast/human-leo.9b8d21fe.webp" alt=""></i>You</div>
+  </nav>
+  <main>
+    <header class="head"><h1>Late Night Lobby</h1><div class="meta"><span><b>●</b> 4 here now</span><span>Space 003</span></div><div class="r"><span class="ghost">Travel ⌘K</span><span class="btn">Invite</span></div></header>
+    <nav class="rooms"><span class="room on"># general</span><span class="room"># clips <b>3</b></span><span class="room"># lfg</span><span class="room">builds</span><span class="room">all rooms</span></nav>
+    <section class="chat">
+      <div class="m"><div class="who">Noor<span>9:02 PM</span></div><p>anyone on tonight? ranked at 9</p></div>
+      <div class="m"><div class="who">Kenji<span>9:04 PM</span></div><div><p>in. also this, from last night</p><div class="item"><span class="num">CLIP 014</span><img src="../../../../frontend/web/public/art/cast/alien-zib.8e6a5ac8.webp" alt=""><div class="tag">THE JUMP THAT SHOULDN'T HAVE WORKED<span>0:14 ▶</span></div></div></div></div>
+      <div class="m me"><div class="who">You<span>9:05 PM</span></div><div><p>same, give me ten</p></div></div>
+    </section>
+    <div class="composer">Say something in #general<span class="btn">Send</span></div>
+  </main>
+  <aside>
+    <h2>Here now <b>4 / 5</b></h2>
+    <div class="p"><i><img src="../../../../frontend/web/public/art/cast/human-maya.a2538d65.webp" alt=""></i><div><b>Noor</b><span>In a match · 12m</span><br><span class="live">LIVE</span></div></div>
+    <div class="p"><i><img src="../../../../frontend/web/public/art/cast/alien-zib.8e6a5ac8.webp" alt=""></i><div><b>Kenji</b><span>Cutting a clip · 3m</span></div></div>
+    <div class="p"><i><img src="../../../../frontend/web/public/art/cast/astro-teal.f95095b2.webp" alt=""></i><div><b>Maya</b><span>Around · 1h</span></div></div>
+    <div class="p away"><i><img src="../../../../frontend/web/public/art/cast/monster-bruno.29842e99.webp" alt=""></i><div><b>Leo</b><span>Away since 6 PM</span></div></div>
+  </aside>
+</body>
+</html>

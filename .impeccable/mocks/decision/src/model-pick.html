@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Realm — Party Lobby (direction comp)</title>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wdth,wght@50..125,100..900&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e11; --panel: #14171c; --panel-2: #1b1f26; --rule: #272c34;
+    --ink: #f1f3f6; --ink-2: #9ba4af; --ink-3: #636c77;
+    --volt: #d4ff3a; --on-volt: #0c0e11;
+    --noor: #3fd2ff; --kenji: #ff5fd2; --maya: #ffb52e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--bg); color: var(--ink); font-family: "Atkinson Hyperlegible Next", system-ui, sans-serif; position: relative; }
+  .saira { font-family: "Saira", sans-serif; }
+  /* The stage: a floor of light under the party, nothing else glows. */
+  .floor { position: absolute; left: 560px; right: 0; top: 560px; height: 2px; background: linear-gradient(90deg, transparent, #3a414c 18%, #3a414c 82%, transparent); }
+  .floorlight { position: absolute; left: 600px; right: 20px; top: 470px; height: 180px; background: radial-gradient(50% 40% at 50% 60%, rgb(212 255 58 / .07), transparent 70%); }
+
+  .top { position: absolute; left: 0; right: 0; top: 0; height: 68px; display: flex; align-items: center; padding: 0 40px; gap: 34px; border-bottom: 1px solid var(--rule); background: rgb(12 14 17 / .9); }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: "Saira"; font-variation-settings: "wdth" 112; font-weight: 800; font-size: 21px; letter-spacing: .04em; }
+  .tabs { display: flex; gap: 6px; height: 100%; }
+  .tabs span { display: flex; align-items: center; padding: 0 16px; font-family: "Saira"; font-weight: 700; font-size: 14px; letter-spacing: .12em; color: var(--ink-2); position: relative; }
+  .tabs span.on { color: var(--ink); }
+  .tabs span.on::after { content: ""; position: absolute; left: 16px; right: 16px; bottom: -1px; height: 3px; background: var(--volt); }
+  .top .right { margin-left: auto; display: flex; align-items: center; gap: 24px; font-size: 15px; color: var(--ink-2); }
+  .cta { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 22px 0 20px; background: var(--volt); color: var(--on-volt); font-family: "Saira"; font-weight: 800; font-size: 15px; letter-spacing: .1em; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%); }
+  .cta.lg { height: 56px; font-size: 17px; padding: 0 28px 0 24px; }
+  .ghost { display: inline-flex; align-items: center; height: 56px; padding: 0 24px; border: 1.5px solid #3a414c; font-weight: 700; font-size: 16px; }
+
+  .copy { position: absolute; left: 40px; top: 132px; width: 540px; }
+  h1 { font-family: "Saira"; font-variation-settings: "wdth" 96; font-weight: 800; font-size: 86px; line-height: .93; letter-spacing: -.02em; }
+  .lead { margin-top: 26px; font-size: 19px; line-height: 1.6; color: var(--ink-2); width: 470px; }
+  .actions { margin-top: 32px; display: flex; gap: 12px; }
+
+  /* The party */
+  .party { position: absolute; left: 600px; right: 40px; top: 120px; height: 470px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .slot { position: relative; border: 1px solid var(--rule); background: linear-gradient(180deg, var(--panel), rgb(20 23 28 / .4)); clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%); overflow: hidden; }
+  .slot img { position: absolute; left: 50%; bottom: 74px; height: 300px; transform: translateX(-50%); filter: grayscale(1) contrast(1.2) brightness(.92); }
+  .slot .tint { position: absolute; inset: 0; mix-blend-mode: color; opacity: .85; }
+  .slot .meta { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 12px 14px; background: var(--panel); border-top: 1px solid var(--rule); }
+  .slot .meta b { display: block; font-family: "Saira"; font-weight: 700; font-size: 17px; letter-spacing: .02em; }
+  .slot .meta span { display: block; margin-top: 2px; font-size: 13px; color: var(--ink-2); }
+  .slot .bar { position: absolute; left: 0; top: 0; right: 16px; height: 3px; }
+  .chip { position: absolute; left: 10px; top: 12px; font-family: "Saira"; font-weight: 700; font-size: 11px; letter-spacing: .14em; padding: 4px 8px; background: rgb(12 14 17 / .8); border: 1px solid var(--rule); }
+  .chip.ready { color: var(--volt); border-color: rgb(212 255 58 / .45); }
+  .slot.empty { border-style: dashed; background: transparent; display: grid; place-items: center; text-align: center; color: var(--ink-3); }
+  .slot.empty b { display: block; font-family: "Saira"; font-weight: 700; font-size: 15px; letter-spacing: .12em; color: var(--ink-2); }
+  .slot.empty i { font-style: normal; display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 12px; border: 1.5px solid var(--ink-3); font-size: 22px; color: var(--ink-2); }
+  .partyhead { position: absolute; left: 600px; right: 40px; top: 92px; display: flex; justify-content: space-between; font-family: "Saira"; font-weight: 700; font-size: 13px; letter-spacing: .14em; color: var(--ink-2); }
+  .partyhead b { color: var(--ink); }
+  .partyhead .here { color: var(--volt); }
+
+  /* Party chat, like an in-game chat log */
+  .log { position: absolute; left: 600px; width: 470px; top: 620px; border: 1px solid var(--rule); background: var(--panel); }
+  .log header { display: flex; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--rule); font-family: "Saira"; font-weight: 700; font-size: 12px; letter-spacing: .14em; color: var(--ink-2); }
+  .log p { padding: 8px 14px 0; font-size: 15px; line-height: 1.45; }
+  .log p b { margin-right: 8px; }
+  .log .say { margin: 12px 14px 14px; height: 38px; border: 1px solid var(--rule); display: flex; align-items: center; padding: 0 12px; color: var(--ink-3); font-size: 14px; }
+  .worlds { position: absolute; left: 1086px; right: 40px; top: 620px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .worlds div { border: 1px solid var(--rule); padding: 14px; height: 99px; }
+  .worlds b { font-family: "Saira"; font-weight: 700; font-size: 14px; letter-spacing: .12em; }
+  .worlds span { display: block; margin-top: 6px; font-size: 14px; color: var(--ink-2); line-height: 1.35; }
+  .worlds i { display: inline-block; width: 8px; height: 8px; margin-right: 8px; }
+  .foot { position: absolute; left: 40px; bottom: 34px; display: flex; gap: 26px; font-size: 14px; color: var(--ink-3); }
+  .foot b { color: var(--ink-2); font-weight: 700; }
+</style>
+</head>
+<body>
+  <div class="floorlight"></div><div class="floor"></div>
+  <header class="top">
+    <div class="logo"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11.5" fill="none" stroke="#f1f3f6" stroke-width="2"/><circle cx="15.5" cy="11.5" r="8" fill="#0c0e11"/><path d="M6 20 A11.5 11.5 0 0 0 23 18" fill="none" stroke="#d4ff3a" stroke-width="2"/></svg>REALM</div>
+    <nav class="tabs"><span class="on">SPACES</span><span>FEED</span><span>PROFILES</span><span>BOARDS</span></nav>
+    <div class="right"><span>Download</span><span>Sign in</span><span class="cta">OPEN REALM</span></div>
+  </header>
+
+  <section class="copy">
+    <h1>Your crew's lobby. Always open.</h1>
+    <p class="lead">Group chat, clips, profiles and boards in one place. See who's on, jump into the room, and pick up where the night left off.</p>
+    <div class="actions"><span class="cta lg">OPEN REALM IN YOUR BROWSER</span><span class="ghost">Download</span></div>
+  </section>
+
+  <div class="partyhead"><span><b>LATE NIGHT LOBBY</b> &nbsp;·&nbsp; # GENERAL</span><span class="here">● 4 OF 5 HERE NOW</span></div>
+  <div class="party">
+    <div class="slot"><span class="bar" style="background:var(--noor)"></span><span class="chip ready">READY</span><img src="../../../../frontend/web/public/art/cast/human-maya.a2538d65.webp" alt=""><span class="tint" style="background:var(--noor)"></span><div class="meta"><b>Noor</b><span>In a match · 12m</span></div></div>
+    <div class="slot"><span class="bar" style="background:var(--kenji)"></span><span class="chip ready">READY</span><img src="../../../../frontend/web/public/art/cast/alien-zib.8e6a5ac8.webp" alt=""><span class="tint" style="background:var(--kenji)"></span><div class="meta"><b>Kenji</b><span>Cutting a clip</span></div></div>
+    <div class="slot"><span class="bar" style="background:var(--maya)"></span><span class="chip">AROUND</span><img src="../../../../frontend/web/public/art/cast/astro-teal.f95095b2.webp" alt=""><span class="tint" style="background:var(--maya)"></span><div class="meta"><b>Maya</b><span>Around for a chat</span></div></div>
+    <div class="slot"><span class="bar" style="background:var(--volt)"></span><span class="chip ready">READY</span><img src="../../../../frontend/web/public/art/cast/human-leo.9b8d21fe.webp" alt=""><span class="tint" style="background:var(--volt)"></span><div class="meta"><b>You</b><span>Just got here</span></div></div>
+    <div class="slot empty"><div><i>+</i><b>INVITE</b><span style="font-size:13px">One link, no server maze</span></div></div>
+  </div>
+
+  <section class="log">
+    <header><span># GENERAL</span><span>PARTY CHAT</span></header>
+    <p><b style="color:var(--noor)">Noor</b>ranked at 9? I'm on in 10</p>
+    <p><b style="color:var(--kenji)">Kenji</b>clip from last night is up in #clips</p>
+    <p><b style="color:var(--volt)">You</b>in. save me a spot</p>
+    <div class="say">Say something in #general</div>
+  </section>
+  <section class="worlds">
+    <div><b><i style="background:var(--noor)"></i>SPACES</b><span>Rooms for chat and boards</span></div>
+    <div><b><i style="background:var(--kenji)"></i>FEED</b><span>Posts and clips</span></div>
+    <div><b><i style="background:var(--maya)"></i>PROFILES</b><span>Yours, your way</span></div>
+    <div><b><i style="background:#8f7bff"></i>BOARDS</b><span>Threads and votes</span></div>
+  </section>
+  <div class="foot"><span><b>13+</b> to join</span><span><b>Web</b> now, apps soon</span><span>DMs aren't end-to-end encrypted yet, and we say so in every one.</span></div>
+</body>
+</html>

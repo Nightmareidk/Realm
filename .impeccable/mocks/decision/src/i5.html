@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Idea — Stories of groups</title>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;700;800;900&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --g: #0b0a0e; --ink: #f6f4f0; --ink2: #aba8b3; --ink3: #6e6b77; --acc: #ff4f8b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--g); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  .nav { position: absolute; left: 48px; right: 48px; top: 0; height: 76px; display: flex; align-items: center; gap: 30px; font-size: 15px; color: var(--ink2); }
+  .nav .logo { font-family: "Gabarito"; font-weight: 900; font-size: 26px; color: var(--ink); }
+  .nav .r { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+  .btn { height: 44px; padding: 0 18px; border-radius: 22px; background: var(--acc); color: #26020f; font-weight: 700; display: inline-flex; align-items: center; }
+  h1 { position: absolute; left: 48px; top: 110px; font-family: "Gabarito"; font-weight: 900; font-size: 74px; line-height: .98; letter-spacing: -.03em; width: 700px; }
+  .lead { position: absolute; right: 48px; top: 128px; width: 400px; font-size: 19px; line-height: 1.55; color: var(--ink2); }
+  .lead .btn { margin-top: 18px; height: 52px; padding: 0 24px; border-radius: 26px; font-size: 16px; }
+  .reel { position: absolute; left: 0; right: 0; top: 330px; height: 540px; display: flex; gap: 18px; align-items: center; justify-content: center; }
+  .story { flex: none; width: 250px; height: 450px; border-radius: 26px; position: relative; overflow: hidden; padding: 16px; display: flex; flex-direction: column; opacity: .55; }
+  .story.main { width: 320px; height: 540px; opacity: 1; box-shadow: 0 50px 90px -40px rgb(0 0 0 / .9); }
+  .bars { display: flex; gap: 4px; } .bars i { flex: 1; height: 3px; border-radius: 2px; background: rgb(255 255 255 / .35); display: block; } .bars i.on { background: #fff; }
+  .who { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: 700; font-size: 14px; }
+  .who i { width: 30px; height: 30px; border-radius: 10px; display: block; }
+  .story h3 { margin-top: auto; font-family: "Gabarito"; font-weight: 800; font-size: 30px; line-height: 1; letter-spacing: -.02em; }
+  .story.main h3 { font-size: 38px; }
+  .story p { margin-top: 8px; font-size: 14px; opacity: .85; }
+  .faces { display: flex; margin-top: 12px; } .faces i { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgb(0 0 0 / .3); margin-left: -8px; display: block; } .faces i:first-child { margin-left: 0; }
+  .rx { position: absolute; right: 14px; top: 90px; display: flex; flex-direction: column; gap: 8px; }
+  .rx span { height: 32px; padding: 0 10px; border-radius: 16px; background: rgb(0 0 0 / .3); font-size: 14px; display: flex; align-items: center; }
+  .note { position: absolute; left: 48px; bottom: 14px; font-size: 13px; color: var(--ink3); }
+
+  .amb { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .amb i { position: absolute; border-radius: 50%; filter: blur(70px); display: block; }
+  .grain { position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); opacity: .9; mix-blend-mode: overlay; }
+  body > *:not(.amb):not(.grain) { position: absolute; z-index: 2; }
+  body > header.nav { z-index: 5; }
+</style></head><body>
+<div class="amb" style="background:linear-gradient(180deg,#120812 0%,#0d0a10 60%,#08070a 100%)">
+  <i style="width:900px;height:800px;left:270px;top:240px;background:#ff4f8b;opacity:.32"></i>
+  <i style="width:500px;height:500px;left:-80px;top:380px;background:#2b47ff;opacity:.3"></i>
+  <i style="width:500px;height:500px;left:1080px;top:380px;background:#14532d;opacity:.45"></i>
+  <i style="width:600px;height:300px;left:420px;top:-120px;background:#ffd36b;opacity:.12"></i>
+</div><div class="grain"></div>
+  <header class="nav"><span class="logo">realm</span><span>Spaces</span><span>Feed</span><span>Profiles</span><span>Boards</span><div class="r"><span>Sign in</span><span class="btn">Open Realm</span></div></header>
+  <h1>Every group has a story. Keep it in one place.</h1>
+  <div class="lead">Realm is where your group talks, shares clips, posts and plans, whatever your group is into.<br><span class="btn">Open Realm in your browser</span></div>
+  <section class="reel">
+    <div class="story" style="background:linear-gradient(170deg,#2b47ff,#0b1650)"><div class="bars"><i class="on"></i><i></i><i></i></div><div class="who"><i style="background:#ffd36b"></i>Speedrun Club</div><h3>New PB: 41:07</h3><p>Kenji posted the run</p></div>
+    <div class="story" style="background:linear-gradient(170deg,#f4ecd8,#cfb58a);color:#2a2116"><div class="bars"><i class="on" style="background:#2a2116"></i><i class="on" style="background:#2a2116"></i><i style="background:rgb(0 0 0 /.2)"></i></div><div class="who"><i style="background:#e2b778"></i>Sourdough Bros</div><h3>First loaf that didn't collapse</h3></div>
+    <div class="story main" style="background:linear-gradient(170deg,#ff4f8b,#5b0b2c)"><div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i></div><div class="who"><i style="background:#ffd36b"></i>Late Night Lobby</div><div class="rx"><span>🔥 18</span><span>🙌 9</span></div><h3>We finally beat the raid.</h3><p>3:12 AM · 5 of us · clip inside</p><div class="faces"><i style="background:#ffd36b"></i><i style="background:#c4b5fd"></i><i style="background:#6fd6c9"></i><i style="background:#ff9a6b"></i></div></div>
+    <div class="story" style="background:linear-gradient(170deg,#14532d,#04140b);color:#d9ffb0"><div class="bars"><i class="on" style="background:#d9ffb0"></i><i></i></div><div class="who"><i style="background:#d9ffb0"></i>Book Club, 2am</div><h3>Chapter 12 thread is unhinged</h3></div>
+    <div class="story" style="background:linear-gradient(170deg,#c4b5fd,#3b2a7a);color:#1e1338"><div class="bars"><i class="on" style="background:#1e1338"></i><i></i><i></i></div><div class="who"><i style="background:#fff"></i>Climbing Crew</div><h3>Sat 9am, who's driving?</h3></div>
+  </section>
+  <p class="note">Scroll idea: scrolling steps through groups like stories, each snapping into the centre with its progress bar filling.</p>
+</body></html>

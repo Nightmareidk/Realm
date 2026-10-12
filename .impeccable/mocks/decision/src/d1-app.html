@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Manual — inside the app</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --stock: #121110; --stock-2: #1a1917; --ink: #ece6da; --ink-2: #a9a296; --ink-3: #6f6a61; --rule: #3a3731; --spot: #ff5a1f; --on-spot: #121110; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--stock); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; display: grid; grid-template-columns: 92px 1fr 300px; }
+  .cap { font-family: "Archivo"; font-variation-settings: "wdth" 72; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  /* Thumb-index tabs down the edge, like a manual's */
+  .index { border-right: 1px solid var(--rule); display: flex; flex-direction: column; align-items: stretch; padding: 18px 0; }
+  .mark { display: grid; place-items: center; margin-bottom: 22px; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; font-size: 12px; color: var(--ink-2); border-top: 1px solid var(--rule); }
+  .tab:last-of-type { border-bottom: 1px solid var(--rule); }
+  .tab i { font-style: normal; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink-2); display: grid; place-items: center; font-family: "Archivo"; font-weight: 800; font-size: 13px; }
+  .tab.on { color: var(--ink); background: var(--stock-2); box-shadow: inset 3px 0 0 var(--spot); }
+  .tab.on i { background: var(--spot); border-color: var(--spot); color: var(--on-spot); }
+  .you { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+  .av { width: 36px; height: 36px; border-radius: 9px; border: 1.5px solid var(--ink); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+  /* The place */
+  main { display: flex; flex-direction: column; min-width: 0; }
+  .head { height: 72px; display: flex; align-items: center; gap: 14px; padding: 0 28px; border-bottom: 1px solid var(--rule); }
+  .badge { width: 36px; height: 36px; border-radius: 9px; border: 1.5px solid var(--ink); display: grid; place-items: center; font-family: "Archivo"; font-weight: 800; font-size: 13px; }
+  .head h1 { font-family: "Archivo"; font-variation-settings: "wdth" 108; font-weight: 800; font-size: 24px; letter-spacing: -.02em; }
+  .head .here { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 15px; margin-left: 10px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--spot); display: inline-block; }
+  .head .r { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+  .key { font-size: 13px; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 4px; padding: 6px 10px; }
+  .btn { height: 38px; padding: 0 14px; border-radius: 3px; border: 1.5px solid var(--ink); display: inline-flex; align-items: center; font-weight: 700; font-size: 14px; }
+  .rooms { display: flex; gap: 0; padding: 0 28px; border-bottom: 1px solid var(--rule); }
+  .room { padding: 14px 16px 12px; font-size: 15px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; border-bottom: 3px solid transparent; }
+  .room.on { color: var(--ink); font-weight: 700; border-bottom-color: var(--spot); }
+  .room b { font-size: 12px; background: var(--ink); color: var(--stock); border-radius: 8px; padding: 0 6px; }
+  .chat { flex: 1; padding: 22px 28px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
+  .day { display: flex; align-items: center; gap: 12px; color: var(--ink-3); font-size: 12px; }
+  .day::before, .day::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  .m { display: flex; gap: 12px; max-width: 640px; }
+  .m .av { width: 34px; height: 34px; border-color: var(--ink-2); color: var(--ink-2); flex: none; }
+  .m .who { font-size: 14px; font-weight: 700; } .m .who span { color: var(--ink-3); font-weight: 400; margin-left: 8px; font-size: 13px; }
+  .m .b { margin-top: 4px; border: 1px solid var(--rule); border-radius: 4px; padding: 9px 12px; font-size: 16px; line-height: 1.5; }
+  .fig { margin-top: 8px; border: 1px solid var(--rule); border-radius: 4px; width: 360px; }
+  .fig .img { height: 170px; background: repeating-linear-gradient(135deg, #1e1c1a 0 6px, #191816 6px 12px); display: grid; place-items: center; color: var(--ink-3); }
+  .fig .play { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--ink); display: grid; place-items: center; }
+  .fig p { padding: 8px 12px; font-size: 13px; color: var(--ink-2); border-top: 1px solid var(--rule); }
+  .fig p b { color: var(--ink); margin-right: 8px; }
+  .m.me { margin-left: auto; flex-direction: row-reverse; }
+  .m.me .b { border-color: var(--ink); }
+  .reply { font-size: 13px; color: var(--ink-3); border-left: 0; margin-top: 4px; }
+  .composer { margin: 0 28px 22px; height: 52px; border: 1.5px solid var(--ink); border-radius: 4px; display: flex; align-items: center; padding: 0 8px 0 16px; gap: 12px; color: var(--ink-3); font-size: 16px; }
+  .composer .send { margin-left: auto; height: 36px; padding: 0 14px; border-radius: 3px; background: var(--spot); color: var(--on-spot); font-weight: 700; font-size: 14px; display: flex; align-items: center; }
+  /* Here now: a roster table */
+  aside { border-left: 1px solid var(--rule); padding: 22px 22px; }
+  aside h2 { font-size: 13px; color: var(--ink-2); margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 10px 0; border-top: 1px solid var(--rule); vertical-align: top; }
+  td:first-child { width: 16px; padding-top: 15px; }
+  td b { display: block; font-size: 15px; } td span { color: var(--ink-2); font-size: 13px; }
+  td.t { text-align: right; color: var(--ink-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .off { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ink-3); display: inline-block; }
+  .note { margin-top: 26px; border: 1px solid var(--rule); padding: 12px 14px; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+  .note b { display: block; color: var(--ink); margin-bottom: 4px; }
+  .folio { position: absolute; right: 22px; bottom: 16px; font-size: 11px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+  <nav class="index">
+    <div class="mark"><svg width="30" height="30" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11.5" fill="none" stroke="#ece6da" stroke-width="1.5"/><circle cx="15.5" cy="11.5" r="8.5" fill="#121110"/></svg></div>
+    <span class="tab"><i>0</i>Home</span>
+    <span class="tab on"><i>1</i>Spaces</span>
+    <span class="tab"><i>2</i>Messages</span>
+    <span class="tab"><i>3</i>Feed</span>
+    <span class="tab"><i>4</i>Explore</span>
+    <div class="you"><span class="av">YO</span>You</div>
+  </nav>
+  <main>
+    <header class="head"><span class="badge">LN</span><h1>Late Night Lobby</h1><span class="here"><span class="dot"></span>4 here now</span><div class="r"><span class="key">Travel ⌘K</span><span class="btn">Invite</span></div></header>
+    <nav class="rooms"><span class="room on"># general</span><span class="room"># clips <b>3</b></span><span class="room"># lfg</span><span class="room">builds (board)</span><span class="room">All rooms</span></nav>
+    <section class="chat">
+      <div class="day cap">Tonight</div>
+      <div class="m"><span class="av">NH</span><div><div class="who">Noor<span>9:02 PM</span></div><div class="b">anyone on tonight? ranked at 9</div></div></div>
+      <div class="m"><span class="av">KS</span><div><div class="who">Kenji<span>9:04 PM</span></div><div class="b">in. finishing this match first. also this, from last night:</div><div class="fig"><div class="img"><span class="play">▶</span></div><p><b class="cap">Clip</b>the jump that should not have worked · 0:14</p></div></div></div>
+      <div class="m me"><div><div class="b">same, give me ten</div><div class="reply">Seen by Noor, Kenji</div></div></div>
+    </section>
+    <div class="composer">+ <span>Say something in #general</span><span class="send">Send</span></div>
+  </main>
+  <aside>
+    <h2 class="cap">Here now</h2>
+    <table>
+      <tr><td><span class="dot"></span></td><td><b>Noor</b><span>in a match</span></td><td class="t">12m</td></tr>
+      <tr><td><span class="dot"></span></td><td><b>Kenji</b><span>cutting a clip</span></td><td class="t">3m</td></tr>
+      <tr><td><span class="dot"></span></td><td><b>Maya</b><span>around</span></td><td class="t">1h</td></tr>
+      <tr><td><span class="off"></span></td><td><b>Leo</b><span>away</span></td><td class="t">—</td></tr>
+    </table>
+    <div class="note"><b>Space chat isn't end-to-end encrypted.</b>Direct messages will be, before Realm launches publicly. We say which is which, everywhere.</div>
+  </aside>
+  <span class="folio cap">P. 12 — Late Night Lobby</span>
+</body>
+</html>

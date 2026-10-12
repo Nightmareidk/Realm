@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Idea — Bubble type</title>
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;700;800;900&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --g: #0c0b10; --r: #1e1c25; --ink: #f6f4f0; --ink2: #aba8b3; --ink3: #6e6b77; --mine: #7c5cff; --acc: #c6ff4a; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--g); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  .nav { position: absolute; left: 48px; right: 48px; top: 0; height: 76px; display: flex; align-items: center; gap: 30px; font-size: 15px; color: var(--ink2); }
+  .nav .logo { font-family: "Gabarito"; font-weight: 900; font-size: 26px; color: var(--ink); }
+  .nav .r { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+  .btn { height: 44px; padding: 0 18px; border-radius: 22px; background: var(--ink); color: var(--g); font-weight: 700; display: inline-flex; align-items: center; }
+  .stack { position: absolute; left: 50%; top: 120px; width: 1100px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; align-items: flex-end; gap: 14px; }
+  .row.me { justify-content: flex-end; }
+  .av { width: 52px; height: 52px; border-radius: 50%; flex: none; display: grid; place-items: center; font-family: "Gabarito"; font-weight: 800; color: #14121a; font-size: 20px; }
+  .bub { font-family: "Gabarito"; font-weight: 800; letter-spacing: -.03em; line-height: .98; background: var(--r); border-radius: 44px; padding: 22px 34px 26px; }
+  .row:not(.me) .bub { border-bottom-left-radius: 14px; }
+  .row.me .bub { background: var(--mine); border-bottom-right-radius: 14px; }
+  .bub small { display: block; font-family: "Atkinson Hyperlegible Next"; font-weight: 700; font-size: 15px; letter-spacing: 0; color: var(--ink2); margin-bottom: 6px; }
+  .row.me .bub small { color: #e3dcff; }
+  .react { display: inline-flex; gap: 6px; margin-left: 66px; margin-top: -4px; }
+  .react span { height: 34px; padding: 0 12px; border-radius: 17px; background: #16141c; border: 1px solid #2b2934; font-size: 16px; display: flex; align-items: center; gap: 6px; color: var(--ink2); }
+  .foot { position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; }
+  .foot .btn { height: 58px; padding: 0 28px; border-radius: 29px; font-size: 17px; }
+  .foot .btn.acc { background: var(--acc); color: #10140a; }
+  .foot p { color: var(--ink2); font-size: 17px; margin-right: 14px; }
+  .note { position: absolute; right: 48px; bottom: 22px; font-size: 13px; color: var(--ink3); }
+
+  .amb { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .amb i { position: absolute; border-radius: 50%; filter: blur(70px); display: block; }
+  .grain { position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); opacity: .9; mix-blend-mode: overlay; }
+  body > *:not(.amb):not(.grain) { position: absolute; z-index: 2; }
+  body > header.nav { z-index: 5; }
+</style></head><body>
+<div class="amb" style="background:linear-gradient(180deg,#0d0b1a 0%,#120a24 50%,#07070c 100%)">
+  <i style="width:1100px;height:700px;left:170px;top:120px;background:#7c5cff;opacity:.34"></i>
+  <i style="width:600px;height:500px;left:-120px;top:-80px;background:#2b6bff;opacity:.3"></i>
+  <i style="width:600px;height:500px;left:1000px;top:520px;background:#c6ff4a;opacity:.12"></i>
+  <span style="position:absolute;left:60px;top:110px;font:800 140px/1 Gabarito;color:rgb(255 255 255 /.035);letter-spacing:-.04em;white-space:nowrap">you up? · ranked at 9 · lol · same</span>
+  <span style="position:absolute;left:-80px;top:520px;font:800 140px/1 Gabarito;color:rgb(255 255 255 /.03);letter-spacing:-.04em;white-space:nowrap">clip?? · on my way · gg · HOW</span>
+</div><div class="grain"></div>
+  <header class="nav"><span class="logo">realm</span><span>Spaces</span><span>Feed</span><span>Profiles</span><span>Boards</span><div class="r"><span>Sign in</span><span class="btn">Open Realm</span></div></header>
+  <div class="stack">
+    <div class="row"><span class="av" style="background:#ff9a6b">N</span><div class="bub" style="font-size:54px"><small>Noor</small>wait, why are we on four apps</div></div>
+    <div class="row me"><div class="bub" style="font-size:54px"><small>you</small>chat here, clips there, pics somewhere else</div></div>
+    <div class="row"><span class="av" style="background:#c6ff4a">R</span><div class="bub" style="font-size:96px;background:#f6f4f0;color:#0c0b10"><small style="color:#6e6b77">Realm</small>One app. Your whole group.</div></div>
+    <div class="react"><span>🙌 12</span><span>💯 8</span><span>finally 4</span></div>
+  </div>
+  <div class="foot"><p>Chat, clips, profiles and boards.</p><span class="btn acc">Open Realm in your browser</span><span class="btn" style="background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px #3a3844">Download</span></div>
+  <p class="note">Scroll idea: the page is a group chat. Each section arrives as a new message, replies thread in, reactions pop.</p>
+</body></html>

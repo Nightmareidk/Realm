@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_world.css"><link rel="stylesheet" href="_app.css"><script src="_parts.js"></script>
+<style>
+.inv{position:absolute;left:96px;top:190px;width:560px;padding:14px;border-radius:30px;background:#141419;box-shadow:inset 0 0 0 1px rgb(255 255 255/.08),0 60px 120px -50px #000}
+.room{height:34px;padding:0 13px;border-radius:999px;display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:0.88rem;color:var(--ink-2);box-shadow:inset 0 0 0 1px rgb(255 255 255/.1)}
+.sel{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px;border-radius:14px;background:rgb(11 11 14/.7);box-shadow:inset 0 0 0 1.5px var(--rule);font-size:1.02rem}
+</style></head>
+<body><div class="field-bg"></div><div class="grain"></div>
+<div class="row" style="position:absolute;left:56px;right:56px;top:34px;justify-content:space-between"><span class="mark" id="mk"></span><span class="ink2">Already on Realm? <u style="color:var(--ink)">Sign in to join</u></span></div>
+<div class="inv">
+  <div style="height:170px;border-radius:20px;background:radial-gradient(120% 140% at 0% 0%,#ff6a3d,transparent 58%),radial-gradient(100% 120% at 100% 10%,#ffb547,transparent 55%),radial-gradient(120% 120% at 50% 100%,#c2185b,#131318 78%)"></div>
+  <div style="padding:0 16px 10px">
+    <div class="row" style="gap:16px;margin-top:-36px;align-items:flex-end"><span style="width:80px;height:80px;border-radius:24px;border:5px solid #141419;background:#ff8a5c;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:30px;color:#1d0904">LN</span>
+      <div class="row" style="gap:10px;padding-bottom:6px" id="inviter"></div></div>
+    <h2 class="display" style="font-size:2.4rem;margin-top:16px">Late Night Lobby</h2>
+    <p class="ink2" style="margin-top:6px">Ranked nights, clips and very long voice calls. Private Space.</p>
+    <div class="row" style="gap:12px;margin-top:18px"><div class="row" id="stack"></div><span style="font-weight:700">7 members</span><span class="row" style="gap:7px;color:var(--ink-2)"><i class="dot"></i>4 here now</span></div>
+    <div class="row" style="gap:7px;margin-top:18px;flex-wrap:wrap" id="rooms"></div>
+    <p class="small ink2" style="margin-top:18px">Invite from Noor · works for 6 more days</p>
+  </div>
+</div>
+<div style="position:absolute;left:760px;top:215px;width:500px">
+  <h1 class="display" style="font-size:3.4rem;text-wrap:balance">Join Noor and the crew.</h1>
+  <p class="ink2" style="font-size:1.15rem;margin-top:16px">First, when's your birthday? We use it to keep Realm right for your age. It's never shown on your profile.</p>
+  <fieldset style="border:0;margin-top:28px"><legend class="lbl">Date of birth</legend>
+    <div style="display:grid;grid-template-columns:1.5fr 1fr 1.2fr;gap:10px">
+      <div><span class="hint" style="margin:0 0 6px;display:block">Month</span><div class="sel"><span class="ph" style="color:#8d8b97">Choose</span><svg class="ic sm" viewBox="0 0 24 24" style="color:var(--ink-2)"><path d="m8 10 4 4 4-4"/></svg></div></div>
+      <div><span class="hint" style="margin:0 0 6px;display:block">Day</span><div class="input" style="height:56px"><span class="ph">DD</span></div></div>
+      <div><span class="hint" style="margin:0 0 6px;display:block">Year</span><div class="input" style="height:56px"><span class="ph">YYYY</span></div></div>
+    </div></fieldset>
+  <div class="row" style="gap:20px;margin-top:30px"><span class="act" style="padding:0 34px">Next</span><span class="ink2">Step 1 of 2 · then your account</span></div>
+</div>
+<script>
+mk.innerHTML = MARK + "realm";
+inviter.innerHTML = av("noor",36,true) + '<span><b>Noor</b> <span class="ink2">invited you</span></span>';
+stack.innerHTML = ["noor","kenji","ama","sol","jun"].map((p,i)=>`<span style="margin-left:${i?-10:0}px;border-radius:50%;box-shadow:0 0 0 3px #141419">${av(p,34)}</span>`).join("");
+rooms.innerHTML = ["# general","# clips","# lfg","▤ builds"].map(r=>`<span class="room">${r}</span>`).join("");
+</script></body></html>

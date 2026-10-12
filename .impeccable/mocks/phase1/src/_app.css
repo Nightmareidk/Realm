@@ -1,0 +1,345 @@
+/* App-frame pieces shared by the Phase 1 app previews (chat per the messaging research §7). */
+.frame {
+  background: #131318;
+  border-radius: 20px;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.07),
+    0 40px 80px -50px rgb(0 0 0 / 0.95);
+  overflow: hidden;
+  position: relative;
+}
+.ic {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ic.sm {
+  width: 17px;
+  height: 17px;
+}
+.iconbtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+}
+.travel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 8px 0 14px;
+  border-radius: 999px;
+  background: rgb(11 11 14 / 0.7);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  color: #9c9aa6;
+  font-size: 0.95rem;
+}
+.kbd {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  padding: 3px 8px;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+}
+.count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--acc);
+  color: var(--on-acc);
+}
+.count.n {
+  background: var(--raised);
+  color: var(--ink-2);
+}
+.ndot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-2);
+}
+.pillnav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--ink-2);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.pillnav.on {
+  color: var(--ink);
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+.filter {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+.filter.on {
+  background: var(--raised);
+  color: var(--ink);
+}
+/* Inbox */
+.convo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 68px;
+  padding: 0 12px;
+  border-radius: 14px;
+}
+.convo.on {
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+.convo .who {
+  flex: 1;
+  min-width: 0;
+}
+.convo b {
+  font-size: 0.98rem;
+}
+.convo p {
+  font-size: 0.88rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.convo p.unread {
+  color: var(--ink);
+}
+.convo .meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+.avwrap {
+  position: relative;
+  flex: none;
+}
+.avwrap .pdot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--presence);
+  box-shadow: 0 0 0 2.5px #131318;
+}
+/* Conversation */
+.msgs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 52rem;
+  margin: 0 auto;
+  width: 100%;
+}
+.daytag {
+  align-self: center;
+  margin: 14px 0 10px;
+}
+.b {
+  max-width: min(30rem, 78%);
+  padding: 9px 14px;
+  border-radius: 20px;
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+.b.them {
+  align-self: flex-start;
+  background: #1b1b22;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+.b.me {
+  align-self: flex-end;
+  background: #2a2a33;
+}
+.b.me.acc {
+  background: var(--acc);
+  color: var(--on-acc);
+}
+.b.them.first {
+  border-bottom-left-radius: 7px;
+}
+.b.them.mid {
+  border-top-left-radius: 7px;
+  border-bottom-left-radius: 7px;
+}
+.b.them.last {
+  border-top-left-radius: 7px;
+}
+.b .t {
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  margin-left: 10px;
+  float: right;
+  margin-top: 6px;
+}
+.b.me.acc .t {
+  color: rgb(4 21 15 / 0.7);
+}
+.reacts {
+  display: flex;
+  gap: 6px;
+  margin: 2px 0 6px;
+}
+.react {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: #1b1b22;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+.react.mine {
+  box-shadow: inset 0 0 0 1.5px var(--acc);
+}
+.seen {
+  align-self: flex-end;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+  margin: 2px 4px 8px;
+}
+.typing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+  margin-top: 6px;
+}
+.typing .dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 11px 14px;
+  border-radius: 18px;
+  background: #1b1b22;
+}
+.typing .dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-2);
+}
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 54px;
+  padding: 0 7px 0 7px;
+  border-radius: 999px;
+  background: #1b1b22;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  max-width: 52rem;
+  margin: 0 auto;
+  width: 100%;
+}
+.composer .ph {
+  flex: 1;
+  color: #8d8b97;
+  padding-left: 4px;
+}
+.send {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--acc);
+  color: var(--on-acc);
+}
+.pinbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--raised);
+  font-size: 0.9rem;
+  color: var(--ink-2);
+}
+.pinbar b {
+  color: var(--ink);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  background: rgb(11 11 14 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+/* Here now */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 14px;
+}
+.person > div > b {
+  display: block;
+  font-size: 0.95rem;
+}
+.person > div > span {
+  font-size: 0.84rem;
+  color: var(--ink-2);
+}
+.sec {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  padding: 0 10px;
+  margin: 16px 0 6px;
+}
+
+.scrollend {
+  flex: 1;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 56px);
+  mask-image: linear-gradient(to bottom, transparent, #000 56px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}

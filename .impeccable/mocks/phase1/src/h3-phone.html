@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="mock-size" content="390x844" />
+    <link rel="stylesheet" href="_world.css" />
+    <link rel="stylesheet" href="_app.css" />
+    <link rel="stylesheet" href="_hybrid.css" />
+    <script src="_parts.js"></script>
+    <script src="_hybrid.js"></script>
+    <style>
+      body { font-size: 16px; }
+      .b { font-size: 0.98rem; }
+      .tabs { position: absolute; left: 0; right: 0; bottom: 0; height: 78px; display: flex; justify-content: space-around; padding-top: 10px; background: rgb(11 11 14 / 0.94); border-top: 1px solid var(--hair); }
+      .tb { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 700; color: var(--ink-2); }
+      .tb.on { color: var(--ink); }
+    </style>
+  </head>
+  <body>
+    <div class="field-bg dim"></div>
+    <div class="grain"></div>
+    <div class="row" style="height: 56px; padding: 0 12px; gap: 10px; margin-top: 6px">
+      <span class="iconbtn" id="bk"></span>
+      <span style="width: 30px; height: 30px; border-radius: 9px; background: #ff8a5c; display: grid; place-items: center; font-family: var(--display); font-weight: 800; color: #1d0904; font-size: 12px; flex: none">LN</span>
+      <b class="display" style="font-size: 1.15rem; letter-spacing: -0.025em; white-space: nowrap">Late Night Lobby</b>
+      <span class="chip" style="margin-left: auto; height: 32px"><i class="dot"></i>4</span>
+    </div>
+    <div class="row" style="gap: 4px; padding: 2px 12px 8px; overflow: hidden" id="rooms"></div>
+    <div style="position: absolute; left: 0; right: 0; top: 112px; bottom: 84px; display: flex; flex-direction: column; padding: 0 12px">
+      <div class="scrollend" id="ms"></div>
+      <div style="padding: 8px 0 4px"><div class="composer" style="height: 50px"><span class="iconbtn" id="pl"></span><span class="ph">Message #general</span><span class="send" id="se"></span></div></div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <script>
+      bk.innerHTML = '<svg class="ic" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg>';
+      rooms.innerHTML = [["# general", 1], ["# clips", 0], ["# lfg", 0], ["▤ builds", 0]]
+        .map(([n, on]) => `<span class="roomtab ${on ? "on" : ""}" style="height:34px;padding:0 12px;font-size:0.88rem">${n}</span>`)
+        .join("");
+      ms.innerHTML = spaceMessages(true);
+      pl.innerHTML = ic("plus");
+      se.innerHTML = ic("send", "sm");
+      tabs.innerHTML =
+        [["home", "Home"], ["spaces", "Spaces"], ["feed", "Feed"], ["messages", "Messages"]]
+          .map(([i, l]) => `<span class="tb ${l === "Spaces" ? "on" : ""}">${ic(i)}${l}</span>`)
+          .join("") + `<span class="tb">${av("you", 26, true)}You</span>`;
+    </script>
+  </body>
+</html>

@@ -49,23 +49,23 @@ The only place where a friend group's private chat, its public communities, and 
 ## Brand Commitments
 
 - Name: **Realm** (trademark search pending before public launch).
-- **Brand direction (user decisions, 2026-09-27, latest):** "another universe". The look is spacey (deep space, portals, planets, aurora light), modern, and only partly cartoonish. The user rejected both the original gateway logo and "The Huddle".
-  - **Logo:** **Eclipse**, a dark world with a glowing aurora rim and a small star.
-  - **Palette:** **Aurora**, lime, teal and ice blue on midnight, plus aurora violet and pink for the four regions.
-  - **Characters:** **astronaut explorers**, stylized semi-cartoon astronauts with glossy suits and iridescent visors that float in zero-g and wave.
-  - **Motion and assets:** keep all the informational content, but add lots of motion (moving text, floating objects, waving characters) and rich 3D assets.
-  - **Accessibility:** stays a priority for dyslexic readers and people with short attention spans (legible body face, clear hierarchy, Pause motion).
-  - **Spaces UI:** must NOT look like Discord. No server-icon rail plus channel list. Rooms appear as tabs, chat as bubbles, with a presence panel.
-- Original identity — must not look or read like Discord, TikTok, Instagram, or Reddit.
-- Modern, premium, polished; fast and responsive; smooth animations that don't make the site heavy.
+- **Current direction (user decisions, 2026-10-02): "Your group and your profile, in motion."** It replaces the earlier "another universe" world (Eclipse logo, aurora palette, astronaut and alien cast, Bricolage Grotesque, the Stratosphere day edition), which the user and a friend judged "AI slop". Treat that world as an anti-reference.
+  - Chosen from rendered previews: the front page is **"Phones in motion"** (one 3D phone turning through the app's screens as you scroll) plus **"Profile canvas"** (a profile that builds itself, then changes theme and the whole page follows). The holo card is a profile element, not the identity; the party lobby ("who's here now") is in.
+  - Look: an ink ground lit by soft colour fields in the current theme, with grain; never plain black. Funnel Display for statements, Atkinson Hyperlegible Next for reading. The mark is a ring with the theme's action colour caught inside it. Four themes: Mint (default), Orchid, Aqua, Ember. DESIGN.md holds the details.
+  - Not cartoonish, not gamer-only, not retro, not generic SaaS; "modern social app, dark-first, playful, polished, highly usable". Scroll animation is welcome when it is good and not overdone.
+  - Every surface (sign-in, the app, settings, help and legal pages) moves to this world. Until they do, DESIGN.md's Migration note lists what is still on the old look.
+- **Night is the default. Day is an option**, to be redesigned in this world later. Users will be able to theme Realm "to anything" later (docs/THEMING.md).
+- **Spaces UI:** must NOT look like Discord. No server-icon rail plus channel list. Rooms appear as tabs, chat as bubbles, with a presence panel.
+- Original identity: must not look or read like Discord, TikTok, Instagram, or Reddit.
+- Modern, premium, polished; fast and responsive; smooth animations that don't make the site heavy (the owner's machine has an integrated AMD Radeon 610M; measure there).
 - **Dark mode is a first-class experience**, not an inverted afterthought; light mode also supported.
 - Landing site and web app must feel like one coherent product.
 - Honest claims only, especially about privacy and security.
-- **Redesign (user decisions, 2026-09-28):** modern and premium in both editions. Headlines move to a sleeker editorial grotesk (Bricolage Grotesque; body stays Atkinson Hyperlegible Next). Day was golden hour until 2026-09-30; see the day edition below. Lots of scroll-driven motion. The cast is the product owner's own Meshy characters (an astronaut, three aliens, two monsters, two people). DESIGN.md holds the details.
-- **Day edition (user decisions, 2026-09-30), replacing golden hour and the filmed summer day:** the day hero is **in space**, after a reference the user supplied (the sun cresting a planet's limb over a sea of clouds, a teal atmosphere band, deep space above): the worlds still orbit the sun and the crew floats over the clouds, seen from above. The page below is **Stratosphere** (the user picked it over a dark "dawn orbit" page and a warm "horizon band"): ice blue to pale cyan with a trace of dawn gold at the end, white-blue surfaces, deep navy text, sunrise-orange buttons with navy text. Still never plain white. Drawn live (the user's Higgsfield balance was 0), no film.
-- **Design priorities (user-confirmed 2026-09-27):** modern, user-friendly, premium and feature-rich without clutter. **Dark theme first**: dark is the main experience (light is an option), elegant and slightly futuristic. Purple/magenta accents welcome but restrained, with strong readability and contrast. Clear navigation and information hierarchy, and features discovered gradually. Social, immersive, sleek; one consistent design language across landing and app. Full UX structure in `docs/UX-ARCHITECTURE.md`.
-- **Headline belief (user-confirmed):** "one app instead of four" — a visitor should leave the first screen understanding that servers/chat, the feed, profiles, and discussion boards live together in Realm.
-- **Anti-references (user-confirmed):** must not read as (1) Discord with a new logo, (2) a generic SaaS template (gradient hero, three feature cards, logo cloud), (3) try-hard gamer aesthetic (RGB neon, aggressive angles, energy-drink esports), or (4) cold corporate collaboration software.
+- **Accessibility:** a priority for dyslexic readers and people with short attention spans (legible body face, clear hierarchy, Pause motion), and WCAG 2.2 AA throughout.
+- **Design priorities (user-confirmed 2026-09-27):** modern, user-friendly, premium and feature-rich without clutter. Clear navigation and information hierarchy, and features discovered gradually. Social, immersive, sleek; one consistent design language across landing and app. Full UX structure in `docs/UX-ARCHITECTURE.md`.
+- **Headline belief (user-confirmed):** "one app instead of four": a visitor should leave the first screen understanding that chat, the feed, profiles and discussion boards live together in Realm.
+- **Anti-references (user-confirmed):** must not read as (1) Discord with a new logo, (2) a generic SaaS template (gradient hero, three feature cards, logo cloud), (3) try-hard gamer aesthetic (RGB neon, aggressive angles, energy-drink esports), (4) cold corporate collaboration software, or (5) generic AI-made spectacle (purple nebula glow, mascots, glow everywhere).
+- **Process (user preference):** show rendered previews and let the user choose before building a new look or layout; when asked for ideas or previews, give only those.
 
 ## Evidence on Hand
 

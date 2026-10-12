@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Messaging C — Inbox</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --ground: #0d0c12; --surface: #15131c; --raised: #1f1c28; --rule: #2a2735; --ink: #f4f2f8; --ink-2: #aaa5b9; --ink-3: #726c84; --gold: #ffc94d; --on-gold: #1c1406; --noor: #ff8a5c; --kenji: #c86bff; --maya: #3fd2c8; --live: #4ee08a; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--ground); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; display: grid; grid-template-columns: 72px 380px 1fr; }
+  .dock { display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 8px; border-right: 1px solid var(--rule); }
+  .di { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; color: var(--ink-3); position: relative; }
+  .di.on { background: var(--raised); color: var(--ink); }
+  .di .n { position: absolute; right: 4px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); border: 2px solid var(--ground); }
+  /* The inbox: Spaces and people together, like a social app */
+  .inbox { border-right: 1px solid var(--rule); display: flex; flex-direction: column; }
+  .inbox header { padding: 20px 20px 12px; }
+  .inbox h1 { font-family: "Space Grotesk"; font-weight: 700; font-size: 28px; letter-spacing: -.02em; display: flex; justify-content: space-between; align-items: center; }
+  .inbox h1 span { width: 38px; height: 38px; border-radius: 12px; background: var(--raised); display: grid; place-items: center; font-size: 20px; color: var(--ink-2); }
+  .search { margin-top: 12px; height: 42px; border-radius: 14px; background: var(--raised); display: flex; align-items: center; padding: 0 14px; color: var(--ink-3); font-size: 15px; }
+  .filters { display: flex; gap: 6px; margin-top: 12px; }
+  .filters span { height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--rule); display: flex; align-items: center; font-size: 13.5px; color: var(--ink-2); }
+  .filters span.on { background: var(--ink); color: var(--ground); border-color: var(--ink); font-weight: 700; }
+  .stories { display: flex; gap: 12px; padding: 4px 20px 14px; border-bottom: 1px solid var(--rule); }
+  .st { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); }
+  .st i { width: 54px; height: 54px; border-radius: 50%; padding: 2.5px; display: block; }
+  .st i span { display: block; width: 100%; height: 100%; border-radius: 50%; border: 2.5px solid var(--ground); overflow: hidden; position: relative; }
+  .st img { position: absolute; width: 150%; left: -25%; top: -5%; }
+  .list { padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .c { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: 16px; }
+  .c.on { background: var(--raised); }
+  .c .ic { width: 50px; height: 50px; border-radius: 16px; flex: none; display: grid; place-items: center; font-family: "Space Grotesk"; font-weight: 700; color: #160f22; position: relative; overflow: hidden; }
+  .c .ic img { position: absolute; width: 150%; left: -25%; top: -5%; }
+  .c .ic.round { border-radius: 50%; }
+  .c b { font-size: 15.5px; display: block; } .c small { font-size: 13.5px; color: var(--ink-2); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .c .meta { margin-left: auto; text-align: right; font-size: 12px; color: var(--ink-3); display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .c .u { min-width: 20px; height: 20px; border-radius: 10px; background: var(--gold); color: var(--on-gold); font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 6px; }
+  .c .here { font-size: 12px; color: var(--live); }
+  /* Conversation */
+  main { display: flex; flex-direction: column; min-width: 0; }
+  .head { height: 76px; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--rule); }
+  .head .ic { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #ff8a5c, #c86bff); display: grid; place-items: center; font-family: "Space Grotesk"; font-weight: 700; color: #160f22; }
+  .head b { font-family: "Space Grotesk"; font-size: 19px; display: block; } .head small { color: var(--live); font-size: 13px; }
+  .head .tabs { margin-left: 18px; display: flex; gap: 4px; }
+  .head .tabs span { height: 32px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; font-size: 14px; color: var(--ink-3); }
+  .head .tabs span.on { background: var(--raised); color: var(--ink); font-weight: 700; }
+  .head .r { margin-left: auto; display: flex; gap: 8px; }
+  .round { width: 40px; height: 40px; border-radius: 12px; background: var(--raised); display: grid; place-items: center; color: var(--ink-2); }
+  .btn { height: 40px; padding: 0 16px; border-radius: 12px; background: var(--gold); color: var(--on-gold); display: flex; align-items: center; font-weight: 700; font-size: 14px; }
+  .chat { flex: 1; padding: 20px 24px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; background: radial-gradient(80% 60% at 70% 100%, rgb(200 107 255 / .06), transparent 70%); }
+  .sep { align-self: center; font-size: 12.5px; color: var(--ink-3); background: var(--surface); border-radius: 10px; padding: 3px 10px; margin: 4px 0 10px; }
+  .row { display: flex; gap: 8px; align-items: flex-end; max-width: 70%; }
+  .row .av { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; position: relative; flex: none; }
+  .row .av img { position: absolute; width: 150%; left: -25%; top: -5%; }
+  .col { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+  .b { background: var(--raised); border-radius: 20px; padding: 9px 14px; font-size: 16px; line-height: 1.45; position: relative; }
+  .b small { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 1px; }
+  .row.me { margin-left: auto; }
+  .row.me .col { align-items: flex-end; }
+  .row.me .b { background: #f4f2f8; color: #15131c; }
+  .card { width: 320px; border-radius: 20px; overflow: hidden; background: var(--surface); border: 1px solid var(--rule); }
+  .card .img { height: 150px; background: linear-gradient(135deg, #3b2b6e, #ff8a5c); position: relative; }
+  .card .img::after { content: "▶"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; border-radius: 50%; background: rgb(255 255 255 / .9); color: #15131c; display: grid; place-items: center; font-size: 16px; }
+  .card p { padding: 10px 14px; font-size: 14px; color: var(--ink-2); } .card p b { color: var(--ink); display: block; font-size: 15px; }
+  .react { position: absolute; right: -6px; bottom: -12px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 1px 7px; font-size: 13px; }
+  .composer { margin: 0 20px 18px; display: flex; align-items: center; gap: 10px; }
+  .composer .box { flex: 1; height: 54px; border-radius: 27px; background: var(--raised); display: flex; align-items: center; padding: 0 18px; color: var(--ink-3); font-size: 16px; gap: 14px; }
+  .composer .send { width: 54px; height: 54px; border-radius: 50%; background: var(--gold); display: grid; place-items: center; }
+</style>
+</head>
+<body>
+  <nav class="dock">
+    <svg width="30" height="30" viewBox="0 0 26 26" style="margin-bottom:12px"><circle cx="13" cy="13" r="11" fill="none" stroke="#f4f2f8" stroke-width="2"/><circle cx="15.5" cy="11" r="7.5" fill="#ffc94d"/></svg>
+    <span class="di"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/></svg></span>
+    <span class="di on"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 5h14v10H10l-5 4z"/></svg><span class="n"></span></span>
+    <span class="di"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="4" width="14" height="16" rx="3"/></svg></span>
+    <span class="di"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg></span>
+  </nav>
+  <section class="inbox">
+    <header><h1>Chats <span>+</span></h1><div class="search">Search people and Spaces</div><div class="filters"><span class="on">All</span><span>Spaces</span><span>People</span><span>Unread 4</span></div></header>
+    <div class="stories">
+      <div class="st"><i style="background:conic-gradient(#ff8a5c,#ffc94d,#c86bff,#ff8a5c)"><span><img src="../../../../frontend/web/public/art/cast/human-maya-face.399f5b46.webp" alt=""></span></i>Noor</div>
+      <div class="st"><i style="background:conic-gradient(#c86bff,#3fd2c8,#c86bff)"><span><img src="../../../../frontend/web/public/art/cast/alien-zib-face.f5b5aada.webp" alt=""></span></i>Kenji</div>
+      <div class="st"><i style="background:#3a3646"><span style="background:#173a3c;display:grid;place-items:center;font-weight:700">MA</span></i>Maya</div>
+      <div class="st"><i style="background:#3a3646"><span style="background:#22304f;display:grid;place-items:center;font-weight:700">PR</span></i>Priya</div>
+    </div>
+    <div class="list">
+      <div class="c on"><span class="ic" style="background:linear-gradient(135deg,#ff8a5c,#c86bff)">LN</span><div><b>Late Night Lobby</b><small>Kenji: Ascent or I'm not playing</small></div><div class="meta">9:04<span class="u">3</span></div></div>
+      <div class="c"><span class="ic round"><img src="../../../../frontend/web/public/art/cast/human-maya-face.399f5b46.webp" alt=""></span><div><b>Noor</b><small>see you at 9 👀</small></div><div class="meta">8:51<span class="u">1</span></div></div>
+      <div class="c"><span class="ic" style="background:#3fd2c8">SB</span><div><b>Sourdough Bros</b><small>Maya: the crumb on this one</small></div><div class="meta">7:30<span class="here">2 here</span></div></div>
+      <div class="c"><span class="ic round" style="background:#c86bff">KM</span><div><b>Kenji, Maya</b><small>You: lol no</small></div><div class="meta">Tue</div></div>
+      <div class="c"><span class="ic" style="background:#6f8cff">SR</span><div><b>Speedrun Club</b><small>new PB posted in #runs</small></div><div class="meta">Mon</div></div>
+    </div>
+  </section>
+  <main>
+    <header class="head"><span class="ic">LN</span><div><b>Late Night Lobby</b><small>● 4 here now</small></div><div class="tabs"><span class="on"># general</span><span># clips</span><span># lfg</span><span>Board</span></div><div class="r"><span class="round">⌕</span><span class="btn">Invite</span></div></header>
+    <section class="chat">
+      <span class="sep">Today</span>
+      <div class="row"><span class="av"><img src="../../../../frontend/web/public/art/cast/human-maya-face.399f5b46.webp" alt=""></span><div class="col"><span class="b"><small style="color:var(--noor)">Noor</small>ranked at 9. who's in?</span></div></div>
+      <div class="row" style="margin-top:8px"><span class="av"><img src="../../../../frontend/web/public/art/cast/alien-zib-face.f5b5aada.webp" alt=""></span><div class="col"><span class="b"><small style="color:var(--kenji)">Kenji</small>in. clip from last night</span><div class="card"><div class="img"></div><p><b>The jump that shouldn't have worked</b>Clip · 0:14 · 128 views</p></div></div></div>
+      <div class="row me" style="margin-top:8px"><div class="col"><span class="b">HOW<span class="react">😂 3</span></span><span class="b" style="margin-top:8px">same, give me ten</span></div></div>
+    </section>
+    <div class="composer"><div class="box">+<span>Message Late Night Lobby</span><span style="margin-left:auto">☺</span></div><span class="send"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1c1406" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+  </main>
+</body>
+</html>

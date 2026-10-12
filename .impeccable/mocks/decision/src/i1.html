@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Idea — Live room</title>
+<link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@500;700;800&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root { --g: #0b0b0e; --s: #141419; --r: #1d1d24; --rule: #2a2a33; --ink: #f5f4f2; --ink2: #a9a7b0; --ink3: #6f6d78; --acc: #ff6a3d; --live: #4ee08a; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--g); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  .fd { font-family: "Funnel Display", sans-serif; }
+  .nav { position: absolute; left: 48px; right: 48px; top: 0; height: 76px; display: flex; align-items: center; gap: 30px; font-size: 15px; color: var(--ink2); }
+  .nav .logo { font-family: "Funnel Display"; font-weight: 800; font-size: 24px; color: var(--ink); letter-spacing: -.02em; }
+  .nav .r { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+  .btn { height: 44px; padding: 0 18px; border-radius: 22px; background: var(--ink); color: var(--g); font-weight: 700; display: inline-flex; align-items: center; }
+  .btn.acc { background: var(--acc); color: #1a0a04; }
+  h1 { position: absolute; left: 48px; top: 170px; width: 610px; font-family: "Funnel Display"; font-weight: 800; font-size: 88px; line-height: .96; letter-spacing: -.035em; }
+  h1 span { color: var(--acc); }
+  .lead { position: absolute; left: 48px; top: 470px; width: 500px; font-size: 20px; line-height: 1.55; color: var(--ink2); }
+  .acts { position: absolute; left: 48px; top: 590px; display: flex; gap: 12px; }
+  .acts .btn { height: 56px; padding: 0 26px; border-radius: 28px; font-size: 17px; }
+  .proof { position: absolute; left: 48px; bottom: 50px; display: flex; gap: 34px; font-size: 14px; color: var(--ink3); }
+  .proof b { color: var(--ink); display: block; font-size: 15px; }
+  /* The live room, the product as the hero */
+  .room { position: absolute; right: 48px; top: 104px; width: 680px; height: 730px; border-radius: 28px; background: var(--s); border: 1px solid var(--rule); box-shadow: 0 60px 120px -40px rgb(0 0 0 / .9); overflow: hidden; display: flex; flex-direction: column; }
+  .rh { display: flex; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--rule); }
+  .rh .ic { width: 42px; height: 42px; border-radius: 13px; background: linear-gradient(135deg, #ff6a3d, #ffb547); display: grid; place-items: center; font-family: "Funnel Display"; font-weight: 800; color: #1a0a04; }
+  .rh b { font-size: 17px; display: block; } .rh small { color: var(--live); font-size: 13px; }
+  .faces { margin-left: auto; display: flex; }
+  .faces i { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--s); margin-left: -8px; display: grid; place-items: center; font-size: 11px; font-weight: 700; font-style: normal; color: #14121a; }
+  .msgs { flex: 1; padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; }
+  .m { display: flex; gap: 10px; align-items: flex-end; max-width: 78%; }
+  .m .a { width: 32px; height: 32px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #14121a; }
+  .b { background: var(--r); border-radius: 20px; padding: 10px 15px; font-size: 16.5px; line-height: 1.45; }
+  .b small { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 1px; }
+  .m.me { margin-left: auto; } .m.me .b { background: var(--acc); color: #1a0a04; }
+  .clip { width: 320px; height: 180px; border-radius: 18px; background: radial-gradient(120% 90% at 20% 20%, #4b3a8a, #1d1b2c 60%), #1d1b2c; position: relative; overflow: hidden; }
+  .clip::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(100deg, transparent 0 40px, rgb(255 255 255 / .03) 40px 41px); }
+  .clip span { position: absolute; left: 14px; bottom: 12px; font-size: 13px; font-weight: 700; }
+  .clip i { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px; border-radius: 50%; background: rgb(255 255 255 / .92); }
+  .poll { width: 360px; border-radius: 18px; background: var(--r); padding: 14px; }
+  .poll b { font-family: "Funnel Display"; font-size: 17px; }
+  .opt { margin-top: 8px; height: 38px; border-radius: 12px; background: var(--s); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 14.5px; }
+  .opt i { position: absolute; left: 0; top: 0; bottom: 0; background: rgb(255 106 61 / .28); }
+  .opt span { position: relative; }
+  .typing { display: flex; align-items: center; gap: 8px; color: var(--ink3); font-size: 13.5px; }
+  .typing span { background: var(--r); border-radius: 14px; padding: 8px 12px; letter-spacing: 3px; color: var(--ink2); }
+  .comp { margin: 0 16px 16px; height: 54px; border-radius: 27px; background: var(--r); display: flex; align-items: center; padding: 0 7px 0 18px; color: var(--ink3); }
+  .comp i { margin-left: auto; width: 40px; height: 40px; border-radius: 50%; background: var(--acc); }
+  .note { position: absolute; right: 48px; bottom: 30px; font-size: 13px; color: var(--ink3); }
+
+  .amb { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .amb i { position: absolute; border-radius: 50%; filter: blur(70px); display: block; }
+  .grain { position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); opacity: .9; mix-blend-mode: overlay; }
+  body > *:not(.amb):not(.grain) { position: absolute; z-index: 2; }
+  body > header.nav { z-index: 5; }
+</style></head><body>
+<div class="amb" style="background:linear-gradient(160deg,#1a0f0b 0%,#0e0b10 45%,#120c1c 100%)">
+  <i style="width:900px;height:700px;left:620px;top:-120px;background:#ff6a3d;opacity:.32"></i>
+  <i style="width:700px;height:600px;left:980px;top:420px;background:#ffb547;opacity:.18"></i>
+  <i style="width:700px;height:700px;left:-200px;top:420px;background:#7a2f6a;opacity:.28"></i>
+  <div style="position:absolute;left:560px;top:120px;width:780px;height:760px;border-radius:40px;background:rgb(255 255 255 /.04);filter:blur(28px);transform:rotate(-6deg) scale(1.08)"></div>
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgb(255 255 255 /.025) 0 1px,transparent 1px 120px),repeating-linear-gradient(0deg,rgb(255 255 255 /.02) 0 1px,transparent 1px 120px);mask-image:radial-gradient(60% 70% at 70% 45%,#000,transparent)"></div>
+</div><div class="grain"></div>
+  <header class="nav"><span class="logo">realm</span><span>Spaces</span><span>Feed</span><span>Profiles</span><span>Boards</span><div class="r"><span>Sign in</span><span class="btn acc">Open Realm</span></div></header>
+  <h1>Where your group <span>actually</span> hangs out.</h1>
+  <p class="lead">Chat, clips, posts and profiles in one place, for the people you'd text first.</p>
+  <div class="acts"><span class="btn acc">Open Realm in your browser</span><span class="btn" style="background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px #3a3a44">Download</span></div>
+  <div class="proof"><span><b>Web</b>now, apps soon</span><span><b>13+</b>to join</span><span><b>Honest privacy</b>labelled in every chat</span></div>
+  <section class="room">
+    <div class="rh"><span class="ic">LN</span><div><b>Late Night Lobby</b><small>● 4 here now</small></div><span class="faces"><i style="background:#ff9a6b">N</i><i style="background:#c99bff">K</i><i style="background:#6fd6c9">M</i><i style="background:#ffd36b">Y</i></span></div>
+    <div class="msgs">
+      <div class="m"><span class="a" style="background:#ff9a6b">N</span><div class="b"><small style="color:#ff9a6b">Noor</small>ranked at 9, who's in?</div></div>
+      <div class="m"><span class="a" style="background:#c99bff">K</span><div><div class="b"><small style="color:#c99bff">Kenji</small>in. clip from last night</div><div class="clip" style="margin-top:6px"><i></i><span>the jump that shouldn't have worked · 0:14</span></div></div></div>
+      <div class="m me"><div class="b">HOW</div></div>
+      <div class="m"><span class="a" style="background:#6fd6c9">M</span><div class="poll"><b>Which map first?</b><div class="opt"><i style="width:64%"></i><span>Ascent</span><span>5</span></div><div class="opt"><i style="width:24%"></i><span>Lotus</span><span>2</span></div></div></div>
+      <div class="typing"><span>• • •</span>Leo is typing</div>
+    </div>
+    <div class="comp">Message #general<i></i></div>
+  </section>
+  <p class="note">Scroll idea: the conversation keeps going as you scroll, and each feature arrives as the next message.</p>
+</body></html>

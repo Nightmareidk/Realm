@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Holo Card — sign in</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=block" rel="stylesheet">
+<style>
+  :root { --mat: #0f0e15; --mat-2: #17151f; --panel: #1c1a26; --rule: #2b2836; --ink: #f3f1f8; --ink-2: #a9a4b8; --gold: #ffcf5c; --on-gold: #1a1407; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: radial-gradient(70% 90% at 40% 50%, #1b1828, var(--mat) 70%); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; position: relative; }
+  body::before { content: ""; position: absolute; inset: 0; opacity: .35; background-image: repeating-linear-gradient(45deg, rgb(255 255 255 / .018) 0 1px, transparent 1px 4px), repeating-linear-gradient(-45deg, rgb(255 255 255 / .018) 0 1px, transparent 1px 4px); }
+  .logo { position: absolute; left: 40px; top: 28px; font-family: "Space Grotesk"; font-weight: 700; font-size: 22px; display: flex; gap: 10px; align-items: center; }
+  .deck { position: absolute; left: 120px; top: 150px; width: 520px; height: 620px; perspective: 1400px; }
+  .back { position: absolute; width: 340px; height: 476px; border-radius: 20px; padding: 10px; background: linear-gradient(160deg, #3b2b6e, #1f1838); box-shadow: 0 40px 70px -30px rgb(0 0 0 / .7); }
+  .back span { display: block; height: 100%; border-radius: 13px; border: 2px solid rgb(255 255 255 / .12); background: repeating-linear-gradient(45deg, rgb(255 255 255 / .05) 0 2px, transparent 2px 12px), radial-gradient(circle at 50% 50%, #2e2356, #191430); display: grid; place-items: center; }
+  .back svg { opacity: .8; }
+  .foil { position: absolute; inset: 0; border-radius: 20px; mix-blend-mode: color-dodge; opacity: .5; background: repeating-linear-gradient(115deg, #ff7eb3 0%, #ffd36e 6%, #7dffb0 12%, #6ec8ff 18%, #b48bff 24%, #ff7eb3 30%); background-size: 220% 220%; -webkit-mask-image: linear-gradient(115deg, transparent 20%, #000 40%, transparent 62%); mask-image: linear-gradient(115deg, transparent 20%, #000 40%, transparent 62%); }
+  h1 { position: absolute; left: 120px; top: 70px; font-family: "Space Grotesk"; font-weight: 700; font-size: 18px; color: var(--ink-2); }
+  .formcard { position: absolute; right: 120px; top: 110px; width: 520px; height: 690px; border-radius: 26px; padding: 12px; background: linear-gradient(160deg, #ffcf5c, #ff8a5c 45%, #b25cff); box-shadow: 0 50px 90px -30px rgb(0 0 0 / .75); }
+  .formcard .face { height: 100%; border-radius: 18px; background: #1d1a29; padding: 34px 36px; display: flex; flex-direction: column; }
+  .formcard h2 { font-family: "Space Grotesk"; font-weight: 700; font-size: 44px; letter-spacing: -.03em; line-height: 1; }
+  .formcard .sub { color: var(--ink-2); margin-top: 10px; font-size: 16px; }
+  .f { margin-top: 26px; }
+  .f label { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+  .f label a { color: var(--gold); font-weight: 400; text-decoration: underline; text-underline-offset: 4px; font-size: 15px; }
+  .box { height: 54px; border-radius: 14px; background: var(--mat); border: 1.5px solid #4a4659; display: flex; align-items: center; padding: 0 16px; font-size: 17px; }
+  .box.focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgb(255 207 92 / .2); }
+  .box span { margin-left: auto; font-size: 14px; color: var(--ink-2); }
+  .btn { margin-top: 30px; height: 58px; border-radius: 14px; background: var(--gold); color: var(--on-gold); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+  .alt { margin-top: auto; padding-top: 22px; border-top: 1px solid var(--rule); text-align: center; color: var(--ink-2); }
+  .alt b { color: var(--ink); }
+  .formcard .cfoil { position: absolute; inset: 0; border-radius: 26px; pointer-events: none; mix-blend-mode: color-dodge; opacity: .35; background: repeating-linear-gradient(115deg, #ff7eb3 0%, #ffd36e 6%, #7dffb0 12%, #6ec8ff 18%, #b48bff 24%, #ff7eb3 30%); background-size: 220% 220%; -webkit-mask-image: linear-gradient(115deg, transparent 5%, #000 12%, transparent 20%); mask-image: linear-gradient(115deg, transparent 5%, #000 12%, transparent 20%); }
+</style></head><body>
+  <span class="logo"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#f3f1f8" stroke-width="2"/><circle cx="15.5" cy="11" r="7.5" fill="#ffcf5c"/></svg>Realm</span>
+  <h1>Your deck is right where you left it.</h1>
+  <div class="deck">
+    <div class="back" style="left:0;top:40px;transform:rotate(-10deg)"><span><svg width="90" height="90" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#f3f1f8" stroke-width="1.2"/><circle cx="15.5" cy="11" r="7.5" fill="#ffcf5c"/></svg></span><i class="foil"></i></div>
+    <div class="back" style="left:90px;top:20px;transform:rotate(-2deg);background:linear-gradient(160deg,#1e5a5c,#13262e)"><span><svg width="90" height="90" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#f3f1f8" stroke-width="1.2"/><circle cx="15.5" cy="11" r="7.5" fill="#ffcf5c"/></svg></span></div>
+    <div class="back" style="left:180px;top:30px;transform:rotate(7deg);background:linear-gradient(160deg,#ff8a5c,#b25cff)"><span><svg width="90" height="90" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#f3f1f8" stroke-width="1.2"/><circle cx="15.5" cy="11" r="7.5" fill="#ffcf5c"/></svg></span><i class="foil"></i></div>
+  </div>
+  <div class="formcard"><div class="face">
+    <h2>Welcome back</h2><p class="sub">Sign in with your email or username.</p>
+    <div class="f"><label>Email or username</label><div class="box focus">noor.h</div></div>
+    <div class="f"><label>Password <a>Forgot it?</a></label><div class="box">••••••••••••<span>Show</span></div></div>
+    <div class="btn">Sign in</div>
+    <p class="alt">New here? <b>Create an account</b> and make your card.</p>
+  </div><i class="cfoil"></i></div>
+</body></html>

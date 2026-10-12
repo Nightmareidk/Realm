@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Drop — sign in</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Atkinson+Hyperlegible+Next:wght@400;700&display=block" rel="stylesheet">
+<style>
+  :root { --black: #0b0b0b; --ink: #f4f3ef; --ink-2: #9d9b95; --ink-3: #6a6863; --rule: #2a2a28; --hit: #2f4bff; --seam: #d9d7d1; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 900px; overflow: hidden; }
+  body { background: var(--black); color: var(--ink); font-family: "Atkinson Hyperlegible Next", sans-serif; display: grid; grid-template-columns: 1fr 1fr; }
+  .l { padding: 30px 40px; display: flex; flex-direction: column; }
+  .logo { font-family: "Big Shoulders Display"; font-weight: 900; font-size: 28px; }
+  h1 { margin-top: 60px; font-family: "Big Shoulders Display"; font-weight: 900; font-size: 170px; line-height: .8; text-transform: uppercase; }
+  .f { margin-top: 26px; width: 520px; }
+  .f:first-of-type { margin-top: 46px; }
+  .f label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 8px; }
+  .f label a { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+  .box { height: 54px; border-bottom: 2px solid var(--ink-3); display: flex; align-items: center; font-size: 20px; }
+  .box.focus { border-color: var(--hit); }
+  .box span { margin-left: auto; font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--ink-2); }
+  .btn { margin-top: 34px; width: 520px; height: 58px; background: var(--hit); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-weight: 700; font-size: 16px; letter-spacing: .08em; text-transform: uppercase; }
+  .alt { margin-top: 22px; color: var(--ink-2); font-size: 16px; }
+  .alt b { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+  .r { position: relative; background: radial-gradient(80% 70% at 50% 40%, #ecebe6, var(--seam) 80%); overflow: hidden; }
+  .r img { position: absolute; left: 50%; bottom: 120px; height: 66%; transform: translateX(-50%); filter: drop-shadow(0 26px 16px rgb(0 0 0 / .25)); }
+  .r .num { position: absolute; left: 30px; top: 24px; font-family: "Big Shoulders Display"; font-weight: 900; font-size: 64px; color: #0b0b0b; line-height: 1; }
+  .r .tag { position: absolute; left: 30px; right: 30px; bottom: 30px; height: 50px; background: var(--black); display: flex; justify-content: space-between; align-items: center; padding: 0 18px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 14px; }
+  .r .tag span { color: var(--ink-2); font-weight: 400; letter-spacing: 0; text-transform: none; }
+</style></head><body>
+  <section class="l">
+    <span class="logo">REALM</span>
+    <h1>Sign<br>in.</h1>
+    <div class="f"><label>Email or username</label><div class="box focus">noor.h</div></div>
+    <div class="f"><label>Password <a>Forgot it?</a></label><div class="box">••••••••••••<span>SHOW</span></div></div>
+    <div class="btn">Sign in <span>→</span></div>
+    <p class="alt">New here? <b>Create an account</b></p>
+  </section>
+  <section class="r"><span class="num">YOUR<br>CREW</span><img src="../../../../frontend/web/public/art/cast/human-maya.a2538d65.webp" alt=""><div class="tag">Late Night Lobby<span>4 here now, waiting on you</span></div></section>
+</body></html>
