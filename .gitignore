@@ -44,8 +44,8 @@ test-results/
 # scrollable direction prototypes (copies of vendor files and art)
 .impeccable/mocks/proto/
 
-# Expo (frontend/mobile): local state, generated types and native folders from prebuild
+# Expo (frontend/app): local state, generated types and native folders from prebuild
 .expo/
 expo-env.d.ts
-frontend/mobile/android/
-frontend/mobile/ios/
+frontend/app/android/
+frontend/app/ios/

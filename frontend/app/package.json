@@ -1,8 +1,8 @@
 {
-  "name": "@realm/mobile",
+  "name": "@realm/app",
   "version": "0.0.0",
   "private": true,
-  "description": "Realm for phones (Expo SDK 57). Same API, accounts and design tokens as the web app.",
+  "description": "The Realm app for phones (Expo SDK 57). Same backend, accounts and design tokens as the website.",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",

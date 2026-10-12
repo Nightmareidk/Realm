@@ -1,8 +1,8 @@
 ---
 version: 1
 slug: "frontend-mobile-app-index-tsx"
-primary_target: "frontend/mobile/app/index.tsx"
-related_targets: ["frontend/mobile/app/sign-in.tsx","frontend/mobile/app/sign-up.tsx"]
+primary_target: "frontend/app/app/index.tsx"
+related_targets: ["frontend/app/app/sign-in.tsx","frontend/app/app/sign-up.tsx"]
 ---
 
 # App introduction (Android/iOS, pre-sign-in)

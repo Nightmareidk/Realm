@@ -302,25 +302,7 @@ importers:
         specifier: 5.0.2
         version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3))
 
-  frontend/design-tokens:
-    devDependencies:
-      '@realm/tsconfig':
-        specifier: workspace:*
-        version: link:../../shared/tsconfig
-      '@types/node':
-        specifier: 26.6.3
-        version: 26.6.3
-      tsx:
-        specifier: 4.23.15
-        version: 4.23.15
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 5.0.2
-        version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3))
-
-  frontend/mobile:
+  frontend/app:
     dependencies:
       '@expo-google-fonts/atkinson-hyperlegible-next':
         specifier: 0.4.1
@@ -407,6 +389,24 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+
+  frontend/design-tokens:
+    devDependencies:
+      '@realm/tsconfig':
+        specifier: workspace:*
+        version: link:../../shared/tsconfig
+      '@types/node':
+        specifier: 26.6.3
+        version: 26.6.3
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 5.0.2
+        version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3))
 
   frontend/web:
     dependencies:
@@ -8867,7 +8867,7 @@ snapshots:
 
   '@types/react-test-renderer@19.3.0':
     dependencies:
-      '@types/react': 19.3.0
+      '@types/react': 19.2.18
 
   '@types/react@19.2.18':
     dependencies:

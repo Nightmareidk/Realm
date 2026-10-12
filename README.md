@@ -11,6 +11,7 @@ Communities, real-time chat, posts, and clips — one place for your people.
 |---|---|
 | **`frontend/`** | Everything people see |
 | `frontend/web` | Next.js: landing page, download portal, and the web app |
+| `frontend/app` | Expo (React Native): the Realm app for phones, on the same backend |
 | `frontend/design-tokens` | Design tokens → CSS variables (web) and TS (native, later) |
 | **`backend/`** | Everything that runs on servers |
 | `backend/api` | Fastify REST API (`/v1`) |

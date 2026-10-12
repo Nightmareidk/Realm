@@ -60,7 +60,7 @@
       }
     },
     {
-      "includes": ["frontend/mobile/**"],
+      "includes": ["frontend/app/**"],
       "linter": {
         "domains": {
           "react": "recommended"
