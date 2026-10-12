@@ -4,6 +4,7 @@ import {
   customType,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -18,6 +19,14 @@ import { users } from "./users";
 export const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
   dataType: () => "bytea",
 });
+
+export type MessageEmbed = {
+  type: "place";
+  name: string;
+  address: string | null;
+  lat: number;
+  lng: number;
+};
 
 export const messageType = pgEnum("message_type", [
   "default",
@@ -49,6 +58,9 @@ export const messages = pgTable(
     mentionRoles: bigint({ mode: "bigint" }).array().notNull().default([]),
     mentionEveryone: boolean().notNull().default(false),
     nonce: text(),
+    /** A place someone chose to share (never live location). */
+    embed: jsonb().$type<MessageEmbed>(),
+    /** Bit 0: hidden after enough members reported it, until a moderator looks. */
     flags: integer().notNull().default(0),
     editedAt: tstz(),
     deletedAt: tstz(),

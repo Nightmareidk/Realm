@@ -2,12 +2,11 @@ import { Limits } from "@realm/server-core";
 import type { FastifyInstance } from "fastify";
 import type { Deps } from "../deps";
 import { AppError, rateLimited } from "../lib/errors";
+import { trustedOrigin } from "../lib/origins";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export function registerSecurity(app: FastifyInstance, deps: Deps) {
-  const allowedOrigins = new Set([new URL(deps.config.REALM_WEB_ORIGIN).origin]);
-
   app.addHook("onRequest", async (req, reply) => {
     // Coarse per-IP budget in front of every route.
     const global = await deps.limiter.hit(Limits.global, req.ip);
@@ -23,7 +22,7 @@ export function registerSecurity(app: FastifyInstance, deps: Deps) {
   app.addHook("preHandler", async (req) => {
     if (SAFE_METHODS.has(req.method)) return;
     const origin = req.headers.origin;
-    if (origin && !allowedOrigins.has(origin)) {
+    if (origin && !trustedOrigin(deps, origin)) {
       throw new AppError(403, "FORBIDDEN", "Cross-origin request blocked");
     }
     if (!origin && req.authVia === "cookie") {

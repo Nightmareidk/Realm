@@ -1,0 +1,1 @@
+ALTER TABLE "communities" ADD COLUMN "accent" "theme_accent" DEFAULT 'mint' NOT NULL;

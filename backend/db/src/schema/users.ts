@@ -61,11 +61,15 @@ export const friendRequestPolicy = pgEnum("friend_request_policy", [
   "nobody",
 ]);
 
+/** The person's theme (DESIGN.md): the action colour and the light behind every screen. */
+export const themeAccent = pgEnum("theme_accent", ["mint", "orchid", "aqua", "ember"]);
+
 export const userSettings = pgTable("user_settings", {
   userId: id()
     .primaryKey()
     .references(() => users.id),
   theme: themePref().notNull().default("system"),
+  accent: themeAccent().notNull().default("mint"),
   reducedMotion: motionPref().notNull().default("system"),
   locale: text().notNull().default("en"),
   profileVisibility: profileVisibility().notNull().default("public"),

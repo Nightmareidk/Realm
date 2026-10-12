@@ -1,4 +1,11 @@
-import type { LoginBody, RegisterBody } from "@realm/contracts";
+import {
+  isMinor,
+  type LoginBody,
+  type RegisterBody,
+  TEEN_USER_SETTINGS,
+  Username,
+  type UsernameAvailability,
+} from "@realm/contracts";
 import { and, desc, eq, gt, isNull, schema, sql } from "@realm/db";
 import {
   hashPassword,
@@ -7,6 +14,7 @@ import {
   randomNumericCode,
   randomToken,
   safeEqual,
+  screenPassword,
   sha256Hex,
   timingSafeDummyVerify,
   verifyPassword,
@@ -63,11 +71,35 @@ export class AuthService {
     this.deps.mailer.send(mail).catch((err) => this.deps.logger.error({ err }, "mail send failed"));
   }
 
+  /**
+   * Refuses passwords attackers try first: common ones, trivial patterns, the person's own name,
+   * and (when switched on) passwords found in breaches.
+   */
+  private async screen(password: string, related: string[]) {
+    const result = await screenPassword(password, {
+      related,
+      pwned: this.deps.config.REALM_PWNED_PASSWORDS,
+    });
+    if (result === "common") {
+      throw badRequest(
+        "PASSWORD_TOO_COMMON",
+        "That password is one of the first ones people guess. Pick something less common.",
+      );
+    }
+    if (result === "breached") {
+      throw badRequest(
+        "PASSWORD_BREACHED",
+        "That password has shown up in a data breach, so it's easy to guess. Pick another one.",
+      );
+    }
+  }
+
   async register(body: RegisterBody, client: ClientContext) {
     if (RESERVED_USERNAMES.has(body.username)) {
       throw conflict("USERNAME_RESERVED", "That username isn't available");
     }
     const email = body.email.toLowerCase();
+    await this.screen(body.password, [body.username, email.split("@")[0] ?? ""]);
 
     const existing = await this.deps.db
       .select({ username: users.username, email: users.email })
@@ -100,7 +132,12 @@ export class AuthService {
           })
           .returning();
         if (!user) throw new Error("user insert returned nothing");
-        await tx.insert(userSettings).values({ userId });
+        await tx.insert(userSettings).values({
+          userId,
+          accent: body.accent ?? "mint",
+          // Under 18: private profile, DMs from friends, requests from friends of friends.
+          ...(isMinor(body.birthDate) ? TEEN_USER_SETTINGS : {}),
+        });
         await tx.insert(emailVerifications).values({
           id: this.deps.ids.next(),
           userId,
@@ -193,24 +230,33 @@ export class AuthService {
     return this.markVerified(user, client);
   }
 
+  /**
+   * The emailed link. Looked up whether or not it was used, so a link opened after verifying with
+   * the code (or pre-opened by a mail scanner) answers "already verified" instead of failing.
+   */
   async verifyEmailWithToken(token: string, client: ClientContext) {
     const [pending] = await this.deps.db
       .select()
       .from(emailVerifications)
-      .where(
-        and(
-          eq(emailVerifications.tokenHash, sha256Hex(token)),
-          isNull(emailVerifications.consumedAt),
-        ),
-      )
+      .where(eq(emailVerifications.tokenHash, sha256Hex(token)))
       .limit(1);
-    if (!pending) throw badRequest("TOKEN_INVALID", "This link isn't valid anymore.");
-    if (pending.expiresAt.getTime() <= Date.now()) {
-      throw badRequest("CODE_EXPIRED", "This link expired. Request a new one.");
-    }
+    if (!pending) throw badRequest("TOKEN_INVALID", "This link isn't valid.");
     const user = await this.getUser(pending.userId);
     if (user.email !== pending.email) {
-      throw badRequest("TOKEN_INVALID", "This link is for a previous email address.");
+      throw badRequest(
+        "TOKEN_OLD_EMAIL",
+        "This link is for an email address you've since changed.",
+      );
+    }
+    if (user.emailVerifiedAt) return user;
+    if (pending.consumedAt) {
+      throw badRequest(
+        "TOKEN_SUPERSEDED",
+        "There's a newer email. Use the link or code in the latest one.",
+      );
+    }
+    if (pending.expiresAt.getTime() <= Date.now()) {
+      throw badRequest("CODE_EXPIRED", "This link expired. Links work for 15 minutes.");
     }
     return this.markVerified(user, client);
   }
@@ -280,6 +326,19 @@ export class AuthService {
     this.sendMail(passwordResetEmail({ to: user.email, link: this.link("/reset", token) }));
   }
 
+  /** A reset link's state, read without using it up, so the page can say so before any typing. */
+  async resetTokenStatus(token: string): Promise<"valid" | "expired" | "used" | "invalid"> {
+    const [reset] = await this.deps.db
+      .select()
+      .from(passwordResets)
+      .where(eq(passwordResets.tokenHash, sha256Hex(token)))
+      .limit(1);
+    if (!reset) return "invalid";
+    if (reset.usedAt) return "used";
+    if (reset.expiresAt.getTime() <= Date.now()) return "expired";
+    return "valid";
+  }
+
   async resetPassword(token: string, password: string, client: ClientContext) {
     await this.enforce(Limits.reset, client.ip);
     const tokenHash = sha256Hex(token);
@@ -296,6 +355,8 @@ export class AuthService {
       )
       .limit(1);
     if (!reset) throw badRequest("TOKEN_INVALID", "This reset link isn't valid anymore.");
+    const owner = await this.getUser(reset.userId);
+    await this.screen(password, [owner.username, owner.email.split("@")[0] ?? ""]);
 
     const passwordHash = await hashPassword(password);
     const user = await this.deps.db.transaction(async (tx) => {
@@ -330,8 +391,9 @@ export class AuthService {
     await this.enforce(Limits.loginAccount, `change:${userId}`);
     const user = await this.getUser(userId);
     if (!(await verifyPassword(user.passwordHash, current))) {
-      throw new AppError(401, "INVALID_CREDENTIALS", "Your current password is incorrect");
+      throw new AppError(401, "INVALID_CREDENTIALS", "That isn't your current password.");
     }
+    await this.screen(next, [user.username, user.email.split("@")[0] ?? ""]);
     const passwordHash = await hashPassword(next);
     await this.deps.db.transaction(async (tx) => {
       await tx.update(users).set({ passwordHash }).where(eq(users.id, userId));
@@ -339,6 +401,19 @@ export class AuthService {
     });
     await this.logEvent(userId, "password_changed", client, sessionId);
     this.sendMail(passwordChangedEmail({ to: user.email }));
+  }
+
+  /** Whether a username can be taken (as someone types it on sign-up). */
+  async usernameAvailability(raw: string): Promise<UsernameAvailability> {
+    const parsed = Username.safeParse(raw.toLowerCase());
+    if (!parsed.success) return { available: false, reason: "invalid" };
+    if (RESERVED_USERNAMES.has(parsed.data)) return { available: false, reason: "reserved" };
+    const [taken] = await this.deps.db
+      .select({ id: users.id })
+      .from(users)
+      .where(sql`lower(${users.username}) = ${parsed.data}`)
+      .limit(1);
+    return taken ? { available: false, reason: "taken" } : { available: true };
   }
 
   async getUser(userId: bigint): Promise<UserRow> {

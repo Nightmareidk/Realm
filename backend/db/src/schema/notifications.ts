@@ -37,6 +37,23 @@ export const notifications = pgTable(
   (t) => [index("notifications_user_idx").on(t.userId, t.id.desc())],
 );
 
+export const pushPlatform = pgEnum("push_platform", ["web", "ios", "android"]);
+
+/** Devices that asked for push notifications (Firebase Cloud Messaging registration tokens). */
+export const pushTokens = pgTable(
+  "push_tokens",
+  {
+    token: text().primaryKey(),
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    platform: pushPlatform().notNull().default("web"),
+    createdAt: createdAt(),
+    lastSeenAt: tstz().notNull().defaultNow(),
+  },
+  (t) => [index("push_tokens_user_idx").on(t.userId)],
+);
+
 export const notificationScope = pgEnum("notification_scope", ["global", "community", "channel"]);
 export const notificationLevel = pgEnum("notification_level", ["all", "mentions", "none"]);
 

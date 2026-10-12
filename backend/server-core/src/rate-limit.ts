@@ -48,4 +48,27 @@ export const Limits = {
   forgotEmail: { bucket: "auth:forgot:email", limit: 3, windowSeconds: 3600 },
   reset: { bucket: "auth:reset:ip", limit: 10, windowSeconds: 3600 },
   gatewayTicket: { bucket: "gateway:ticket:user", limit: 30, windowSeconds: 60 },
+  ageCheck: { bucket: "auth:age:ip", limit: 20, windowSeconds: 3600 },
+  usernameCheck: { bucket: "auth:username:ip", limit: 120, windowSeconds: 60 },
+  // Spaces: generous for a friend group, tight against scripts.
+  spaceCreate: { bucket: "space:create:user", limit: 10, windowSeconds: 3600 },
+  roomCreate: { bucket: "space:room:user", limit: 30, windowSeconds: 3600 },
+  inviteCreate: { bucket: "space:invite:user", limit: 30, windowSeconds: 3600 },
+  inviteAccept: { bucket: "space:join:user", limit: 30, windowSeconds: 3600 },
+  invitePreview: { bucket: "space:invite-preview:ip", limit: 120, windowSeconds: 60 },
+  messageSend: { bucket: "chat:send:user", limit: 30, windowSeconds: 30 },
+  messageEdit: { bucket: "chat:edit:user", limit: 30, windowSeconds: 60 },
+  /** Bursts: a person typing fast never hits this; a script does. */
+  messageFlood: { bucket: "chat:flood:user", limit: 8, windowSeconds: 10 },
+  /** Links from accounts under a day old or unverified: a few at a time. */
+  newAccountLinks: { bucket: "chat:links:new", limit: 3, windowSeconds: 600 },
+  upload: { bucket: "media:upload:user", limit: 60, windowSeconds: 3600 },
+  report: { bucket: "safety:report:user", limit: 20, windowSeconds: 3600 },
+  modAction: { bucket: "safety:mod:user", limit: 60, windowSeconds: 600 },
+  voiceJoin: { bucket: "voice:join:user", limit: 30, windowSeconds: 600 },
+  pushToken: { bucket: "push:token:user", limit: 20, windowSeconds: 3600 },
+  /** New conversations: plenty for a person, too few for cold-message spam. */
+  dmOpen: { bucket: "dm:open:user", limit: 20, windowSeconds: 3600 },
+  dmChange: { bucket: "dm:change:user", limit: 60, windowSeconds: 600 },
+  react: { bucket: "chat:react:user", limit: 60, windowSeconds: 60 },
 } satisfies Record<string, RateLimitRule>;

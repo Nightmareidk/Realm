@@ -21,8 +21,40 @@ export interface DbHandle {
   close: () => Promise<void>;
 }
 
+/** The embedded development database: `pglite:<folder>` or `pglite:memory`. */
+export const EMBEDDED_PREFIX = "pglite:";
+
+/**
+ * Opens the database a URL names: Postgres over the network (postgres.js), or in development the
+ * embedded one (PGlite, migrated on open). The embedded driver is loaded only when asked for.
+ */
+export async function openDb(
+  url: string,
+  options: { max?: number; appName?: string } = {},
+): Promise<DbHandle> {
+  if (url.startsWith(EMBEDDED_PREFIX)) {
+    const { openEmbeddedDb } = await import("./embedded");
+    return openEmbeddedDb(url.slice(EMBEDDED_PREFIX.length) || "memory");
+  }
+  return createDb(url, options);
+}
+
+/**
+ * A transaction pooler (Supabase's on port 6543, Neon's "-pooler" hosts, anything flagged
+ * `pgbouncer=true`) can't hold prepared statements between transactions, so they're turned off
+ * there. The flag itself isn't a Postgres setting and is taken out of the URL.
+ */
+export function poolerAware(url: string): { url: string; prepare: boolean } {
+  const pooled = /[?&]pgbouncer=true\b|-pooler\.|pooler\.supabase\.com|:6543\//.test(url);
+  const clean = url.replace(/([?&])pgbouncer=true&?/, "$1").replace(/[?&]$/, "");
+  return { url: clean, prepare: !pooled };
+}
+
 export function createDb(url: string, options: { max?: number; appName?: string } = {}): DbHandle {
-  const client = postgres(url, {
+  const target = poolerAware(url);
+  // Neon and Supabase need TLS: put `?sslmode=require` on their URLs (postgres.js reads it).
+  const client = postgres(target.url, {
+    prepare: target.prepare,
     max: options.max ?? 10,
     connection: { application_name: options.appName ?? "realm" },
     // bigint columns come back as JS bigint, matching the schema's `mode: "bigint"`.

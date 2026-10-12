@@ -1,0 +1,4 @@
+# wss://VOICE_DOMAIN → LiveKit on this machine. Caddy fetches and renews the certificate.
+{$VOICE_DOMAIN} {
+	reverse_proxy 127.0.0.1:7880
+}

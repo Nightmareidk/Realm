@@ -63,8 +63,17 @@ export async function createSession(
   return { token, session };
 }
 
-/** Validates a raw session token. Returns null for unknown, expired, revoked, or inactive users. */
-export async function resolveSession(deps: Deps, token: string): Promise<ResolvedSession | null> {
+/**
+ * Validates a raw session token. Returns null for unknown, expired, revoked, or inactive users.
+ * A `peek` (the web server checking who's signed in while it renders a page) never extends the
+ * session: it can't pass a renewed cookie on to the browser, so the browser's own next request
+ * should be the one that does.
+ */
+export async function resolveSession(
+  deps: Deps,
+  token: string,
+  { peek = false }: { peek?: boolean } = {},
+): Promise<ResolvedSession | null> {
   if (token.length < 20 || token.length > 200) return null;
   const tokenHash = sha256Hex(token);
   const now = Date.now();
@@ -118,8 +127,8 @@ export async function resolveSession(deps: Deps, token: string): Promise<Resolve
     expiresAt: cached.expiresAt,
   };
 
-  const renew = cached.expiresAt - now < RENEW_THRESHOLD_MS;
-  const touch = now - cached.lastActiveAt > TOUCH_INTERVAL_MS;
+  const renew = !peek && cached.expiresAt - now < RENEW_THRESHOLD_MS;
+  const touch = !peek && now - cached.lastActiveAt > TOUCH_INTERVAL_MS;
   if (renew || touch) {
     const expiresAt = renew ? new Date(now + SESSION_TTL_MS) : new Date(cached.expiresAt);
     await deps.db

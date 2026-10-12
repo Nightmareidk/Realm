@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Snowflake } from "../ids";
 import { Limits } from "../limits";
 import { IsoDateTime, Platform } from "./common";
-import { DisplayName, SelfUser, Username } from "./users";
+import { DisplayName, SelfUser, ThemeAccent, Username } from "./users";
 
 export const Email = z.email("Enter a valid email address").trim().max(254);
 
@@ -21,6 +21,11 @@ export function ageInYears(birthDate: string, now: Date = new Date()): number {
   return age;
 }
 
+/** Under 18: the teen defaults apply. */
+export function isMinor(birthDate: string, now: Date = new Date()): boolean {
+  return ageInYears(birthDate, now) < Limits.adultAgeYears;
+}
+
 export const BirthDate = z.iso
   .date()
   .refine((v) => ageInYears(v) >= Limits.minimumAgeYears, {
@@ -35,8 +40,32 @@ export const RegisterBody = z
     displayName: DisplayName,
     password: Password,
     birthDate: BirthDate,
+    /** The colour picked on sign-up's first step. */
+    accent: ThemeAccent.optional(),
   })
   .meta({ id: "RegisterBody" });
+
+/**
+ * Sign-up's birthday step, asked before anything personal. A date under the minimum age puts a
+ * 24-hour hold on this browser (an HttpOnly cookie the API enforces on register).
+ */
+export const AgeCheckBody = z.object({ birthDate: z.iso.date() }).meta({ id: "AgeCheckBody" });
+export type AgeCheckBody = z.infer<typeof AgeCheckBody>;
+
+/** Whether a username can be taken, checked as someone types it. */
+export const UsernameAvailability = z
+  .object({
+    available: z.boolean(),
+    reason: z.enum(["taken", "reserved", "invalid"]).optional(),
+  })
+  .meta({ id: "UsernameAvailability" });
+export type UsernameAvailability = z.infer<typeof UsernameAvailability>;
+
+/** A reset link's state, checked when the page opens (reading it never uses it up). */
+export const ResetTokenStatus = z
+  .object({ status: z.enum(["valid", "expired", "used", "invalid"]) })
+  .meta({ id: "ResetTokenStatus" });
+export type ResetTokenStatus = z.infer<typeof ResetTokenStatus>;
 export type RegisterBody = z.infer<typeof RegisterBody>;
 
 export const LoginBody = z

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Snowflake } from "../ids";
 import { Limits } from "../limits";
 import { IsoDateTime, MediaRef } from "./common";
+import { Place } from "./media";
 import { UserSummary } from "./users";
 
 export const MessageType = z.enum([
@@ -41,6 +42,13 @@ export const Message = z
     mentions: z.array(Snowflake),
     mentionEveryone: z.boolean(),
     pinned: z.boolean(),
+    /** A place the author chose to share. */
+    place: Place.nullable(),
+    /**
+     * Hidden after several members reported it, until a moderator decides. Its text and files are
+     * left out for everyone but the Space's moderators.
+     */
+    hidden: z.boolean(),
     editedAt: IsoDateTime.nullable(),
     createdAt: IsoDateTime,
     /** Echo of the client's nonce, for reconciling optimistic sends. */
@@ -54,10 +62,11 @@ export const CreateMessageBody = z
     content: z.string().max(Limits.message.max).default(""),
     replyToId: Snowflake.optional(),
     attachmentIds: z.array(Snowflake).max(Limits.messageAttachments.max).default([]),
+    place: Place.optional(),
     nonce: z.string().max(64).optional(),
   })
-  .refine((b) => b.content.trim().length > 0 || b.attachmentIds.length > 0, {
-    message: "A message needs text or an attachment",
+  .refine((b) => b.content.trim().length > 0 || b.attachmentIds.length > 0 || b.place, {
+    message: "A message needs text, a file or a place",
     path: ["content"],
   });
 export type CreateMessageBody = z.infer<typeof CreateMessageBody>;

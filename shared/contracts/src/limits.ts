@@ -6,10 +6,17 @@ export const Limits = {
   bio: { max: 300 },
   pronouns: { max: 40 },
   minimumAgeYears: 13,
+  /** Under this age, the teen defaults apply (docs/research/2026-10-phase1-spaces-feed-safety.md §3.4). */
+  adultAgeYears: 18,
   communityName: { min: 2, max: 64 },
   communitySlug: { min: 3, max: 32 },
   communityDescription: { max: 500 },
   channelName: { min: 1, max: 64 },
+  roomName: { min: 1, max: 32 },
+  spacesPerUser: 100,
+  roomsPerSpace: 50,
+  /** A teen's presence shows only in Spaces up to this size. */
+  teenPresenceSpaceSize: 200,
   channelTopic: { max: 1024 },
   roleName: { min: 1, max: 64 },
   message: { max: 4000 },

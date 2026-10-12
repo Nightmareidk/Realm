@@ -1,0 +1,24 @@
+# LiveKit server settings for Realm (keys come from LIVEKIT_KEYS, not this file).
+port: 7880
+# Only Caddy (on the same machine) talks to the signalling port.
+bind_addresses:
+  - 127.0.0.1
+rtc:
+  # Media: UDP 50000-60000, with TCP 7881 as a fallback for strict networks.
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 60000
+  # Advertise the server's public address to callers.
+  use_external_ip: true
+turn:
+  # A relay for people behind firewalls that block the media ports.
+  enabled: true
+  udp_port: 3478
+room:
+  # Rooms close a little after the last person leaves.
+  empty_timeout: 300
+logging:
+  level: info
+# Several voice servers later: point them all at the same Redis and they share the load.
+# redis:
+#   address: 127.0.0.1:6379

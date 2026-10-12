@@ -78,9 +78,55 @@ export const UpdateChannelBody = z
   })
   .partial();
 
+/** Start a conversation: one person is a DM (reused if you already have one); more is a group. */
 export const OpenDmBody = z.object({
-  recipientIds: z.array(Snowflake).min(1).max(Limits.groupDmRecipients.max),
+  recipientIds: z
+    .array(Snowflake)
+    .min(1)
+    .max(Limits.groupDmRecipients.max - 1),
+  /** A group's name (optional; unnamed groups read as their members). */
+  name: z.string().trim().min(1).max(100).optional(),
 });
+export type OpenDmBody = z.infer<typeof OpenDmBody>;
+
+/** Rename a group (null clears it), or pin or unpin a conversation in your own list. */
+export const UpdateConversationBody = z
+  .object({
+    name: z.string().trim().min(1).max(100).nullable(),
+    pinned: z.boolean(),
+  })
+  .partial();
+export type UpdateConversationBody = z.infer<typeof UpdateConversationBody>;
+
+/** The last thing said in a conversation, for the inbox. */
+export const MessagePreview = z
+  .object({
+    id: Snowflake,
+    authorId: Snowflake,
+    type: z.string(),
+    /** The first 140 characters; empty when it's only files or a place. */
+    content: z.string(),
+    attachments: z.number().int(),
+    /** What the first file is, for "Photo", "Voice message" and so on. */
+    attachmentKind: z.enum(["image", "video", "audio", "file"]).nullable(),
+    place: z.boolean(),
+    createdAt: IsoDateTime,
+  })
+  .meta({ id: "MessagePreview" });
+export type MessagePreview = z.infer<typeof MessagePreview>;
+
+/**
+ * A DM or group chat as one of its members sees it: the others in it, the last message, whether
+ * you pinned it, and how far the others have read (only between people who both share read
+ * receipts).
+ */
+export const Conversation = Channel.extend({
+  recipients: z.array(UserSummary),
+  lastMessage: MessagePreview.nullable(),
+  pinned: z.boolean(),
+  seen: z.array(z.object({ userId: Snowflake, messageId: Snowflake })),
+}).meta({ id: "Conversation" });
+export type Conversation = z.infer<typeof Conversation>;
 
 export const ReadState = z
   .object({

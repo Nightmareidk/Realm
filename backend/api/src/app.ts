@@ -2,15 +2,30 @@ import cookie from "@fastify/cookie";
 import helmet from "@fastify/helmet";
 import swagger from "@fastify/swagger";
 import { sql } from "@realm/db";
-import Fastify, { type FastifyBaseLogger, type FastifyInstance } from "fastify";
+import { MemoryQueue } from "@realm/server-core";
+import Fastify, { type FastifyBaseLogger, type FastifyInstance, LogController } from "fastify";
 import {
   jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
 } from "fastify-type-provider-zod";
 import type { Deps } from "./deps";
+import { jobHandlers } from "./jobs";
 import { authRoutes, gatewayRoutes } from "./modules/auth/routes";
+import { conversationRoutes } from "./modules/dms/routes";
+import { ConversationsService } from "./modules/dms/service";
+import { mediaRoutes } from "./modules/media/routes";
 import { releaseRoutes } from "./modules/releases/routes";
+import { meSafetyRoutes, moderationRoutes, reportRoutes } from "./modules/safety/routes";
+import { SafetyService } from "./modules/safety/service";
+import {
+  channelRoutes,
+  communityRoutes,
+  discoverRoutes,
+  inviteRoutes,
+  meSpaceRoutes,
+  spacesModule,
+} from "./modules/spaces/routes";
 import { userRoutes } from "./modules/users/routes";
 import { registerContext } from "./plugins/context";
 import { registerErrorHandling } from "./plugins/errors";
@@ -23,7 +38,7 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
     trustProxy: deps.config.REALM_TRUST_PROXY,
     bodyLimit: 1024 * 1024,
     genReqId: () => deps.ids.next().toString(36),
-    disableRequestLogging: deps.config.isTest,
+    logController: new LogController({ disableRequestLogging: deps.config.isTest }),
   });
 
   app.setValidatorCompiler(validatorCompiler);
@@ -57,11 +72,28 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       await v1.register(authRoutes(deps), { prefix: "/auth" });
       await v1.register(gatewayRoutes(deps), { prefix: "/gateway" });
       await v1.register(userRoutes(deps), { prefix: "/users" });
+      const spaces = spacesModule(deps);
+      await v1.register(meSpaceRoutes(deps, spaces), { prefix: "/users" });
+      await v1.register(conversationRoutes(deps, new ConversationsService(deps, spaces.messages)), {
+        prefix: "/users",
+      });
+      await v1.register(communityRoutes(deps, spaces), { prefix: "/communities" });
+      await v1.register(channelRoutes(deps, spaces), { prefix: "/channels" });
+      await v1.register(inviteRoutes(deps, spaces), { prefix: "/invites" });
+      await v1.register(discoverRoutes(deps, spaces), { prefix: "/discover" });
+      await v1.register(mediaRoutes(deps), { prefix: "/media" });
+      const safety = new SafetyService(deps);
+      await v1.register(reportRoutes(deps, safety), { prefix: "/reports" });
+      await v1.register(moderationRoutes(deps, safety), { prefix: "/communities" });
+      await v1.register(meSafetyRoutes(deps, safety), { prefix: "/users" });
       await v1.register(releaseRoutes(deps), { prefix: "/releases" });
       v1.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
     },
     { prefix: "/v1" },
   );
+
+  // Without Redis there's no worker process: background jobs run here, after each request.
+  if (deps.queue instanceof MemoryQueue) deps.queue.process(jobHandlers(deps));
 
   return app;
 }

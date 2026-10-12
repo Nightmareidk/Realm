@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -11,7 +12,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createdAt, id, tstz, updatedAt } from "./_columns";
-import { users } from "./users";
+import { themeAccent, users } from "./users";
 
 export const communityVisibility = pgEnum("community_visibility", ["public", "private"]);
 export const joinPolicy = pgEnum("join_policy", ["open", "request", "invite"]);
@@ -29,11 +30,17 @@ export const communities = pgTable(
     ownerId: id()
       .notNull()
       .references(() => users.id),
+    /** The Space's colour, one of the four themes. */
+    accent: themeAccent().notNull().default("mint"),
     visibility: communityVisibility().notNull().default("private"),
     joinPolicy: joinPolicy().notNull().default("invite"),
     isNsfw: boolean().notNull().default(false),
     memberCount: integer().notNull().default(0),
     rules: jsonb().$type<{ title: string; body: string }[]>().notNull().default([]),
+    /** The city a Space says it's in (public Spaces can be found nearby). Rounded to ~1 km. */
+    city: text(),
+    lat: doublePrecision(),
+    lng: doublePrecision(),
     features: id().notNull().default(sql`0`),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -165,6 +172,8 @@ export const channelRecipients = pgTable(
     joinedAt: tstz().notNull().defaultNow(),
     /** Hidden from the user's DM list until a new message arrives. */
     closedAt: tstz(),
+    /** Pinned to the top of the user's DM list. */
+    pinnedAt: tstz(),
   },
   (t) => [
     primaryKey({ columns: [t.channelId, t.userId] }),

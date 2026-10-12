@@ -57,7 +57,8 @@ export function registerContext(app: FastifyInstance, deps: Deps) {
     const token = bearer ?? cookie;
     if (!token) return;
 
-    const session = await resolveSession(deps, token);
+    const peek = req.method === "GET" && req.headers["x-realm-peek"] === "1";
+    const session = await resolveSession(deps, token, { peek });
     if (!session) {
       // Stale cookie: clear it so the browser stops sending it.
       if (!bearer && cookie)

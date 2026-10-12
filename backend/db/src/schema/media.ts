@@ -35,6 +35,8 @@ export const media = pgTable(
     blurhash: text(),
     variants: jsonb().$type<MediaVariants>().notNull().default({}),
     sha256: text(),
+    /** The name the file had on the uploader's device (files only; shown on its card). */
+    filename: text(),
     /** Phase 2: E2EE ciphertext the server cannot process. */
     isEncrypted: boolean().notNull().default(false),
     createdAt: createdAt(),

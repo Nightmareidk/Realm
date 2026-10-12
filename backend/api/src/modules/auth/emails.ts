@@ -40,7 +40,7 @@ export function passwordChangedEmail(opts: { to: string }): Mail {
     text: [
       "Your Realm password was just changed.",
       "",
-      "If this wasn't you, reset your password immediately and review your signed-in devices in Settings → Security.",
+      "If this wasn't you, reset your password immediately and review where you're signed in under Settings, Devices.",
     ].join("\n"),
   };
 }

@@ -1,10 +1,16 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createTestDb } from "@realm/db/testing";
 import {
   createLogger,
+  LocalStore,
   loadConfig,
   MemoryEventBus,
   MemoryMailer,
+  MemoryQueue,
   MemoryStore,
+  NoopPusher,
   RateLimiter,
   SnowflakeGenerator,
 } from "@realm/server-core";
@@ -19,6 +25,8 @@ export interface TestContext {
   deps: Deps;
   mailer: MemoryMailer;
   bus: MemoryEventBus;
+  queue: MemoryQueue;
+  pusher: NoopPusher;
   close: () => Promise<void>;
 }
 
@@ -29,6 +37,8 @@ export async function createTestApp(): Promise<TestContext> {
   const kv = new MemoryStore();
   const mailer = new MemoryMailer();
   const bus = new MemoryEventBus();
+  const queue = new MemoryQueue();
+  const pusher = new NoopPusher();
   const deps: Deps = {
     config,
     logger: createLogger({ name: "test", level: "fatal" }),
@@ -38,7 +48,12 @@ export async function createTestApp(): Promise<TestContext> {
     mailer,
     ids: new SnowflakeGenerator(1),
     limiter: new RateLimiter(kv),
+    storage: new LocalStore(mkdtempSync(join(tmpdir(), "realm-test-media-")), config.REALM_SECRET),
+    queue,
+    pusher,
+    livekit: { url: "wss://test.livekit.cloud", apiKey: "APItest", apiSecret: "secret-for-tests" },
     close: async () => {
+      await queue.drain();
       await closeDb();
     },
   };
@@ -48,6 +63,8 @@ export async function createTestApp(): Promise<TestContext> {
     deps,
     mailer,
     bus,
+    queue,
+    pusher,
     close: async () => {
       await app.close();
       await deps.close();

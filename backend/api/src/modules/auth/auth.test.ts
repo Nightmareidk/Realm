@@ -1,3 +1,5 @@
+import { eq, schema } from "@realm/db";
+import { sha256Hex } from "@realm/server-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   browser,
@@ -188,6 +190,34 @@ describe("login & sessions", () => {
     expect(afterLogout.statusCode).toBe(401);
   });
 
+  it("never extends a session when the web server only peeks at it", async () => {
+    const { cookie } = await register();
+    if (!cookie) throw new Error("no session cookie");
+    // Bring the session near its end, inside the window where it would normally be extended.
+    const soon = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+    await t.deps.db
+      .update(schema.sessions)
+      .set({ expiresAt: soon })
+      .where(eq(schema.sessions.tokenHash, sha256Hex(cookie)));
+    await t.deps.kv.del(`sess:${sha256Hex(cookie)}`);
+
+    const peek = await t.app.inject({
+      method: "GET",
+      url: "/v1/users/@me",
+      headers: { ...browser(cookie), "x-realm-peek": "1" },
+    });
+    expect(peek.statusCode).toBe(200);
+    expect(sessionCookie(peek)).toBeUndefined();
+
+    const visit = await t.app.inject({
+      method: "GET",
+      url: "/v1/users/@me",
+      headers: browser(cookie),
+    });
+    expect(visit.statusCode).toBe(200);
+    expect(sessionCookie(visit)).toBe(cookie);
+  });
+
   it("blocks cookie-authenticated mutations from foreign or missing origins (CSRF)", async () => {
     const { cookie } = await register();
     const foreign = await t.app.inject({
@@ -345,5 +375,137 @@ describe("gateway tickets & releases", () => {
       ["android", "coming_soon"],
       ["ios", "coming_soon"],
     ]);
+  });
+});
+
+describe("sign-up's steps and the recovery details", () => {
+  it("asks the age first and holds an under-age browser for a day, also on register", async () => {
+    const remoteAddress = nextIp();
+    const adult = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/age-check",
+      headers: browser(),
+      payload: { birthDate: "2001-04-12" },
+      remoteAddress,
+    });
+    expect(adult.statusCode).toBe(204);
+
+    const young = new Date();
+    young.setUTCFullYear(young.getUTCFullYear() - 10);
+    const child = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/age-check",
+      headers: browser(),
+      payload: { birthDate: young.toISOString().slice(0, 10) },
+      remoteAddress,
+    });
+    expect(child.statusCode).toBe(403);
+    expect(child.json().error.code).toBe("UNDER_AGE");
+    const hold = child.cookies.find((c) => c.name === "realm_age_hold");
+    expect(hold?.httpOnly).toBe(true);
+
+    const retry = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { ...browser(), cookie: `realm_age_hold=${hold?.value}` },
+      payload: newAccount(),
+      remoteAddress,
+    });
+    expect(retry.statusCode).toBe(403);
+    expect(retry.json().error.code).toBe("UNDER_AGE");
+
+    const forged = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/age-check",
+      headers: { ...browser(), cookie: `realm_age_hold=${Date.now()}.forged` },
+      payload: { birthDate: "2001-04-12" },
+      remoteAddress,
+    });
+    expect(forged.statusCode).toBe(204);
+  });
+
+  it("says whether a username is free, taken, reserved or not allowed", async () => {
+    const { account } = await register();
+    const check = async (username: string) =>
+      (
+        await t.app.inject({
+          method: "GET",
+          url: `/v1/auth/username-available?username=${encodeURIComponent(username)}`,
+          headers: browser(),
+        })
+      ).json();
+    expect(await check(account.username.toUpperCase())).toEqual({
+      available: false,
+      reason: "taken",
+    });
+    expect(await check("admin")).toEqual({ available: false, reason: "reserved" });
+    expect(await check("a b")).toEqual({ available: false, reason: "invalid" });
+    expect(await check(`fresh_${Date.now() % 100000}`)).toEqual({ available: true });
+  });
+
+  it("refuses common passwords and the account's own name as a password", async () => {
+    const common = await register(newAccount({ password: "1234567890" }));
+    expect(common.res.json().error.code).toBe("PASSWORD_TOO_COMMON");
+    const own = newAccount();
+    const named = await register({ ...own, password: `${own.username}2026` });
+    expect(named.res.json().error.code).toBe("PASSWORD_TOO_COMMON");
+  });
+
+  it("keeps the colour picked on sign-up", async () => {
+    const { cookie } = await register({ ...newAccount(), accent: "orchid" } as never);
+    const settings = await t.app.inject({
+      method: "GET",
+      url: "/v1/users/@me/settings",
+      headers: browser(cookie),
+    });
+    expect(settings.json().accent).toBe("orchid");
+  });
+
+  it("answers a verification link opened after verifying as success, not as broken", async () => {
+    const { account, cookie } = await register();
+    const token = tokenFrom(account.email, "/verify");
+    await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/email/verify",
+      headers: browser(cookie),
+      payload: { code: codeFrom(account.email) },
+    });
+    const late = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/email/verify",
+      headers: browser(),
+      payload: { token },
+    });
+    expect(late.statusCode).toBe(200);
+    expect(late.json().emailVerified).toBe(true);
+  });
+
+  it("reports a reset link's state without using it up", async () => {
+    const { account } = await register();
+    await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/password/forgot",
+      headers: browser(),
+      payload: { email: account.email },
+    });
+    const token = tokenFrom(account.email, "/reset");
+    const status = async (tk: string) =>
+      (
+        await t.app.inject({
+          method: "GET",
+          url: `/v1/auth/password/reset/status?token=${tk}`,
+          headers: browser(),
+        })
+      ).json().status;
+    expect(await status(token)).toBe("valid");
+    expect(await status(token)).toBe("valid");
+    await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/password/reset",
+      headers: browser(),
+      payload: { token, password: "a brand new passphrase" },
+    });
+    expect(await status(token)).toBe("used");
+    expect(await status("x".repeat(43))).toBe("invalid");
   });
 });

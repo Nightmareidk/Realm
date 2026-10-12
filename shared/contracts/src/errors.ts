@@ -21,11 +21,17 @@ export const ErrorCode = z.enum([
   "USERNAME_TAKEN",
   "USERNAME_RESERVED",
   "PASSWORD_TOO_WEAK",
+  "PASSWORD_TOO_COMMON",
+  "PASSWORD_BREACHED",
+  "UNDER_AGE",
+  "BIRTHDATE_INVALID",
   "AGE_REQUIREMENT",
   "EMAIL_NOT_VERIFIED",
   "INVALID_CODE",
   "CODE_EXPIRED",
   "TOKEN_INVALID",
+  "TOKEN_OLD_EMAIL",
+  "TOKEN_SUPERSEDED",
   "SESSION_EXPIRED",
   "ACCOUNT_SUSPENDED",
   // social
@@ -36,6 +42,20 @@ export const ErrorCode = z.enum([
   "BANNED_FROM_COMMUNITY",
   "SLOWMODE",
   "CLIENT_OUTDATED",
+  // spaces
+  "INVITE_EXPIRED",
+  "INVITE_USED_UP",
+  "INVITE_REVOKED",
+  "OWNER_CANNOT_LEAVE",
+  "AGE_RESTRICTED",
+  "ROOM_NAME_TAKEN",
+  "LIMIT_REACHED",
+  "COMING_SOON",
+  // uploads, safety, services
+  "UPLOAD_INVALID",
+  "SLOW_DOWN",
+  "SERVICE_UNAVAILABLE",
+  "ALREADY_REPORTED",
 ]);
 export type ErrorCode = z.infer<typeof ErrorCode>;
 

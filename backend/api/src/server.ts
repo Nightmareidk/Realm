@@ -1,10 +1,16 @@
 import { loadConfig } from "@realm/server-core";
 import { buildApp } from "./app";
 import { createDeps } from "./deps";
+import { attachGateway, type Gateway } from "./gateway/gateway";
 
 const config = loadConfig();
-const deps = createDeps(config);
+const deps = await createDeps(config);
 const app = await buildApp(deps);
+
+// Without Redis there's no way to hear the API from another process, so in single-process
+// development the realtime gateway rides on the API's own server at /gateway. With Redis it runs
+// on its own (gateway-main.ts), so socket load never slows the API.
+const gateway: Gateway | null = config.REDIS_URL ? null : attachGateway(app.server, deps);
 
 /**
  * Stops taking requests, lets the ones in flight finish, closes the database and Redis, then
@@ -22,6 +28,7 @@ const shutdown = async (reason: string, code: number) => {
   }, 10_000);
   force.unref();
   try {
+    await gateway?.close();
     await app.close();
     await deps.close();
   } catch (err) {
@@ -45,7 +52,8 @@ process.on("uncaughtException", (err) => {
 });
 
 try {
-  await app.listen({ port: config.REALM_API_PORT, host: "0.0.0.0" });
+  const host = config.REALM_API_HOST ?? (config.isProduction ? "0.0.0.0" : "127.0.0.1");
+  await app.listen({ port: config.REALM_API_PORT, host });
 } catch (err) {
   app.log.fatal({ err }, "couldn't start the API");
   await deps.close().catch(() => {});

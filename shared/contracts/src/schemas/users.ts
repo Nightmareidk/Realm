@@ -28,8 +28,8 @@ export const PublicUser = z
     id: Snowflake,
     username: z.string(),
     displayName: z.string(),
-    avatarUrl: z.url().nullable(),
-    bannerUrl: z.url().nullable(),
+    avatarUrl: z.string().nullable(),
+    bannerUrl: z.string().nullable(),
     accentColor: z.number().int().nullable(),
     bio: z.string().nullable(),
     pronouns: z.string().nullable(),
@@ -51,6 +51,8 @@ export type UserSummary = z.infer<typeof UserSummary>;
 export const SelfUser = PublicUser.extend({
   email: z.email(),
   emailVerified: z.boolean(),
+  /** Under 18: the interface hides what the server won't allow (nearby Spaces, for one). */
+  teen: z.boolean(),
 }).meta({ id: "SelfUser" });
 export type SelfUser = z.infer<typeof SelfUser>;
 
@@ -67,9 +69,14 @@ export const UpdateSelf = z
   .partial();
 export type UpdateSelf = z.infer<typeof UpdateSelf>;
 
+/** The person's theme: the action colour and the light behind every screen (DESIGN.md). */
+export const ThemeAccent = z.enum(["mint", "orchid", "aqua", "ember"]);
+export type ThemeAccent = z.infer<typeof ThemeAccent>;
+
 export const UserSettings = z
   .object({
     theme: z.enum(["system", "dark", "light"]),
+    accent: ThemeAccent,
     reducedMotion: z.enum(["system", "on", "off"]),
     locale: z.string().max(35),
     profileVisibility: z.enum(["public", "private"]),
@@ -83,6 +90,7 @@ export type UserSettings = z.infer<typeof UserSettings>;
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   theme: "system",
+  accent: "mint",
   reducedMotion: "system",
   locale: "en",
   profileVisibility: "public",
@@ -91,6 +99,17 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   showPresence: true,
   showReadReceipts: true,
 };
+
+/**
+ * Where an account under 18 starts (docs/research/2026-10-phase1-spaces-feed-safety.md §3.4,
+ * after Discord's teen defaults and the EU DSA Art. 28 guidelines): a private profile, direct
+ * messages from friends only, and friend requests only from friends of friends.
+ */
+export const TEEN_USER_SETTINGS = {
+  profileVisibility: "private",
+  dmPolicy: "friends",
+  friendRequestPolicy: "friends_of_friends",
+} as const satisfies Partial<UserSettings>;
 
 export const UpdateUserSettings = UserSettings.partial();
 

@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { Snowflake } from "./ids";
-import { Channel, ReadState } from "./schemas/channels";
+import { Channel, Conversation, ReadState } from "./schemas/channels";
 import { Community, Member, Role } from "./schemas/communities";
 import { Message } from "./schemas/messages";
+import { SpaceDetail, VoiceState } from "./schemas/spaces";
 import { Presence, PresenceStatus, Relationship, SelfUser, UserSettings } from "./schemas/users";
 
 export const GATEWAY_VERSION = 1;
@@ -20,6 +21,8 @@ export const Op = {
   INVALID_SESSION: 9,
   HELLO: 10,
   HEARTBEAT_ACK: 11,
+  /** C→S: you joined a voice room (channelId) or left voice (null). */
+  VOICE_STATE: 12,
 } as const;
 export type Op = (typeof Op)[keyof typeof Op];
 
@@ -66,6 +69,7 @@ export const ClientFrame = z.discriminatedUnion("op", [
   z.object({ op: z.literal(Op.SUBSCRIBE), d: SubscribePayload }),
   z.object({ op: z.literal(Op.UNSUBSCRIBE), d: z.object({ communityId: Snowflake }) }),
   z.object({ op: z.literal(Op.TYPING), d: TypingPayload }),
+  z.object({ op: z.literal(Op.VOICE_STATE), d: z.object({ channelId: Snowflake.nullable() }) }),
 ]);
 export type ClientFrame = z.infer<typeof ClientFrame>;
 
@@ -73,11 +77,7 @@ export type ClientFrame = z.infer<typeof ClientFrame>;
 
 export const HelloPayload = z.object({ heartbeatInterval: z.number().int() });
 
-export const ReadyCommunity = Community.extend({
-  channels: z.array(Channel),
-  roles: z.array(Role),
-  self: Member,
-});
+export const ReadyCommunity = SpaceDetail;
 
 export const ReadyPayload = z.object({
   sessionId: z.string(),
@@ -85,9 +85,11 @@ export const ReadyPayload = z.object({
   settings: UserSettings,
   relationships: z.array(Relationship),
   communities: z.array(ReadyCommunity),
-  dmChannels: z.array(Channel),
+  dmChannels: z.array(Conversation),
   readStates: z.array(ReadState),
   presences: z.array(Presence),
+  /** Who's in your Spaces' voice rooms. */
+  voiceStates: z.array(VoiceState),
 });
 export type ReadyPayload = z.infer<typeof ReadyPayload>;
 
@@ -134,6 +136,12 @@ export const DispatchEvents = {
   TYPING_START: z.object({ channelId: Snowflake, userId: Snowflake, at: z.number() }),
   READ_STATE_UPDATE: ReadState,
   MESSAGE_ACK: z.object({ channelId: Snowflake, userId: Snowflake, messageId: Snowflake }),
+  VOICE_STATE_UPDATE: z.object({
+    communityId: Snowflake,
+    channelId: Snowflake,
+    userId: Snowflake,
+    joined: z.boolean(),
+  }),
 } as const;
 
 export type DispatchType = keyof typeof DispatchEvents;

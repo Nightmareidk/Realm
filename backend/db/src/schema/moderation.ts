@@ -1,4 +1,4 @@
-import { bigint, index, jsonb, pgEnum, pgTable, text } from "drizzle-orm/pg-core";
+import { bigint, index, jsonb, pgEnum, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core";
 import { createdAt, id, tstz } from "./_columns";
 import { communities } from "./communities";
 import { users } from "./users";
@@ -49,6 +49,8 @@ export const reports = pgTable(
   (t) => [
     index("reports_community_idx").on(t.communityId, t.status, t.id.desc()),
     index("reports_target_idx").on(t.targetType, t.targetId),
+    // One report per person per thing: repeats can't pile up against someone.
+    uniqueIndex("reports_once_key").on(t.reporterId, t.targetType, t.targetId),
   ],
 );
 

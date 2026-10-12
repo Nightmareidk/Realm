@@ -27,11 +27,16 @@ export const Page = <T extends z.ZodType>(item: T) =>
 export const MediaRef = z
   .object({
     id: Snowflake,
-    url: z.url(),
+    kind: z.enum(["image", "video", "audio", "file"]),
+    /** Read through the API, which checks access first (never a public bucket URL). */
+    url: z.string(),
     width: z.number().int().nullable(),
     height: z.number().int().nullable(),
     blurhash: z.string().nullable(),
     mimeType: z.string(),
+    sizeBytes: z.number().int(),
+    durationMs: z.number().int().nullable(),
+    filename: z.string().nullable(),
   })
   .meta({ id: "MediaRef" });
 export type MediaRef = z.infer<typeof MediaRef>;

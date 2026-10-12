@@ -20,6 +20,7 @@
     "@realm/server-core": "workspace:*",
     "fastify": "5.12.5",
     "fastify-type-provider-zod": "7.0.0",
+    "ws": "8.21.3",
     "zod": "4.6.5"
   },
   "devDependencies": {
