@@ -6,53 +6,164 @@
   --color-*: initial;
 }
 
+/* The theme's colour and lights are typed, so a theme change cross-fades instead of snapping. */
+@property --r-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #3ee6b0;
+}
+@property --r-on-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #04150f;
+}
+@property --r-light-1 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #1fbf8f;
+}
+@property --r-light-2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #2b47ff;
+}
+@property --r-light-3 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #0f766e;
+}
+@property --r-glow {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.6;
+}
+:root {
+  transition:
+    --r-accent var(--r-dur-theme) var(--r-ease-in-out),
+    --r-on-accent var(--r-dur-theme) var(--r-ease-in-out),
+    --r-light-1 var(--r-dur-theme) var(--r-ease-in-out),
+    --r-light-2 var(--r-dur-theme) var(--r-ease-in-out),
+    --r-light-3 var(--r-dur-theme) var(--r-ease-in-out),
+    --r-glow var(--r-dur-theme) var(--r-ease-in-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    transition: none;
+  }
+}
+:root[data-motion="paused"] {
+  transition: none;
+}
+
 @theme inline {
-  --color-ground: var(--r-ground);
-  --color-ground-mid: var(--r-ground-mid);
-  --color-ground-end: var(--r-ground-end);
-  --color-shadow: var(--r-shadow);
-  --color-panel: var(--r-panel);
-  --color-panel-raised: var(--r-panel-raised);
-  --color-land: var(--r-land);
-  --color-rule: var(--r-rule);
-  --color-rule-strong: var(--r-rule-strong);
-  --color-ink: var(--r-ink);
-  --color-ink-soft: var(--r-ink-soft);
-  --color-ink-muted: var(--r-ink-muted);
-  --color-overprint: var(--r-overprint);
-  --color-overprint-fill: var(--r-overprint-fill);
-  --color-overprint-fill-hover: var(--r-overprint-fill-hover);
-  --color-on-overprint: var(--r-on-overprint);
+  /* The public roles (docs/THEMING.md §4.2.1), read by every new component. */
+  --color-base: var(--r-bg);
+  --color-surface: var(--r-surface);
+  --color-surface-raised: var(--r-surface-raised);
+  --color-surface-sunken: var(--r-surface-sunken);
+  --color-line: var(--r-border);
+  --color-line-strong: var(--r-border-strong);
+  --color-fg: var(--r-text);
+  --color-fg-soft: var(--r-text-soft);
+  --color-fg-muted: var(--r-text-muted);
+  --color-accent: var(--r-accent);
+  --color-on-accent: var(--r-on-accent);
   --color-focus: var(--r-focus);
   --color-danger: var(--r-danger);
+  --color-danger-line: var(--r-danger-line);
   --color-success: var(--r-success);
+  --color-presence: var(--r-presence);
+  --color-bubble-mine: var(--r-bubble-mine);
+  --color-on-bubble-mine: var(--r-on-bubble-mine);
+  --color-bubble-theirs: var(--r-bubble-theirs);
+  --color-shadow: var(--r-shadow);
 
-  --color-spaces-fill: var(--r-spaces-fill);
-  --color-spaces-line: var(--r-spaces-line);
-  --color-spaces-solid: var(--r-spaces-solid);
-  --color-spaces-text: var(--r-spaces-text);
-  --color-feed-fill: var(--r-feed-fill);
-  --color-feed-line: var(--r-feed-line);
-  --color-feed-solid: var(--r-feed-solid);
-  --color-feed-text: var(--r-feed-text);
-  --color-profiles-fill: var(--r-profiles-fill);
-  --color-profiles-line: var(--r-profiles-line);
-  --color-profiles-solid: var(--r-profiles-solid);
-  --color-profiles-text: var(--r-profiles-text);
-  --color-boards-fill: var(--r-boards-fill);
-  --color-boards-line: var(--r-boards-line);
-  --color-boards-solid: var(--r-boards-solid);
-  --color-boards-text: var(--r-boards-text);
+  /* Old-world names, aliased onto the roles until the screens that use them are rebuilt
+     (DESIGN.md Migration). New code never uses these. */
+  --color-ground: var(--r-bg);
+  --color-ground-mid: var(--r-bg);
+  --color-ground-end: var(--r-bg);
+  --color-panel: var(--r-surface);
+  --color-panel-raised: var(--r-surface-raised);
+  --color-land: var(--r-surface-sunken);
+  --color-rule: var(--r-border);
+  --color-rule-strong: var(--r-border-strong);
+  --color-ink: var(--r-text);
+  --color-ink-soft: var(--r-text-soft);
+  --color-ink-muted: var(--r-text-muted);
+  --color-overprint: var(--r-accent);
+  --color-overprint-fill: var(--r-accent);
+  --color-overprint-fill-hover: var(--r-accent);
+  --color-on-overprint: var(--r-on-accent);
+  --color-spaces-fill: var(--r-surface-raised);
+  --color-spaces-line: var(--r-text-soft);
+  --color-spaces-solid: var(--r-light-1);
+  --color-spaces-text: var(--r-text-soft);
+  --color-feed-fill: var(--r-surface-raised);
+  --color-feed-line: var(--r-text-soft);
+  --color-feed-solid: var(--r-light-2);
+  --color-feed-text: var(--r-text-soft);
+  --color-profiles-fill: var(--r-surface-raised);
+  --color-profiles-line: var(--r-text-soft);
+  --color-profiles-solid: var(--r-light-3);
+  --color-profiles-text: var(--r-text-soft);
+  --color-boards-fill: var(--r-surface-raised);
+  --color-boards-line: var(--r-text-soft);
+  --color-boards-solid: var(--r-accent);
+  --color-boards-text: var(--r-text-soft);
 
   --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-bricolage), var(--font-atkinson), system-ui, sans-serif;
-  --radius-sm: var(--r-radius-sm);
-  --radius-md: var(--r-radius-md);
-  --radius-lg: var(--r-radius-lg);
-  --radius-xl: var(--r-radius-xl);
+  --font-display: var(--font-funnel), var(--font-atkinson), system-ui, sans-serif;
+  --radius-card: var(--r-radius-card);
+  --radius-input: var(--r-radius-input);
+  --radius-box: var(--r-radius-box);
+  --radius-frame: var(--r-radius-frame);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-xl: 28px;
   --ease-out: var(--r-ease-out);
   --ease-in-out: var(--r-ease-in-out);
   --ease-drawer: var(--r-ease-drawer);
+}
+
+/* Old-world custom properties still read directly by screens awaiting their rebuild. */
+:root {
+  --r-ground: var(--r-bg);
+  --r-ground-mid: var(--r-bg);
+  --r-ground-end: var(--r-bg);
+  --r-panel: var(--r-surface);
+  --r-panel-raised: var(--r-surface-raised);
+  --r-land: var(--r-surface-sunken);
+  --r-rule: var(--r-border);
+  --r-rule-strong: var(--r-border-strong);
+  --r-ink: var(--r-text);
+  --r-ink-soft: var(--r-text-soft);
+  --r-ink-muted: var(--r-text-muted);
+  --r-overprint: var(--r-accent);
+  --r-overprint-fill: var(--r-accent);
+  --r-overprint-fill-hover: var(--r-accent);
+  --r-on-overprint: var(--r-on-accent);
+  --r-spaces-fill: var(--r-surface-raised);
+  --r-spaces-line: var(--r-text-soft);
+  --r-spaces-solid: var(--r-light-1);
+  --r-spaces-text: var(--r-text-soft);
+  --r-feed-fill: var(--r-surface-raised);
+  --r-feed-line: var(--r-text-soft);
+  --r-feed-solid: var(--r-light-2);
+  --r-feed-text: var(--r-text-soft);
+  --r-profiles-fill: var(--r-surface-raised);
+  --r-profiles-line: var(--r-text-soft);
+  --r-profiles-solid: var(--r-light-3);
+  --r-profiles-text: var(--r-text-soft);
+  --r-boards-fill: var(--r-surface-raised);
+  --r-boards-line: var(--r-text-soft);
+  --r-boards-solid: var(--r-accent);
+  --r-boards-text: var(--r-text-soft);
+  --r-radius-sm: 4px;
+  --r-radius-md: 6px;
+  --r-radius-lg: 12px;
+  --r-radius-xl: 28px;
 }
 
 /* Names, titles and labels inside product UI use the legible body face at a heavier weight. */
@@ -266,6 +377,20 @@ main:has([data-ground]) + .site-footer::before {
   text-shadow: 0 1px 3px oklch(0.06 0.02 280 / 0.85);
 }
 
+/* Someone's typing: three dots lift in turn (chat's typing line; motion-safe only). */
+@keyframes realm-typing {
+  0%,
+  70%,
+  100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
 /* Off screen, a part of the page rests (offscreen-still.tsx): its CSS animations pause until it's
    about to come back into view. */
 [data-still] *,
@@ -472,14 +597,14 @@ main:has([data-ground]) + .site-footer::before {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    scrollbar-color: var(--r-rule-strong) transparent;
+    scrollbar-color: var(--r-border-strong) transparent;
     scrollbar-width: thin;
     -webkit-tap-highlight-color: transparent;
   }
 
   body {
     min-height: 100dvh;
-    caret-color: var(--r-overprint);
+    caret-color: var(--r-accent);
     overflow-x: clip;
     font-size: 1.0625rem;
     line-height: 1.6;
@@ -493,52 +618,48 @@ main:has([data-ground]) + .site-footer::before {
     animation-play-state: paused !important;
   }
 
-  /* Behind the whole page, still: two scatterings of stars by night, and a fine grain over the
-     nebula (it keeps the big soft gradients from banding and gives the page a printed finish).
-     One fixed layer; the stars used to twinkle as a second full-screen layer of their own. */
+  /* Behind every page (DESIGN.md): the ink ground lit by the person's theme, still, with grain
+     so the soft light never bands. The front page draws its own moving light instead. The
+     strengths mirror the front page's light field, scaled by the theme's solved glow. */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-image:
-      radial-gradient(1px 1px at 12% 18%, oklch(0.95 0.02 290 / 0.55), transparent 60%),
-      radial-gradient(1px 1px at 68% 9%, oklch(0.95 0.02 290 / 0.4), transparent 60%),
-      radial-gradient(1.4px 1.4px at 83% 41%, oklch(0.95 0.02 290 / 0.45), transparent 60%),
-      radial-gradient(1px 1px at 37% 63%, oklch(0.95 0.02 290 / 0.3), transparent 60%),
-      radial-gradient(1.2px 1.2px at 56% 82%, oklch(0.95 0.02 290 / 0.35), transparent 60%),
-      radial-gradient(1px 1px at 7% 91%, oklch(0.95 0.02 290 / 0.3), transparent 60%),
-      radial-gradient(1px 1px at 91% 74%, oklch(0.95 0.02 290 / 0.35), transparent 60%),
-      radial-gradient(1.6px 1.6px at 22% 30%, oklch(0.9 0.12 200 / 0.6), transparent 60%),
-      radial-gradient(1.4px 1.4px at 74% 22%, oklch(0.88 0.12 330 / 0.52), transparent 60%),
-      radial-gradient(1.8px 1.8px at 48% 72%, oklch(0.93 0.1 90 / 0.56), transparent 60%),
-      radial-gradient(1.3px 1.3px at 88% 86%, oklch(0.88 0.14 290 / 0.52), transparent 60%),
-      radial-gradient(1.5px 1.5px at 8% 64%, oklch(0.9 0.14 140 / 0.52), transparent 60%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size:
-      420px 420px,
-      420px 420px,
-      420px 420px,
-      420px 420px,
-      420px 420px,
-      420px 420px,
-      420px 420px,
-      560px 560px,
-      560px 560px,
-      560px 560px,
-      560px 560px,
-      560px 560px,
-      220px 220px;
+    background:
+      radial-gradient(
+        62% 80% at 18% 100%,
+        color-mix(in srgb, var(--r-light-1) calc(var(--r-glow) * 55%), transparent),
+        color-mix(in srgb, var(--r-light-1) calc(var(--r-glow) * 19%), transparent) 40%,
+        transparent 72%
+      ),
+      radial-gradient(
+        50% 70% at 86% 6%,
+        color-mix(in srgb, var(--r-light-2) calc(var(--r-glow) * 42%), transparent),
+        color-mix(in srgb, var(--r-light-2) calc(var(--r-glow) * 15%), transparent) 42%,
+        transparent 72%
+      ),
+      radial-gradient(
+        42% 60% at 60% 62%,
+        color-mix(in srgb, var(--r-light-3) calc(var(--r-glow) * 28%), transparent),
+        transparent 70%
+      );
   }
-  :root[data-theme="day"] body::before {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.063 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 220px 220px;
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.55;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   ::selection {
-    background: color-mix(in oklch, var(--r-overprint-fill) 45%, transparent);
-    color: var(--r-ink);
+    background: var(--r-selection);
+    color: var(--r-text);
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -550,7 +671,7 @@ main:has([data-ground]) + .site-footer::before {
   :focus-visible {
     outline: 2px solid var(--r-focus);
     outline-offset: 3px;
-    border-radius: var(--r-radius-sm);
+    border-radius: 4px;
   }
 
   a {
@@ -566,5 +687,117 @@ main:has([data-ground]) + .site-footer::before {
 
   p {
     text-wrap: pretty;
+  }
+}
+
+/*
+ * The front page's world (features/home, 2026-10): its own ink ground, light field and grain.
+ * The old sky (the gradient on html, the stars on body) stays off it.
+ */
+/* Inside the app the light is much fainter (the owner, 2026-10-05): the page leads, not the glow. */
+html:has([data-frame="app"]) body::before {
+  opacity: 0.38;
+}
+html:has([data-world="canvas"]) {
+  background: #0b0b0e;
+  scroll-behavior: auto;
+}
+html:has([data-world="canvas"]) body::before,
+html:has([data-world="canvas"]) body::after {
+  display: none;
+}
+/* Theme colours are registered so a theme change cross-fades instead of snapping. */
+@property --acc {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #3ee6b0;
+}
+@property --on-acc {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #04150f;
+}
+@property --l1 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #1fbf8f;
+}
+@property --l2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #2b47ff;
+}
+@property --l3 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #0f766e;
+}
+/* Outside the front page, the shared pieces that read --acc (the mark, action pills) wear the
+   person's own colour. A registered property never falls back, so it has to be set here. */
+:root {
+  --acc: var(--r-accent);
+  --on-acc: var(--r-on-accent);
+}
+[data-world="canvas"] {
+  --acc: #3ee6b0;
+  --on-acc: #04150f;
+  --l1: #1fbf8f;
+  --l2: #2b47ff;
+  --l3: #0f766e;
+  transition:
+    --acc 0.8s ease,
+    --on-acc 0.8s ease,
+    --l1 0.8s ease,
+    --l2 0.8s ease,
+    --l3 0.8s ease;
+  --home-ink: #f5f4f2;
+  --home-ink-2: #c8c6cf;
+  --home-ink-3: #c0bec8;
+  --home-surface: #141419;
+  --home-raised: #1d1d24;
+  --home-rule: #2a2a33;
+  color: var(--home-ink);
+}
+[data-world="canvas"] ::selection {
+  background: color-mix(in srgb, var(--acc) 40%, transparent);
+  color: #fff;
+}
+[data-world="canvas"] :focus-visible {
+  outline-color: var(--acc);
+}
+.home-grain {
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* The front page's loading page (features/home/loader.tsx): only with scripts, once per visit,
+   never with reduced motion or Pause motion. When it's done the dark lifts away while the phone
+   outline grows onto the hero's centre phone. If scripts stall, it gets out of the way by itself. */
+.home-loader {
+  display: none;
+  transition: background-color 0.8s ease 0.35s;
+  animation: home-loader-failsafe 0.4s ease 6s forwards;
+}
+:root.js:not([data-home-loaded]) .home-loader {
+  display: grid;
+}
+.home-loader[data-done] {
+  background-color: transparent;
+  pointer-events: none;
+}
+.home-loader__mark {
+  transition:
+    opacity 0.3s ease,
+    translate 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.home-loader[data-done] .home-loader__mark {
+  opacity: 0;
+  translate: 0 0.75rem;
+}
+@keyframes home-loader-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
   }
 }

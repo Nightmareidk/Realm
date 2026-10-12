@@ -1,51 +1,56 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { contrast, inGamut } from "./color";
+import { contrast, contrastL, fieldPeak, luminance } from "./color";
 import { buildCss } from "./css";
-import { type Edition, editions, type RegionName } from "./tokens";
+import { FIELD_PEAK_LUMINANCE, roles, THEME_ORDER, themes } from "./tokens";
 
-const EDITIONS: Edition[] = ["night", "day"];
-const REGIONS: RegionName[] = ["spaces", "feed", "profiles", "boards"];
+const SURFACES = [roles.bg, roles.surface, roles.surfaceRaised, roles.surfaceSunken];
+const TEXT = [roles.text, roles.textSoft, roles.textMuted];
 
-describe.each(EDITIONS)("%s edition", (name) => {
-  const e = editions[name];
+describe("neutral roles", () => {
+  it("keeps every text role at 4.5:1 or better on every surface", () => {
+    for (const s of SURFACES)
+      for (const t of TEXT) expect(contrast(t, s)).toBeGreaterThanOrEqual(4.5);
+  });
 
-  it("keeps body text at WCAG AA or better on every surface", () => {
-    for (const surface of [e.ground, e.groundMid, e.groundEnd, e.panel, e.land]) {
-      expect(contrast(e.ink, surface)).toBeGreaterThanOrEqual(7);
-      expect(contrast(e.inkSoft, surface)).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(e.inkMuted, surface)).toBeGreaterThanOrEqual(4.5);
+  it("keeps every text role at 4.5:1 on the light field's brightest allowed point", () => {
+    for (const t of [...TEXT, roles.danger]) {
+      expect(contrastL(luminance(t), FIELD_PEAK_LUMINANCE)).toBeGreaterThanOrEqual(4.5);
     }
   });
 
-  it("keeps the overprint accessible as text, button fill, and focus ring", () => {
-    for (const sky of [e.ground, e.groundMid, e.groundEnd]) {
-      expect(contrast(e.overprint, sky)).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(e.overprintFill, sky)).toBeGreaterThanOrEqual(3);
+  it("gives controls and error edges a 3:1 boundary against the ground and surfaces", () => {
+    for (const s of SURFACES) {
+      expect(contrast(roles.borderStrong, s)).toBeGreaterThanOrEqual(3);
+      expect(contrast(roles.dangerLine, s)).toBeGreaterThanOrEqual(3);
+      expect(contrast(roles.presence, s)).toBeGreaterThanOrEqual(3);
     }
-    expect(contrast(e.onOverprint, e.overprintFill)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(e.onOverprint, e.overprintFillHover)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(e.overprintFill, e.ground)).toBeGreaterThanOrEqual(3);
-    expect(contrast(e.focus, e.ground)).toBeGreaterThanOrEqual(3);
-    expect(contrast(e.ruleStrong, e.ground)).toBeGreaterThanOrEqual(3);
   });
 
-  it.each(REGIONS)("region %s is legible on the ground and on its own fill", (region) => {
-    const inks = e.regions[region];
-    expect(contrast(inks.text, e.ground)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(inks.text, inks.fill)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(e.ink, inks.fill)).toBeGreaterThanOrEqual(7);
+  it("keeps danger and success readable as text", () => {
+    for (const s of SURFACES) {
+      expect(contrast(roles.danger, s)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(roles.success, s)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
+describe.each(THEME_ORDER)("%s theme", (id) => {
+  const t = themes[id];
+
+  it("keeps its light field at or under the allowed peak", () => {
+    expect(fieldPeak(t.lights, t.glow)).toBeLessThanOrEqual(FIELD_PEAK_LUMINANCE + 0.002);
   });
 
-  it("stays inside the sRGB gamut", () => {
-    const all = [
-      ...Object.entries(e)
-        .filter(([k]) => k !== "regions")
-        .map(([, v]) => v),
-      ...REGIONS.flatMap((r) => Object.values(e.regions[r])),
-    ];
-    for (const color of all) expect(inGamut(color as never)).toBe(true);
+  it("keeps the action colour readable as text and as a fill", () => {
+    for (const s of SURFACES) expect(contrast(t.accent, s)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastL(luminance(t.accent), FIELD_PEAK_LUMINANCE)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(t.onAccent, t.accent)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("stays apart from the danger colour, so an error never reads as an action", () => {
+    expect(t.accent.toLowerCase()).not.toBe(roles.danger.toLowerCase());
   });
 });
 

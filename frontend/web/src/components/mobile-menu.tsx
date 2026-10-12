@@ -2,10 +2,22 @@
 
 import { List, X } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useEffect, useId, useState } from "react";
+import { type ReactNode, useEffect, useId, useState } from "react";
 import { cx } from "@/lib/cx";
 
-export function MobileMenu({ items }: { items: { href: string; label: string }[] }) {
+/**
+ * `children` sit under the links (for example the Pause motion switch); `panelClassName` lets a
+ * page restyle the dropdown panel.
+ */
+export function MobileMenu({
+  items,
+  children,
+  panelClassName,
+}: {
+  items: { href: string; label: string }[];
+  children?: ReactNode;
+  panelClassName?: string;
+}) {
   const [open, setOpen] = useState(false);
   const id = useId();
 
@@ -33,6 +45,7 @@ export function MobileMenu({ items }: { items: { href: string; label: string }[]
         className={cx(
           "surface fixed inset-x-2 top-[4.5rem] px-5 pb-4 pt-2 transition-[opacity,transform] duration-200 ease-out md:inset-x-4",
           open ? "opacity-100" : "pointer-events-none -translate-y-2 opacity-0",
+          panelClassName,
         )}
         inert={!open}
       >
@@ -51,6 +64,7 @@ export function MobileMenu({ items }: { items: { href: string; label: string }[]
             ))}
           </ul>
         </nav>
+        {children && <div className="border-t border-rule pt-4">{children}</div>}
       </div>
     </div>
   );

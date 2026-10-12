@@ -1,66 +1,68 @@
-/** Minimal OKLCH → sRGB conversion and WCAG contrast, so token choices are verified, not eyeballed. */
+/** sRGB colour maths for verifying tokens: WCAG luminance and contrast, and the light field. */
 
-export interface Oklch {
-  l: number;
-  c: number;
-  h: number;
-  alpha?: number;
+export type Rgb = [number, number, number];
+
+export function hexToRgb(hex: string): Rgb {
+  const h = hex.replace("#", "");
+  return [0, 2, 4].map((i) => Number.parseInt(h.slice(i, i + 2), 16)) as Rgb;
 }
 
-export const oklch = (l: number, c: number, h: number, alpha?: number): Oklch => ({
-  l,
-  c,
-  h,
-  alpha,
-});
+const linear = (v: number) => {
+  const s = v / 255;
+  return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+};
 
-export function toCss({ l, c, h, alpha }: Oklch): string {
-  const base = `${round(l, 4)} ${round(c, 4)} ${round(h, 2)}`;
-  return alpha === undefined ? `oklch(${base})` : `oklch(${base} / ${alpha})`;
+/** WCAG 2.x relative luminance of an sRGB colour (0–255 channels, clamped). */
+export function luminanceRgb([r, g, b]: Rgb): number {
+  const c = (v: number) => linear(Math.min(255, Math.max(0, v)));
+  return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b);
 }
 
-const round = (n: number, d: number) => Number(n.toFixed(d));
+export const luminance = (hex: string) => luminanceRgb(hexToRgb(hex));
 
-/** OKLCH → linear sRGB (Björn Ottosson's OKLab matrices). */
-function toLinearRgb({ l, c, h }: Oklch): [number, number, number] {
-  const hr = (h * Math.PI) / 180;
-  const a = c * Math.cos(hr);
-  const b = c * Math.sin(hr);
-  const l_ = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3;
-  const m_ = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3;
-  const s_ = (l - 0.0894841775 * a - 1.291485548 * b) ** 3;
-  return [
-    4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_,
-    -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_,
-    -0.0041960863 * l_ - 0.7034186147 * m_ + 1.707614701 * s_,
-  ];
-}
-
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
-
-/** True when the colour is inside the sRGB gamut (small tolerance). */
-export function inGamut(color: Oklch): boolean {
-  return toLinearRgb(color).every((v) => v >= -0.0005 && v <= 1.0005);
-}
-
-export function toHex(color: Oklch): string {
-  const encode = (v: number) => {
-    const x = clamp01(v);
-    const s = x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055;
-    return Math.round(clamp01(s) * 255)
-      .toString(16)
-      .padStart(2, "0");
-  };
-  return `#${toLinearRgb(color).map(encode).join("")}`;
-}
-
-/** WCAG 2.x relative luminance (from linear sRGB, clamped to gamut). */
-export function luminance(color: Oklch): number {
-  const [r, g, b] = toLinearRgb(color).map(clamp01) as [number, number, number];
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-export function contrast(a: Oklch, b: Oklch): number {
-  const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m) as [number, number];
+/** Contrast between two luminances (or colours), as WCAG's ratio. */
+export function contrastL(a: number, b: number): number {
+  const [x, y] = a > b ? [a, b] : [b, a];
   return (x + 0.05) / (y + 0.05);
+}
+
+export const contrast = (a: string, b: string) => contrastL(luminance(a), luminance(b));
+
+/**
+ * The brightest point of the light field for a theme, mirroring how the front page draws it
+ * (features/home/light-field.tsx): three radial fields added with "lighter" over the ink ground,
+ * moving with scroll. Sampled across every scroll position.
+ */
+export function fieldPeak(
+  lights: [string, string, string],
+  glow: number,
+  ground = "#0b0b0e",
+): number {
+  const W = 192;
+  const H = 108;
+  const base = hexToRgb(ground);
+  const cols = lights.map(hexToRgb);
+  const alphas = [0.55 * glow, 0.42 * glow, 0.28 * glow];
+  const stop = (d: number, a: number) =>
+    d >= 1 ? 0 : d <= 0.55 ? a + (a * 0.35 - a) * (d / 0.55) : a * 0.35 * (1 - (d - 0.55) / 0.45);
+  let peak = 0;
+  for (let p = 0; p <= 6; p += 0.05) {
+    const fields: [number, number, number][] = [
+      [W * (0.22 + 0.16 * Math.sin(p * 2.1)), H * (1.02 - 0.18 * Math.cos(p * 1.3)), W * 0.62],
+      [W * (0.84 - 0.2 * Math.sin(p * 1.6 + 1)), H * (0.12 + 0.25 * Math.sin(p * 1.1)), W * 0.5],
+      [W * (0.55 + 0.25 * Math.cos(p * 0.9)), H * (0.6 + 0.2 * Math.sin(p * 1.7 + 2)), W * 0.42],
+    ];
+    for (let y = 0; y < H; y += 3) {
+      for (let x = 0; x < W; x += 3) {
+        const px: Rgb = [...base];
+        fields.forEach(([fx, fy, r], i) => {
+          const a = stop(Math.hypot(x - fx, y - fy) / r, alphas[i] as number);
+          for (let k = 0; k < 3; k++)
+            px[k] = (px[k] as number) + ((cols[i] as Rgb)[k] as number) * a;
+        });
+        peak = Math.max(peak, luminanceRgb(px));
+      }
+    }
+  }
+  return peak;
 }

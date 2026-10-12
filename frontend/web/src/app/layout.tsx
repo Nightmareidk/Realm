@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from "next/font/google";
+import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque, Funnel_Display } from "next/font/google";
 import { SITE } from "@/lib/site";
 import "./globals.css";
-import { Nebula } from "@/components/nebula";
 
 /**
  * Headlines: a modern editorial grotesk. Its optical sizes tighten it up at display sizes (the
@@ -13,6 +12,16 @@ const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
   display: "swap",
   axes: ["opsz"],
+});
+
+/**
+ * The front page's display face (the new world, 2026-10): a confident, slightly quirky grotesk
+ * that stays crisp set tight and large. Reading text stays Atkinson.
+ */
+const funnel = Funnel_Display({
+  subsets: ["latin"],
+  variable: "--font-funnel",
+  display: "swap",
 });
 
 /** Body text: designed for legibility (distinct letterforms help dyslexic readers). */
@@ -72,27 +81,25 @@ export const viewport: Viewport = {
 };
 
 /**
- * Dark is the default. The day edition and paused motion are personal choices remembered on
- * this device and applied before first paint, so nothing flashes or moves unexpectedly. The
- * landing page's opening plays once per visit, and never with reduced or paused motion.
+ * Night is the only edition for now. The person's colour (Mint, Orchid, Aqua or Ember) and paused
+ * motion are remembered on this device and applied before first paint, so nothing flashes or
+ * moves unexpectedly. The front page's loader plays once per visit, never with reduced or paused
+ * motion.
  */
-const bootScript = `try{var d=document.documentElement;d.style.setProperty("--aurora-t",(Date.now()/1e3%48).toFixed(2));var t=localStorage.getItem("realm:theme");if(t==="day"||t==="night")d.dataset.theme=t;var p=localStorage.getItem("realm:motion")==="paused";if(p)d.dataset.motion="paused";if(p||sessionStorage.getItem("realm:intro")||matchMedia("(prefers-reduced-motion: reduce)").matches)d.dataset.intro="skip"}catch(e){}`;
+const bootScript = `try{var d=document.documentElement;d.classList.add("js");d.style.setProperty("--aurora-t",(Date.now()/1e3%48).toFixed(2));var a=localStorage.getItem("realm:accent");if(a==="orchid"||a==="aqua"||a==="ember")d.dataset.accent=a;var p=localStorage.getItem("realm:motion")==="paused";if(p)d.dataset.motion="paused";if(p||sessionStorage.getItem("realm:loaded")||matchMedia("(prefers-reduced-motion: reduce)").matches)d.dataset.homeLoaded="";if(p||sessionStorage.getItem("realm:intro")||matchMedia("(prefers-reduced-motion: reduce)").matches)d.dataset.intro="skip"}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${bricolage.variable} ${atkinson.variable}`}
+      className={`${bricolage.variable} ${atkinson.variable} ${funnel.variable}`}
       suppressHydrationWarning
     >
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static, first-party preferences bootstrap */}
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
-      <body>
-        <Nebula />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

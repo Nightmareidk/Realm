@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/button";
+import { redirect } from "next/navigation";
+import { AuthHeader, AuthSwitch } from "@/features/auth/auth-shell";
+import { SignupFlow } from "@/features/auth/signup-flow";
+import { safeNext } from "@/lib/api";
+import { peekViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = {
   title: "Create your account",
@@ -8,17 +12,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/signup" },
 };
 
-// The sign-up form is the next build step (the API behind it already exists).
-export default function SignupPage() {
+export default async function SignupPage({ searchParams }: PageProps<"/signup">) {
+  const next = safeNext((await searchParams).next);
+  if (await peekViewer()) redirect(next);
+  const login = next === "/home" ? "/login" : `/login?next=${encodeURIComponent(next)}`;
   return (
-    <div className="w-full max-w-[26rem]">
-      <h1 className="display text-[2.4rem] text-ink">Create your account</h1>
-      <p className="mt-3 text-ink-soft">
-        Sign-up is being wired up right now and opens in the next build of early access.
-      </p>
-      <ButtonLink href="/" variant="secondary" className="mt-8">
-        Back to the map
-      </ButtonLink>
-    </div>
+    <>
+      <AuthHeader aside={<AuthSwitch lead="Have an account?" href={login} label="Sign in" />} />
+      <main id="main" className="flex flex-1 items-center">
+        <SignupFlow next={next} />
+      </main>
+    </>
   );
 }
