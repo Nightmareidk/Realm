@@ -13,7 +13,8 @@
       "!**/.next",
       "!**/dist",
       "!**/drizzle/meta",
-      "!**/public/draco"
+      "!**/public/draco",
+      "!**/.impeccable/mocks"
     ]
   },
   "formatter": {
@@ -54,6 +55,14 @@
       "linter": {
         "domains": {
           "next": "recommended",
+          "react": "recommended"
+        }
+      }
+    },
+    {
+      "includes": ["frontend/mobile/**"],
+      "linter": {
+        "domains": {
           "react": "recommended"
         }
       }

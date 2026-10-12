@@ -9,6 +9,11 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 
+# the embedded development database (DATABASE_URL=pglite:.data/pglite)
+.data/
+# Local dev tools downloaded on this machine (LiveKit for Windows).
+.tools/
+
 # env — only .env.example is committed
 .env
 .env.*
@@ -35,3 +40,12 @@ test-results/
 
 # rendered frames kept between cast runs (frontend/web/scripts/render-cast.mjs)
 .cache/
+
+# scrollable direction prototypes (copies of vendor files and art)
+.impeccable/mocks/proto/
+
+# Expo (frontend/mobile): local state, generated types and native folders from prebuild
+.expo/
+expo-env.d.ts
+frontend/mobile/android/
+frontend/mobile/ios/

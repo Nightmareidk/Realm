@@ -8,6 +8,8 @@ allowBuilds:
   esbuild: true
   sharp: true
   "@biomejs/biome": true
+  '@firebase/util': false
+  protobufjs: false
 
 # pnpm holds back very fresh releases (supply-chain safety); explicit exceptions only.
 minimumReleaseAgeExclude:
