@@ -17,6 +17,9 @@ export const userStatus = pgEnum("user_status", ["active", "suspended", "deactiv
 
 export const platform = pgEnum("platform", ["web", "ios", "android", "windows", "macos", "linux"]);
 
+/** A personal account, or a business one (always public, with a category and a link). */
+export const accountKind = pgEnum("account_kind", ["personal", "business"]);
+
 export const users = pgTable(
   "users",
   {
@@ -34,6 +37,10 @@ export const users = pgTable(
     bio: text(),
     pronouns: text(),
     accentColor: integer(),
+    accountKind: accountKind().notNull().default("personal"),
+    /** Business accounts: what they are ("Esports team") and where to find them. */
+    category: text(),
+    websiteUrl: text(),
     flags: id().notNull().default(sql`0`),
     status: userStatus().notNull().default("active"),
     createdAt: createdAt(),

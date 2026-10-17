@@ -71,4 +71,9 @@ export const Limits = {
   dmOpen: { bucket: "dm:open:user", limit: 20, windowSeconds: 3600 },
   dmChange: { bucket: "dm:change:user", limit: 60, windowSeconds: 600 },
   react: { bucket: "chat:react:user", limit: 60, windowSeconds: 60 },
+  // Posts and Clips: a busy evening of posting is fine, a bot's flood isn't.
+  postCreate: { bucket: "post:create:user", limit: 30, windowSeconds: 3600 },
+  commentCreate: { bucket: "post:comment:user", limit: 30, windowSeconds: 300 },
+  follow: { bucket: "social:follow:user", limit: 120, windowSeconds: 3600 },
+  search: { bucket: "social:search:key", limit: 60, windowSeconds: 60 },
 } satisfies Record<string, RateLimitRule>;

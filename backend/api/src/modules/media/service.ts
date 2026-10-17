@@ -12,6 +12,7 @@ import type { Deps } from "../../deps";
 import { AppError, notFound } from "../../lib/errors";
 import { MESSAGE_HIDDEN, toMediaInfo } from "../../lib/serialize-spaces";
 import { acceptAs, imageSize, sniff } from "../../lib/sniff";
+import { seenThroughPost } from "../social/access";
 import { roomAccess } from "../spaces/access";
 
 const { media, messageAttachments, messages, users } = schema;
@@ -187,6 +188,7 @@ export class MediaService {
         .limit(1);
       if (member) return true;
     }
+    if (await seenThroughPost(this.db, row.id, viewerId)) return true;
     if (!viewerId) return false;
     const uses = await this.db
       .select({ channelId: messages.channelId, flags: messages.flags })

@@ -18,6 +18,8 @@ import { mediaRoutes } from "./modules/media/routes";
 import { releaseRoutes } from "./modules/releases/routes";
 import { meSafetyRoutes, moderationRoutes, reportRoutes } from "./modules/safety/routes";
 import { SafetyService } from "./modules/safety/service";
+import { postRoutes, socialUserRoutes } from "./modules/social/routes";
+import { SocialService } from "./modules/social/service";
 import {
   channelRoutes,
   communityRoutes,
@@ -87,6 +89,9 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       await v1.register(moderationRoutes(deps, safety), { prefix: "/communities" });
       await v1.register(meSafetyRoutes(deps, safety), { prefix: "/users" });
       await v1.register(releaseRoutes(deps), { prefix: "/releases" });
+      const social = new SocialService(deps);
+      await v1.register(postRoutes(deps, social));
+      await v1.register(socialUserRoutes(deps, social), { prefix: "/users" });
       v1.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
     },
     { prefix: "/v1" },

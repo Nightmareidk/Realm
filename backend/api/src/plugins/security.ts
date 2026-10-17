@@ -2,11 +2,24 @@ import { Limits } from "@realm/server-core";
 import type { FastifyInstance } from "fastify";
 import type { Deps } from "../deps";
 import { AppError, rateLimited } from "../lib/errors";
-import { trustedOrigin } from "../lib/origins";
+import { isAppPreview, trustedOrigin } from "../lib/origins";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export function registerSecurity(app: FastifyInstance, deps: Deps) {
+  // Development only: the phone app's browser preview is another origin, so it needs CORS.
+  app.addHook("onRequest", async (req, reply) => {
+    const origin = req.headers.origin;
+    if (!origin || !isAppPreview(deps, origin)) return;
+    reply
+      .header("access-control-allow-origin", origin)
+      .header("access-control-allow-headers", "authorization, content-type, x-realm-client")
+      .header("access-control-allow-methods", "GET, POST, PUT, PATCH, DELETE")
+      .header("access-control-expose-headers", "retry-after")
+      .header("vary", "origin");
+    if (req.method === "OPTIONS") return reply.status(204).send();
+  });
+
   app.addHook("onRequest", async (req, reply) => {
     // Coarse per-IP budget in front of every route.
     const global = await deps.limiter.hit(Limits.global, req.ip);

@@ -24,6 +24,10 @@ export const Limits = {
   postTitle: { min: 1, max: 300 },
   postBody: { max: 40_000 },
   comment: { max: 10_000 },
+  /** Posts and Clips (the Instagram side): a caption, up to 10 photos, a short comment. */
+  caption: { max: 2200 },
+  postMedia: { max: 10 },
+  postComment: { max: 1000 },
   groupDmRecipients: { max: 25 },
   pageSize: { default: 50, max: 100 },
 } as const;

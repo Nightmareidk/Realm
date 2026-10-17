@@ -10,5 +10,6 @@ export * from "./schemas/media";
 export * from "./schemas/messages";
 export * from "./schemas/releases";
 export * from "./schemas/safety";
+export * from "./schemas/social";
 export * from "./schemas/spaces";
 export * from "./schemas/users";

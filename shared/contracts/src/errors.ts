@@ -56,6 +56,7 @@ export const ErrorCode = z.enum([
   "SLOW_DOWN",
   "SERVICE_UNAVAILABLE",
   "ALREADY_REPORTED",
+  "PRIVATE_ACCOUNT",
 ]);
 export type ErrorCode = z.infer<typeof ErrorCode>;
 

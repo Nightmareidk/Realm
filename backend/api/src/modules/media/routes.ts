@@ -48,7 +48,10 @@ export const mediaRoutes =
     // The file itself: a short-lived link for someone allowed to see it. Profile pictures are
     // public; everything else needs the viewer's session.
     app.get("/:id/raw", { schema: { params: IdParams } }, async (req, reply) => {
-      const url = await service.readUrl(BigInt(req.params.id), req.auth?.userId ?? null);
+      const link = await service.readUrl(BigInt(req.params.id), req.auth?.userId ?? null);
+      // In development the link is a web path (/api/v1/…, through the web app's proxy); the
+      // phone app talks to the API directly, where the same path has no /api in front.
+      const url = req.client.isNative && link.startsWith("/api/v1/") ? link.slice(4) : link;
       return reply
         .header("cache-control", "private, max-age=300")
         .header("referrer-policy", "no-referrer")

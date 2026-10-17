@@ -7,6 +7,7 @@ export const notificationType = pgEnum("notification_type", [
   "mention",
   "reply",
   "post_comment",
+  "post_like",
   "comment_reply",
   "vote_milestone",
   "follow",

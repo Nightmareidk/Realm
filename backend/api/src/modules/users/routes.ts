@@ -136,6 +136,14 @@ export const userRoutes =
           .onConflictDoUpdate({ target: userSettings.userId, set: req.body })
           .returning();
         if (!row) throw notFound("Settings");
+        if (req.body.profileVisibility === "public") {
+          await deps.db
+            .update(schema.follows)
+            .set({ status: "active" })
+            .where(
+              and(eq(schema.follows.followeeId, userId), eq(schema.follows.status, "pending")),
+            );
+        }
         const settings = toUserSettings(row);
         await deps.bus.publish(`user:${userId}`, { type: "USER_SETTINGS_UPDATE", data: settings });
         return settings;

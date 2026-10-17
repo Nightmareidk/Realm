@@ -11,6 +11,7 @@ const PRIVATE_HOST =
 export function trustedOrigin(deps: Pick<Deps, "config">, origin: string): boolean {
   const web = new URL(deps.config.REALM_WEB_ORIGIN);
   if (origin === web.origin) return true;
+  if (isAppPreview(deps, origin)) return true;
   if (deps.config.isProduction || !deps.config.REALM_DEV_LAN) return false;
   try {
     const u = new URL(origin);
@@ -18,4 +19,12 @@ export function trustedOrigin(deps: Pick<Deps, "config">, origin: string): boole
   } catch {
     return false;
   }
+}
+
+/**
+ * Development only: the phone app's browser preview (Expo web on port 8082), used to check the
+ * app's screens on this PC. It signs in with a bearer token like the app, never a cookie.
+ */
+export function isAppPreview(deps: Pick<Deps, "config">, origin: string): boolean {
+  return !deps.config.isProduction && origin === "http://localhost:8082";
 }
