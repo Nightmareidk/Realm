@@ -52,8 +52,11 @@ export function Pill({
   pending,
   pendingLabel,
   style,
+  size = "lg",
 }: {
   kind?: "action" | "ghost" | "quiet";
+  /** lg 56dp for a screen's main action; md 44dp for actions in a row. */
+  size?: "lg" | "md";
   label: string;
   onPress: () => void;
   pending?: boolean;
@@ -97,6 +100,7 @@ export function Pill({
         <Animated.View
           style={[
             s.pill,
+            size === "md" && s.pillMd,
             kind === "ghost" && s.ghost,
             fill,
             pressed && { transform: [{ scale: 0.97 }] },
@@ -106,7 +110,14 @@ export function Pill({
           {pending && (
             <ActivityIndicator color={kind === "action" ? onAccent : roles.text} size="small" />
           )}
-          <Animated.Text style={[s.pillLabel, kind === "quiet" && { color: roles.textSoft }, ink]}>
+          <Animated.Text
+            style={[
+              s.pillLabel,
+              size === "md" && s.pillLabelMd,
+              kind === "quiet" && { color: roles.textSoft },
+              ink,
+            ]}
+          >
             {pending ? (pendingLabel ?? label) : label}
           </Animated.Text>
         </Animated.View>
@@ -261,6 +272,8 @@ const s = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
   },
+  pillMd: { minHeight: 44, paddingHorizontal: 18 },
+  pillLabelMd: { fontSize: 15 },
   ghost: { borderWidth: 1.5, borderColor: roles.borderStrong },
   pillLabel: { fontFamily: fonts.bold, fontSize: 17, color: roles.text },
   linkHit: { minHeight: 48, justifyContent: "center" },

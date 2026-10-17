@@ -9,11 +9,25 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Platform } from "react-native";
 import { api, setSessionToken } from "./server";
 import { useTheme } from "./theme";
 
 /** The session token lives in the OS keychain (Android Keystore), never in plain storage. */
 const TOKEN_KEY = "realm.session";
+
+/**
+ * Where the token is kept: the keychain on a phone. The browser preview of the app (development
+ * only) has no keychain, so it uses the browser's storage instead.
+ */
+const tokenStore =
+  Platform.OS === "web"
+    ? {
+        getItemAsync: async (k: string) => globalThis.localStorage?.getItem(k) ?? null,
+        setItemAsync: async (k: string, v: string) => globalThis.localStorage?.setItem(k, v),
+        deleteItemAsync: async (k: string) => globalThis.localStorage?.removeItem(k),
+      }
+    : SecureStore;
 
 type Session =
   | { status: "loading" }
@@ -25,6 +39,8 @@ interface SessionApi {
   signIn(login: string, password: string): Promise<void>;
   register(body: RegisterBody): Promise<void>;
   signOut(): Promise<void>;
+  /** Load your account again after changing it (name, picture). */
+  refreshUser(): Promise<void>;
 }
 
 const SessionContext = createContext<SessionApi | null>(null);
@@ -46,7 +62,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let live = true;
     (async () => {
-      const token = await SecureStore.getItemAsync(TOKEN_KEY).catch(() => null);
+      const token = await tokenStore.getItemAsync(TOKEN_KEY).catch(() => null);
       if (!token) return live && setSession({ status: "signedOut" });
       setSessionToken(token);
       try {
@@ -66,7 +82,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const start = useCallback(
     async (result: AuthResult) => {
       if (!result.token) throw new Error("The server didn't hand this app a session.");
-      await SecureStore.setItemAsync(TOKEN_KEY, result.token);
+      await tokenStore.setItemAsync(TOKEN_KEY, result.token);
       setSessionToken(result.token);
       await adopt(result.user);
     },
@@ -82,9 +98,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       async register(body) {
         await start(await api<AuthResult>("/auth/register", { body }));
       },
+      async refreshUser() {
+        const user = await api<SelfUser>("/users/@me");
+        setSession({ status: "signedIn", user });
+      },
       async signOut() {
         await api("/auth/logout", { method: "POST" }).catch(() => {});
-        await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
+        await tokenStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
         setSessionToken(null);
         setSession({ status: "signedOut" });
       },

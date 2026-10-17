@@ -7,10 +7,11 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
+import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { SessionProvider } from "@/session";
+import { SessionProvider, useSession } from "@/session";
 import { roles, ThemeProvider } from "@/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -37,16 +38,28 @@ export default function RootLayout() {
         <ThemeProvider>
           <SessionProvider>
             <StatusBar style="light" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: roles.bg },
-                animation: "fade",
-              }}
-            />
+            <SessionGate>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: roles.bg },
+                }}
+              >
+                <Stack.Screen name="index" options={{ animation: "fade" }} />
+                <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
+                <Stack.Screen name="create" options={{ presentation: "modal" }} />
+              </Stack>
+            </SessionGate>
           </SessionProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
+}
+
+/** Nothing loads until we know who's signed in, so no screen asks the API as nobody. */
+function SessionGate({ children }: { children: ReactNode }) {
+  const { session } = useSession();
+  if (session.status === "loading") return <View style={{ flex: 1, backgroundColor: roles.bg }} />;
+  return children;
 }

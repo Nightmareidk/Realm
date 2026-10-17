@@ -8,6 +8,8 @@ import { Platform } from "react-native";
  * localhost): the API on port 4000 and the website on 3000.
  */
 function devHost(): string | null {
+  // The browser preview of the app (Expo web) runs on this PC.
+  if (Platform.OS === "web") return globalThis.location?.hostname ?? "localhost";
   return Constants.expoConfig?.hostUri?.split(":")[0] ?? null;
 }
 
@@ -83,8 +85,11 @@ function toApiError(res: Response, data: unknown): ApiError {
   return new ApiError(res.status, body.code, body.message, fields, retryAfter);
 }
 
-/** Tells the API this is the app (it then hands back a session token instead of a cookie). */
-const CLIENT = `${Platform.OS}/0.1.0`;
+/**
+ * Tells the API this is the app (it then hands back a session token instead of a cookie). The
+ * browser preview stands in for the Android app.
+ */
+const CLIENT = `${Platform.OS === "web" ? "android" : Platform.OS}/0.1.0`;
 
 let sessionToken: string | null = null;
 /** Set by the session once signed in; every request after carries it. */
@@ -127,4 +132,65 @@ export async function api<T = void>(
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) throw toApiError(res, data);
   return data as T;
+}
+
+/** Headers that let the app read the API directly (for images and video it loads itself). */
+export function authHeaders(): Record<string, string> {
+  return {
+    "X-Realm-Client": CLIENT,
+    ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+  };
+}
+
+/**
+ * The API gives file links as web paths (`/api/v1/media/…`, through the website's proxy); the app
+ * calls the API itself, where the same path starts at `/v1`.
+ */
+export function resolveUrl(url: string): string {
+  if (/^https?:/.test(url)) return url;
+  const origin = apiOrigin() ?? "";
+  return `${origin}${url.replace(/^\/api\/v1\//, "/v1/")}`;
+}
+
+/** An image or video source for a Realm file: the link plus the session to read it with. */
+export function mediaSource(url: string) {
+  return { uri: resolveUrl(url), headers: authHeaders() };
+}
+
+/**
+ * Uploads a picked photo or video: ask for a ticket, send the bytes where it says, then finish.
+ * Returns the upload's id, ready to attach to a post.
+ */
+export async function upload(file: {
+  uri: string;
+  kind: "image" | "video";
+  mimeType: string;
+  durationMs?: number;
+}): Promise<string> {
+  const bytes = await (await fetch(file.uri)).blob();
+  const ticket = await api<{ mediaId: string; uploadUrl: string; headers: Record<string, string> }>(
+    "/media/uploads",
+    {
+      body: {
+        kind: file.kind,
+        mimeType: file.mimeType,
+        sizeBytes: bytes.size,
+        ...(file.durationMs ? { durationMs: Math.round(file.durationMs) } : {}),
+      },
+    },
+  );
+  let res: Response;
+  try {
+    res = await fetch(resolveUrl(ticket.uploadUrl), {
+      method: "PUT",
+      headers: ticket.headers,
+      body: bytes,
+    });
+  } catch {
+    throw new ApiError(0, "OFFLINE", OFFLINE);
+  }
+  if (!res.ok)
+    throw new ApiError(res.status, "UPLOAD_INVALID", "That upload didn't go through. Try again.");
+  await api(`/media/${ticket.mediaId}/complete`, { method: "POST" });
+  return ticket.mediaId;
 }
