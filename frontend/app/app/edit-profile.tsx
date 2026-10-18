@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { ApiError, api, upload } from "@/server";
 import { useSession } from "@/session";
+import { shrinkPhoto } from "@/shrink";
 import { Avatar } from "@/social/avatar";
 import { AppScreen, TopBar } from "@/social/screen";
 import { fonts, roles } from "@/theme";
@@ -44,7 +45,8 @@ export default function EditProfile() {
     const a = res.assets[0];
     setPicture("Uploading");
     try {
-      const id = await upload({ uri: a.uri, kind: "image", mimeType: a.mimeType ?? "image/jpeg" });
+      const small = await shrinkPhoto(a);
+      const id = await upload({ uri: small.uri, kind: "image", mimeType: small.mimeType });
       await api<SelfUser>("/users/@me", { method: "PATCH", body: { avatarMediaId: id } });
       await refreshUser();
       setPicture(null);

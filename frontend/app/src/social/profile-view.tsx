@@ -17,9 +17,11 @@ import {
 import { useApi, usePosts } from "../data";
 import { Icon } from "../icon";
 import { ApiError, api, mediaSource } from "../server";
+import { useSheet } from "../sheet";
 import { fonts, roles } from "../theme";
 import { Pill } from "../ui";
 import { Avatar, fillFor } from "./avatar";
+import { useSafety } from "./safety";
 import { Empty, Loading, Problem } from "./screen";
 import { compact } from "./time";
 
@@ -38,6 +40,8 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
       ? "/users/@me/saved"
       : `/users/${username}/posts${tab === "clips" ? "?kind=clip" : ""}`;
   const list = usePosts(profile ? path : null);
+  const sheet = useSheet();
+  const safety = useSafety();
 
   if (error && !profile) return <Problem message={error} onRetry={reload} />;
   if (!profile) return <Loading />;
@@ -76,6 +80,74 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
     } catch (err) {
       Alert.alert("Can't message them", err instanceof ApiError ? err.message : "Try again.");
     }
+  }
+
+  /** Someone else's profile menu: report, block, or stop them following you. */
+  function more() {
+    if (!profile) return;
+    const them = profile.user;
+    const summary = {
+      id: them.id,
+      username: them.username,
+      displayName: them.displayName,
+      avatarUrl: them.avatarUrl,
+      accentColor: them.accentColor,
+    };
+    sheet({
+      title: them.displayName,
+      actions: [
+        ...(profile.followsYou
+          ? [
+              {
+                label: "Remove follower",
+                icon: "UserMinus" as const,
+                onPress: () =>
+                  sheet({
+                    title: `Remove ${them.displayName} as a follower?`,
+                    line: profile.isPrivate
+                      ? "They'll stop seeing your followers-only posts, and would have to ask again. They aren't told."
+                      : "They'll stop seeing your posts on their Home. They aren't told.",
+                    actions: [
+                      {
+                        label: "Remove",
+                        danger: true,
+                        onPress: async () => {
+                          try {
+                            await api(`/users/@me/followers/${them.username}`, {
+                              method: "DELETE",
+                            });
+                            reload();
+                          } catch (err) {
+                            sheet({
+                              title: "Not removed",
+                              line: err instanceof ApiError ? err.message : "Try again.",
+                              actions: [],
+                            });
+                          }
+                        },
+                      },
+                    ],
+                  }),
+              },
+            ]
+          : []),
+        {
+          label: "Report account",
+          icon: "Flag",
+          danger: true,
+          onPress: () => safety.report("user", them.id, summary),
+        },
+        {
+          label: `Block @${them.username}`,
+          icon: "Prohibit",
+          danger: true,
+          onPress: () =>
+            safety.block(summary, () =>
+              router.canGoBack() ? router.back() : router.replace("/home"),
+            ),
+        },
+      ],
+    });
   }
 
   const tabs: Tab[] = profile.isSelf ? ["posts", "clips", "saved"] : ["posts", "clips"];
@@ -201,6 +273,17 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
                 />
               )}
               <Pill size="md" kind="ghost" label="Message" onPress={message} style={s.grow} />
+              <Pressable
+                onPress={more}
+                accessibilityRole="button"
+                accessibilityLabel={`More about ${profile.user.displayName}`}
+                style={({ pressed }) => [
+                  s.more,
+                  pressed && { backgroundColor: roles.surfaceRaised },
+                ]}
+              >
+                <Icon name="DotsThreeBold" size={20} color={roles.text} />
+              </Pressable>
             </>
           )}
         </View>
@@ -412,6 +495,15 @@ const s = StyleSheet.create({
   countN: { fontFamily: fonts.bold, fontSize: 17, color: roles.text },
   countLabel: { fontFamily: fonts.body, fontSize: 13.5, color: roles.textSoft },
   actions: { flexDirection: "row", gap: 8, marginTop: 10 },
+  more: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: roles.borderStrong,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   grow: { flex: 1 },
   private: {
     flexDirection: "row",

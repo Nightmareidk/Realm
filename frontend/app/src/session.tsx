@@ -10,15 +10,18 @@ import {
   useState,
 } from "react";
 import { Platform } from "react-native";
-import { api, setSessionToken } from "./server";
+import { live } from "./live";
+import { api, setSessionToken, whenSessionEnds } from "./server";
 import { useTheme } from "./theme";
 
 /** The session token lives in the OS keychain (Android Keystore), never in plain storage. */
 const TOKEN_KEY = "realm.session";
 
 /**
- * Where the token is kept: the keychain on a phone. The browser preview of the app (development
- * only) has no keychain, so it uses the browser's storage instead.
+ * Where the token is kept: the keychain on a phone, readable only while the phone is unlocked
+ * and never copied to a backup or a new phone (signing in again there is the safe way). The
+ * browser preview of the app (development only) has no keychain, so it uses the browser's
+ * storage instead.
  */
 const tokenStore =
   Platform.OS === "web"
@@ -27,7 +30,14 @@ const tokenStore =
         setItemAsync: async (k: string, v: string) => globalThis.localStorage?.setItem(k, v),
         deleteItemAsync: async (k: string) => globalThis.localStorage?.removeItem(k),
       }
-    : SecureStore;
+    : {
+        getItemAsync: (k: string) => SecureStore.getItemAsync(k),
+        setItemAsync: (k: string, v: string) =>
+          SecureStore.setItemAsync(k, v, {
+            keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+          }),
+        deleteItemAsync: (k: string) => SecureStore.deleteItemAsync(k),
+      };
 
 type Session =
   | { status: "loading" }
@@ -41,6 +51,8 @@ interface SessionApi {
   signOut(): Promise<void>;
   /** Load your account again after changing it (name, picture). */
   refreshUser(): Promise<void>;
+  /** Take an account the API just handed back (after confirming your email). */
+  setUser(user: SelfUser): void;
 }
 
 const SessionContext = createContext<SessionApi | null>(null);
@@ -60,24 +72,41 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    let live = true;
+    let mounted = true;
     (async () => {
       const token = await tokenStore.getItemAsync(TOKEN_KEY).catch(() => null);
-      if (!token) return live && setSession({ status: "signedOut" });
+      if (!token) return mounted && setSession({ status: "signedOut" });
       setSessionToken(token);
       try {
         const user = await api<SelfUser>("/users/@me");
-        if (live) await adopt(user);
+        if (mounted) await adopt(user);
       } catch {
         // Signed out elsewhere, expired, or offline: start at the introduction either way.
         setSessionToken(null);
-        if (live) setSession({ status: "signedOut" });
+        if (mounted) setSession({ status: "signedOut" });
       }
     })();
     return () => {
-      live = false;
+      mounted = false;
     };
   }, [adopt]);
+
+  // Signed out from another device, or the password changed: forget this session here too.
+  useEffect(() => {
+    whenSessionEnds(() => {
+      setSessionToken(null);
+      tokenStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
+      setSession({ status: "signedOut" });
+    });
+    return () => whenSessionEnds(null);
+  }, []);
+
+  // One live connection while signed in, for messages as they arrive.
+  useEffect(() => {
+    if (session.status !== "signedIn") return;
+    live.start();
+    return () => live.stop();
+  }, [session.status]);
 
   const start = useCallback(
     async (result: AuthResult) => {
@@ -100,6 +129,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       },
       async refreshUser() {
         const user = await api<SelfUser>("/users/@me");
+        setSession({ status: "signedIn", user });
+      },
+      setUser(user) {
         setSession({ status: "signedIn", user });
       },
       async signOut() {

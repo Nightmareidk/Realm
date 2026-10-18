@@ -16,8 +16,26 @@ function devHost(): string | null {
 export function apiOrigin(): string | null {
   const set = process.env.EXPO_PUBLIC_REALM_API_URL;
   if (set) return set.replace(/\/$/, "");
+  // Only a development build may find the API on the Wi-Fi; a release build must be told where.
+  if (!__DEV__) return null;
   const host = devHost();
   return host ? `http://${host}:4000` : null;
+}
+
+/**
+ * Plain http only to this PC on the home network while developing. A release build talks to
+ * Realm over https and nothing else, so the session token never crosses a network in the clear.
+ */
+function secureEnough(origin: string) {
+  return origin.startsWith("https://") || __DEV__;
+}
+
+/** Where the live connection is: the API's own address in development, or its own host. */
+export function gatewayUrl(): string | null {
+  const set = process.env.EXPO_PUBLIC_REALM_GATEWAY_URL;
+  if (set) return set;
+  const origin = apiOrigin();
+  return origin ? `${origin.replace(/^http/, "ws")}/gateway` : null;
 }
 
 export function webOrigin(): string | null {
@@ -43,14 +61,16 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 
+  /** The session is gone (not a wrong password, which is a 401 too). */
   get signedOut() {
-    return this.status === 401;
+    return this.status === 401 && this.code === "UNAUTHORIZED";
   }
 }
 
 const OFFLINE =
   "We couldn't reach Realm. Check your phone is on the same Wi-Fi as Realm, and try again.";
 const DOWN = "Realm isn't answering right now. Give it a minute and try again.";
+const INSECURE = "This build of Realm isn't set up to reach Realm safely. Update the app.";
 
 export function waitFor(seconds: number | undefined) {
   if (!seconds) return "Wait a little while";
@@ -89,12 +109,44 @@ function toApiError(res: Response, data: unknown): ApiError {
  * Tells the API this is the app (it then hands back a session token instead of a cookie). The
  * browser preview stands in for the Android app.
  */
-const CLIENT = `${Platform.OS === "web" ? "android" : Platform.OS}/0.1.0`;
+export const CLIENT_PLATFORM = Platform.OS === "web" ? "android" : Platform.OS;
+export const CLIENT_VERSION = "0.1.0";
+const CLIENT = `${CLIENT_PLATFORM}/${CLIENT_VERSION}`;
+
+/**
+ * The phone's name for the "Where you're signed in" list ("Google Pixel 7"), so you can tell
+ * your devices apart and sign out the one you lost.
+ */
+function deviceName(): string {
+  if (Platform.OS === "web") return "Browser preview";
+  const c = Platform.constants as { Brand?: string; Model?: string; interfaceIdiom?: string };
+  if (Platform.OS === "android") {
+    const brand = c.Brand ? c.Brand[0]?.toUpperCase() + c.Brand.slice(1) : "";
+    const model = c.Model ?? "";
+    return (model.toLowerCase().startsWith(brand.toLowerCase()) ? model : `${brand} ${model}`)
+      .trim()
+      .slice(0, 48);
+  }
+  return c.interfaceIdiom === "pad" ? "iPad" : "iPhone";
+}
+const DEVICE = deviceName();
 
 let sessionToken: string | null = null;
 /** Set by the session once signed in; every request after carries it. */
 export function setSessionToken(token: string | null) {
   sessionToken = token;
+}
+export function currentToken() {
+  return sessionToken;
+}
+
+/**
+ * Told when the API turns this session away (signed out from another device, or the password
+ * changed): the session then forgets it and the app goes back to the start.
+ */
+let onSessionEnded: (() => void) | null = null;
+export function whenSessionEnds(fn: (() => void) | null) {
+  onSessionEnded = fn;
 }
 
 /**
@@ -107,6 +159,7 @@ export async function api<T = void>(
 ): Promise<T> {
   const origin = apiOrigin();
   if (!origin) throw new ApiError(0, "OFFLINE", OFFLINE);
+  if (!secureEnough(origin)) throw new ApiError(0, "INSECURE", INSECURE);
   const hasBody = init.body !== undefined;
   const stop = new AbortController();
   const timer = setTimeout(() => stop.abort(), 15000);
@@ -117,6 +170,7 @@ export async function api<T = void>(
       headers: {
         Accept: "application/json",
         "X-Realm-Client": CLIENT,
+        "X-Realm-Device": DEVICE,
         ...(hasBody ? { "Content-Type": "application/json" } : {}),
         ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
       },
@@ -130,7 +184,12 @@ export async function api<T = void>(
   }
   if (res.status === 204) return undefined as T;
   const data: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw toApiError(res, data);
+  if (!res.ok) {
+    const error = toApiError(res, data);
+    // Sent with a session and refused as signed out: that session is over, wherever it ended.
+    if (error.signedOut && sessionToken && path !== "/auth/logout") onSessionEnded?.();
+    throw error;
+  }
   return data as T;
 }
 

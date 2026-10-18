@@ -18,6 +18,7 @@ import { postsChanged, useApi } from "@/data";
 import { Icon } from "@/icon";
 import { ApiError, api, upload } from "@/server";
 import { useSession } from "@/session";
+import { CLIP_MAX_SECONDS, shrinkPhoto } from "@/shrink";
 import { AppScreen, TopBar } from "@/social/screen";
 import { fonts, roles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
@@ -66,7 +67,10 @@ export default function Create() {
       selectionLimit: 10,
       orderedSelection: true,
       quality: 0.85,
-      videoMaxDuration: 180,
+      // Recording on an iPhone: medium quality, a fraction of the size. (Android phones record at
+      // their camera's setting; long videos are stopped below instead.)
+      videoQuality: ImagePicker.UIImagePickerControllerQualityType.Medium,
+      videoMaxDuration: CLIP_MAX_SECONDS,
     };
     if (from === "camera") {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -83,6 +87,16 @@ export default function Create() {
         ? await ImagePicker.launchCameraAsync(options)
         : await ImagePicker.launchImageLibraryAsync(options);
     if (res.canceled) return;
+    const long = res.assets.find(
+      (a) => a.type === "video" && (a.duration ?? 0) > CLIP_MAX_SECONDS * 1000 + 500,
+    );
+    if (long) {
+      Alert.alert(
+        "That video is too long",
+        `Clips can be up to ${CLIP_MAX_SECONDS} seconds. Trim it in your gallery first, then pick it again.`,
+      );
+      return;
+    }
     setPicked(mode === "clip" ? res.assets.slice(0, 1) : [...picked, ...res.assets].slice(0, 10));
   }
 
@@ -93,11 +107,15 @@ export default function Create() {
       for (const [i, a] of picked.entries()) {
         setStatus(picked.length > 1 ? `Uploading ${i + 1} of ${picked.length}` : "Uploading");
         const isVideo = a.type === "video";
+        // Photos are made smaller first, so they upload faster and storage lasts longer.
+        const file = isVideo
+          ? { uri: a.uri, mimeType: a.mimeType ?? "video/mp4" }
+          : await shrinkPhoto(a);
         ids.push(
           await upload({
-            uri: a.uri,
+            uri: file.uri,
             kind: isVideo ? "video" : "image",
-            mimeType: a.mimeType ?? (isVideo ? "video/mp4" : "image/jpeg"),
+            mimeType: file.mimeType,
             durationMs: a.duration ?? undefined,
           }),
         );

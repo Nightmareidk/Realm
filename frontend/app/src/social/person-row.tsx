@@ -5,15 +5,18 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { fonts, roles } from "../theme";
 import { Avatar } from "./avatar";
 
-/** A person in a list: picture, name and @handle; tap for their profile. */
+/** A person in a list: picture, name and @handle; tap for their profile (unless it's hidden). */
 export function PersonRow({
   user,
   line,
   right,
+  linked = true,
 }: {
   user: UserSummary;
   line?: string;
   right?: ReactNode;
+  /** Off when their profile can't open (someone you've blocked). */
+  linked?: boolean;
 }) {
   const router = useRouter();
   return (
@@ -22,7 +25,8 @@ export function PersonRow({
         onPress={() =>
           router.push({ pathname: "/user/[username]", params: { username: user.username } })
         }
-        accessibilityRole="link"
+        disabled={!linked}
+        accessibilityRole={linked ? "link" : "text"}
         accessibilityLabel={`${user.displayName}, @${user.username}`}
         style={s.who}
       >

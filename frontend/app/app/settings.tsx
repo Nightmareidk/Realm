@@ -5,13 +5,17 @@ import { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
+import type { IconName } from "@/icon-paths";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
 import { fonts, roles, THEME_ORDER, themes, useTheme } from "@/theme";
 import { Field, Pill } from "@/ui";
 
-/** Settings: who can see you, personal or business, your colour, and signing out. */
+/**
+ * Settings: who can see you, personal or business, your colour, keeping the account safe (email,
+ * password, where you're signed in, who you've blocked), and signing out.
+ */
 export default function Settings() {
   const router = useRouter();
   const { session, signOut } = useSession();
@@ -197,6 +201,33 @@ export default function Settings() {
           })}
         </View>
 
+        <Text style={s.heading}>Security and login</Text>
+        <NavRow
+          icon="EnvelopeSimple"
+          title="Email"
+          line={me?.emailVerified ? `${me.email} · Confirmed` : `${me?.email} · Not confirmed yet`}
+          warn={!me?.emailVerified}
+          onPress={() => router.push("/verify-email")}
+        />
+        <NavRow
+          icon="Password"
+          title="Password"
+          line="Change it, and sign out your other devices"
+          onPress={() => router.push("/change-password")}
+        />
+        <NavRow
+          icon="DeviceMobile"
+          title="Where you're signed in"
+          line="Your phones and browsers, and signing one out"
+          onPress={() => router.push("/devices")}
+        />
+        <NavRow
+          icon="Prohibit"
+          title="Blocked accounts"
+          line="People who can't see you or message you"
+          onPress={() => router.push("/blocked")}
+        />
+
         <View style={s.signOut}>
           <Pill
             kind="ghost"
@@ -215,8 +246,62 @@ export default function Settings() {
   );
 }
 
+/** A row that opens another settings screen: what it is, where it stands, and a caret. */
+function NavRow({
+  icon,
+  title,
+  line,
+  warn,
+  onPress,
+}: {
+  icon: IconName;
+  title: string;
+  line: string;
+  /** Needs doing: the line says so in the danger colour, and in words. */
+  warn?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="link"
+      accessibilityLabel={`${title}. ${line}`}
+      style={({ pressed }) => [s.navRow, pressed && s.navRowPressed]}
+    >
+      <View style={s.navMark}>
+        <Icon name={icon} size={21} color={roles.text} />
+      </View>
+      <View style={s.fill}>
+        <Text style={s.title}>{title}</Text>
+        <Text style={[s.line, warn && { color: roles.danger }]} numberOfLines={1}>
+          {line}
+        </Text>
+      </View>
+      <Icon name="CaretRight" size={18} color={roles.textSoft} />
+    </Pressable>
+  );
+}
+
 const s = StyleSheet.create({
   body: { padding: 16, paddingBottom: 48 },
+  navRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 64,
+    marginHorizontal: -8,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+  },
+  navRowPressed: { backgroundColor: roles.surfaceRaised },
+  navMark: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: roles.surfaceRaised,
+  },
   fill: { flex: 1 },
   linkRow: {
     flexDirection: "row",

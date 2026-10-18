@@ -16,8 +16,10 @@ import { useApi } from "@/data";
 import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
+import { useSheet } from "@/sheet";
 import { Avatar } from "@/social/avatar";
 import { PostCard } from "@/social/post-card";
+import { useSafety } from "@/social/safety";
 import { AppScreen, Loading, Problem, TopBar } from "@/social/screen";
 import { ago } from "@/social/time";
 import { fonts, roles, useTheme } from "@/theme";
@@ -37,6 +39,8 @@ export default function PostScreen() {
   const [sending, setSending] = useState(false);
   const input = useRef<TextInput>(null);
   const comments = useMemo(() => thread.data?.items ?? [], [thread.data]);
+  const sheet = useSheet();
+  const safety = useSafety();
 
   if (post.error && !post.data) {
     return (
@@ -67,19 +71,72 @@ export default function PostScreen() {
   }
 
   function remove(c: Comment) {
-    Alert.alert("Delete this comment?", undefined, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await api(`/posts/${id}/comments/${c.id}`, { method: "DELETE" });
-          thread.setData({ items: comments.filter((x) => x.id !== c.id), nextCursor: null });
-          if (post.data)
-            post.setData({ ...post.data, commentCount: Math.max(0, post.data.commentCount - 1) });
+    sheet({
+      title: "Delete this comment?",
+      line: "It's gone for everyone.",
+      actions: [
+        {
+          label: "Delete",
+          icon: "Trash",
+          danger: true,
+          onPress: async () => {
+            try {
+              await api(`/posts/${id}/comments/${c.id}`, { method: "DELETE" });
+              thread.setData({ items: comments.filter((x) => x.id !== c.id), nextCursor: null });
+              if (post.data) {
+                post.setData({
+                  ...post.data,
+                  commentCount: Math.max(0, post.data.commentCount - (c.hidden ? 0 : 1)),
+                });
+              }
+            } catch (err) {
+              sheet({
+                title: "Not deleted",
+                line: err instanceof ApiError ? err.message : "Try again.",
+                actions: [],
+              });
+            }
+          },
         },
-      },
-    ]);
+      ],
+    });
+  }
+
+  function reply(c: Comment) {
+    setReplyTo(c);
+    input.current?.focus();
+  }
+
+  /** Long-press on a comment: reply, and report or delete as it's yours or theirs. */
+  function options(c: Comment, canDelete: boolean) {
+    const mine = me?.id === c.author.id;
+    sheet({
+      actions: [
+        ...(c.hidden
+          ? []
+          : [{ label: "Reply", icon: "ArrowBendUpLeft" as const, onPress: () => reply(c) }]),
+        ...(mine
+          ? []
+          : [
+              {
+                label: "Report comment",
+                icon: "Flag" as const,
+                danger: true,
+                onPress: () => safety.report("comment", c.id, c.author),
+              },
+            ]),
+        ...(canDelete
+          ? [
+              {
+                label: "Delete comment",
+                icon: "Trash" as const,
+                danger: true,
+                onPress: () => remove(c),
+              },
+            ]
+          : []),
+      ],
+    });
   }
 
   return (
@@ -105,19 +162,18 @@ export default function PostScreen() {
                 </Text>
               </View>
             }
-            renderItem={({ item }) => (
-              <CommentRow
-                comment={item}
-                canDelete={Boolean(
-                  me && (me.id === item.author.id || me.id === post.data?.author.id),
-                )}
-                onReply={() => {
-                  setReplyTo(item);
-                  input.current?.focus();
-                }}
-                onDelete={() => remove(item)}
-              />
-            )}
+            renderItem={({ item }) => {
+              const canDelete = Boolean(
+                me && (me.id === item.author.id || me.id === post.data?.author.id),
+              );
+              return (
+                <CommentRow
+                  comment={item}
+                  onReply={() => reply(item)}
+                  onOptions={() => options(item, canDelete)}
+                />
+              );
+            }}
             keyboardShouldPersistTaps="handled"
           />
         )}
@@ -179,20 +235,18 @@ function placeComment(list: Comment[], made: Comment): Comment[] {
 
 function CommentRow({
   comment,
-  canDelete,
   onReply,
-  onDelete,
+  onOptions,
 }: {
   comment: Comment;
-  canDelete: boolean;
   onReply: () => void;
-  onDelete: () => void;
+  onOptions: () => void;
 }) {
   const router = useRouter();
   return (
     <Pressable
-      onLongPress={canDelete ? onDelete : undefined}
-      accessibilityHint={canDelete ? "Long press to delete" : undefined}
+      onLongPress={onOptions}
+      accessibilityHint="Long press for more, like reporting it"
       style={[s.comment, comment.depth > 0 && s.reply]}
     >
       <Pressable
@@ -212,16 +266,24 @@ function CommentRow({
           <Text style={s.author}>{comment.author.displayName} </Text>
           {comment.body}
         </Text>
+        {comment.hidden ? (
+          <Text style={s.hiddenText}>Taken down after reports. Only you can see it.</Text>
+        ) : null}
         <View style={s.meta}>
           <Text style={s.metaText}>{ago(comment.createdAt)}</Text>
-          <Pressable onPress={onReply} accessibilityRole="button" hitSlop={10}>
-            <Text style={s.metaAction}>Reply</Text>
-          </Pressable>
-          {canDelete ? (
-            <Pressable onPress={onDelete} accessibilityRole="button" hitSlop={10}>
-              <Text style={s.metaText}>Delete</Text>
+          {comment.hidden ? null : (
+            <Pressable onPress={onReply} accessibilityRole="button" hitSlop={10}>
+              <Text style={s.metaAction}>Reply</Text>
             </Pressable>
-          ) : null}
+          )}
+          <Pressable
+            onPress={onOptions}
+            accessibilityRole="button"
+            accessibilityLabel="More"
+            hitSlop={10}
+          >
+            <Icon name="DotsThreeBold" size={18} color={roles.textSoft} />
+          </Pressable>
         </View>
       </View>
     </Pressable>
@@ -249,6 +311,7 @@ const s = StyleSheet.create({
   meta: { flexDirection: "row", gap: 16, marginTop: 4, alignItems: "center" },
   metaText: { fontFamily: fonts.body, fontSize: 13, color: roles.textSoft },
   metaAction: { fontFamily: fonts.bold, fontSize: 13, color: roles.textSoft },
+  hiddenText: { fontFamily: fonts.bold, fontSize: 13, color: roles.danger, marginTop: 4 },
   composer: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: roles.border,

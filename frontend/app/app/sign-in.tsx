@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { Linking, StyleSheet, Text, type TextInput, View } from "react-native";
+import { StyleSheet, Text, type TextInput, View } from "react-native";
 import { FormScreen } from "@/screen";
-import { ApiError, webOrigin } from "@/server";
+import { ApiError } from "@/server";
 import { useSession } from "@/session";
 import { fonts, roles } from "@/theme";
 import { Field, Notice, Pill, TextLink, Title } from "@/ui";
@@ -40,7 +40,6 @@ export default function SignIn() {
     }
   }
 
-  const web = webOrigin();
   return (
     <FormScreen>
       <View style={s.head}>
@@ -74,12 +73,7 @@ export default function SignIn() {
           returnKeyType="go"
           onSubmitEditing={submit}
         />
-        {web ? (
-          <TextLink
-            label="Forgot your password?"
-            onPress={() => Linking.openURL(`${web}/forgot`)}
-          />
-        ) : null}
+        <TextLink label="Forgot your password?" onPress={() => router.push("/forgot")} />
       </View>
       <View style={s.foot}>
         <Pill label="Sign in" pendingLabel="Signing in" pending={pending} onPress={submit} />

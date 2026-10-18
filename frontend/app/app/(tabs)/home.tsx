@@ -24,6 +24,8 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const feed = usePosts("/feed");
   const [unread, setUnread] = useState(0);
+  const { session } = useSession();
+  const unconfirmed = session.status === "signedIn" && !session.user.emailVerified;
 
   useFocusEffect(
     useCallback(() => {
@@ -55,6 +57,20 @@ export default function Home() {
           {unread ? <View style={s.badge} /> : null}
         </Pressable>
       </View>
+      {unconfirmed ? (
+        <Pressable
+          onPress={() => router.push("/verify-email")}
+          accessibilityRole="link"
+          style={({ pressed }) => [s.confirm, pressed && { backgroundColor: roles.surfaceRaised }]}
+        >
+          <Icon name="EnvelopeSimple" size={22} color={roles.text} />
+          <View style={s.confirmText}>
+            <Text style={s.confirmTitle}>Confirm your email</Text>
+            <Text style={s.confirmLine}>Use the 6-digit code we sent. It takes a moment.</Text>
+          </View>
+          <Icon name="CaretRight" size={18} color={roles.textSoft} />
+        </Pressable>
+      ) : null}
       <People />
     </>
   );
@@ -146,6 +162,23 @@ function People() {
 }
 
 const s = StyleSheet.create({
+  confirm: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 12,
+    marginTop: 4,
+    marginBottom: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: roles.border,
+    backgroundColor: roles.surface,
+  },
+  confirmText: { flex: 1 },
+  confirmTitle: { fontFamily: fonts.bold, fontSize: 15.5, color: roles.text },
+  confirmLine: { fontFamily: fonts.body, fontSize: 13.5, color: roles.textSoft, marginTop: 2 },
   top: {
     flexDirection: "row",
     alignItems: "center",

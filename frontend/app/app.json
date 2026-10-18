@@ -8,7 +8,8 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0b0b0e",
     "android": {
-      "package": "app.realm.mobile"
+      "package": "app.realm.mobile",
+      "allowBackup": false
     },
     "ios": {
       "bundleIdentifier": "app.realm.mobile"

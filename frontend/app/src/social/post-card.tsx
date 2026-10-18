@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { memo, useState } from "react";
 import {
-  Alert,
   FlatList,
   Pressable,
   Share,
@@ -26,10 +25,12 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { postsChanged } from "../data";
 import { Icon } from "../icon";
-import { api, mediaSource } from "../server";
+import { ApiError, api, mediaSource } from "../server";
 import { useSession } from "../session";
+import { useSheet } from "../sheet";
 import { fonts, roles } from "../theme";
 import { Avatar } from "./avatar";
+import { useSafety } from "./safety";
 import { ago, agoLong, compact } from "./time";
 
 /** The like colour: a warm pink, the one hue that means "loved" across social apps. */
@@ -112,6 +113,14 @@ export const PostCard = memo(function PostCard({
         </Pressable>
         <PostMenu post={post} onChange={onChange} onRemoved={onRemoved} />
       </View>
+      {post.hidden ? (
+        <View style={s.hidden} accessibilityRole="alert">
+          <Icon name="WarningCircle" size={18} color={roles.danger} />
+          <Text style={s.hiddenText}>
+            Taken down after reports. Only you can see it now; you can still delete it.
+          </Text>
+        </View>
+      ) : null}
 
       {post.kind === "text" ? (
         <Pressable onPress={standalone ? undefined : open} style={s.textPost}>
@@ -281,7 +290,9 @@ export function ClipTile({ post, onPress }: { post: Post; onPress: () => void })
   );
 }
 
-/** Your own post's menu: who sees it, or delete. Other people's posts have none yet. */
+/**
+ * A post's menu. Yours: who sees it, or delete. Someone else's: report it, or block them.
+ */
 function PostMenu({
   post,
   onChange,
@@ -292,37 +303,88 @@ function PostMenu({
   onRemoved?: (id: string) => void;
 }) {
   const { session } = useSession();
-  if (session.status !== "signedIn" || session.user.id !== post.author.id) return null;
+  const sheet = useSheet();
+  const safety = useSafety();
+  if (session.status !== "signedIn") return null;
+  const mine = session.user.id === post.author.id;
+  const failed = (err: unknown) =>
+    sheet({
+      title: "That didn't work",
+      line: err instanceof ApiError ? err.message : "Something went wrong. Try again.",
+      actions: [],
+    });
+
   const showMenu = () => {
-    const next = post.visibility === "public" ? "followers" : "public";
-    Alert.alert("Your post", undefined, [
-      {
-        text: next === "public" ? "Show to everyone" : "Only my followers",
-        onPress: async () => {
-          onChange(
-            await api<Post>(`/posts/${post.id}`, { method: "PATCH", body: { visibility: next } }),
-          );
-        },
-      },
-      {
-        text: "Delete post",
-        style: "destructive",
-        onPress: () =>
-          Alert.alert("Delete this post?", "It's gone for everyone, with its likes and comments.", [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Delete",
-              style: "destructive",
-              onPress: async () => {
-                await api(`/posts/${post.id}`, { method: "DELETE" });
+    if (!mine) {
+      sheet({
+        actions: [
+          {
+            label: "Report post",
+            icon: "Flag",
+            danger: true,
+            onPress: () => safety.report("post", post.id, post.author),
+          },
+          {
+            label: `Block @${post.author.username}`,
+            icon: "Prohibit",
+            danger: true,
+            onPress: () =>
+              safety.block(post.author, () => {
                 onRemoved?.(post.id);
-                postsChanged();
-              },
-            },
-          ]),
-      },
-      { text: "Cancel", style: "cancel" },
-    ]);
+              }),
+          },
+        ],
+      });
+      return;
+    }
+    const next = post.visibility === "public" ? "followers" : "public";
+    sheet({
+      title: "Your post",
+      actions: [
+        {
+          label: next === "public" ? "Show to everyone" : "Only my followers",
+          icon: next === "public" ? "Globe" : "Lock",
+          onPress: async () => {
+            try {
+              onChange(
+                await api<Post>(`/posts/${post.id}`, {
+                  method: "PATCH",
+                  body: { visibility: next },
+                }),
+              );
+            } catch (err) {
+              failed(err);
+            }
+          },
+        },
+        {
+          label: "Delete post",
+          icon: "Trash",
+          danger: true,
+          onPress: () =>
+            sheet({
+              title: "Delete this post?",
+              line: "It's gone for everyone, with its likes and comments.",
+              actions: [
+                {
+                  label: "Delete",
+                  icon: "Trash",
+                  danger: true,
+                  onPress: async () => {
+                    try {
+                      await api(`/posts/${post.id}`, { method: "DELETE" });
+                      onRemoved?.(post.id);
+                      postsChanged();
+                    } catch (err) {
+                      failed(err);
+                    }
+                  },
+                },
+              ],
+            }),
+        },
+      ],
+    });
   };
   return (
     <Pressable
@@ -338,6 +400,18 @@ function PostMenu({
 
 const s = StyleSheet.create({
   card: { paddingBottom: 14 },
+  hidden: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "flex-start",
+    marginHorizontal: 12,
+    marginBottom: 8,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: roles.dangerLine,
+  },
+  hiddenText: { flex: 1, fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: roles.text },
   head: {
     flexDirection: "row",
     alignItems: "center",

@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApi } from "@/data";
+import { useLiveEvent } from "@/live";
 import { useSession } from "@/session";
 import { Avatar } from "@/social/avatar";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
@@ -19,6 +20,11 @@ export default function Inbox() {
       list.reload();
     }, [list.reload]),
   );
+  // A new message in any of your conversations moves it to the top.
+  useLiveEvent("MESSAGE_CREATE", (m) => {
+    if (list.data?.conversations.some((c) => c.id === m.channelId) ?? true) list.reload();
+  });
+  useLiveEvent("CHANNEL_CREATE", () => list.reload());
   const items = [...(list.data?.conversations ?? [])].sort(
     (a, b) =>
       Number(b.pinned) - Number(a.pinned) ||

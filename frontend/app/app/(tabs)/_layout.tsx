@@ -1,8 +1,12 @@
 import { Redirect, Tabs } from "expo-router";
 import { View } from "react-native";
+import { CrashScreen } from "@/crash";
 import { useSession } from "@/session";
 import { TabBar } from "@/tab-bar";
 import { roles } from "@/theme";
+
+/** A crash inside a tab is caught here, so the rest of the app keeps going. */
+export const ErrorBoundary = CrashScreen;
 
 /** The signed-in app: Home, Clips, Explore, Inbox and You. */
 export default function TabsLayout() {
