@@ -33,6 +33,37 @@ export function passwordResetEmail(opts: { to: string; link: string }): Mail {
   };
 }
 
+/** A sign-in from a device this account hasn't used before. */
+export function newSignInEmail(opts: { to: string; device: string; when: Date }): Mail {
+  return {
+    to: opts.to,
+    subject: "New sign-in to your Realm account",
+    text: [
+      `Your Realm account was just signed in to on a new device: ${opts.device}, at ${opts.when.toUTCString()}.`,
+      "",
+      "If this was you, there's nothing to do.",
+      "",
+      "If it wasn't you, change your password now (Settings, Security and login, Password). Changing it signs out every other device straight away. Then check \"Where you're signed in\" for anything you don't recognise.",
+    ].join("\n"),
+  };
+}
+
+/** Someone kept guessing this account's password, and sign-in attempts are paused for a while. */
+export function signInPausedEmail(opts: { to: string; minutes: number }): Mail {
+  return {
+    to: opts.to,
+    subject: "Someone kept trying to sign in to your Realm account",
+    text: [
+      `Someone tried to sign in to your Realm account and got the password wrong many times, so Realm has paused sign-in attempts to your account for ${opts.minutes} minutes.`,
+      "",
+      "Your account is safe: wrong passwords don't get in.",
+      "",
+      "If it was you, wait a little and try again, or reset your password from the sign-in screen.",
+      "If it wasn't you, nothing to do. For extra safety, use a long password you don't use anywhere else.",
+    ].join("\n"),
+  };
+}
+
 export function passwordChangedEmail(opts: { to: string }): Mail {
   return {
     to: opts.to,

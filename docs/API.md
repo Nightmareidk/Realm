@@ -14,7 +14,7 @@
 | Idempotency | Creates accept an `Idempotency-Key` header; messages also carry a client `nonce` echoed back in the event. |
 | Errors | `{ "error": { "code": "MISSING_PERMISSION", "message": "…", "details": {…}, "requestId": "…" } }` — `code` values are a closed enum in contracts; clients switch on `code`, never on `message`. |
 | Rate limits | `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset` headers; `429` with `retryAfter`. |
-| Versioning | Additive changes only within `/v1`. `X-Realm-Client: <platform>/<version>` required from native clients. |
+| Versioning | Additive changes only within `/v1`. `X-Realm-Client: <platform>/<version>` required from native clients. They may also send `X-Realm-Device: <phone model>` (plain text, 48 characters), which names their session: "Realm app on Google Pixel 7". |
 | Partial updates | `PATCH` with only the fields to change; `null` clears a nullable field. |
 
 ---
@@ -142,7 +142,7 @@ Messages take `attachmentIds` (your own ready uploads, once each) and `place: { 
 ### Moderation & safety — P1 *(built 2026-10-04)*
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/reports` | `{ targetType: message\|user\|community, targetId, reason, details?, communityId? }` → `{ hidden, goesTo: space\|realm }`. One report per person per thing. A message hides itself after 2 reports (Spaces ≤ 10) or 3; `sexual_minors` hides at once and goes to Realm. A public Space leaves Explore after 5. |
+| POST | `/reports` | `{ targetType: message\|user\|community\|post\|comment, targetId, reason, details?, communityId? }` → `{ hidden, goesTo: space\|realm\|noted }`. One report per person per thing, and only for what you can see. A message, or a post or comment shared to a Space, hides itself after 2 reports (Spaces ≤ 10) or 3 and goes to that Space's moderators. A profile post or comment hides itself after 3 reports from established accounts (email confirmed, a day old); its author still sees it, marked `hidden`. `sexual_minors` hides at once and goes to Realm. A public Space leaves Explore after 5. |
 | GET | `/communities/:id/reports` | the Space's queue, folded per item; reporters never shown |
 | POST | `/communities/:id/reports/:targetId` | `{ action: dismiss\|remove }` (logged) |
 | PATCH | `/communities/:id/members/:userId` | `{ roleIds?, timeoutUntil?, reason? }`; only on people below you |
@@ -167,6 +167,8 @@ Automatic spam limits on every message answer `429 SLOW_DOWN` with a plain reaso
 ## Realtime gateway
 
 Endpoint: `wss://gateway.<domain>/?v=1&encoding=json`
+
+The upgrade must come from Realm's web origin, or carry no `Origin`, or (the phone app: Android's WebSocket adds one on its own) the gateway's own address. Native clients IDENTIFY with their session token; browsers with a ticket.
 Frame: `{ "op": number, "d": any, "s"?: number, "t"?: string }`
 
 ### Opcodes

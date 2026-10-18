@@ -43,6 +43,13 @@
       "when": 1792197612964,
       "tag": "0005_social_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792358359529,
+      "tag": "0006_owner_alerts",
+      "breakpoints": true
     }
   ]
 }

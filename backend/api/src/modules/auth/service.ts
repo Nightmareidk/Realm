@@ -21,11 +21,19 @@ import {
 } from "@realm/server-core";
 import type { Deps } from "../../deps";
 import { AppError, badRequest, conflict, rateLimited } from "../../lib/errors";
+import { alertOwnerOnce } from "../../lib/owner-alerts";
 import { type ClientContext, createSession, revokeAllSessions } from "../../lib/sessions";
-import { passwordChangedEmail, passwordResetEmail, verificationEmail } from "./emails";
+import {
+  newSignInEmail,
+  passwordChangedEmail,
+  passwordResetEmail,
+  signInPausedEmail,
+  verificationEmail,
+} from "./emails";
 import { RESERVED_USERNAMES } from "./reserved";
 
-const { users, userSettings, emailVerifications, passwordResets, securityEvents } = schema;
+const { users, userSettings, emailVerifications, passwordResets, securityEvents, sessions } =
+  schema;
 
 const VERIFICATION_TTL_MS = 15 * 60 * 1000;
 const VERIFICATION_MAX_ATTEMPTS = 5;
@@ -165,7 +173,12 @@ export class AuthService {
   async login(body: LoginBody, client: ClientContext) {
     const login = body.login.trim().toLowerCase();
     await this.enforce(Limits.loginIp, client.ip);
-    await this.enforce(Limits.loginAccount, login);
+    try {
+      await this.enforce(Limits.loginAccount, login);
+    } catch (err) {
+      await this.warnPaused(login);
+      throw err;
+    }
 
     const column = login.includes("@") ? users.email : users.username;
     const [user] = await this.deps.db
@@ -176,11 +189,13 @@ export class AuthService {
 
     if (!user) {
       await timingSafeDummyVerify(body.password);
+      await this.countFailure();
       throw new AppError(401, "INVALID_CREDENTIALS", "Wrong username/email or password");
     }
     const ok = await verifyPassword(user.passwordHash, body.password);
     if (!ok) {
       await this.logEvent(user.id, "login_failed", client);
+      await this.countFailure();
       throw new AppError(401, "INVALID_CREDENTIALS", "Wrong username/email or password");
     }
     if (user.status === "suspended") {
@@ -193,7 +208,64 @@ export class AuthService {
     await this.deps.limiter.reset(Limits.loginAccount, login);
     const { session, token } = await createSession(this.deps, this.deps.db, user.id, client);
     await this.logEvent(user.id, "login", client, session.id);
+    await this.tellIfNewDevice(user, session);
     return { user, session, token };
+  }
+
+  /**
+   * A sign-in from a device this account has never used (by its name in the session list, like
+   * "Chrome on Windows") gets an email, so a stolen password shows up straight away. The very
+   * first sign-in after sign-up doesn't count.
+   */
+  private async tellIfNewDevice(
+    user: typeof users.$inferSelect,
+    session: typeof sessions.$inferSelect,
+  ) {
+    const [seen] = await this.deps.db
+      .select({
+        total: sql<number>`count(*)::int`,
+        same: sql<number>`count(*) filter (where ${sessions.deviceName} = ${session.deviceName})::int`,
+      })
+      .from(sessions)
+      .where(and(eq(sessions.userId, user.id), sql`${sessions.id} <> ${session.id}`));
+    if (!seen || Number(seen.total) === 0 || Number(seen.same) > 0) return;
+    this.sendMail(newSignInEmail({ to: user.email, device: session.deviceName, when: new Date() }));
+  }
+
+  /** Sign-in attempts to one account just got paused: tell its owner, once per pause. */
+  private async warnPaused(login: string) {
+    const column = login.includes("@") ? users.email : users.username;
+    const [user] = await this.deps.db
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(sql`lower(${column}) = ${login}`)
+      .limit(1);
+    if (!user) return;
+    const window = Limits.loginAccount.windowSeconds;
+    const { count } = await this.deps.kv.incr(`login-paused-mail:${user.id}`, window);
+    if (count === 1) {
+      this.sendMail(signInPausedEmail({ to: user.email, minutes: Math.round(window / 60) }));
+    }
+  }
+
+  /**
+   * Wrong passwords across all of Realm. A sudden flood means someone is trying stolen password
+   * lists against many accounts: the owner gets one email per hour while it lasts.
+   */
+  private async countFailure() {
+    const flood = await this.deps.limiter.hit(Limits.loginFailuresAll, "all");
+    if (flood.allowed) return;
+    const hour = new Date().toISOString().slice(0, 13);
+    await alertOwnerOnce(this.deps, `login-flood:${hour}`, {
+      subject: "Realm: many wrong passwords right now",
+      text: [
+        `In the last ${Limits.loginFailuresAll.windowSeconds / 60} minutes more than ${Limits.loginFailuresAll.limit} sign-ins to Realm failed with a wrong password. That usually means someone is trying passwords leaked from other sites against many accounts.`,
+        "",
+        "Realm is already slowing them down: each address and each account can only try a few times before it's paused, and account owners are emailed when theirs is targeted.",
+        "",
+        'Worth doing: look at the server\'s log for the addresses involved, and see docs/SECURITY.md ("If Realm is attacked") for the next steps.',
+      ].join("\n"),
+    }).catch((err) => this.deps.logger.error({ err }, "login flood alert failed"));
   }
 
   async verifyEmailWithCode(userId: bigint, code: string, client: ClientContext) {

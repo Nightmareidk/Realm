@@ -11,7 +11,7 @@ import {
   type SafetyLists,
   type UpdateMemberBody,
 } from "@realm/contracts";
-import { and, desc, eq, gt, inArray, isNull, or, schema, sql } from "@realm/db";
+import { and, desc, eq, gt, inArray, isNotNull, isNull, lt, or, schema, sql } from "@realm/db";
 import type { Deps } from "../../deps";
 import { badRequest, conflict, forbidden, notFound } from "../../lib/errors";
 import {
@@ -20,6 +20,7 @@ import {
   toMember,
   toUserSummary,
 } from "../../lib/serialize-spaces";
+import { canSeePost } from "../social/access";
 import {
   findSpace,
   loadAccess,
@@ -45,12 +46,25 @@ const {
   relationships,
   mutes,
   users,
+  posts,
+  comments,
+  follows,
 } = schema;
 
 /** The gravest reports go to Realm itself (the law requires acting on them); all else to Spaces. */
 const PLATFORM_REASONS: ReportReason[] = ["sexual_minors"];
 /** Distinct reporters before a message hides itself pending a moderator. */
 const hideAt = (memberCount: number) => (memberCount <= 10 ? 2 : 3);
+/**
+ * Outside a Space (a profile post, or a comment on one) nobody moderates, so a post hides itself
+ * once this many established people (email confirmed, account at least a day old) report it.
+ * Brand-new accounts don't count, so a few throwaway sign-ups can't take someone's post down.
+ */
+const PROFILE_HIDE_AT = 3;
+const ESTABLISHED_MS = 24 * 3600 * 1000;
+/** Why a post is down: hidden by reports (undone by "Nothing wrong"), or by a moderator. */
+const BY_REPORTS = "reports";
+const BY_MODERATOR = "moderator";
 /** Distinct reporters before a public Space drops out of Explore on its own. */
 const UNLIST_AT = 5;
 const MAX_TIMEOUT_MS = 28 * 24 * 3600 * 1000;
@@ -98,8 +112,42 @@ export class SafetyService {
     let message: typeof messages.$inferSelect | null = null;
     let access: SpaceAccess | null = null;
     let topic: string | null = null;
+    /** A reported post, or the post a reported comment is on. */
+    let post: typeof posts.$inferSelect | null = null;
+    let comment: typeof comments.$inferSelect | null = null;
 
-    if (body.targetType === "message") {
+    if (body.targetType === "post" || body.targetType === "comment") {
+      if (body.targetType === "comment") {
+        const [row] = await this.db
+          .select()
+          .from(comments)
+          .where(and(eq(comments.id, target), isNull(comments.deletedAt)))
+          .limit(1);
+        if (!row || row.removedAt) throw notFound("Comment");
+        comment = row;
+      }
+      const postId = comment ? comment.postId : target;
+      const [row] = await this.db.select().from(posts).where(eq(posts.id, postId)).limit(1);
+      // You can only report what you can see.
+      if (!row || !(await canSeePost(this.db, row, userId))) {
+        throw notFound(comment ? "Comment" : "Post");
+      }
+      const authorId = comment ? comment.authorId : row.authorId;
+      if (authorId === userId) {
+        throw badRequest(
+          "BAD_REQUEST",
+          comment ? "That's your own comment." : "That's your own post.",
+        );
+      }
+      post = row;
+      // Shared to a Space: its moderators decide. On a profile, automation does.
+      communityId = row.communityId;
+      evidence = {
+        content: comment ? comment.body : row.body,
+        authorId: authorId.toString(),
+        postId: row.id.toString(),
+      };
+    } else if (body.targetType === "message") {
       const [row] = await this.db
         .select()
         .from(messages)
@@ -198,6 +246,24 @@ export class SafetyService {
         hidden = true;
       }
     }
+    if (post) {
+      hidden = comment ? comment.removedAt !== null : post.removedAt !== null;
+      if (!hidden) {
+        let enough = platform;
+        if (!enough && communityId) {
+          const space = await findSpace(this.db, communityId.toString());
+          enough = n >= hideAt(space?.memberCount ?? 0);
+        } else if (!enough) {
+          enough =
+            (await this.establishedReporters(comment ? "comment" : "post", target)) >=
+            PROFILE_HIDE_AT;
+        }
+        if (enough) {
+          await this.takeDown(comment ? "comment" : "post", target, BY_REPORTS, null);
+          hidden = true;
+        }
+      }
+    }
     if (body.targetType === "community" && n >= UNLIST_AT) {
       await this.db
         .update(communities)
@@ -209,6 +275,77 @@ export class SafetyService {
       goesTo:
         platform || body.targetType === "community" ? "realm" : communityId ? "space" : "noted",
     };
+  }
+
+  /** Open reports on a thing from people whose accounts are confirmed and at least a day old. */
+  private async establishedReporters(targetType: "post" | "comment", targetId: bigint) {
+    const [row] = await this.db
+      .select({ n: sql<number>`count(distinct ${reports.reporterId})::int` })
+      .from(reports)
+      .innerJoin(users, eq(users.id, reports.reporterId))
+      .where(
+        and(
+          eq(reports.targetType, targetType),
+          eq(reports.targetId, targetId),
+          eq(reports.status, "open"),
+          isNotNull(users.emailVerifiedAt),
+          lt(users.createdAt, new Date(Date.now() - ESTABLISHED_MS)),
+        ),
+      );
+    return Number(row?.n ?? 0);
+  }
+
+  /**
+   * Takes a post or comment down for everyone but its author; a comment stops counting on its
+   * post. A second take-down (a moderator after reports) only records who did it.
+   */
+  private async takeDown(type: "post" | "comment", id: bigint, why: string, by: bigint | null) {
+    if (type === "post") {
+      await this.db
+        .update(posts)
+        .set({
+          removedAt: sql`coalesce(${posts.removedAt}, now())`,
+          removalReason: why,
+          removedBy: by,
+        })
+        .where(eq(posts.id, id));
+      return;
+    }
+    const [row] = await this.db
+      .update(comments)
+      .set({ removedAt: new Date(), removedBy: by })
+      .where(and(eq(comments.id, id), isNull(comments.removedAt)))
+      .returning({ postId: comments.postId });
+    if (row) {
+      await this.db
+        .update(posts)
+        .set({ commentCount: sql`greatest(${posts.commentCount} - 1, 0)` })
+        .where(eq(posts.id, row.postId));
+    } else if (by) {
+      await this.db.update(comments).set({ removedBy: by }).where(eq(comments.id, id));
+    }
+  }
+
+  /** "Nothing wrong": back up, unless a moderator took it down on purpose. */
+  private async restore(type: "post" | "comment", id: bigint) {
+    if (type === "post") {
+      await this.db
+        .update(posts)
+        .set({ removedAt: null, removalReason: null, removedBy: null })
+        .where(and(eq(posts.id, id), eq(posts.removalReason, BY_REPORTS)));
+      return;
+    }
+    const [row] = await this.db
+      .update(comments)
+      .set({ removedAt: null })
+      .where(and(eq(comments.id, id), isNotNull(comments.removedAt), isNull(comments.removedBy)))
+      .returning({ postId: comments.postId });
+    if (row) {
+      await this.db
+        .update(posts)
+        .set({ commentCount: sql`${posts.commentCount} + 1` })
+        .where(eq(posts.id, row.postId));
+    }
   }
 
   private async setHidden(messageId: bigint, hide: boolean, topic: string) {
@@ -261,6 +398,26 @@ export class SafetyService {
           .from(messages)
           .where(inArray(messages.id, msgIds))
       : [];
+    const idsOf = (type: string) =>
+      rows.filter((r) => r.targetType === type).map((r) => r.targetId);
+    const postIds = idsOf("post");
+    const commentIds = idsOf("comment");
+    const down = new Set(
+      [
+        ...(postIds.length
+          ? await this.db
+              .select({ id: posts.id })
+              .from(posts)
+              .where(and(inArray(posts.id, postIds), isNotNull(posts.removedAt)))
+          : []),
+        ...(commentIds.length
+          ? await this.db
+              .select({ id: comments.id })
+              .from(comments)
+              .where(and(inArray(comments.id, commentIds), isNotNull(comments.removedAt)))
+          : []),
+      ].map((r) => r.id.toString()),
+    );
     return [...groups.values()].map((list) => {
       const first = list[list.length - 1] ?? list[0];
       if (!first) throw new Error("empty report group");
@@ -278,7 +435,9 @@ export class SafetyService {
           author: author ? toUserSummary(author) : null,
           channelId: ev.channelId ?? null,
         },
-        hidden: flags.some((f) => f.id === first.targetId && (f.flags & MESSAGE_HIDDEN) !== 0),
+        hidden:
+          down.has(first.targetId.toString()) ||
+          flags.some((f) => f.id === first.targetId && (f.flags & MESSAGE_HIDDEN) !== 0),
         firstReportedAt: first.createdAt.toISOString(),
       };
     });
@@ -299,8 +458,15 @@ export class SafetyService {
         ),
       );
     if (open.length === 0) throw notFound("Report");
-    const isMessage = open[0]?.targetType === "message";
-    if (isMessage && action === "remove") {
+    const type = open[0]?.targetType;
+    const isMessage = type === "message";
+    const postLike = type === "post" || type === "comment" ? type : null;
+    if (postLike && action === "remove") {
+      requireSpacePermission(access, Permission.MANAGE_MESSAGES, "remove posts");
+      await this.takeDown(postLike, targetId, BY_MODERATOR, userId);
+    } else if (postLike) {
+      await this.restore(postLike, targetId);
+    } else if (isMessage && action === "remove") {
       requireSpacePermission(access, Permission.MANAGE_MESSAGES, "remove messages");
       const [row] = await this.db
         .update(messages)
@@ -333,7 +499,7 @@ export class SafetyService {
     await this.audit(
       access.community.id,
       userId,
-      action === "remove" ? "message.remove" : "report.dismiss",
+      action === "remove" ? `${postLike ?? "message"}.remove` : "report.dismiss",
       { type: open[0]?.targetType ?? "message", id: targetId },
     );
   }
@@ -354,6 +520,15 @@ export class SafetyService {
         target: [relationships.userId, relationships.targetId],
         set: { type: "blocked", createdAt: new Date() },
       });
+    // A block ends following both ways, and any request waiting, like on Instagram.
+    await this.db
+      .delete(follows)
+      .where(
+        or(
+          and(eq(follows.followerId, userId), eq(follows.followeeId, targetId)),
+          and(eq(follows.followerId, targetId), eq(follows.followeeId, userId)),
+        ),
+      );
   }
 
   async unblock(userId: bigint, targetId: bigint) {

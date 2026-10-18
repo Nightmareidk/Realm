@@ -19,6 +19,22 @@ export interface ClientContext {
   platform: Platform;
   /** Native clients receive their token in the response body; web never does. */
   isNative: boolean;
+  /** The app's name for the phone it runs on ("Google Pixel 7"), from `X-Realm-Device`. */
+  device?: string;
+}
+
+const NATIVE_NAMES: Partial<Record<Platform, string>> = {
+  ios: "iPhone",
+  android: "Android phone",
+  windows: "Windows",
+  macos: "Mac",
+  linux: "Linux",
+};
+
+/** What the session list calls a device: "Realm app on Google Pixel 7", or "Chrome on Windows". */
+function deviceLabel(client: ClientContext): string {
+  if (!client.isNative) return describeUserAgent(client.userAgent);
+  return `Realm app on ${client.device ?? NATIVE_NAMES[client.platform] ?? "a device"}`;
 }
 
 export interface ResolvedSession {
@@ -53,7 +69,7 @@ export async function createSession(
       tokenHash: sha256Hex(token),
       userId,
       platform: client.platform,
-      deviceName: describeUserAgent(client.userAgent),
+      deviceName: deviceLabel(client),
       ipCreated: client.ip,
       userAgent: client.userAgent?.slice(0, 512),
       expiresAt: new Date(Date.now() + SESSION_TTL_MS),

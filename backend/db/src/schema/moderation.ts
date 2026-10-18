@@ -75,3 +75,12 @@ export const auditLog = pgTable(
   },
   (t) => [index("audit_log_community_idx").on(t.communityId, t.id.desc())],
 );
+
+/**
+ * Warnings already emailed to Realm's owner ("storage:90", "login-flood:2026-10-19T14"), so each
+ * goes out once. Clearing a key lets that warning go out again (storage freed up, say).
+ */
+export const ownerAlerts = pgTable("owner_alerts", {
+  key: text().primaryKey(),
+  sentAt: createdAt(),
+});

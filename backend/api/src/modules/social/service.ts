@@ -20,6 +20,7 @@ import type { Deps } from "../../deps";
 import { AppError, badRequest, forbidden, notFound } from "../../lib/errors";
 import { mediaUrl, toPublicUser } from "../../lib/serialize";
 import { summaryColumns, toMediaRef, toUserSummary } from "../../lib/serialize-spaces";
+import { guardMessage } from "../../lib/spam";
 import { blockedEitherWay } from "../spaces/access";
 import { canSeePost, followsActively, isMember, isPrivateAccount } from "./access";
 
@@ -93,6 +94,8 @@ export class SocialService {
       throw invalid(body.kind === "clip" ? "A Clip has to be a video." : "Posts take photos.");
     }
 
+    if (caption) await this.guard(authorId, caption);
+
     const spaceId = body.spaceId ? BigInt(body.spaceId) : null;
     if (spaceId && !(await isMember(this.db, authorId, spaceId))) {
       throw forbidden("Join that Space to share to it.");
@@ -117,6 +120,19 @@ export class SocialService {
     }
     const [row] = await this.db.select().from(posts).where(eq(posts.id, id));
     return (await this.hydrate([row as PostRow], authorId))[0] as Post;
+  }
+
+  /**
+   * The same automated spam checks as chat (bursts, the same words again and again, links from
+   * brand-new accounts), so nobody has to read posts and comments to catch spam.
+   */
+  private async guard(authorId: bigint, text: string) {
+    const [author] = await this.db
+      .select({ id: users.id, createdAt: users.createdAt, emailVerifiedAt: users.emailVerifiedAt })
+      .from(users)
+      .where(eq(users.id, authorId))
+      .limit(1);
+    if (author) await guardMessage(this.deps, author, text);
   }
 
   /** Uploads a post may use: the author's own, finished, and not already posted or sent. */
@@ -331,7 +347,8 @@ export class SocialService {
         and(
           eq(posts.authorId, authorId),
           isNull(posts.deletedAt),
-          isNull(posts.removedAt),
+          // You still see your own posts once taken down, marked, so you know why.
+          self ? undefined : isNull(posts.removedAt),
           kind ? eq(posts.kind, kind) : inArray(posts.kind, ["image", "text"]),
           before ? lt(posts.id, before) : undefined,
           seeing,
@@ -441,6 +458,7 @@ export class SocialService {
         saved: savedSet.has(r.id.toString()),
         createdAt: r.createdAt.toISOString(),
         editedAt: r.editedAt?.toISOString() ?? null,
+        hidden: r.removedAt !== null,
       } satisfies Post;
     });
   }
@@ -457,7 +475,10 @@ export class SocialService {
         and(
           eq(comments.postId, postId),
           isNull(comments.deletedAt),
-          isNull(comments.removedAt),
+          // A comment taken down after reports still shows to the person who wrote it.
+          viewerId
+            ? or(isNull(comments.removedAt), eq(comments.authorId, viewerId))
+            : isNull(comments.removedAt),
           viewerId ? sql`${comments.authorId} not in ${blockedWith(viewerId)}` : undefined,
         ),
       )
@@ -476,8 +497,9 @@ export class SocialService {
         .from(comments)
         .where(and(eq(comments.id, BigInt(body.parentId)), eq(comments.postId, postId)))
         .limit(1);
-      if (!parent || parent.deletedAt) throw notFound("Comment");
+      if (!parent || parent.deletedAt || parent.removedAt) throw notFound("Comment");
     }
+    await this.guard(userId, body.body);
     const id = this.deps.ids.next();
     // Replies to replies stay at one level under the comment they answer, like Instagram.
     const anchor = parent && parent.depth > 0 ? parent.path.split(".")[0] : parent?.path;
@@ -920,5 +942,6 @@ function toComment(
     body: c.body,
     depth: c.depth,
     createdAt: c.createdAt.toISOString(),
+    hidden: c.removedAt !== null,
   };
 }

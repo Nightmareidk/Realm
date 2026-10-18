@@ -49,6 +49,11 @@ export const Post = z
     saved: z.boolean(),
     createdAt: IsoDateTime,
     editedAt: IsoDateTime.nullable(),
+    /**
+     * Taken down after reports, or by a Space's moderators. Only its author still sees it, so
+     * they know why it went quiet.
+     */
+    hidden: z.boolean(),
   })
   .meta({ id: "Post" });
 export type Post = z.infer<typeof Post>;
@@ -90,6 +95,8 @@ export const Comment = z
     body: z.string(),
     depth: z.number().int(),
     createdAt: IsoDateTime,
+    /** Taken down after reports; only its author still sees it. */
+    hidden: z.boolean(),
   })
   .meta({ id: "Comment" });
 export type Comment = z.infer<typeof Comment>;

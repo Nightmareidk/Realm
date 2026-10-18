@@ -57,6 +57,8 @@ export const ErrorCode = z.enum([
   "SERVICE_UNAVAILABLE",
   "ALREADY_REPORTED",
   "PRIVATE_ACCOUNT",
+  /** Realm's storage is full: no new photos or videos until there's room again. */
+  "UPLOADS_PAUSED",
 ]);
 export type ErrorCode = z.infer<typeof ErrorCode>;
 

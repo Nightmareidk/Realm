@@ -12,6 +12,7 @@ import type { Deps } from "../../deps";
 import { AppError, notFound } from "../../lib/errors";
 import { MESSAGE_HIDDEN, toMediaInfo } from "../../lib/serialize-spaces";
 import { acceptAs, imageSize, sniff } from "../../lib/sniff";
+import { ensureRoom, noteStorage } from "../../lib/storage-guard";
 import { seenThroughPost } from "../social/access";
 import { roomAccess } from "../spaces/access";
 
@@ -61,6 +62,8 @@ export class MediaService {
     if (used + body.sizeBytes > DAILY_UPLOAD_BYTES) {
       throw new AppError(429, "RATE_LIMITED", "You've uploaded a lot today. Try again tomorrow.");
     }
+    // Realm-wide: never past the storage limit (free on Cloudflare up to 10 GB).
+    await ensureRoom(this.deps, body.sizeBytes);
     await this.deps.kv.set(quotaKey, String(used + body.sizeBytes), 26 * 3600);
 
     const id = this.deps.ids.next();
@@ -143,6 +146,10 @@ export class MediaService {
       .returning();
     if (!ready) throw notFound("Upload");
     await this.deps.queue.enqueue("media.scan", { mediaId: ready.id.toString() });
+    // Warn the owner as storage nears the limit. Never fails the upload itself.
+    await noteStorage(this.deps).catch((err) =>
+      this.deps.logger.error({ err }, "storage check after upload failed"),
+    );
     return toMediaInfo(ready);
   }
 

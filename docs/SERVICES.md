@@ -56,6 +56,10 @@ gateway currently keeps voice-room presence in its own memory, so run one gatewa
    ```
 5. For the web app's security policy, set `REALM_STORAGE_ORIGIN` to the same endpoint, then
    rebuild the web app.
+6. A bucket made in the **EU jurisdiction** answers only at
+   `https://<account-id>.eu.r2.cloudflarestorage.com`; the plain address says Access Denied.
+7. `REALM_STORAGE_LIMIT_GB` (10 by default, R2's free amount) pauses uploads before storage could
+   cost money, and emails `REALM_ALERT_EMAIL` at 90%, 93% and 97% of it and when it's full.
 
 ## Voice and video: LiveKit
 

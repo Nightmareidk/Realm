@@ -25,12 +25,28 @@ function parseClient(req: FastifyRequest): ClientContext {
   const raw = typeof header === "string" ? header.split("/")[0]?.toLowerCase() : undefined;
   const parsed = Platform.safeParse(raw);
   const platform = parsed.success ? parsed.data : "web";
+  const isNative = platform !== "web";
   return {
     ip: req.ip,
     userAgent: req.headers["user-agent"],
     platform,
-    isNative: platform !== "web",
+    isNative,
+    device: isNative ? deviceName(req.headers["x-realm-device"]) : undefined,
   };
+}
+
+/**
+ * The phone's name as the app reports it, kept to letters, numbers and simple punctuation: it's
+ * shown back to the account's owner in their session list, so nothing in it can be markup.
+ */
+function deviceName(header: string | string[] | undefined): string | undefined {
+  if (typeof header !== "string") return undefined;
+  const clean = header
+    .replace(/[^\p{L}\p{N} ._()'+-]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 48);
+  return clean || undefined;
 }
 
 export function sessionCookieOptions(deps: Deps) {

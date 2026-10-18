@@ -23,7 +23,7 @@ export const ReportReason = z.enum([
 export type ReportReason = z.infer<typeof ReportReason>;
 
 export const CreateReportBody = z.object({
-  targetType: z.enum(["message", "user", "community"]),
+  targetType: z.enum(["message", "user", "community", "post", "comment"]),
   targetId: Snowflake,
   reason: ReportReason,
   details: z.string().trim().max(1000).optional(),
@@ -48,12 +48,12 @@ export type ReportReceipt = z.infer<typeof ReportReceipt>;
 export const ReportedItem = z
   .object({
     id: Snowflake,
-    targetType: z.enum(["message", "user", "community"]),
+    targetType: z.enum(["message", "user", "community", "post", "comment"]),
     targetId: Snowflake,
     reasons: z.array(ReportReason),
     count: z.number().int(),
     details: z.array(z.string()),
-    /** The message as it was when first reported. */
+    /** The message, post or comment as it was when first reported. */
     evidence: z
       .object({
         content: z.string().nullable(),
@@ -68,7 +68,7 @@ export const ReportedItem = z
 export type ReportedItem = z.infer<typeof ReportedItem>;
 
 export const HandleReportBody = z.object({
-  /** dismiss: nothing wrong (and unhide); remove: delete the message; */
+  /** dismiss: nothing wrong (and unhide); remove: take the message, post or comment down. */
   action: z.enum(["dismiss", "remove"]),
 });
 

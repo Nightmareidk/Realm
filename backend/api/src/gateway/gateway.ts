@@ -104,10 +104,17 @@ export class Gateway {
     this.dms = new ConversationsService(deps, this.messages);
   }
 
-  /** Browsers must come from Realm's web origin; native apps send no Origin and use a token. */
+  /**
+   * Browsers must come from Realm's web origin. Native apps sign in with a token, and send either
+   * no Origin or (Android's WebSocket, unasked) the gateway's own address: no web page is served
+   * from there, so that's the app.
+   */
   handleUpgrade(req: IncomingMessage, socket: Duplex, head: Buffer) {
     const origin = req.headers.origin;
-    if (origin && !trustedOrigin(this.deps, origin)) {
+    const own = req.headers.host
+      ? [`http://${req.headers.host}`, `https://${req.headers.host}`]
+      : [];
+    if (origin && !trustedOrigin(this.deps, origin) && !own.includes(origin)) {
       socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
       return;
     }

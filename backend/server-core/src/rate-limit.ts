@@ -42,6 +42,11 @@ export const Limits = {
   register: { bucket: "auth:register:ip", limit: 5, windowSeconds: 3600 },
   loginIp: { bucket: "auth:login:ip", limit: 20, windowSeconds: 900 },
   loginAccount: { bucket: "auth:login:account", limit: 8, windowSeconds: 900 },
+  /**
+   * Wrong passwords across all of Realm: past this, someone is likely trying stolen password
+   * lists (credential stuffing), and the owner gets an email. Nothing is blocked by it.
+   */
+  loginFailuresAll: { bucket: "auth:login:fail:all", limit: 100, windowSeconds: 600 },
   verify: { bucket: "auth:verify:user", limit: 10, windowSeconds: 900 },
   resend: { bucket: "auth:resend:user", limit: 3, windowSeconds: 900 },
   forgotIp: { bucket: "auth:forgot:ip", limit: 5, windowSeconds: 3600 },

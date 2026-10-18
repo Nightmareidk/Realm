@@ -1,10 +1,12 @@
-// The parts of `ws` the gateway uses. (`ws` ships no types and @types/ws isn't installed.)
+// The parts of `ws` the gateway and its tests use. (`ws` ships no types and @types/ws isn't installed.)
 declare module "ws" {
   import { EventEmitter } from "node:events";
   import type { IncomingMessage } from "node:http";
   import type { Duplex } from "node:stream";
 
   export class WebSocket extends EventEmitter {
+    /** A client socket (the tests use it to send the headers a phone would). */
+    constructor(address: string, options?: { origin?: string; headers?: Record<string, string> });
     static readonly CONNECTING: 0;
     static readonly OPEN: 1;
     static readonly CLOSING: 2;

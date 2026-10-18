@@ -9,7 +9,8 @@
     "build": "tsup",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "emergency": "tsx --env-file-if-exists=../../.env src/emergency.ts"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",

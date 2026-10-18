@@ -1,3 +1,4 @@
+import { inArray, schema } from "@realm/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   browser,
@@ -220,5 +221,120 @@ describe("search and blocks", () => {
     expect((await call(noor.cookie, "PUT", `/users/${zeynep.username}/follow`)).statusCode).toBe(
       403,
     );
+  });
+});
+
+/** Confirmed email and a week old: the accounts whose reports count on a profile post. */
+async function establish(...who: { id: string }[]) {
+  await t.deps.db
+    .update(schema.users)
+    .set({ emailVerifiedAt: new Date(), createdAt: new Date(Date.now() - 7 * 86400_000) })
+    .where(
+      inArray(
+        schema.users.id,
+        who.map((w) => BigInt(w.id)),
+      ),
+    );
+}
+
+const report = (who: { cookie: string }, targetType: string, targetId: string) =>
+  call(who.cookie, "POST", "/reports", { targetType, targetId, reason: "harassment" });
+
+describe("reports on posts and comments", () => {
+  it("hides a profile post after three established reporters; brand-new ones don't count", async () => {
+    const author = await person();
+    const post = await say(author, "a post people report");
+    const fresh = await person();
+    const [one, two, three] = [await person(), await person(), await person()];
+    await establish(one, two, three);
+
+    expect((await report(author, "post", post.id)).statusCode).toBe(400);
+    expect((await report(fresh, "post", post.id)).json()).toMatchObject({ hidden: false });
+    expect((await report(one, "post", post.id)).json().hidden).toBe(false);
+    expect((await report(two, "post", post.id)).json().hidden).toBe(false);
+    const third = await report(three, "post", post.id);
+    expect(third.json()).toMatchObject({ hidden: true, goesTo: "noted" });
+
+    // Gone for everyone else; its author still sees it, marked.
+    expect((await call(fresh.cookie, "GET", `/posts/${post.id}`)).statusCode).toBe(404);
+    const own = await call(author.cookie, "GET", `/posts/${post.id}`);
+    expect(own.json()).toMatchObject({ hidden: true });
+    const grid = (await call(author.cookie, "GET", `/users/${author.username}/posts`)).json();
+    expect(grid.items.map((p: { id: string }) => p.id)).toContain(post.id);
+    const theirs = (await call(fresh.cookie, "GET", `/users/${author.username}/posts`)).json();
+    expect(theirs.items.map((p: { id: string }) => p.id)).not.toContain(post.id);
+  });
+
+  it("hides a comment from everyone but its writer, and takes it off the count", async () => {
+    const author = await person();
+    const rude = await person();
+    const post = await say(author, "comment on this");
+    const comment = (
+      await call(rude.cookie, "POST", `/posts/${post.id}/comments`, { body: "something rude" })
+    ).json();
+    const crowd = [author, await person(), await person()];
+    await establish(...crowd);
+    for (const who of crowd) await report(who, "comment", comment.id);
+
+    const seen = (await call(author.cookie, "GET", `/posts/${post.id}/comments`)).json().items;
+    expect(seen).toHaveLength(0);
+    const mine = (await call(rude.cookie, "GET", `/posts/${post.id}/comments`)).json().items;
+    expect(mine).toMatchObject([{ id: comment.id, hidden: true }]);
+    expect((await call(author.cookie, "GET", `/posts/${post.id}`)).json().commentCount).toBe(0);
+  });
+
+  it("sends a post shared to a Space to that Space's moderators", async () => {
+    const owner = await person();
+    const space = (
+      await call(owner.cookie, "POST", "/communities", { name: "Report Room" })
+    ).json();
+    const invite = (
+      await call(owner.cookie, "POST", `/communities/${space.id}/invites`, {})
+    ).json();
+    const member = await person();
+    await call(member.cookie, "POST", `/invites/${invite.code}`);
+    const post = await say(member, "in the space", { spaceId: space.id });
+
+    expect((await report(owner, "post", post.id)).json()).toMatchObject({ goesTo: "space" });
+    const queue = (await call(owner.cookie, "GET", `/communities/${space.id}/reports`)).json();
+    expect(queue.items).toMatchObject([
+      { targetType: "post", targetId: post.id, evidence: { content: "in the space" } },
+    ]);
+    await call(owner.cookie, "POST", `/communities/${space.id}/reports/${post.id}`, {
+      action: "remove",
+    });
+    expect((await call(member.cookie, "GET", `/posts/${post.id}`)).json().hidden).toBe(true);
+  });
+});
+
+describe("blocks and spam", () => {
+  it("ends following both ways when someone blocks", async () => {
+    const a = await person();
+    const b = await person();
+    await call(a.cookie, "PUT", `/users/${b.username}/follow`);
+    await call(b.cookie, "PUT", `/users/${a.username}/follow`);
+    await call(a.cookie, "PUT", `/users/@me/blocks/${b.id}`);
+    await call(a.cookie, "DELETE", `/users/@me/blocks/${b.id}`);
+    const profile = (await call(a.cookie, "GET", `/users/${b.username}/profile`)).json();
+    expect(profile).toMatchObject({ follow: "none", followsYou: false });
+    expect(profile.counts).toMatchObject({ followers: 0, following: 0 });
+  });
+
+  it("slows down the same comment pasted again and again", async () => {
+    const author = await person();
+    const spammer = await person();
+    const post = await say(author, "spam magnet");
+    const codes: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      codes.push(
+        (
+          await call(spammer.cookie, "POST", `/posts/${post.id}/comments`, {
+            body: "free skins here",
+          })
+        ).statusCode,
+      );
+    }
+    expect(codes.slice(0, 3)).toEqual([201, 201, 201]);
+    expect(codes[3]).toBe(429);
   });
 });

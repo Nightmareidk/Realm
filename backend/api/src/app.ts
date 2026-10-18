@@ -92,7 +92,10 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       const social = new SocialService(deps);
       await v1.register(postRoutes(deps, social));
       await v1.register(socialUserRoutes(deps, social), { prefix: "/users" });
-      v1.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
+      // The API's map is for building Realm, not for strangers mapping it out: off in production.
+      if (!deps.config.isProduction) {
+        v1.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
+      }
     },
     { prefix: "/v1" },
   );

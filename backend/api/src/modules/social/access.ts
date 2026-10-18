@@ -48,13 +48,15 @@ export async function isMember(db: Db, userId: bigint, communityId: bigint) {
 }
 
 /**
- * Who may see a post: its author; members of the Space it was shared to; everyone for a public
- * post (even from a private account: that's the author's choice per post); the author's
- * followers for a followers post. Never across a block, and never once deleted or removed.
+ * Who may see a post: its author (even once it's taken down, so they know); members of the Space
+ * it was shared to; everyone for a public post (even from a private account: that's the author's
+ * choice per post); the author's followers for a followers post. Never across a block, and never
+ * once deleted.
  */
 export async function canSeePost(db: Db, post: PostRow, viewerId: bigint | null) {
-  if (post.deletedAt || post.removedAt) return false;
+  if (post.deletedAt) return false;
   if (viewerId === post.authorId) return true;
+  if (post.removedAt) return false;
   if (viewerId && (await blockedEitherWay(db, viewerId, post.authorId))) return false;
   if (post.communityId && viewerId && (await isMember(db, viewerId, post.communityId))) {
     return true;

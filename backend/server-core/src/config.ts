@@ -57,6 +57,17 @@ const Env = z.object({
   LIVEKIT_API_SECRET: z.string().optional(),
   /** Where reports that need Realm itself (sexual content involving a minor) are emailed. */
   REALM_SAFETY_EMAIL: z.email().optional(),
+  /**
+   * The owner's inbox for warnings: storage filling up, many failed sign-ins at once. Falls back
+   * to REALM_SAFETY_EMAIL; with neither, warnings only go to the log.
+   */
+  REALM_ALERT_EMAIL: z.email().optional(),
+  /**
+   * Stop taking new photos and videos once this many GB are stored (Cloudflare R2 is free up to
+   * 10 GB), so storage never costs money by surprise. Emails go out at 90%, 93% and 97% of it, and
+   * when it's full. 0 turns the limit off.
+   */
+  REALM_STORAGE_LIMIT_GB: z.coerce.number().min(0).default(10),
   /** Firebase Cloud Messaging: the service account's JSON, raw or base64. */
   FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),

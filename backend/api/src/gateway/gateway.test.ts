@@ -1,5 +1,6 @@
 import { type AddressInfo, createConnection } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { WebSocket as NodeSocket } from "ws";
 import {
   browser,
   createTestApp,
@@ -174,6 +175,33 @@ describe("gateway", () => {
     const left = await n.next((f) => f.t === "VOICE_STATE_UPDATE" && f.d.joined === false);
     expect(left.d).toMatchObject({ channelId: voice.id, userId: kenji.id });
     n.ws.close();
+  });
+
+  it("lets the phone app in with its token, under the Origin Android adds on its own", async () => {
+    const res = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { "x-realm-client": "android/0.1.0" },
+      payload: newAccount(),
+      remoteAddress: `10.20.0.${++ip}`,
+    });
+    const token = res.json().token as string;
+    const { port } = t.app.server.address() as AddressInfo;
+    const ws = new NodeSocket(url, { origin: `http://127.0.0.1:${port}` });
+    const ready = await new Promise<Frame>((resolve, reject) => {
+      ws.on("error", reject);
+      ws.on("message", (raw) => {
+        const frame = JSON.parse(String(raw)) as Frame;
+        if (frame.op === 10) {
+          ws.send(
+            JSON.stringify({ op: 2, d: { token, client: { platform: "android", version: "t" } } }),
+          );
+        }
+        if (frame.t === "READY") resolve(frame);
+      });
+    });
+    expect((ready.d.user as { id: string }).id).toBe(res.json().user.id);
+    ws.close();
   });
 
   it("refuses a used ticket and a foreign origin", async () => {

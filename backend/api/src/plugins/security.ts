@@ -13,7 +13,10 @@ export function registerSecurity(app: FastifyInstance, deps: Deps) {
     if (!origin || !isAppPreview(deps, origin)) return;
     reply
       .header("access-control-allow-origin", origin)
-      .header("access-control-allow-headers", "authorization, content-type, x-realm-client")
+      .header(
+        "access-control-allow-headers",
+        "authorization, content-type, x-realm-client, x-realm-device",
+      )
       .header("access-control-allow-methods", "GET, POST, PUT, PATCH, DELETE")
       .header("access-control-expose-headers", "retry-after")
       .header("vary", "origin");

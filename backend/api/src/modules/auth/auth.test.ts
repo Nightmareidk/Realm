@@ -83,6 +83,23 @@ describe("registration", () => {
     expect(me.statusCode).toBe(200);
   });
 
+  it("names an app session after the phone, stripped of anything that isn't plain text", async () => {
+    const named = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { "x-realm-client": "android/0.1.0", "x-realm-device": "Google <b>Pixel 7</b>" },
+      payload: newAccount(),
+    });
+    expect(named.json().session.deviceName).toBe("Realm app on Google bPixel 7b");
+    const unnamed = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { "x-realm-client": "android/0.1.0" },
+      payload: newAccount(),
+    });
+    expect(unnamed.json().session.deviceName).toBe("Realm app on Android phone");
+  });
+
   it("rejects taken usernames case-insensitively and taken emails", async () => {
     const { account } = await register();
     const dupeName = await register(newAccount({ username: account.username.toUpperCase() }));
