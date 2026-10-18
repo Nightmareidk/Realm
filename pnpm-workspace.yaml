@@ -15,5 +15,16 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - "@types/node@26.6.3"
 
+# One copy of React's types for the website and the phone app. With two, libraries that don't ask
+# for one picked up the app's copy while the website's own code used the other, and the website's
+# type-check failed (JSX elements and `key` typed against different copies).
+overrides:
+  "@types/react": 19.2.18
+  # Security fix (GHSA-f596-whhp-79r4): Firebase's Firestore part pins an older gRPC. Realm only
+  # uses Firebase for push, so this is belt and braces.
+  "@grpc/grpc-js@<1.13.6": 1.14.6
+  # Security fix (a slow-down bug in reading source maps), a patch release of the same version.
+  "source-map-js@<1.2.2": 1.2.2
+
 patchedDependencies:
   gsap@3.15.0: patches/gsap@3.15.0.patch
