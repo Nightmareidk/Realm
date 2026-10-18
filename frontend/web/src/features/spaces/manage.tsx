@@ -52,6 +52,12 @@ const REASON_LABEL: Record<string, string> = {
   impersonation: "Impersonation",
   other: "Other",
 };
+/** What a moderator can take down from the queue, and what the button says. */
+const TAKE_DOWN: Partial<Record<ReportedItem["targetType"], string>> = {
+  message: "Remove the message",
+  post: "Remove the post",
+  comment: "Remove the comment",
+};
 
 /**
  * Running a Space: its settings, its people, the reports its members sent, and the log of what
@@ -757,8 +763,8 @@ function ReportsTab({ space }: { space: SpaceDetail }) {
     <div className="space-y-4">
       <FormNotice>{notice}</FormNotice>
       <p className="text-[0.95rem] text-fg-soft">
-        A message hides itself after 2 reports in a Space of 10 or fewer people, or 3 in a bigger
-        one, until you decide. Who reported stays private.
+        A message, post or comment hides itself after 2 reports in a Space of 10 or fewer people, or
+        3 in a bigger one, until you decide. Who reported stays private.
       </p>
       {items.length === 0 ? (
         <p className="flex items-center gap-2 text-fg">
@@ -783,7 +789,11 @@ function ReportsTab({ space }: { space: SpaceDetail }) {
                     </span>
                   )}
                   {it.evidence.content || (
-                    <span className="text-fg-soft">(a person, not a message)</span>
+                    <span className="text-fg-soft">
+                      {it.targetType === "user"
+                        ? "(a person, not a message)"
+                        : "(no words, only media)"}
+                    </span>
                   )}
                 </blockquote>
               )}
@@ -802,7 +812,7 @@ function ReportsTab({ space }: { space: SpaceDetail }) {
                 >
                   Nothing wrong
                 </button>
-                {it.targetType === "message" && spaceCan(space, Permission.MANAGE_MESSAGES) && (
+                {TAKE_DOWN[it.targetType] && spaceCan(space, Permission.MANAGE_MESSAGES) && (
                   <button
                     type="button"
                     className={pill(
@@ -812,7 +822,7 @@ function ReportsTab({ space }: { space: SpaceDetail }) {
                     )}
                     onClick={() => void decide(it, "remove")}
                   >
-                    Remove the message
+                    {TAKE_DOWN[it.targetType]}
                   </button>
                 )}
                 {it.evidence?.author &&

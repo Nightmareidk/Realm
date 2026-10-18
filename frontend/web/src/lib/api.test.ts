@@ -28,6 +28,15 @@ describe("safeNext", () => {
     for (const next of ["//evil.example", backslash, "https://evil.example", "evil", ""]) {
       expect(safeNext(next)).toBe("/home");
     }
+    // Tabs and line breaks vanish when a browser reads an address: "/<tab>/evil" is "//evil".
+    const TAB = String.fromCharCode(9);
+    const LF = String.fromCharCode(10);
+    const CR = String.fromCharCode(13);
+    for (const gap of [TAB, LF, `${CR}${LF}`]) {
+      expect(safeNext(`/${gap}/evil.example`)).toBe("/home");
+      expect(safeNext(`/${gap}${String.fromCharCode(92)}evil.example`)).toBe("/home");
+    }
+    expect(safeNext("/spaces?tab=new#top")).toBe("/spaces?tab=new#top");
     expect(safeNext(undefined)).toBe("/home");
     expect(safeNext(null, "/login")).toBe("/login");
   });

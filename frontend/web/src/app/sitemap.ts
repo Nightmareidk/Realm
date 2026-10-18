@@ -10,9 +10,13 @@ const PAGES: { path: string; priority: number; changeFrequency: "weekly" | "mont
   { path: "/terms", priority: 0.3, changeFrequency: "monthly" },
 ];
 
+/** When this build was made: the public pages change with each release of the site. */
+const BUILT = new Date();
+
 export default function sitemap(): MetadataRoute.Sitemap {
   return PAGES.map(({ path, priority, changeFrequency }) => ({
     url: `${SITE.origin}${path}`,
+    lastModified: BUILT,
     changeFrequency,
     priority,
   }));

@@ -96,11 +96,22 @@ export async function api<T = void>(
   return data as T;
 }
 
-/** Where to go after signing in: only a path on this site, never another origin. */
+/**
+ * Where to go after signing in: only a path on this site, never another origin. Browsers quietly
+ * drop tabs and line breaks from addresses ("/<tab>/evil.example" becomes "//evil.example", another
+ * site), so the path is read the way a browser would and must stay on this site.
+ */
 export function safeNext(next: string | string[] | undefined | null, fallback = "/home") {
   const value = Array.isArray(next) ? next[0] : next;
   if (!value?.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
     return fallback;
   }
-  return value;
+  const HOME = "https://realm.invalid";
+  try {
+    const url = new URL(value, HOME);
+    if (url.origin !== HOME) return fallback;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return fallback;
+  }
 }
