@@ -19,6 +19,8 @@ export interface SheetSpec {
   title?: string;
   /** What will happen, for a choice that needs saying before you make it. */
   line?: string;
+  /** Something above the actions, like a row of reactions. It gets `close` to finish with. */
+  top?: (close: () => void) => ReactNode;
   actions: SheetAction[];
 }
 
@@ -68,6 +70,7 @@ export function SheetProvider({ children }: { children: ReactNode }) {
                 </Text>
               ) : null}
               {spec.line ? <Text style={s.line}>{spec.line}</Text> : null}
+              {spec.top ? <View style={s.top}>{spec.top(close)}</View> : null}
               <View style={spec.title || spec.line ? s.actionsSpaced : undefined}>
                 {spec.actions.map((a) => (
                   <Pressable
@@ -152,6 +155,7 @@ const s = StyleSheet.create({
     marginTop: 6,
   },
   actionsSpaced: { marginTop: 12 },
+  top: { paddingHorizontal: 4, paddingTop: 2, paddingBottom: 8 },
   row: {
     flexDirection: "row",
     alignItems: "center",

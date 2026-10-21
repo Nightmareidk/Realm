@@ -71,6 +71,17 @@ export const CreateMessageBody = z
   });
 export type CreateMessageBody = z.infer<typeof CreateMessageBody>;
 
+/**
+ * How long after sending a message can still be edited, as in WhatsApp and Messenger: long enough
+ * to fix a typo, short enough that a conversation can't be quietly rewritten later.
+ */
+export const MESSAGE_EDIT_WINDOW_MS = 15 * 60 * 1000;
+
+/** Whether a message sent at `createdAt` can still be edited. */
+export function canStillEdit(createdAt: string | Date, now = Date.now()): boolean {
+  return now - new Date(createdAt).getTime() <= MESSAGE_EDIT_WINDOW_MS;
+}
+
 export const UpdateMessageBody = z.object({
   content: z.string().trim().min(1).max(Limits.message.max),
 });

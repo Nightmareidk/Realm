@@ -13,6 +13,7 @@ import { Platform } from "react-native";
 import { live } from "./live";
 import { api, setSessionToken, whenSessionEnds } from "./server";
 import { useTheme } from "./theme";
+import { refreshUnread, resetUnread } from "./unread";
 
 /** The session token lives in the OS keychain (Android Keystore), never in plain storage. */
 const TOKEN_KEY = "realm.session";
@@ -101,12 +102,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return () => whenSessionEnds(null);
   }, []);
 
-  // One live connection while signed in, for messages as they arrive.
+  // One live connection while signed in, for messages as they arrive, and what's unread.
+  const meId = session.status === "signedIn" ? session.user.id : null;
   useEffect(() => {
-    if (session.status !== "signedIn") return;
+    if (!meId) {
+      resetUnread();
+      return;
+    }
     live.start();
+    refreshUnread(meId).catch(() => {});
     return () => live.stop();
-  }, [session.status]);
+  }, [meId]);
 
   const start = useCallback(
     async (result: AuthResult) => {

@@ -17,6 +17,14 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Realm opens your photos when you choose one to post or send.",
+          "cameraPermission": "Realm uses the camera when you take a photo or record a Clip to share.",
+          "microphonePermission": "Realm uses the microphone when you record a Clip."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#0b0b0e"

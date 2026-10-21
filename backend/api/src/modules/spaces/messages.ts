@@ -1,5 +1,6 @@
 import {
   type CreateMessageBody,
+  canStillEdit,
   has,
   isMinor,
   Limits,
@@ -315,6 +316,12 @@ export class MessagesService {
     if (row.authorId !== userId) throw forbidden("You can only edit your own messages.");
     if (row.type !== "default" && row.type !== "reply") {
       throw badRequest("BAD_REQUEST", "That message can't be edited.");
+    }
+    if (!canStillEdit(row.createdAt)) {
+      throw badRequest(
+        "BAD_REQUEST",
+        "Messages can be edited for 15 minutes after they're sent. You can still delete it.",
+      );
     }
     const [updated] = await this.db
       .update(messages)

@@ -1,3 +1,4 @@
+import { eq, schema } from "@realm/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   browser,
@@ -220,6 +221,15 @@ describe("chat in rooms", () => {
       content: "ranked at 9:30",
     });
     expect(edited.json().editedAt).not.toBeNull();
+    // After 15 minutes it stays as it was sent (deleting still works).
+    await t.deps.db
+      .update(schema.messages)
+      .set({ createdAt: new Date(Date.now() - 16 * 60 * 1000) })
+      .where(eq(schema.messages.id, BigInt(id)));
+    const late = await call(kenji.cookie, "PATCH", `/channels/${room}/messages/${id}`, {
+      content: "rewriting history",
+    });
+    expect(late.statusCode).toBe(400);
     expect((await call(noor.cookie, "DELETE", `/channels/${room}/messages/${id}`)).statusCode).toBe(
       204,
     );

@@ -14,7 +14,7 @@ import {
   UserPlus,
 } from "@phosphor-icons/react";
 import type { Channel, Conversation, Message, SpaceDetail } from "@realm/contracts";
-import { Limits } from "@realm/contracts";
+import { canStillEdit, Limits } from "@realm/contracts";
 import {
   type KeyboardEvent,
   type ReactNode,
@@ -340,7 +340,8 @@ export function Chat({
     const mine = [...messages]
       .reverse()
       .find((m) => m.author.id === meId && !m.type.startsWith("system_"));
-    if (mine) setEditing(mine.id);
+    // Up-arrow edits your last message, while it can still be edited (15 minutes).
+    if (mine && canStillEdit(mine.createdAt)) setEditing(mine.id);
   };
 
   const pinned = pins?.[0];
@@ -961,7 +962,7 @@ function Bubble({
           e.preventDefault();
           onReply();
         }
-        if ((e.key === "e" || e.key === "E") && mine) {
+        if ((e.key === "e" || e.key === "E") && mine && canStillEdit(m.createdAt)) {
           e.preventDefault();
           onEdit();
         }
@@ -1127,7 +1128,7 @@ function Bubble({
                     {m.pinned ? <PushPinSlash size={16} /> : <PushPin size={16} />}
                   </ToolButton>
                 )}
-                {mine && (
+                {mine && canStillEdit(m.createdAt) && (
                   <ToolButton label="Edit" keys="E" onClick={onEdit}>
                     <PencilSimple size={16} />
                   </ToolButton>

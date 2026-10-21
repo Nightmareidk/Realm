@@ -7,7 +7,8 @@ import { Icon } from "./icon";
 import type { IconName } from "./icon-paths";
 import { useSession } from "./session";
 import { Avatar } from "./social/avatar";
-import { fonts, roles } from "./theme";
+import { fonts, roles, useTheme } from "./theme";
+import { useUnreadCount } from "./unread";
 
 type BarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0];
 
@@ -25,6 +26,8 @@ const TABS: Record<string, { label: string; icon: IconName; on: IconName }> = {
 export function TabBar({ state, navigation }: BarProps) {
   const insets = useSafeAreaInsets();
   const { session } = useSession();
+  const { accent, onAccent } = useTheme();
+  const unread = useUnreadCount();
   return (
     <View
       style={[s.bar, { paddingBottom: Math.max(insets.bottom, 8) }]}
@@ -50,7 +53,9 @@ export function TabBar({ state, navigation }: BarProps) {
             onPress={press}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            accessibilityLabel={tab?.label ?? "You"}
+            accessibilityLabel={
+              route.name === "inbox" && unread ? `Inbox, ${unread} unread` : (tab?.label ?? "You")
+            }
             style={s.item}
           >
             <View style={[s.pill, on && s.pillOn]}>
@@ -62,6 +67,13 @@ export function TabBar({ state, navigation }: BarProps) {
                 />
               ) : session.status === "signedIn" ? (
                 <Avatar user={session.user} size={26} ring={on ? "self" : undefined} />
+              ) : null}
+              {route.name === "inbox" && unread ? (
+                <View style={[s.badge, { backgroundColor: accent }]} pointerEvents="none">
+                  <Text style={[s.badgeText, { color: onAccent }]} allowFontScaling={false}>
+                    {unread > 9 ? "9+" : unread}
+                  </Text>
+                </View>
               ) : null}
             </View>
             <Text style={[s.label, on && s.labelOn]} allowFontScaling={false}>
@@ -91,6 +103,20 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   pillOn: { backgroundColor: roles.surfaceRaised },
+  badge: {
+    position: "absolute",
+    top: -2,
+    right: 8,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: roles.bg,
+  },
+  badgeText: { fontFamily: fonts.bold, fontSize: 10.5 },
   label: { fontFamily: fonts.bold, fontSize: 11.5, color: roles.textSoft },
   labelOn: { color: roles.text },
 });
