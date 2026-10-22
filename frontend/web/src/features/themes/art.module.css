@@ -14,14 +14,15 @@
   inset: -40px;
   background-image: var(--r-wallpaper, none);
   background-size: cover;
-  background-position: center;
-  filter: blur(var(--r-wallpaper-blur, 0px));
+  background-position: var(--r-wallpaper-pos, center);
+  filter: var(--r-wallpaper-filter, none);
 }
+/* The layer over the picture: a colour or a gradient, as strong as the theme's dim. */
 .wallpaper::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--r-bg);
+  background: var(--r-wallpaper-overlay, var(--r-bg));
   opacity: var(--r-wallpaper-dim, 0);
 }
 

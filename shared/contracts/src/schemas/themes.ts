@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Snowflake } from "../ids";
-import { ThemeFile, ThemeLook } from "../themes/file";
+import { ThemeButtons, ThemeColors, ThemeFile, ThemeLook, ThemePanels } from "../themes/file";
 import { IsoDateTime } from "./common";
 import { ThemeAccent, UserSummary } from "./users";
 
@@ -201,3 +201,18 @@ export const ThemePayments = z
   })
   .meta({ id: "ThemePayments" });
 export type ThemePayments = z.infer<typeof ThemePayments>;
+
+/** Colour sets Realm suggests from a picture you uploaded (like a phone's wallpaper colours). */
+export const PaletteSuggestion = z
+  .object({
+    name: z.string(),
+    colors: ThemeColors,
+    panels: ThemePanels.partial(),
+    buttons: ThemeButtons.partial(),
+    /** The layer over the wallpaper: a colour fading to a second one. */
+    overlay: z.string(),
+    overlay2: z.string(),
+  })
+  .meta({ id: "PaletteSuggestion" });
+export type PaletteSuggestion = z.infer<typeof PaletteSuggestion>;
+export const PaletteBody = z.object({ mediaId: Snowflake }).meta({ id: "PaletteBody" });

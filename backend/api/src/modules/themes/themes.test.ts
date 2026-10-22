@@ -372,3 +372,33 @@ describe("theme attacks", () => {
     expect((await call(noor.cookie, "POST", `/themes/${draft.id}/publish`)).statusCode).toBe(403);
   });
 });
+
+describe("colours from a picture", () => {
+  it("suggests readable colour sets from your own picture, not someone else's", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const red = await sharp({ create: { width: 32, height: 32, channels: 3, background: "#c01830" } })
+      .composite([
+        {
+          input: await sharp({ create: { width: 16, height: 32, channels: 3, background: "#101018" } })
+            .png()
+            .toBuffer(),
+          left: 0,
+          top: 0,
+        },
+      ])
+      .png()
+      .toBuffer();
+    const pic = await upload(noor.cookie, red);
+    const res = await call(noor.cookie, "POST", "/themes/palette", { mediaId: pic });
+    expect(res.statusCode, res.body).toBe(200);
+    const { suggestions } = res.json();
+    expect(suggestions.length).toBeGreaterThanOrEqual(2);
+    // Each one makes a valid theme that Realm accepts as it is or fixes.
+    const check = await call(noor.cookie, "POST", "/themes/check", {
+      file: theme({ colors: suggestions[0].colors, panels: suggestions[0].panels }),
+    });
+    expect(check.json().ok).toBe(true);
+    expect((await call(kenji.cookie, "POST", "/themes/palette", { mediaId: pic })).statusCode).toBe(404);
+  });
+});

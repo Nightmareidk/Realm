@@ -112,8 +112,9 @@
   --color-boards-solid: var(--r-accent);
   --color-boards-text: var(--r-text-soft);
 
-  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-funnel), var(--font-atkinson), system-ui, sans-serif;
+  --font-sans: var(--r-font-body, var(--font-atkinson)), ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    var(--r-font-display, var(--font-funnel)), var(--font-atkinson), system-ui, sans-serif;
   --radius-card: var(--r-radius-card);
   --radius-input: var(--r-radius-input);
   --radius-box: var(--r-radius-box);
@@ -800,4 +801,33 @@ html:has([data-world="canvas"]) body::after {
     opacity: 0;
     visibility: hidden;
   }
+}
+
+/* ── Themes (docs/THEMING.md): values come only from the theme compiler ─────────────────────── */
+
+/* The main button: the theme's fill (solid, gradient or outline), ink, edge and glow. */
+.r-btn {
+  background: var(--r-btn-bg, var(--r-accent));
+  color: var(--r-btn-ink, var(--r-on-accent));
+  box-shadow: var(--r-btn-ring, 0 0 0 0 transparent), var(--r-btn-glow, 0 0 0 0 transparent);
+}
+
+/* Section titles ("Your Spaces"): the theme's heading colour, or a strip in its colour. */
+.r-heading {
+  color: var(--r-heading, var(--r-text-soft));
+}
+[data-headers="bar"] .r-heading {
+  display: block;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--r-accent) 88%, transparent);
+  color: var(--r-on-accent);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Links in messages and posts. */
+.r-link {
+  color: var(--r-link, var(--r-text));
 }

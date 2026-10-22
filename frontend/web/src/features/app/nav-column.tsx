@@ -75,7 +75,7 @@ function SpacesList({ pathname }: { pathname: string }) {
   return (
     <section aria-labelledby="nav-spaces" className="min-h-0">
       <div className="flex items-center justify-between pr-1 pl-3">
-        <p id="nav-spaces" className="py-1.5 text-[0.82rem] font-bold text-fg-soft">
+        <p id="nav-spaces" className="r-heading py-1.5 text-[0.82rem] font-bold">
           Your Spaces
         </p>
         <button

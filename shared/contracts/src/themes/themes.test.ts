@@ -145,4 +145,32 @@ describe("readability checks", () => {
     );
     expect(checkTheme(fixTheme(kitty))).toEqual([]);
   });
+
+  it("keeps text readable on see-through panels over a bright wallpaper", () => {
+    const t = resolveTheme(
+      ThemeFile.parse({
+        ...base,
+        panels: { opacity: 0.4, blur: "soft" },
+        art: { wallpaper: { image: "media:1", dim: 0.3, blur: "none", focus: "right" } },
+      }),
+    );
+    const bright = { low: 0.05, high: 0.95 };
+    expect(checkTheme(t, bright).some((p) => p.fix === "panels" || p.fix === "dim")).toBe(true);
+    const fixed = fixTheme(t, bright);
+    expect(checkTheme(fixed, bright)).toEqual([]);
+  });
+
+  it("checks gradient buttons, outline buttons, headings and links", () => {
+    const t = resolveTheme(
+      ThemeFile.parse({
+        ...base,
+        colors: { ...base.colors, accent2: "#202000", heading: "#222222", link: "#111111" },
+        buttons: { fill: "gradient", shape: "square", glow: true },
+        type: { display: "bangers", body: "nunito" },
+      }),
+    );
+    const found = checkTheme(t).map((p) => p.fix);
+    expect(found).toEqual(expect.arrayContaining(["accent2", "heading", "link"]));
+    expect(checkTheme(fixTheme(t))).toEqual([]);
+  });
 });

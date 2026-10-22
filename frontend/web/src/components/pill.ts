@@ -6,12 +6,13 @@ import { cx } from "@/lib/cx";
  * everything secondary. Rounded rectangles are for content, never for buttons.
  */
 const base =
-  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-bold whitespace-nowrap " +
+  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--r-btn-radius,999px)] font-bold whitespace-nowrap " +
   "transition-[transform,filter,background-color,box-shadow] duration-150 ease-out active:scale-[0.97] " +
   "aria-disabled:cursor-progress aria-disabled:active:scale-100";
 
 const kinds = {
-  action: "bg-accent text-on-accent hover:brightness-110",
+  // The theme decides the fill (solid, gradient or outline) and any glow: globals.css .r-btn.
+  action: "r-btn hover:brightness-110",
   ghost: "text-fg shadow-[inset_0_0_0_1.5px_var(--r-border-strong)] hover:bg-surface-raised",
   quiet: "text-fg-soft hover:bg-surface-raised hover:text-fg",
 } as const;

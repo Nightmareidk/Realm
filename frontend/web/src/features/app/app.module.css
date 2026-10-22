@@ -247,3 +247,25 @@
     border-bottom: 1px solid var(--r-border);
   }
 }
+
+/* See-through panels (a theme with a wallpaper): frosted when the theme asks, with its own edge
+   and shadow. The wallpaper itself is drawn once, behind everything (features/themes/art). */
+@media (width >= 48rem) {
+  .sheet,
+  :global(html[data-look="now-playing"]) .nav {
+    backdrop-filter: blur(var(--r-panel-blur, 0px));
+    box-shadow:
+      var(--r-panel-ring, 0 0 0 0 transparent), var(--r-panel-shadow, 0 0 0 0 transparent);
+  }
+  :global(html[data-glass="on"]) .nav {
+    margin: 0.625rem 0 0.625rem 0.625rem;
+    border-radius: 1.375rem;
+    background: var(--r-surface);
+    backdrop-filter: blur(var(--r-panel-blur, 0px));
+  }
+}
+:global(html[data-glass="on"]) .phoneTop,
+:global(html[data-glass="on"]) .tabs {
+  background: var(--r-surface);
+  backdrop-filter: blur(var(--r-panel-blur, 0px));
+}

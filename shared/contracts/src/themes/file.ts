@@ -68,8 +68,16 @@ export const ThemeColors = z.strictObject({
   onAccent: Hex,
   /** The three soft lights glowing behind the page. */
   lights: z.tuple([Hex, Hex, Hex]),
+  /** Where a gradient button ends (it starts at your colour). */
+  accent2: Hex.optional(),
+  /** Section titles in lists and menus ("YOUR SPACES", "MODERATORS"). */
+  heading: Hex.optional(),
+  /** Links in messages and posts. */
+  link: Hex.optional(),
 });
 export type ThemeColors = z.infer<typeof ThemeColors>;
+/** Every colour filled in (the optional ones come from the others). */
+export type ResolvedColors = Required<ThemeColors>;
 
 /** Built-in pattern shapes, drawn by Realm in the theme's colour. */
 export const PATTERN_SHAPES = [
@@ -103,9 +111,25 @@ export const EFFECT_SHAPES = [
   "notes",
 ] as const;
 
-/** Display fonts set titles and names only; reading text keeps a font made for reading. */
-export const DISPLAY_FONTS = ["funnel", "atkinson", "system"] as const;
-export const BODY_FONTS = ["atkinson", "system"] as const;
+/**
+ * Fonts Realm carries (free Google Fonts, served by Realm itself, so a theme never loads anything
+ * from outside). Display fonts set titles and names; reading text keeps a font made for reading.
+ */
+export const DISPLAY_FONTS = [
+  "funnel",
+  "atkinson",
+  "system",
+  "bangers",
+  "fredoka",
+  "pacifico",
+  "press-start",
+  "bebas",
+  "righteous",
+  "orbitron",
+  "permanent-marker",
+  "comfortaa",
+] as const;
+export const BODY_FONTS = ["atkinson", "system", "lexend", "nunito", "fredoka", "comfortaa"] as const;
 
 /** Realm's own app icons that ship inside the app (phones only switch between built-in icons). */
 export const APP_ICONS = [
@@ -136,6 +160,27 @@ export const ThemeStyle = z.strictObject({
 });
 export type ThemeStyle = z.infer<typeof ThemeStyle>;
 
+/** The panels the app sits on: how solid they are (see-through lets the wallpaper show), and their edges. */
+export const ThemePanels = z.strictObject({
+  /** 1 is solid; lower lets the wallpaper show through (Realm raises it if text would be hard to read). */
+  opacity: z.number().min(0.35).max(1),
+  /** Frosted glass behind see-through panels (on the website; phones use the see-through alone). */
+  blur: z.enum(["none", "soft", "strong"]),
+  border: z.enum(["none", "line", "accent"]),
+  shadow: z.enum(["none", "soft", "glow"]),
+  /** Section titles as plain words, or on a strip in your colour. */
+  headers: z.enum(["plain", "bar"]),
+});
+export type ThemePanels = z.infer<typeof ThemePanels>;
+
+/** The main buttons: their shape and how they're filled. */
+export const ThemeButtons = z.strictObject({
+  shape: z.enum(["pill", "rounded", "square"]),
+  fill: z.enum(["solid", "outline", "gradient"]),
+  glow: z.boolean(),
+});
+export type ThemeButtons = z.infer<typeof ThemeButtons>;
+
 export const ThemeType = z.strictObject({
   display: z.enum(DISPLAY_FONTS),
   body: z.enum(BODY_FONTS),
@@ -152,6 +197,14 @@ export const ThemeArt = z.strictObject({
       /** How much of the ground colour lies over it (Realm raises this if text would be hard to read). */
       dim: z.number().min(0.2).max(0.95),
       blur: z.enum(["none", "soft", "strong"]),
+      /** Which part stays in view when the screen crops it (keep a character's face showing). */
+      focus: z.enum(["center", "top", "bottom", "left", "right"]).optional(),
+      /** The picture's own brightness (1 as it is) and colour strength (0 grey, 1 as it is). */
+      brightness: z.number().min(0.3).max(1.2).optional(),
+      saturation: z.number().min(0).max(1.6).optional(),
+      /** The layer over the picture: a colour, or a gradient to a second colour (dim sets how strong). */
+      overlay: Hex.optional(),
+      overlay2: Hex.optional(),
     })
     .optional(),
   /** A repeating pattern over the ground: a built-in shape, or your own small picture. */
@@ -212,6 +265,8 @@ export const ThemeFile = z
     colors: ThemeColors,
     /** Anything left out comes from the look. */
     style: ThemeStyle.partial().optional(),
+    panels: ThemePanels.partial().optional(),
+    buttons: ThemeButtons.partial().optional(),
     type: ThemeType.partial().optional(),
     art: ThemeArt.optional(),
     /** Which of Realm's app icons to use, on phones that allow it. */
@@ -222,7 +277,10 @@ export type ThemeFile = z.infer<typeof ThemeFile>;
 export type ThemeFileInput = z.input<typeof ThemeFile>;
 
 /** What each look is when a theme doesn't say otherwise. */
-export const LOOK_DEFAULTS: Record<ThemeLook, { style: ThemeStyle; type: ThemeType }> = {
+export const LOOK_DEFAULTS: Record<
+  ThemeLook,
+  { style: ThemeStyle; type: ThemeType; panels: ThemePanels; buttons: ThemeButtons }
+> = {
   "now-playing": {
     style: {
       corners: "round",
@@ -237,6 +295,8 @@ export const LOOK_DEFAULTS: Record<ThemeLook, { style: ThemeStyle; type: ThemeTy
       avatars: "circle",
     },
     type: { display: "funnel", body: "atkinson", size: "normal" },
+    panels: { opacity: 1, blur: "none", border: "none", shadow: "soft", headers: "plain" },
+    buttons: { shape: "pill", fill: "solid", glow: false },
   },
   wristband: {
     style: {
@@ -252,6 +312,8 @@ export const LOOK_DEFAULTS: Record<ThemeLook, { style: ThemeStyle; type: ThemeTy
       avatars: "circle",
     },
     type: { display: "funnel", body: "atkinson", size: "normal" },
+    panels: { opacity: 1, blur: "none", border: "line", shadow: "none", headers: "plain" },
+    buttons: { shape: "rounded", fill: "solid", glow: false },
   },
   plain: {
     style: {
@@ -267,6 +329,8 @@ export const LOOK_DEFAULTS: Record<ThemeLook, { style: ThemeStyle; type: ThemeTy
       avatars: "circle",
     },
     type: { display: "funnel", body: "atkinson", size: "normal" },
+    panels: { opacity: 1, blur: "none", border: "line", shadow: "none", headers: "plain" },
+    buttons: { shape: "rounded", fill: "solid", glow: false },
   },
 };
 
@@ -275,8 +339,10 @@ export interface ResolvedTheme {
   name: string;
   description: string | null;
   look: ThemeLook;
-  colors: ThemeColors;
+  colors: ResolvedColors;
   style: ThemeStyle;
+  panels: ThemePanels;
+  buttons: ThemeButtons;
   type: ThemeType;
   art: ThemeArt;
   appIcon: (typeof APP_ICONS)[number];
@@ -288,8 +354,15 @@ export function resolveTheme(file: ThemeFile): ResolvedTheme {
     name: file.name,
     description: file.description ?? null,
     look: file.look,
-    colors: file.colors,
+    colors: {
+      ...file.colors,
+      accent2: file.colors.accent2 ?? file.colors.accent,
+      heading: file.colors.heading ?? file.colors.textSoft,
+      link: file.colors.link ?? file.colors.text,
+    },
     style: { ...base.style, ...file.style },
+    panels: { ...base.panels, ...file.panels },
+    buttons: { ...base.buttons, ...file.buttons },
     type: { ...base.type, ...file.type },
     art: file.art ?? {},
     appIcon: file.appIcon ?? "default",

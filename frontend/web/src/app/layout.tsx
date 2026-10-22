@@ -1,5 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque, Funnel_Display } from "next/font/google";
+import {
+  Atkinson_Hyperlegible_Next,
+  Bangers,
+  Bebas_Neue,
+  Bricolage_Grotesque,
+  Comfortaa,
+  Fredoka,
+  Funnel_Display,
+  Lexend,
+  Nunito,
+  Orbitron,
+  Pacifico,
+  Permanent_Marker,
+  Press_Start_2P,
+  Righteous,
+} from "next/font/google";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 import { themeBootScript } from "@/features/themes/engine";
@@ -34,6 +49,98 @@ const atkinson = Atkinson_Hyperlegible_Next({
   adjustFontFallback: false,
   fallback: ["system-ui", "sans-serif"],
 });
+
+/**
+ * Fonts a theme may pick (docs/THEMING.md). Served by Realm like the others, never preloaded: a
+ * browser only downloads one when the theme in use asks for it.
+ */
+const bangers = Bangers({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-bangers",
+  display: "swap",
+  preload: false,
+});
+const fredoka = Fredoka({
+  subsets: ["latin"],
+  variable: "--font-fredoka",
+  display: "swap",
+  preload: false,
+});
+const pacifico = Pacifico({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-pacifico",
+  display: "swap",
+  preload: false,
+});
+const pressStart = Press_Start_2P({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-press-start",
+  display: "swap",
+  preload: false,
+});
+const bebas = Bebas_Neue({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-bebas",
+  display: "swap",
+  preload: false,
+});
+const righteous = Righteous({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-righteous",
+  display: "swap",
+  preload: false,
+});
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  variable: "--font-orbitron",
+  display: "swap",
+  preload: false,
+});
+const marker = Permanent_Marker({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-permanent-marker",
+  display: "swap",
+  preload: false,
+});
+const comfortaa = Comfortaa({
+  subsets: ["latin"],
+  variable: "--font-comfortaa",
+  display: "swap",
+  preload: false,
+});
+const lexend = Lexend({
+  subsets: ["latin"],
+  variable: "--font-lexend",
+  display: "swap",
+  preload: false,
+});
+const nunito = Nunito({
+  subsets: ["latin"],
+  variable: "--font-nunito",
+  display: "swap",
+  preload: false,
+});
+const themeFonts = [
+  bangers,
+  fredoka,
+  pacifico,
+  pressStart,
+  bebas,
+  righteous,
+  orbitron,
+  marker,
+  comfortaa,
+  lexend,
+  nunito,
+]
+  .map((f) => f.variable)
+  .join(" ");
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.origin),
@@ -93,7 +200,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${bricolage.variable} ${atkinson.variable} ${funnel.variable}`}
+      className={`${bricolage.variable} ${atkinson.variable} ${funnel.variable} ${themeFonts}`}
       suppressHydrationWarning
     >
       <head>

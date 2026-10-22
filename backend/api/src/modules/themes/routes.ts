@@ -1,6 +1,8 @@
 import {
   ActiveTheme,
   MyTheme,
+  PaletteBody,
+  PaletteSuggestion,
   ReportThemeBody,
   ReviewThemeBody,
   SaveThemeBody,
@@ -74,6 +76,19 @@ export const themeRoutes =
       "/active",
       { preHandler: requireAuth, schema: { body: ActiveTheme, response: { 200: MyTheme } } },
       async (req) => themes.setActive(authOf(req).userId, req.body),
+    );
+
+    app.post(
+      "/palette",
+      {
+        preHandler: requireAuth,
+        schema: { body: PaletteBody, response: { 200: z.object({ suggestions: z.array(PaletteSuggestion) }) } },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await save(userId);
+        return themes.palette(userId, BigInt(req.body.mediaId));
+      },
     );
 
     app.post(

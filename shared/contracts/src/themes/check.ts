@@ -1,5 +1,5 @@
 import { contrast, contrastL, hexToRgb, luminance, luminanceRgb, type Rgb } from "./color";
-import type { ResolvedTheme, ThemeColors } from "./file";
+import type { ResolvedColors, ResolvedTheme } from "./file";
 
 /**
  * The readability checks every theme passes before anyone else can use it (docs/THEMING.md
@@ -21,10 +21,10 @@ export interface ThemeProblem {
   ratio: number;
   need: number;
   /** What to change to fix it. */
-  fix: keyof ThemeColors | "glow" | "dim";
+  fix: keyof ResolvedColors | "glow" | "dim" | "panels";
 }
 
-const NAMES: Record<keyof Omit<ThemeColors, "lights">, string> = {
+const NAMES: Record<keyof Omit<ResolvedColors, "lights">, string> = {
   ground: "the background",
   surface: "the panels",
   raised: "menus and bubbles",
@@ -33,15 +33,18 @@ const NAMES: Record<keyof Omit<ThemeColors, "lights">, string> = {
   textSoft: "The second text",
   accent: "Your colour",
   onAccent: "Text on your colour",
+  accent2: "The end of your button gradient",
+  heading: "The section titles",
+  link: "The links",
 };
 
 const round = (n: number) => Math.round(n * 10) / 10;
 
 function pair(
   out: ThemeProblem[],
-  fg: keyof ThemeColors,
-  bg: keyof ThemeColors,
-  colors: ThemeColors,
+  fg: keyof ResolvedColors,
+  bg: keyof ResolvedColors,
+  colors: ResolvedColors,
   need: number,
 ) {
   const ratio = contrast(colors[fg] as string, colors[bg] as string);
@@ -127,11 +130,23 @@ export function litPeak(t: ResolvedTheme): number {
   return peak;
 }
 
-/** Where a wallpaper's darkest and brightest parts end up once the dimming layer lies over them. */
+/**
+ * Where a wallpaper's darkest and brightest parts end up: the picture's brightness setting, then
+ * the layer over it (its colour, or the lighter and darker ends of its gradient) at `dim` strength.
+ */
 export function dimmedWallpaper(t: ResolvedTheme, w: WallpaperLight): WallpaperLight {
-  const dim = t.art.wallpaper?.dim ?? 1;
-  const g = luminance(t.colors.ground);
-  return { low: dim * g + (1 - dim) * w.low, high: dim * g + (1 - dim) * w.high };
+  const wp = t.art.wallpaper;
+  const dim = wp?.dim ?? 1;
+  const bright = wp?.brightness ?? 1;
+  const ends = [wp?.overlay ?? t.colors.ground, wp?.overlay2 ?? wp?.overlay ?? t.colors.ground].map(
+    luminance,
+  );
+  const lo = Math.min(...ends);
+  const hi = Math.max(...ends);
+  return {
+    low: dim * lo + (1 - dim) * Math.min(1, w.low * bright),
+    high: dim * hi + (1 - dim) * Math.min(1, w.high * bright),
+  };
 }
 
 export function checkTheme(t: ResolvedTheme, wallpaper?: WallpaperLight): ThemeProblem[] {
@@ -141,9 +156,20 @@ export function checkTheme(t: ResolvedTheme, wallpaper?: WallpaperLight): ThemeP
     pair(out, "text", bg, c, TEXT_CONTRAST);
     pair(out, "textSoft", bg, c, TEXT_CONTRAST);
   }
+  for (const bg of ["ground", "surface"] as const) {
+    pair(out, "heading", bg, c, TEXT_CONTRAST);
+    pair(out, "link", bg, c, TEXT_CONTRAST);
+  }
   pair(out, "onAccent", "accent", c, TEXT_CONTRAST);
-  pair(out, "accent", "ground", c, UI_CONTRAST);
-  pair(out, "accent", "surface", c, UI_CONTRAST);
+  if (t.buttons.fill === "gradient") {
+    const before = out.length;
+    pair(out, "onAccent", "accent2", c, TEXT_CONTRAST);
+    const last = out[before];
+    if (last) last.fix = "accent2";
+  }
+  // Outline buttons write their words in your colour, on the panels.
+  pair(out, "accent", "ground", c, t.buttons.fill === "outline" ? TEXT_CONTRAST : UI_CONTRAST);
+  pair(out, "accent", "surface", c, t.buttons.fill === "outline" ? TEXT_CONTRAST : UI_CONTRAST);
 
   const peak = litPeak(t);
   for (const fg of ["text", "textSoft"] as const) {
@@ -155,6 +181,30 @@ export function checkTheme(t: ResolvedTheme, wallpaper?: WallpaperLight): ThemeP
         need: TEXT_CONTRAST,
         fix: "glow",
       });
+    }
+  }
+
+  // See-through panels: text on a panel also sits over whatever shows through it.
+  if (t.panels.opacity < 1) {
+    const behind =
+      t.art.wallpaper && wallpaper
+        ? dimmedWallpaper(t, wallpaper)
+        : { low: luminance(c.ground), high: peak };
+    const o = t.panels.opacity;
+    const panel = luminance(c.surface);
+    const lows = o * panel + (1 - o) * behind.low;
+    const highs = o * panel + (1 - o) * behind.high;
+    for (const fg of ["text", "textSoft"] as const) {
+      const l = luminance(c[fg]);
+      const ratio = Math.min(contrastL(l, lows), contrastL(l, highs));
+      if (ratio < TEXT_CONTRAST) {
+        out.push({
+          message: `${NAMES[fg]} is hard to read on the see-through panels (${round(ratio)} to 1). Make the panels more solid.`,
+          ratio,
+          need: TEXT_CONTRAST,
+          fix: "panels",
+        });
+      }
     }
   }
 
@@ -203,6 +253,8 @@ export function fixTheme(t: ResolvedTheme, wallpaper?: WallpaperLight): Resolved
     ...t,
     colors: { ...t.colors, lights: [...t.colors.lights] },
     style: { ...t.style },
+    panels: { ...t.panels },
+    buttons: { ...t.buttons },
     type: { ...t.type },
     art: { ...t.art },
   };
@@ -234,9 +286,17 @@ export function fixTheme(t: ResolvedTheme, wallpaper?: WallpaperLight): Resolved
         c.accent = mixHex(c.accent, best === "#0a0a0a" ? "#ffffff" : "#000000", 0.1);
       }
       c.onAccent = best;
+    } else if (p.fix === "panels") {
+      next.panels = { ...next.panels, opacity: Math.min(1, round(next.panels.opacity + 0.05)) };
+      if (next.panels.opacity >= 1) {
+        c.text = mixHex(c.text, away, 0.2);
+        c.textSoft = mixHex(c.textSoft, away, 0.2);
+      }
+    } else if (p.fix === "accent2") {
+      c.accent2 = mixHex(c.accent2, c.onAccent === "#ffffff" ? "#000000" : "#ffffff", 0.1);
     } else if (p.fix === "accent") {
       c.accent = mixHex(c.accent, away, 0.1);
-    } else if (p.fix === "text" || p.fix === "textSoft") {
+    } else if (p.fix === "text" || p.fix === "textSoft" || p.fix === "heading" || p.fix === "link") {
       c[p.fix] = mixHex(c[p.fix], away, 0.15);
     }
   }

@@ -71,14 +71,22 @@ function patternTile(shape: string, color: string, size: number): string | null 
 }
 
 /** The art's values: the wallpaper and the pattern become CSS values the frame draws. */
-function artVars(art: ThemeArt): Record<string, string> {
+export function artVars(art: ThemeArt): Record<string, string> {
   const out: Record<string, string> = {};
   const wall = mediaPath(art.wallpaper?.image);
-  if (wall && art.wallpaper) {
+  const w = art.wallpaper;
+  if (wall && w) {
+    const blur = w.blur === "strong" ? "28px" : w.blur === "soft" ? "10px" : "0px";
+    const hex = (v: string | undefined) =>
+      v && /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : null;
+    const over = hex(w.overlay) ?? "var(--r-bg)";
+    const over2 = hex(w.overlay2);
     out["--r-wallpaper"] = `url("${wall}")`;
-    out["--r-wallpaper-dim"] = String(art.wallpaper.dim);
-    out["--r-wallpaper-blur"] =
-      art.wallpaper.blur === "strong" ? "28px" : art.wallpaper.blur === "soft" ? "10px" : "0px";
+    out["--r-wallpaper-dim"] = String(w.dim);
+    out["--r-wallpaper-pos"] = w.focus ?? "center";
+    out["--r-wallpaper-filter"] =
+      `brightness(${w.brightness ?? 1}) saturate(${w.saturation ?? 1}) blur(${blur})`;
+    out["--r-wallpaper-overlay"] = over2 ? `linear-gradient(160deg, ${over}, ${over2})` : over;
   }
   const p = art.pattern;
   if (p) {
@@ -95,7 +103,9 @@ function artVars(art: ThemeArt): Record<string, string> {
 const ART_KEYS = [
   "--r-wallpaper",
   "--r-wallpaper-dim",
-  "--r-wallpaper-blur",
+  "--r-wallpaper-pos",
+  "--r-wallpaper-filter",
+  "--r-wallpaper-overlay",
   "--r-pattern",
   "--r-pattern-opacity",
 ];
@@ -138,4 +148,9 @@ export function clearTheme(forget = false) {
  * remembered values. Only `--r-*` names and `data-*` attributes from the fixed list are set, and
  * only values that look like colours, numbers, words or a Realm media path.
  */
-export const themeBootScript = `try{if(${APP_PATHS.toString()}.test(location.pathname)){var c=JSON.parse(localStorage.getItem("${THEME_CACHE}")||"null");if(c){var e=document.documentElement,ok=/^(#[0-9a-f]{6}|[0-9.]+(rem|px)?|url\\("(\\/api\\/v1\\/media\\/[0-9]+\\/raw|data:image\\/svg\\+xml,[^"]*)"\\))$/i;for(var k in c.vars)if(/^--r-[a-z0-9-]+$/.test(k)&&ok.test(c.vars[k]))e.style.setProperty(k,c.vars[k]);for(var a in c.attrs)if(/^data-(look|stories|posts|tabbar|bubbles|corners|icons|avatars|grain|scheme)$/.test(a)&&/^[a-z-]+$/.test(c.attrs[a]))e.setAttribute(a,c.attrs[a])}}}catch(x){}`;
+export const themeBootScript = `try{if(${APP_PATHS.toString()}.test(location.pathname)){var c=JSON.parse(localStorage.getItem("${THEME_CACHE}")||"null");if(c){var e=document.documentElement,ok=/^([#a-z0-9 .,()%-]+|url\\("(\\/api\\/v1\\/media\\/[0-9]+\\/raw|data:image\\/svg\\+xml,[^"]*)"\\))$/i;for(var k in c.vars)if(/^--r-[a-z0-9-]+$/.test(k)&&ok.test(c.vars[k]))e.style.setProperty(k,c.vars[k]);for(var a in c.attrs)if(/^data-(look|stories|posts|tabbar|bubbles|corners|icons|avatars|grain|scheme|headers|glass)$/.test(a)&&/^[a-z-]+$/.test(c.attrs[a]))e.setAttribute(a,c.attrs[a])}}}catch(x){}`;
+
+/** A theme's values for one element (a preview), instead of the whole page. */
+export function scopedTheme(t: ResolvedTheme) {
+  return { vars: { ...cssVars(t), ...artVars(t.art) }, attrs: themeAttrs(t) };
+}

@@ -14,7 +14,27 @@ export function ThemePreview({
   width?: number;
   wide?: boolean;
 }) {
-  const c = theme.colors;
+  const base = theme.colors;
+  // See-through panels and the wallpaper, as the app draws them.
+  const a = (hex: string, v: number) =>
+    v >= 1
+      ? hex
+      : `${hex}${Math.round(v * 255)
+          .toString(16)
+          .padStart(2, "0")}`;
+  const c = {
+    ...base,
+    surface: a(base.surface, theme.panels.opacity),
+    raised: a(base.raised, Math.min(1, theme.panels.opacity + 0.15)),
+  };
+  const wp = theme.art.wallpaper;
+  const wallId = wp?.image.match(/^media:([1-9]\d{0,19})$/)?.[1];
+  const overlay = wp ? a(wp.overlay ?? base.ground, wp.dim) : null;
+  const overlay2 = wp ? a(wp.overlay2 ?? wp.overlay ?? base.ground, wp.dim) : null;
+  const ground =
+    wp && wallId
+      ? `linear-gradient(160deg, ${overlay}, ${overlay2}), url("/api/v1/media/${wallId}/raw") ${wp.focus ?? "center"} / cover`
+      : base.ground;
   const [l1, l2, l3] = c.lights;
   const glow = theme.style.glow;
   const u = width / 150;
@@ -146,13 +166,13 @@ export function ThemePreview({
         width,
         height: wide ? width * 0.62 : width * 1.78,
         borderRadius: px(wide ? 10 : 18),
-        background: c.ground,
+        background: ground,
         border: `1px solid ${c.line}`,
         overflow: "hidden",
         display: wide ? "flex" : "block",
       }}
     >
-      {glow > 0 && (
+      {glow > 0 && !wallId && (
         <div
           style={{
             position: "absolute",
