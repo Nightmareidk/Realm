@@ -3,15 +3,18 @@ import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
+  type NativeSyntheticEvent,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
+  type TextInputKeyPressEventData,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,7 +28,8 @@ import { shrinkPhoto } from "@/shrink";
 import { useSafety } from "@/social/safety";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
 import { type NativeTheme, THEME_ORDER, themes, useStyles, useTheme } from "@/theme";
-import { markRead, olderId } from "@/unread";
+import { Pill } from "@/ui";
+import { markRead, olderId, refreshUnread } from "@/unread";
 
 /** A short id for an outgoing message, so its echo can be matched. */
 const nonce = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -36,6 +40,11 @@ const TYPING_MS = 8_000;
 const FALLBACK_MS = 10_000;
 /** Photos in one message, at most. */
 const MAX_PHOTOS = 4;
+/** The message box grows with what you write, up to this tall, then scrolls. */
+const INPUT_MIN = 46;
+const INPUT_MAX = 150;
+/** With a keyboard (the website, the browser preview): Enter sends, Shift+Enter starts a line. */
+const ENTER_SENDS = Platform.OS === "web";
 
 type Photo = { uri: string; width: number; height: number; mimeType?: string | null };
 
@@ -86,6 +95,10 @@ export default function Chat() {
   /** How far the others in a conversation have read, by person. */
   const [seenBy, setSeenBy] = useState<Record<string, string>>({});
   const [problem, setProblem] = useState<string | null>(null);
+  /** This conversation as the list sees it: a request to you, or yours waiting to be accepted. */
+  const [conv, setConv] = useState<Conversation | null>(null);
+  const [inputHeight, setInputHeight] = useState(INPUT_MIN);
+  const router = useRouter();
   const focused = useRef(true);
   const input = useRef<TextInput>(null);
   const status = useLiveStatus();
@@ -104,16 +117,21 @@ export default function Chat() {
     }
   }, [id]);
 
-  // In a conversation, where the others have read up to ("Seen").
-  useEffect(() => {
+  // In a conversation: where the others have read up to ("Seen"), and whether it's a request.
+  const loadConv = useCallback(() => {
     if (!isDm) return;
-    api<{ conversations: Conversation[] }>("/users/@me/channels")
-      .then(({ conversations }) => {
-        const c = conversations.find((x) => x.id === id);
-        if (c) setSeenBy(Object.fromEntries(c.seen.map((x) => [x.userId, x.messageId])));
+    api<Conversation>(`/users/@me/channels/${id}`)
+      .then((c) => {
+        setConv(c);
+        setSeenBy(Object.fromEntries(c.seen.map((x) => [x.userId, x.messageId])));
       })
       .catch(() => {});
   }, [id, isDm]);
+  useEffect(loadConv, [loadConv]);
+  // Accepted (by them, or by you elsewhere): it's an ordinary chat now.
+  useLiveEvent("CHANNEL_UPDATE", (c) => {
+    if (c.id === id) loadConv();
+  });
 
   // Load on open and whenever the live line comes back (to fill the gap); without it, check often.
   useFocusEffect(
@@ -289,6 +307,7 @@ export default function Chat() {
       state: "sending",
     };
     setText("");
+    setInputHeight(INPUT_MIN);
     setPhotos([]);
     setReplyTo(null);
     deliver(o);
@@ -461,10 +480,12 @@ export default function Chat() {
     null,
   );
   const myNewest = messages?.find((m) => m.author.id === meId && !m.type.startsWith("system_"));
-  const seenId =
-    isDm && outgoing.length === 0 && myNewest && seenUpTo && !olderId(seenUpTo, myNewest.id)
-      ? myNewest.id
-      : null;
+  // "Sent" or "Seen" goes under your message when it's the last thing said (as on Instagram).
+  const lastSaid = messages?.find((m) => !m.type.startsWith("system_"));
+  const statusId =
+    isDm && outgoing.length === 0 && myNewest && lastSaid?.id === myNewest.id ? myNewest.id : null;
+  const delivery: "sent" | "seen" =
+    myNewest && seenUpTo && !olderId(seenUpTo, myNewest.id) ? "seen" : "sent";
 
   const rows = useMemo<Row[]>(
     () => [
@@ -513,7 +534,7 @@ export default function Chat() {
                   m={m}
                   mine={m.author.id === meId}
                   showName={kind !== "dm" && !sameRun}
-                  seen={m.id === seenId}
+                  status={m.id === statusId ? delivery : null}
                   accent={accent}
                   onAccent={onAccent}
                   onReply={reply}
@@ -534,96 +555,249 @@ export default function Chat() {
               : `${typers.slice(0, 2).join(" and ")}${typers.length > 2 ? " and others" : ""} are typing…`}
           </Text>
         ) : null}
-        <View style={[s.composer, { paddingBottom: insets.bottom + 8 }]}>
-          {replyTo || editing ? (
-            <View style={s.context}>
-              <Icon
-                name={editing ? "NotePencil" : "ArrowBendUpLeft"}
-                size={18}
-                color={t.colors.textSoft}
-              />
-              <View style={s.fill}>
-                <Text style={s.contextTitle} numberOfLines={1}>
-                  {editing ? "Editing your message" : `Replying to ${replyTo?.author.displayName}`}
-                </Text>
-                <Text style={s.contextLine} numberOfLines={1}>
-                  {bodyOf((editing ?? replyTo) as Message)}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => {
-                  if (editing) setText("");
-                  setEditing(null);
-                  setReplyTo(null);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={editing ? "Stop editing" : "Cancel reply"}
-                style={s.iconButton}
-              >
-                <Icon name="X" size={18} color={t.colors.text} />
-              </Pressable>
-            </View>
-          ) : null}
-          {photos.length ? (
-            <View style={s.picked}>
-              {photos.map((p, i) => (
-                <View key={p.uri}>
-                  <Image source={{ uri: p.uri }} style={s.pickedPhoto} contentFit="cover" />
-                  <Pressable
-                    onPress={() => setPhotos((all) => all.filter((_, j) => j !== i))}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remove photo ${i + 1}`}
-                    hitSlop={8}
-                    style={s.unpick}
-                  >
-                    <Icon name="X" size={14} color="#ffffff" />
-                  </Pressable>
-                </View>
-              ))}
-            </View>
-          ) : null}
-          <View style={s.row}>
-            {!editing ? (
-              <Pressable
-                onPress={pickPhotos}
-                disabled={photos.length >= MAX_PHOTOS}
-                accessibilityRole="button"
-                accessibilityLabel="Add photos"
-                style={[s.iconButton, photos.length >= MAX_PHOTOS && s.dim]}
-              >
-                <Icon name="Image" size={24} color={t.colors.text} />
-              </Pressable>
+        {conv?.request ? (
+          <RequestBar
+            conv={conv}
+            meId={meId}
+            onAccepted={(c) => {
+              setConv(c);
+              if (meId) refreshUnread(meId).catch(() => {});
+            }}
+            onGone={() => {
+              if (meId) refreshUnread(meId).catch(() => {});
+              if (router.canGoBack()) router.back();
+              else router.replace("/inbox");
+            }}
+          />
+        ) : (
+          <View style={[s.composer, { paddingBottom: insets.bottom + 8 }]}>
+            {conv?.awaiting ? (
+              <Text style={s.awaiting}>
+                Your message waits in their requests until they accept. Photos can go once they do.
+              </Text>
             ) : null}
-            <TextInput
-              ref={input}
-              value={text}
-              onChangeText={(v) => {
-                setText(v);
-                if (v.trim() && !editing) live.typing(id);
-              }}
-              placeholder={editing ? "Edit message" : `Message ${title ?? ""}`.trim()}
-              placeholderTextColor={t.colors.textMuted}
-              selectionColor={accent}
-              cursorColor={accent}
-              multiline
-              maxLength={4000}
-              style={s.input}
-              accessibilityLabel={editing ? "Edit message" : "Message"}
-            />
-            <Pressable
-              onPress={send}
-              disabled={!canSend}
-              accessibilityRole="button"
-              accessibilityLabel={editing ? "Save changes" : "Send"}
-              accessibilityState={{ disabled: !canSend }}
-              style={[s.send, { backgroundColor: accent }, !canSend && s.dim]}
-            >
-              <Icon name={editing ? "CheckBold" : "ArrowUpBold"} size={20} color={onAccent} />
-            </Pressable>
+            {replyTo || editing ? (
+              <View style={s.context}>
+                <Icon
+                  name={editing ? "NotePencil" : "ArrowBendUpLeft"}
+                  size={18}
+                  color={t.colors.textSoft}
+                />
+                <View style={s.fill}>
+                  <Text style={s.contextTitle} numberOfLines={1}>
+                    {editing
+                      ? "Editing your message"
+                      : `Replying to ${replyTo?.author.displayName}`}
+                  </Text>
+                  <Text style={s.contextLine} numberOfLines={1}>
+                    {bodyOf((editing ?? replyTo) as Message)}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => {
+                    if (editing) setText("");
+                    setEditing(null);
+                    setReplyTo(null);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={editing ? "Stop editing" : "Cancel reply"}
+                  style={s.iconButton}
+                >
+                  <Icon name="X" size={18} color={t.colors.text} />
+                </Pressable>
+              </View>
+            ) : null}
+            {photos.length ? (
+              <View style={s.picked}>
+                {photos.map((p, i) => (
+                  <View key={p.uri}>
+                    <Image source={{ uri: p.uri }} style={s.pickedPhoto} contentFit="cover" />
+                    <Pressable
+                      onPress={() => setPhotos((all) => all.filter((_, j) => j !== i))}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove photo ${i + 1}`}
+                      hitSlop={8}
+                      style={s.unpick}
+                    >
+                      <Icon name="X" size={14} color="#ffffff" />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            <View style={s.row}>
+              {!editing && !conv?.awaiting ? (
+                <Pressable
+                  onPress={pickPhotos}
+                  disabled={photos.length >= MAX_PHOTOS}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add photos"
+                  style={[s.iconButton, photos.length >= MAX_PHOTOS && s.dim]}
+                >
+                  <Icon name="Image" size={24} color={t.colors.text} />
+                </Pressable>
+              ) : null}
+              <TextInput
+                ref={input}
+                value={text}
+                onChangeText={(v) => {
+                  setText(v);
+                  if (v.trim() && !editing) live.typing(id);
+                }}
+                placeholder={editing ? "Edit message" : `Message ${title ?? ""}`.trim()}
+                placeholderTextColor={t.colors.textMuted}
+                selectionColor={accent}
+                cursorColor={accent}
+                multiline
+                maxLength={4000}
+                // Grows with the text instead of showing a scrollbar, up to a few lines.
+                onContentSizeChange={(e) =>
+                  setInputHeight(
+                    Math.min(
+                      INPUT_MAX,
+                      Math.max(INPUT_MIN, Math.ceil(e.nativeEvent.contentSize.height) + 2),
+                    ),
+                  )
+                }
+                onKeyPress={(e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
+                  if (!ENTER_SENDS) return;
+                  const key = e.nativeEvent as TextInputKeyPressEventData & {
+                    shiftKey?: boolean;
+                    isComposing?: boolean;
+                  };
+                  if (key.key === "Enter" && !key.shiftKey && !key.isComposing) {
+                    e.preventDefault();
+                    send();
+                  }
+                }}
+                style={[s.input, { height: inputHeight }, ENTER_SENDS && s.inputWeb]}
+                accessibilityLabel={editing ? "Edit message" : "Message"}
+                accessibilityHint={
+                  ENTER_SENDS ? "Enter sends. Shift and Enter starts a new line." : undefined
+                }
+              />
+              <Pressable
+                onPress={send}
+                disabled={!canSend}
+                accessibilityRole="button"
+                accessibilityLabel={editing ? "Save changes" : "Send"}
+                accessibilityState={{ disabled: !canSend }}
+                style={[s.send, { backgroundColor: accent }, !canSend && s.dim]}
+              >
+                <Icon name={editing ? "CheckBold" : "ArrowUpBold"} size={20} color={onAccent} />
+              </Pressable>
+            </View>
           </View>
-        </View>
+        )}
       </KeyboardAvoidingView>
     </AppScreen>
+  );
+}
+
+/**
+ * A message request, in place of the message box: who it's from, that they can't tell you've
+ * read it, and Block, Delete or Accept. Replying isn't offered until you accept.
+ */
+function RequestBar({
+  conv,
+  meId,
+  onAccepted,
+  onGone,
+}: {
+  conv: Conversation;
+  meId: string | null;
+  onAccepted: (c: Conversation) => void;
+  onGone: () => void;
+}) {
+  const s = useStyles(make);
+  const insets = useSafeAreaInsets();
+  const sheet = useSheet();
+  const [busy, setBusy] = useState(false);
+  const them = conv.recipients.find((r) => r.id !== meId);
+  const name = them?.displayName ?? "Someone";
+  const failed = (err: unknown) =>
+    sheet({
+      title: "That didn't work",
+      line: err instanceof ApiError ? err.message : "Try again.",
+      actions: [],
+    });
+
+  async function accept() {
+    setBusy(true);
+    try {
+      onAccepted(await api<Conversation>(`/users/@me/channels/${conv.id}/accept`, { body: {} }));
+    } catch (err) {
+      failed(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+  function remove() {
+    sheet({
+      title: "Delete this request?",
+      line: `It leaves your Requests. ${name} isn't told.`,
+      actions: [
+        {
+          label: "Delete",
+          icon: "Trash",
+          danger: true,
+          onPress: async () => {
+            try {
+              await api(`/users/@me/channels/${conv.id}/recipients/@me`, { method: "DELETE" });
+              onGone();
+            } catch (err) {
+              failed(err);
+            }
+          },
+        },
+      ],
+    });
+  }
+  function block() {
+    if (!them) return;
+    sheet({
+      title: `Block ${name}?`,
+      line: "They can't message you, follow you or see your posts. They aren't told.",
+      actions: [
+        {
+          label: "Block",
+          icon: "Prohibit",
+          danger: true,
+          onPress: async () => {
+            try {
+              await api(`/users/@me/blocks/${them.id}`, { method: "PUT" });
+              await api(`/users/@me/channels/${conv.id}/recipients/@me`, {
+                method: "DELETE",
+              }).catch(() => {});
+              onGone();
+            } catch (err) {
+              failed(err);
+            }
+          },
+        },
+      ],
+    });
+  }
+
+  return (
+    <View style={[s.request, { paddingBottom: insets.bottom + 12 }]}>
+      <Text style={s.requestTitle}>{name} wants to message you</Text>
+      <Text style={s.requestLine}>
+        They won't know you've seen it until you accept. Photos and files arrive once you do.
+      </Text>
+      <View style={s.requestActions}>
+        <Pill size="md" kind="ghost" label="Block" onPress={block} style={s.fill} />
+        <Pill size="md" kind="ghost" label="Delete" onPress={remove} style={s.fill} />
+        <Pill
+          size="md"
+          label="Accept"
+          pending={busy}
+          pendingLabel="Accepting"
+          onPress={accept}
+          style={s.fill}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -752,10 +926,12 @@ const make = (t: NativeTheme) =>
     },
     row: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
     iconButton: { width: 44, height: 46, alignItems: "center", justifyContent: "center" },
+    // minWidth 0 lets the box shrink, so the send button never gets pushed off the edge.
     input: {
       flex: 1,
-      minHeight: 46,
-      maxHeight: 130,
+      minWidth: 0,
+      minHeight: INPUT_MIN,
+      maxHeight: INPUT_MAX,
       borderRadius: 23,
       borderWidth: 1.5,
       borderColor: t.colors.borderStrong,
@@ -775,6 +951,36 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
     },
     dim: { opacity: 0.45 },
+    // No scrollbar or focus ring drawn by the browser on the message box.
+    inputWeb: { outlineStyle: "none", scrollbarWidth: "none" } as object,
+    awaiting: {
+      fontFamily: t.fonts.body,
+      fontSize: 13 * t.textScale,
+      color: t.colors.textSoft,
+      paddingHorizontal: 6,
+    },
+    request: {
+      paddingHorizontal: 16,
+      paddingTop: 14,
+      gap: 6,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.border,
+      backgroundColor: t.colors.bg,
+    },
+    requestTitle: {
+      fontFamily: t.fonts.displayBold,
+      fontSize: 17 * t.textScale,
+      color: t.colors.heading,
+      textAlign: "center",
+    },
+    requestLine: {
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      lineHeight: 20 * t.textScale,
+      color: t.colors.textSoft,
+      textAlign: "center",
+    },
+    requestActions: { flexDirection: "row", gap: 8, marginTop: 8 },
     quick: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
     quickOne: {
       flex: 1,

@@ -57,6 +57,9 @@ const inbox = async (cookie: string) =>
     lastMessage: { content: string } | null;
     pinned: boolean;
     seen: { userId: string; messageId: string }[];
+    request: boolean;
+    awaiting: boolean;
+    unread: number;
   }[];
 
 describe("direct messages", () => {
@@ -81,6 +84,7 @@ describe("direct messages", () => {
     const theirs = await inbox(kenji.cookie);
     expect(theirs).toHaveLength(1);
     expect(theirs[0]?.lastMessage?.content).toBe("ranked at 9?");
+    expect(theirs[0]?.unread).toBe(1);
     const reply = await call(kenji.cookie, "POST", `/channels/${dm.json().id}/messages`, {
       content: "in",
     });
@@ -93,11 +97,16 @@ describe("direct messages", () => {
     const kenji = await person();
     await together(noor, kenji);
 
+    // Someone who takes no new messages can't be reached by a stranger, even as a request.
+    await call(noor.cookie, "PATCH", "/users/@me/settings", { dmPolicy: "nobody" });
     const cold = await call(stranger.cookie, "POST", "/users/@me/channels", {
       recipientIds: [noor.id],
     });
     expect(cold.statusCode).toBe(403);
     expect(cold.json().error.code).toBe("DM_NOT_ALLOWED");
+    await call(noor.cookie, "PATCH", "/users/@me/settings", {
+      dmPolicy: "friends_and_communities",
+    });
 
     const dm = (
       await call(noor.cookie, "POST", "/users/@me/channels", { recipientIds: [kenji.id] })
@@ -114,16 +123,62 @@ describe("direct messages", () => {
     expect(reopen.json().error.code).toBe("BLOCKED");
   });
 
-  it("lets people who follow each other message, but not a one-way follow", async () => {
+  it("sends a stranger's message as a request: words only, no seen, until accepted", async () => {
     const noor = await person();
     const kenji = await person();
-    const open = () =>
-      call(noor.cookie, "POST", "/users/@me/channels", { recipientIds: [kenji.id] });
-    expect((await open()).json().error.code).toBe("DM_NOT_ALLOWED");
-    await call(noor.cookie, "PUT", `/users/${kenji.username}/follow`);
-    expect((await open()).json().error.code).toBe("DM_NOT_ALLOWED");
+    const dm = (
+      await call(noor.cookie, "POST", "/users/@me/channels", { recipientIds: [kenji.id] })
+    ).json();
+    expect(dm).toMatchObject({ request: false, awaiting: true });
+    const said = await call(noor.cookie, "POST", `/channels/${dm.id}/messages`, { content: "hi!" });
+    expect(said.statusCode).toBe(201);
+    // No photos, files or places until they accept.
+    const place = await call(noor.cookie, "POST", `/channels/${dm.id}/messages`, {
+      content: "",
+      place: { name: "Cafe", address: "Main St", lat: 41.01, lng: 28.97 },
+    });
+    expect(place.json().error.code).toBe("DM_REQUEST_PENDING");
+
+    const theirs = (await inbox(kenji.cookie)).find((c) => c.id === dm.id);
+    expect(theirs).toMatchObject({ request: true });
+    // Reading a request doesn't tell the sender.
+    const ack = await call(kenji.cookie, "POST", `/channels/${dm.id}/ack`, {
+      messageId: said.json().id,
+    });
+    expect(ack.statusCode).toBeLessThan(300);
+    expect((await inbox(noor.cookie)).find((c) => c.id === dm.id)?.seen).toEqual([]);
+
+    const accepted = await call(kenji.cookie, "POST", `/users/@me/channels/${dm.id}/accept`);
+    expect(accepted.json()).toMatchObject({ request: false });
+    const after = (await inbox(noor.cookie)).find((c) => c.id === dm.id);
+    expect(after).toMatchObject({ awaiting: false });
+    // Once accepted, "seen" shows again.
+    expect(after?.seen).toEqual([{ userId: kenji.id, messageId: said.json().id }]);
+  });
+
+  it("puts a message from someone you follow, or a reply, straight in the inbox", async () => {
+    const noor = await person();
+    const kenji = await person();
     await call(kenji.cookie, "PUT", `/users/${noor.username}/follow`);
-    expect((await open()).statusCode).toBe(200);
+    const dm = (
+      await call(noor.cookie, "POST", "/users/@me/channels", { recipientIds: [kenji.id] })
+    ).json();
+    expect(dm.awaiting).toBe(false);
+
+    const mei = await person();
+    const toMei = (
+      await call(noor.cookie, "POST", "/users/@me/channels", { recipientIds: [mei.id] })
+    ).json();
+    await call(noor.cookie, "POST", `/channels/${toMei.id}/messages`, { content: "hey" });
+    await call(mei.cookie, "POST", `/channels/${toMei.id}/messages`, { content: "hi back" });
+    expect((await inbox(mei.cookie)).find((c) => c.id === toMei.id)).toMatchObject({
+      request: false,
+    });
+    // Strangers can't be pulled into group chats.
+    const group = await call(noor.cookie, "POST", "/users/@me/channels", {
+      recipientIds: [kenji.id, (await person()).id],
+    });
+    expect(group.json().error.code).toBe("DM_NOT_ALLOWED");
   });
 
   it("keeps under-18s to people they know", async () => {

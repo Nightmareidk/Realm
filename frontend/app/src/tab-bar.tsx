@@ -28,7 +28,6 @@ export function TabBar({ state, navigation }: BarProps) {
   const s = useStyles(make);
   const insets = useSafeAreaInsets();
   const { session } = useSession();
-  const { accent, onAccent } = useTheme();
   const unread = useUnreadCount();
   const floating = t.style.tabBar === "floating";
   return (
@@ -77,8 +76,8 @@ export function TabBar({ state, navigation }: BarProps) {
                   <Avatar user={session.user} size={26} ring={on ? "self" : undefined} />
                 ) : null}
                 {route.name === "inbox" && unread ? (
-                  <View style={[s.badge, { backgroundColor: accent }]} pointerEvents="none">
-                    <Text style={[s.badgeText, { color: onAccent }]} allowFontScaling={false}>
+                  <View style={[s.badge, { backgroundColor: BADGE_RED }]} pointerEvents="none">
+                    <Text style={[s.badgeText, { color: "#ffffff" }]} allowFontScaling={false}>
                       {unread > 9 ? "9+" : unread}
                     </Text>
                   </View>
@@ -94,6 +93,9 @@ export function TabBar({ state, navigation }: BarProps) {
     </View>
   );
 }
+
+/** Unread is red everywhere people expect it (Instagram, WhatsApp), whatever the theme. */
+const BADGE_RED = "#ff3040";
 
 const make = (t: NativeTheme) =>
   StyleSheet.create({

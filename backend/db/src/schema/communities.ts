@@ -174,6 +174,11 @@ export const channelRecipients = pgTable(
     closedAt: tstz(),
     /** Pinned to the top of the user's DM list. */
     pinnedAt: tstz(),
+    /**
+     * A message request: someone this person doesn't know started the DM. It waits in their
+     * Requests (no notifications, no "seen") until they accept it or reply.
+     */
+    requestedAt: tstz(),
   },
   (t) => [
     primaryKey({ columns: [t.channelId, t.userId] }),

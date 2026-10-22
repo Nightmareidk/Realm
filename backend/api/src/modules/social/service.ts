@@ -595,6 +595,7 @@ export class SocialService {
       viewerId,
       {},
     );
+    if (!pending) await this.countsChanged(viewerId, targetId);
     return pending ? "requested" : "following";
   }
 
@@ -602,7 +603,29 @@ export class SocialService {
     await this.db
       .delete(follows)
       .where(and(eq(follows.followerId, viewerId), eq(follows.followeeId, targetId)));
+    await this.countsChanged(viewerId, targetId);
     return "none";
+  }
+
+  /** Tell both people's open screens their follower and following counts, live. */
+  private async countsChanged(...userIds: bigint[]) {
+    for (const userId of new Set(userIds)) {
+      const [row] = await this.db
+        .select({
+          followers: sql<number>`(select count(*)::int from ${follows} where ${follows.followeeId} = ${userId} and ${follows.status} = 'active')`,
+          following: sql<number>`(select count(*)::int from ${follows} where ${follows.followerId} = ${userId} and ${follows.status} = 'active')`,
+        })
+        .from(sql`(select 1) as one`);
+      if (!row) continue;
+      const data = { userId: userId.toString(), followers: row.followers, following: row.following };
+      // To the person, and to anyone looking at them who follows the change through their own.
+      await this.deps.bus.publish(`user:${userId}`, { type: "PROFILE_COUNTS", data });
+      for (const other of userIds) {
+        if (other !== userId) {
+          await this.deps.bus.publish(`user:${other}`, { type: "PROFILE_COUNTS", data });
+        }
+      }
+    }
   }
 
   async requests(userId: bigint): Promise<FollowRequest[]> {
@@ -630,6 +653,7 @@ export class SocialService {
         .returning({ id: follows.followerId });
       if (!done.length) throw notFound("Request");
       await this.notify(requesterId, "follow", userId, "user", userId, { accepted: true });
+      await this.countsChanged(userId, requesterId);
     } else {
       await this.db.delete(follows).where(where);
     }
@@ -647,6 +671,7 @@ export class SocialService {
     await this.db
       .delete(follows)
       .where(and(eq(follows.followerId, followerId), eq(follows.followeeId, userId)));
+    await this.countsChanged(userId, followerId);
   }
 
   async people(
@@ -922,6 +947,15 @@ export class SocialService {
       subjectId,
       groupKey: groupKey ?? null,
       data,
+    });
+    // The heart on Home lights up at once.
+    const [count] = await this.db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), isNull(notifications.readAt)));
+    await this.deps.bus.publish(`user:${userId}`, {
+      type: "ACTIVITY_NEW",
+      data: { unread: count?.n ?? 1 },
     });
   }
 }

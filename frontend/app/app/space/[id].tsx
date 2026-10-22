@@ -1,7 +1,8 @@
 import type { SpaceDetail } from "@realm/contracts";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
@@ -28,7 +29,7 @@ export default function SpaceScreen() {
     try {
       space.setData(await api<SpaceDetail>(`/communities/${id}/join`, { method: "POST" }));
     } catch (err) {
-      Alert.alert("Couldn't join", err instanceof ApiError ? err.message : "Try again.");
+      alert("Couldn't join", err instanceof ApiError ? err.message : "Try again.");
     } finally {
       setJoining(false);
     }

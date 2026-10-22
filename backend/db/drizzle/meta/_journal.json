@@ -64,6 +64,13 @@
       "when": 1792704705419,
       "tag": "0008_music",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792707070774,
+      "tag": "0009_message_requests",
+      "breakpoints": true
     }
   ]
 }

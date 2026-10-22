@@ -1,0 +1,1 @@
+ALTER TABLE "channel_recipients" ADD COLUMN "requested_at" timestamp with time zone;

@@ -1,7 +1,8 @@
 import type { Profile, UserSettings } from "@realm/contracts";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
 import type { IconName } from "@/icon-paths";
@@ -59,7 +60,7 @@ export default function Settings() {
       profile.reload();
     } catch (err) {
       settings.reload();
-      Alert.alert("Not changed", err instanceof ApiError ? err.message : "Try again.");
+      alert("Not changed", err instanceof ApiError ? err.message : "Try again.");
     }
   }
 
@@ -74,7 +75,7 @@ export default function Settings() {
       );
       settings.reload();
     } catch (err) {
-      Alert.alert("Not saved", err instanceof ApiError ? err.message : "Try again.");
+      alert("Not saved", err instanceof ApiError ? err.message : "Try again.");
     } finally {
       setSaving(false);
     }

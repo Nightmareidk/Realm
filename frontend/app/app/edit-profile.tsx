@@ -2,15 +2,8 @@ import { Limits, type SelfUser } from "@realm/contracts";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { alert } from "@/alert";
 import { ApiError, api, upload } from "@/server";
 import { useSession } from "@/session";
 import { shrinkPhoto } from "@/shrink";
@@ -53,7 +46,7 @@ export default function EditProfile() {
       setPicture(null);
     } catch (err) {
       setPicture(null);
-      Alert.alert("Picture not changed", err instanceof ApiError ? err.message : "Try again.");
+      alert("Picture not changed", err instanceof ApiError ? err.message : "Try again.");
     }
   }
 

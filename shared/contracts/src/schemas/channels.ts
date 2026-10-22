@@ -125,6 +125,12 @@ export const Conversation = Channel.extend({
   lastMessage: MessagePreview.nullable(),
   pinned: z.boolean(),
   seen: z.array(z.object({ userId: Snowflake, messageId: Snowflake })),
+  /** A message request to you: it sits in Requests until you accept it or reply. */
+  request: z.boolean(),
+  /** You started it and they haven't accepted yet (a DM only). */
+  awaiting: z.boolean(),
+  /** Messages from others you haven't read yet (counted up to 99). */
+  unread: z.number().int(),
 }).meta({ id: "Conversation" });
 export type Conversation = z.infer<typeof Conversation>;
 

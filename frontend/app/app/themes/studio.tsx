@@ -19,7 +19,8 @@ import { LOOKS, lookTheme, PRESETS } from "@realm/design-tokens";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { alert } from "@/alert";
 import { Icon } from "@/icon";
 import { ApiError, api, upload } from "@/server";
 import { shrinkPhoto } from "@/shrink";
@@ -153,7 +154,7 @@ export default function Studio() {
         setTags(d.tags);
         setSaved(d);
       } catch (err) {
-        Alert.alert("Couldn't open it", err instanceof ApiError ? err.message : "Try again.");
+        alert("Couldn't open it", err instanceof ApiError ? err.message : "Try again.");
         router.back();
       }
     })();
@@ -209,7 +210,7 @@ export default function Studio() {
       });
       put(`media:${mediaId}`);
     } catch (err) {
-      Alert.alert("Picture not added", err instanceof ApiError ? err.message : "Try again.");
+      alert("Picture not added", err instanceof ApiError ? err.message : "Try again.");
     } finally {
       setBusy(null);
     }
@@ -224,7 +225,7 @@ export default function Studio() {
       });
       setIdeas(suggestions);
     } catch (err) {
-      Alert.alert("No colours yet", err instanceof ApiError ? err.message : "Try again.");
+      alert("No colours yet", err instanceof ApiError ? err.message : "Try again.");
     } finally {
       setBusy(null);
     }
@@ -248,7 +249,7 @@ export default function Studio() {
       setFile(res.theme.file);
       setNotes(res.problems);
     } catch (err) {
-      Alert.alert("Not saved", err instanceof ApiError ? err.message : "Try again.");
+      alert("Not saved", err instanceof ApiError ? err.message : "Try again.");
     } finally {
       setBusy(null);
     }
@@ -259,9 +260,9 @@ export default function Studio() {
     setBusy("share");
     try {
       setSaved(await api<ThemeDetail>(`/themes/${saved.id}/publish`, { method: "POST" }));
-      Alert.alert("It's in the store", "People can find it in More themes now.");
+      alert("It's in the store", "People can find it in More themes now.");
     } catch (err) {
-      Alert.alert("Not shared", err instanceof ApiError ? err.message : "Try again.");
+      alert("Not shared", err instanceof ApiError ? err.message : "Try again.");
     } finally {
       setBusy(null);
     }

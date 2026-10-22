@@ -1,8 +1,9 @@
 import * as Haptics from "expo-haptics";
-import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { Easing, ReduceMotion, SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { bindAlert } from "./alert";
 import { Icon } from "./icon";
 import type { IconName } from "./icon-paths";
 import { motion, type NativeTheme, useStyles, useTheme } from "./theme";
@@ -24,6 +25,8 @@ export interface SheetSpec {
   actions: SheetAction[];
   /** Closed without choosing (Cancel, the backdrop, the back button). */
   onCancel?: () => void;
+  /** The last button's words ("Cancel" unless said otherwise, "OK" for a plain message). */
+  cancelLabel?: string;
 }
 
 const SheetContext = createContext<((spec: SheetSpec) => void) | null>(null);
@@ -45,6 +48,11 @@ export function SheetProvider({ children }: { children: ReactNode }) {
     onCancel?.();
   }, [spec]);
   const open = useCallback((next: SheetSpec) => setSpec(next), []);
+  // `alert()` anywhere in the app opens this sheet.
+  useEffect(() => {
+    bindAlert(open);
+    return () => bindAlert(null);
+  }, [open]);
   return (
     <SheetContext.Provider value={open}>
       {children}
@@ -108,7 +116,7 @@ export function SheetProvider({ children }: { children: ReactNode }) {
                 onPress={cancel}
                 style={({ pressed }) => [s.cancel, pressed && s.rowPressed]}
               >
-                <Text style={s.cancelText}>Cancel</Text>
+                <Text style={s.cancelText}>{spec?.cancelLabel ?? "Cancel"}</Text>
               </Pressable>
             </Animated.View>
           ) : null}

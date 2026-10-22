@@ -2,7 +2,8 @@ import type { Activity, ActivityPage, FollowRequest } from "@realm/contracts";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { ApiError, api, mediaSource } from "@/server";
 import { Avatar } from "@/social/avatar";
@@ -29,7 +30,7 @@ export default function ActivityScreen() {
       });
       requests.setData((requests.data ?? []).filter((x) => x.user.id !== r.user.id));
     } catch (err) {
-      Alert.alert("That didn't work", err instanceof ApiError ? err.message : "Try again.");
+      alert("That didn't work", err instanceof ApiError ? err.message : "Try again.");
     }
   }
 

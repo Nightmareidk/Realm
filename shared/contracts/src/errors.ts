@@ -37,6 +37,7 @@ export const ErrorCode = z.enum([
   // social
   "BLOCKED",
   "DM_NOT_ALLOWED",
+  "DM_REQUEST_PENDING",
   "FRIEND_REQUEST_NOT_ALLOWED",
   "ALREADY_MEMBER",
   "BANNED_FROM_COMMUNITY",

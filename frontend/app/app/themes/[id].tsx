@@ -7,7 +7,6 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   Linking,
   Pressable,
   ScrollView,
@@ -17,6 +16,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
@@ -79,7 +79,7 @@ export default function ThemePage() {
     try {
       await run();
     } catch (err) {
-      Alert.alert("That didn't work", err instanceof ApiError ? err.message : "Try again.");
+      alert("That didn't work", err instanceof ApiError ? err.message : "Try again.");
     } finally {
       setBusy(null);
     }
@@ -136,7 +136,7 @@ export default function ThemePage() {
         onPress: () =>
           act("report", async () => {
             await api(`/themes/${d.id}/report`, { method: "POST", body: { reason } });
-            Alert.alert("Thanks", "We'll take it from here.");
+            alert("Thanks", "We'll take it from here.");
           }),
       })),
     });

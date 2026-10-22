@@ -1,7 +1,7 @@
 import type { Conversation } from "@realm/contracts";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
@@ -18,20 +18,30 @@ import {
   refreshUnread,
   setConversations,
   setMuted,
+  unreadCount,
+  useRequestCount,
   useUnreadState,
 } from "@/unread";
 
-type Filter = "all" | "unread" | "groups";
+type Filter = "all" | "unread" | "groups" | "requests";
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "unread", label: "Unread" },
   { id: "groups", label: "Groups" },
+  { id: "requests", label: "Requests" },
 ];
+
+/** Pressable state on the web also says when the mouse is over it. */
+type Hover = { pressed: boolean; hovered?: boolean };
+
+/** On a computer, menus open from a "more" button; on a phone, by holding. */
+const POINTER = Platform.OS === "web";
 
 /**
  * Inbox: your messages, one-to-one and group chats. Pinned first, then newest; unread ones in
- * bold with a dot. Filter to Unread or Groups; long-press a chat to pin, mute or mark it read;
- * the pencil starts a new one.
+ * bold with how many are new. Filter to Unread or Groups; Requests holds messages from people
+ * you don't know until you accept them. Hold a chat (or use its "more" button) to pin, mute or
+ * mark it read; the pencil starts a new one.
  */
 export default function Inbox() {
   const { t } = useTheme();
@@ -44,6 +54,7 @@ export default function Inbox() {
   const state = useUnreadState();
   const sheet = useSheet();
   const [filter, setFilter] = useState<Filter>("all");
+  const requestCount = useRequestCount();
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
@@ -58,7 +69,15 @@ export default function Inbox() {
 
   const items = [...state.conversations]
     .filter((c) =>
-      filter === "unread" ? isUnread(c, state) : filter === "groups" ? c.type === "group_dm" : true,
+      filter === "requests"
+        ? c.request
+        : c.request
+          ? false
+          : filter === "unread"
+            ? isUnread(c, state)
+            : filter === "groups"
+              ? c.type === "group_dm"
+              : true,
     )
     .sort(
       (a, b) =>
@@ -162,6 +181,11 @@ export default function Inbox() {
                 ]}
               >
                 <Text style={[s.chipText, on && { color: t.colors.bg }]}>{f.label}</Text>
+                {f.id === "requests" && requestCount ? (
+                  <View style={s.chipCount}>
+                    <Text style={s.chipCountText}>{requestCount > 9 ? "9+" : requestCount}</Text>
+                  </View>
+                ) : null}
               </Pressable>
             );
           })}
@@ -179,14 +203,27 @@ export default function Inbox() {
             <Row
               c={item}
               meId={meId}
-              unread={isUnread(item, state)}
+              unread={unreadCount(item, state)}
               muted={isMuted(item.id, state)}
               accent={accent}
               onLongPress={() => options(item)}
             />
           )}
+          ListHeaderComponent={
+            filter === "requests" && items.length ? (
+              <Text style={s.requestsNote}>
+                Messages from people you don't follow. They won't know you've seen them until you
+                accept. Photos and files arrive once you do.
+              </Text>
+            ) : null
+          }
           ListEmptyComponent={
-            filter === "all" ? (
+            filter === "requests" ? (
+              <Empty
+                title="No message requests"
+                line="When someone you don't follow messages you, it waits here."
+              />
+            ) : filter === "all" ? (
               <Empty
                 title="No messages yet"
                 line="Tap the pencil to message someone, or open their profile and tap Message."
@@ -210,9 +247,11 @@ function title(c: Conversation, meId: string | null) {
   return others.map((r) => r.displayName).join(", ") || "Just you";
 }
 
-function preview(c: Conversation, meId: string | null) {
+function preview(c: Conversation, meId: string | null, unread = 0) {
   const m = c.lastMessage;
   if (!m) return "Say hi";
+  // Several new ones: say how many, as Instagram does.
+  if (unread > 1) return unread >= 99 ? "99+ new messages" : `${unread} new messages`;
   const who = m.authorId === meId ? "You: " : "";
   const body =
     m.content ||
@@ -238,7 +277,8 @@ function Row({
 }: {
   c: Conversation;
   meId: string | null;
-  unread: boolean;
+  /** How many unread messages (0 when it's read). */
+  unread: number;
   muted: boolean;
   accent: string;
   onLongPress: () => void;
@@ -255,33 +295,56 @@ function Row({
       }
       onLongPress={onLongPress}
       accessibilityRole="link"
-      accessibilityLabel={`${name}${unread ? ", unread" : ""}${muted ? ", muted" : ""}${c.pinned ? ", pinned" : ""}. ${preview(c, meId)}`}
-      accessibilityHint="Long press to pin, mute or mark as read"
-      style={({ pressed }) => [s.row, pressed && { backgroundColor: t.colors.surface }]}
+      accessibilityLabel={`${name}${unread ? `, ${unread} unread` : ""}${muted ? ", muted" : ""}${c.pinned ? ", pinned" : ""}${c.request ? ", message request" : ""}. ${preview(c, meId, unread)}`}
+      accessibilityHint={POINTER ? undefined : "Long press to pin, mute or mark as read"}
+      style={({ pressed, hovered }: Hover) => [
+        s.row,
+        (pressed || hovered) && { backgroundColor: t.colors.surface },
+      ]}
     >
       {other ? <Avatar user={other} size={52} /> : null}
       <View style={s.fill}>
         <View style={s.top}>
-          <Text style={[s.name, unread && s.strong]} numberOfLines={1}>
+          <Text style={[s.name, unread > 0 && s.strong]} numberOfLines={1}>
             {name}
           </Text>
           {c.pinned ? <Icon name="PushPin" size={14} color={t.colors.textSoft} /> : null}
           {muted ? <Icon name="BellSlash" size={14} color={t.colors.textSoft} /> : null}
           {c.lastMessage ? (
-            <Text style={[s.when, unread && { color: t.colors.text }]}>
+            <Text style={[s.when, unread > 0 && { color: t.colors.text }]}>
               {ago(c.lastMessage.createdAt)}
             </Text>
           ) : null}
         </View>
         <View style={s.bottom}>
-          <Text style={[s.preview, unread && s.previewUnread]} numberOfLines={1}>
-            {preview(c, meId)}
+          <Text style={[s.preview, unread > 0 && s.previewUnread]} numberOfLines={1}>
+            {preview(c, meId, unread)}
           </Text>
-          {unread ? (
+          {unread > 1 ? (
+            <View style={[s.count, { backgroundColor: muted ? t.colors.textSoft : accent }]}>
+              <Text style={[s.countText, { color: muted ? t.colors.bg : t.colors.onAccent }]}>
+                {unread >= 99 ? "99+" : unread}
+              </Text>
+            </View>
+          ) : unread ? (
             <View style={[s.dot, { backgroundColor: muted ? t.colors.textSoft : accent }]} />
           ) : null}
         </View>
       </View>
+      {POINTER ? (
+        <Pressable
+          onPress={onLongPress}
+          accessibilityRole="button"
+          accessibilityLabel={`More for ${name}`}
+          hitSlop={6}
+          style={({ hovered, pressed }: Hover) => [
+            s.more,
+            (hovered || pressed) && { backgroundColor: t.colors.surfaceRaised },
+          ]}
+        >
+          <Icon name="DotsThreeBold" size={20} color={t.colors.textSoft} />
+        </Pressable>
+      ) : null}
     </Pressable>
   );
 }
@@ -317,6 +380,7 @@ const make = (t: NativeTheme) =>
     },
     chips: { flexDirection: "row", gap: 8, marginTop: 12 },
     chip: {
+      flexDirection: "row",
       minHeight: 36,
       paddingHorizontal: 14,
       borderRadius: 999,
@@ -347,4 +411,39 @@ const make = (t: NativeTheme) =>
     },
     previewUnread: { fontFamily: t.fonts.bold, color: t.colors.text },
     dot: { width: 10, height: 10, borderRadius: 5 },
+    count: {
+      minWidth: 22,
+      height: 22,
+      borderRadius: 11,
+      paddingHorizontal: 6,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    countText: { fontFamily: t.fonts.bold, fontSize: 12 * t.textScale },
+    more: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    chipCount: {
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
+      paddingHorizontal: 5,
+      marginLeft: 6,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#ff3040",
+    },
+    chipCountText: { fontFamily: t.fonts.bold, fontSize: 11.5 * t.textScale, color: "#ffffff" },
+    requestsNote: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      lineHeight: 19 * t.textScale,
+      color: t.colors.textSoft,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
   });

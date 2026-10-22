@@ -2,7 +2,6 @@ import type { Comment, CommentPage, Post } from "@realm/contracts";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import {
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Pressable,
@@ -12,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
@@ -66,7 +66,7 @@ export default function PostScreen() {
       setText("");
       setReplyTo(null);
     } catch (err) {
-      Alert.alert("Comment not sent", err instanceof ApiError ? err.message : "Try again.");
+      alert("Comment not sent", err instanceof ApiError ? err.message : "Try again.");
     } finally {
       setSending(false);
     }

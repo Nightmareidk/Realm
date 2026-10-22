@@ -204,6 +204,27 @@ export class MessagesService {
     if (body.attachmentIds.length > 0 && !has(permissions, Permission.ATTACH_FILES)) {
       throw missingPermission("send files");
     }
+
+    // A message request: until the other person accepts, it's words only (no photos, files or
+    // places nobody asked for). Replying to a request accepts it.
+    let accepting = false;
+    if (channel.type === "dm") {
+      const waiting = await this.db
+        .select({ userId: channelRecipients.userId })
+        .from(channelRecipients)
+        .where(
+          and(eq(channelRecipients.channelId, channel.id), isNotNull(channelRecipients.requestedAt)),
+        );
+      accepting = waiting.some((w) => w.userId === userId);
+      const theyWait = waiting.some((w) => w.userId !== userId);
+      if (theyWait && (body.attachmentIds.length > 0 || body.place)) {
+        throw new AppError(
+          403,
+          "DM_REQUEST_PENDING",
+          "Photos, videos, files and places can be sent once they accept your message request.",
+        );
+      }
+    }
     const files = await this.media.attachable(userId, body.attachmentIds.map(BigInt));
 
     // A place is shared once, by choice. Under 18: only in small Spaces and conversations
@@ -273,6 +294,14 @@ export class MessagesService {
           .set({ closedAt: null })
           .where(
             and(eq(channelRecipients.channelId, channel.id), isNotNull(channelRecipients.closedAt)),
+          );
+      }
+      if (accepting) {
+        await tx
+          .update(channelRecipients)
+          .set({ requestedAt: null })
+          .where(
+            and(eq(channelRecipients.channelId, channel.id), eq(channelRecipients.userId, userId)),
           );
       }
       // Sending reads everything above it.
@@ -373,7 +402,22 @@ export class MessagesService {
       mentionCount: 0,
     };
     await this.deps.bus.publish(`user:${userId}`, { type: "READ_STATE_UPDATE", data: state });
-    if (ctx.recipients && state.lastReadMessageId && (await this.sharesReceipts(userId))) {
+    // Reading a message request doesn't tell its sender.
+    const [pending] = ctx.recipients
+      ? await this.db
+          .select({ at: channelRecipients.requestedAt })
+          .from(channelRecipients)
+          .where(
+            and(eq(channelRecipients.channelId, channel.id), eq(channelRecipients.userId, userId)),
+          )
+          .limit(1)
+      : [];
+    if (
+      ctx.recipients &&
+      !pending?.at &&
+      state.lastReadMessageId &&
+      (await this.sharesReceipts(userId))
+    ) {
       await this.deps.bus.publish(topicOf(ctx), {
         type: "MESSAGE_ACK",
         data: {

@@ -1,6 +1,6 @@
 import type { ActiveTheme, MyTheme, ThemeFile } from "@realm/contracts";
 import { useCallback } from "react";
-import { Alert } from "react-native";
+import { alert } from "../alert";
 import { ApiError, api } from "../server";
 import { choiceFrom, type ThemeChoice, useTheme } from "../theme";
 
@@ -23,7 +23,7 @@ export function useApplyTheme() {
         choose(choiceFrom(mine));
       } catch (err) {
         choose(before);
-        Alert.alert("Theme not changed", err instanceof ApiError ? err.message : "Try again.");
+        alert("Theme not changed", err instanceof ApiError ? err.message : "Try again.");
       }
     },
     [choose, choice],

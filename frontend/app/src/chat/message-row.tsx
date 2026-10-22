@@ -1,8 +1,8 @@
 import type { MediaRef, Message } from "@realm/contracts";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import { memo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { memo, useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   ReduceMotion,
@@ -63,9 +63,16 @@ function systemLine(m: Message) {
   }
 }
 
+/** Pressable state on the web also says when the mouse is over it. */
+type Hover = { pressed: boolean; hovered?: boolean };
+
+/** A mouse and a big screen (the website, the browser preview): menus open from buttons. */
+const POINTER = Platform.OS === "web";
+
 /**
- * One message in a chat. Yours sit on the right in your colour, others' on the left. Pull it to
- * the right to reply, double-tap to send a heart, long-press for everything else. Each gesture is
+ * One message in a chat. Yours sit on the right in your colour, others' on the left. On a phone:
+ * pull it to the right to reply, double-tap to send a heart, hold for everything else. With a
+ * mouse, pointing at it shows the same choices as buttons (react, reply, more). Each gesture is
  * also an accessibility action, so screen-reader users have the same choices.
  */
 type RowProps = {
@@ -73,8 +80,8 @@ type RowProps = {
   mine: boolean;
   /** Group chats and rooms: the sender's name above their first message in a run. */
   showName: boolean;
-  /** "Seen" under your newest message, once the other person has read it. */
-  seen: boolean;
+  /** Under your newest message: "Sent", then "Seen" once the other person has read it. */
+  status: "sent" | "seen" | null;
   accent: string;
   onAccent: string;
   onReply: (m: Message) => void;
@@ -90,9 +97,20 @@ export const MessageRow = memo(function MessageRow(props: RowProps) {
   return <Bubble {...props} />;
 });
 
-function Bubble({ m, mine, showName, seen, accent, onAccent, onReply, onReact, onMenu }: RowProps) {
+function Bubble({
+  m,
+  mine,
+  showName,
+  status,
+  accent,
+  onAccent,
+  onReply,
+  onReact,
+  onMenu,
+}: RowProps) {
   const { t } = useTheme();
   const s = useStyles(make);
+  const [hover, setHover] = useState(false);
   const shift = useSharedValue(0);
   const armed = useSharedValue(false);
 
@@ -198,11 +216,51 @@ function Bubble({ m, mine, showName, seen, accent, onAccent, onReply, onReact, o
     </View>
   );
 
-  return (
+  // With a mouse: react, reply and more, beside the bubble while the pointer is on the message.
+  const tools = POINTER ? (
     <View
+      style={[s.tools, mine && s.toolsMine, !hover && s.toolsHidden]}
+      pointerEvents={hover ? "auto" : "none"}
+    >
+      {canTouch ? (
+        <>
+          <Pressable
+            onPress={heart}
+            accessibilityRole="button"
+            accessibilityLabel="React with a heart"
+            style={({ hovered }: Hover) => [s.tool, hovered && s.toolOn]}
+          >
+            <Icon name="Heart" size={17} color={t.colors.textSoft} />
+          </Pressable>
+          <Pressable
+            onPress={replyNow}
+            accessibilityRole="button"
+            accessibilityLabel="Reply"
+            style={({ hovered }: Hover) => [s.tool, hovered && s.toolOn]}
+          >
+            <Icon name="ArrowBendUpLeft" size={17} color={t.colors.textSoft} />
+          </Pressable>
+        </>
+      ) : null}
+      <Pressable
+        onPress={() => onMenu(m)}
+        accessibilityRole="button"
+        accessibilityLabel="More options"
+        style={({ hovered }: Hover) => [s.tool, hovered && s.toolOn]}
+      >
+        <Icon name="DotsThreeBold" size={17} color={t.colors.textSoft} />
+      </Pressable>
+    </View>
+  ) : null;
+
+  return (
+    <Pressable
+      onHoverIn={() => setHover(true)}
+      onHoverOut={() => setHover(false)}
+      disabled={!POINTER}
       style={[s.row, mine ? s.rowMine : s.rowTheirs]}
       accessible
-      accessibilityLabel={`${mine ? "You" : m.author.displayName}: ${bodyOf(m)}. ${timeOf(m.createdAt)}${m.editedAt ? ", edited" : ""}${seen ? ". Seen" : ""}`}
+      accessibilityLabel={`${mine ? "You" : m.author.displayName}: ${bodyOf(m)}. ${timeOf(m.createdAt)}${m.editedAt ? ", edited" : ""}${status === "seen" ? ". Seen" : status === "sent" ? ". Sent" : ""}`}
       accessibilityActions={[
         { name: "reply", label: "Reply" },
         { name: "heart", label: "React with a heart" },
@@ -215,6 +273,7 @@ function Bubble({ m, mine, showName, seen, accent, onAccent, onReply, onReact, o
       }}
     >
       {!mine ? showName ? <Avatar user={m.author} size={28} /> : <View style={s.gap} /> : null}
+      {mine ? tools : null}
       <View style={[s.col, mine && s.colMine]}>
         {showName && !mine ? <Text style={s.author}>{m.author.displayName}</Text> : null}
         <View>
@@ -242,9 +301,10 @@ function Bubble({ m, mine, showName, seen, accent, onAccent, onReply, onReact, o
             ))}
           </View>
         ) : null}
-        {seen ? <Text style={s.seen}>Seen</Text> : null}
+        {status ? <Text style={s.seen}>{status === "seen" ? "Seen" : "Sent"}</Text> : null}
       </View>
-    </View>
+      {mine ? null : tools}
+    </Pressable>
   );
 }
 
@@ -323,6 +383,23 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
     },
     reactionText: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: t.colors.text },
+    tools: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "center",
+      gap: 2,
+      marginHorizontal: 6,
+    },
+    toolsMine: { flexDirection: "row-reverse" },
+    toolsHidden: { opacity: 0 },
+    tool: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    toolOn: { backgroundColor: t.colors.surfaceRaised },
     seen: {
       fontFamily: t.fonts.body,
       fontSize: 12 * t.textScale,

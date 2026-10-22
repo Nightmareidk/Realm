@@ -37,6 +37,11 @@ export function isUnread(c: Conversation, s: State = state): boolean {
   return !read || olderId(read, last.id);
 }
 
+/** How many unread messages a conversation has (at least 1 when it's unread at all). */
+export function unreadCount(c: Conversation, s: State = state): number {
+  return isUnread(c, s) ? Math.max(1, c.unread) : 0;
+}
+
 export const isMuted = (channelId: string, s: State = state) => s.muted.has(channelId);
 
 /** Load (or reload) everything: after signing in, and when a new conversation appears. */
@@ -66,7 +71,14 @@ export function resetUnread() {
 export function markRead(channelId: string, messageId: string) {
   const now = state.reads[channelId];
   if (now && !olderId(now, messageId)) return;
-  set({ reads: { ...state.reads, [channelId]: messageId } });
+  const c = state.conversations.find((x) => x.id === channelId);
+  const caughtUp = !c?.lastMessage || !olderId(messageId, c.lastMessage.id);
+  set({
+    reads: { ...state.reads, [channelId]: messageId },
+    conversations: caughtUp
+      ? state.conversations.map((x) => (x.id === channelId ? { ...x, unread: 0 } : x))
+      : state.conversations,
+  });
 }
 
 export function setConversations(conversations: Conversation[]) {
@@ -83,7 +95,11 @@ export function setMuted(channelId: string, on: boolean) {
 /** A message in one of your conversations: it becomes that conversation's newest, at the top. */
 function onMessage(m: Message) {
   const c = state.conversations.find((x) => x.id === m.channelId);
-  if (!c) return;
+  // A conversation that wasn't in the list yet (a new one, or one you'd closed): load it.
+  if (!c) {
+    if (state.me && m.author.id !== state.me) refreshUnread(state.me).catch(() => {});
+    return;
+  }
   const preview = {
     id: m.id,
     authorId: m.author.id,
@@ -94,9 +110,12 @@ function onMessage(m: Message) {
     place: Boolean(m.place),
     createdAt: m.createdAt,
   };
+  const fromThem = m.author.id !== state.me;
   set({
     conversations: state.conversations.map((x) =>
-      x.id === c.id ? { ...x, lastMessage: preview } : x,
+      x.id === c.id
+        ? { ...x, lastMessage: preview, unread: fromThem ? Math.min(99, x.unread + 1) : x.unread }
+        : x,
     ),
   });
   if (m.author.id === state.me) markRead(m.channelId, m.id);
@@ -109,7 +128,11 @@ live.on((type, data) => {
     const r = data as ReadState;
     if (r.lastReadMessageId) markRead(r.channelId, r.lastReadMessageId);
   }
-  if (type === "CHANNEL_CREATE" && state.me) refreshUnread(state.me).catch(() => {});
+  // A new conversation, or one that changed (a request accepted): load the list again.
+  if ((type === "CHANNEL_CREATE" || type === "CHANNEL_UPDATE") && state.me) {
+    const c = data as { communityId?: string | null };
+    if (!c.communityId) refreshUnread(state.me).catch(() => {});
+  }
 });
 
 // Back online after a gap: catch up on whatever arrived meanwhile.
@@ -130,8 +153,17 @@ export function useUnreadState(): State {
   return state;
 }
 
-/** How many conversations have something you haven't read (muted ones don't count). */
+/**
+ * How many conversations have something you haven't read, for the badge on the Inbox tab. Muted
+ * ones and message requests don't count (requests wait quietly, as on Instagram).
+ */
 export function useUnreadCount(): number {
   const s = useUnreadState();
-  return s.conversations.filter((c) => isUnread(c, s) && !isMuted(c.id, s)).length;
+  return s.conversations.filter((c) => !c.request && isUnread(c, s) && !isMuted(c.id, s)).length;
+}
+
+/** How many message requests are waiting. */
+export function useRequestCount(): number {
+  const s = useUnreadState();
+  return s.conversations.filter((c) => c.request).length;
 }

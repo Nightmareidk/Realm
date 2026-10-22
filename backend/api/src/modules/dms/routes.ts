@@ -64,6 +64,20 @@ export const conversationRoutes =
       },
     );
 
+    // Accept a message request (it moves to your inbox).
+    app.post(
+      "/@me/channels/:channelId/accept",
+      {
+        preHandler: requireAuth,
+        schema: { params: ConversationParams, response: { 200: Conversation } },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.dmChange, userId.toString());
+        return dms.accept(BigInt(req.params.channelId), userId);
+      },
+    );
+
     app.put(
       "/@me/channels/:channelId/recipients/:userId",
       {

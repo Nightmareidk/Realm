@@ -136,6 +136,14 @@ export const DispatchEvents = {
   TYPING_START: z.object({ channelId: Snowflake, userId: Snowflake, at: z.number() }),
   READ_STATE_UPDATE: ReadState,
   MESSAGE_ACK: z.object({ channelId: Snowflake, userId: Snowflake, messageId: Snowflake }),
+  /** Someone's follower or following count changed (yours, or someone you just followed). */
+  PROFILE_COUNTS: z.object({
+    userId: Snowflake,
+    followers: z.number().int(),
+    following: z.number().int(),
+  }),
+  /** Something new in your activity (the heart on Home): how many are unread now. */
+  ACTIVITY_NEW: z.object({ unread: z.number().int() }),
   VOICE_STATE_UPDATE: z.object({
     communityId: Snowflake,
     channelId: Snowflake,

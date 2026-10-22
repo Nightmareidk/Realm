@@ -2,10 +2,9 @@ import type { Channel, FollowState, Post, Profile } from "@realm/contracts";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import { type ReactNode, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { type ReactNode, useCallback, useState } from "react";
 import {
-  Alert,
   Linking,
   Pressable,
   Share,
@@ -14,8 +13,10 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { alert } from "../alert";
 import { useApi, usePosts } from "../data";
 import { Icon } from "../icon";
+import { useLiveEvent } from "../live";
 import { ApiError, api, mediaSource } from "../server";
 import { useSheet } from "../sheet";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
@@ -45,6 +46,20 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
   const list = usePosts(profile ? path : null);
   const sheet = useSheet();
   const safety = useSafety();
+  // Fresh each time you come back to it, and live while it's open: follower counts change as
+  // people follow and unfollow.
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload]),
+  );
+  useLiveEvent("PROFILE_COUNTS", (d) => {
+    if (!profile || d.userId !== profile.user.id) return;
+    setData({
+      ...profile,
+      counts: { ...profile.counts, followers: d.followers, following: d.following },
+    });
+  });
 
   if (error && !profile) return <Problem message={error} onRetry={reload} />;
   if (!profile) return <Loading />;
@@ -69,7 +84,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
       list.refresh();
     } catch (err) {
       setData(was);
-      Alert.alert("That didn't work", err instanceof ApiError ? err.message : "Try again.");
+      alert("That didn't work", err instanceof ApiError ? err.message : "Try again.");
     }
   }
 
@@ -81,7 +96,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
       });
       router.push({ pathname: "/chat/[id]", params: { id: dm.id } });
     } catch (err) {
-      Alert.alert("Can't message them", err instanceof ApiError ? err.message : "Try again.");
+      alert("Can't message them", err instanceof ApiError ? err.message : "Try again.");
     }
   }
 
@@ -255,7 +270,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
                   kind="ghost"
                   label={profile.follow === "requested" ? "Requested" : "Following"}
                   onPress={() =>
-                    Alert.alert(
+                    alert(
                       profile.follow === "requested"
                         ? "Cancel your request?"
                         : `Unfollow ${profile.user.displayName}?`,

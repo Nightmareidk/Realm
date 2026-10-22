@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApi, usePosts } from "@/data";
 import { Icon } from "@/icon";
+import { useLiveEvent } from "@/live";
 import { loadStories, useStories } from "@/music/stories";
 import { api } from "@/server";
 import { useSession } from "@/session";
@@ -29,6 +30,8 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const feed = usePosts("/feed");
   const [unread, setUnread] = useState(0);
+  // A new like, comment or follower lights the heart straight away.
+  useLiveEvent("ACTIVITY_NEW", (d) => setUnread(d.unread));
   const { session } = useSession();
   const unconfirmed = session.status === "signedIn" && !session.user.emailVerified;
 
@@ -308,7 +311,7 @@ const make = (t: NativeTheme) =>
       width: 9,
       height: 9,
       borderRadius: 5,
-      backgroundColor: "#ff5f7a",
+      backgroundColor: "#ff3040",
       borderWidth: 1.5,
       borderColor: t.colors.bg,
     },

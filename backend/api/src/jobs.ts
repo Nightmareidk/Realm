@@ -61,6 +61,8 @@ export function jobHandlers(deps: Deps): Record<string, JobHandler> {
               and(
                 eq(channelRecipients.channelId, row.room.id),
                 ne(channelRecipients.userId, row.m.authorId),
+                // A message request waits quietly in Requests.
+                isNull(channelRecipients.requestedAt),
               ),
             )
         : await deps.db

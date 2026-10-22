@@ -4,7 +4,6 @@ import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -14,6 +13,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { alert } from "@/alert";
 import { postsChanged, useApi } from "@/data";
 import { Icon } from "@/icon";
 import { chip, MusicPicker, type Picked, toPick } from "@/music/picker";
@@ -105,7 +105,7 @@ export default function Create() {
     if (from === "camera") {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert(
+        alert(
           "Camera is off for Realm",
           "Allow the camera in your phone's settings to take one here.",
         );
@@ -121,7 +121,7 @@ export default function Create() {
       (a) => a.type === "video" && (a.duration ?? 0) > CLIP_MAX_SECONDS * 1000 + 500,
     );
     if (long) {
-      Alert.alert(
+      alert(
         "That video is too long",
         `Clips can be up to ${CLIP_MAX_SECONDS} seconds. Trim it in your gallery first, then pick it again.`,
       );
@@ -193,7 +193,7 @@ export default function Create() {
       router.back();
     } catch (err) {
       setStatus(null);
-      Alert.alert(
+      alert(
         "Not shared",
         err instanceof ApiError ? err.message : "Something went wrong. Try again.",
       );

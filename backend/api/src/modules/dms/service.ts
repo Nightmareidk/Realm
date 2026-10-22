@@ -48,12 +48,15 @@ export class ConversationsService {
     return this.deps.db;
   }
 
-  /** Why `from` may not start a conversation with `to`, or null when they may. */
-  private async refusal(
+  /**
+   * How `from` may reach `to`: straight to their inbox, as a message request (Instagram's way,
+   * for people they don't know), or not at all (with why).
+   */
+  private async reach(
     fromId: bigint,
     fromMinor: boolean,
     toId: bigint,
-  ): Promise<AppError | null> {
+  ): Promise<"inbox" | "request" | AppError> {
     if (await blockedEitherWay(this.db, fromId, toId)) {
       return new AppError(403, "BLOCKED", "You can't message this person.");
     }
@@ -94,26 +97,33 @@ export class ConversationsService {
       )
       .where(eq(a.userId, fromId))
       .limit(1);
-    const close = Boolean(friend) || Boolean(shared);
+    // Someone who follows you, a friend, or someone in your Spaces is someone you know.
+    const close =
+      Boolean(friend) || Boolean(shared) || (await followsActively(this.db, toId, fromId));
     const policy = target.policy ?? "friends_and_communities";
     const minor = fromMinor || isMinor(target.birthDate);
-    const ok =
-      policy === "nobody"
-        ? false
-        : policy === "friends"
-          ? Boolean(friend)
-          : policy === "friends_and_communities"
-            ? close
-            : // "everyone", except that under-18s only meet people they know.
-              !minor || close;
-    if (ok) return null;
-    const why =
-      policy === "nobody"
-        ? `${target.name} isn't taking new messages.`
-        : policy === "friends"
-          ? `${target.name} only gets messages from friends. Follow each other to message.`
-          : `${target.name} only gets messages from friends and people in their Spaces. Follow each other to message.`;
-    return new AppError(403, "DM_NOT_ALLOWED", why);
+    if (policy === "nobody") {
+      return new AppError(403, "DM_NOT_ALLOWED", `${target.name} isn't taking new messages.`);
+    }
+    if (policy === "friends") {
+      return friend
+        ? "inbox"
+        : new AppError(
+            403,
+            "DM_NOT_ALLOWED",
+            `${target.name} only gets messages from friends. Follow each other to message.`,
+          );
+    }
+    if (close) return "inbox";
+    // Under-18s only meet people they know: no requests to or from them.
+    if (minor) {
+      return new AppError(
+        403,
+        "DM_NOT_ALLOWED",
+        `You can message ${target.name} once you follow each other.`,
+      );
+    }
+    return policy === "everyone" ? "inbox" : "request";
   }
 
   private preview(
@@ -142,7 +152,11 @@ export class ConversationsService {
    */
   async list(userId: bigint, only?: bigint): Promise<Conversation[]> {
     const mine = await this.db
-      .select({ channel: channels, pinnedAt: channelRecipients.pinnedAt })
+      .select({
+        channel: channels,
+        pinnedAt: channelRecipients.pinnedAt,
+        requestedAt: channelRecipients.requestedAt,
+      })
       .from(channelRecipients)
       .innerJoin(channels, eq(channels.id, channelRecipients.channelId))
       .where(
@@ -156,7 +170,11 @@ export class ConversationsService {
     const ids = mine.map((m) => m.channel.id);
 
     const people = await this.db
-      .select({ channelId: channelRecipients.channelId, user: summaryColumns })
+      .select({
+        channelId: channelRecipients.channelId,
+        requestedAt: channelRecipients.requestedAt,
+        user: summaryColumns,
+      })
       .from(channelRecipients)
       .innerJoin(users, eq(users.id, channelRecipients.userId))
       .where(and(inArray(channelRecipients.channelId, ids), ne(channelRecipients.userId, userId)))
@@ -198,10 +216,35 @@ export class ConversationsService {
           )
       : [];
 
+    // How many messages from others came after where you've read to, per conversation.
+    const unreadRows = await this.db
+      .select({
+        channelId: messages.channelId,
+        n: sql<number>`least(count(*), 99)::int`,
+      })
+      .from(messages)
+      .leftJoin(
+        readStates,
+        and(eq(readStates.channelId, messages.channelId), eq(readStates.userId, userId)),
+      )
+      .where(
+        and(
+          inArray(messages.channelId, ids),
+          ne(messages.authorId, userId),
+          isNull(messages.deletedAt),
+          sql`${messages.type}::text not like 'system_%'`,
+          sql`(${readStates.lastReadMessageId} is null or ${messages.id} > ${readStates.lastReadMessageId})`,
+        ),
+      )
+      .groupBy(messages.channelId);
+
     const conversations = mine.map(
-      ({ channel, pinnedAt }): Conversation & { pinnedAt: Date | null } => {
+      ({ channel, pinnedAt, requestedAt }): Conversation & { pinnedAt: Date | null } => {
         const row = last.find((m) => m.id === channel.lastMessageId);
         const attached = row ? files.filter((f) => f.messageId === row.id) : [];
+        const others = people.filter((p) => p.channelId === channel.id);
+        // Someone who hasn't accepted your request doesn't show you they've read it.
+        const waiting = new Set(others.filter((p) => p.requestedAt).map((p) => p.user.id));
         return {
           ...toChannel(channel),
           recipients: people
@@ -210,10 +253,13 @@ export class ConversationsService {
           lastMessage: row ? this.preview(row, attached[0], attached.length) : null,
           pinned: pinnedAt !== null,
           seen: seenRows.flatMap((r) =>
-            r.channelId === channel.id && r.messageId
+            r.channelId === channel.id && r.messageId && !waiting.has(r.userId)
               ? [{ userId: r.userId.toString(), messageId: r.messageId.toString() }]
               : [],
           ),
+          request: requestedAt !== null,
+          unread: unreadRows.find((u) => u.channelId === channel.id)?.n ?? 0,
+          awaiting: channel.type === "dm" && waiting.size > 0,
           pinnedAt,
         };
       },
@@ -303,9 +349,23 @@ export class ConversationsService {
     }
     const me = await this.personFor(userId);
     const minor = isMinor(me.birthDate);
+    const group = others.length > 1 || Boolean(body.name);
+    const requests = new Set<bigint>();
     for (const id of others) {
-      const no = await this.refusal(userId, minor, id);
-      if (no) throw no;
+      const how = await this.reach(userId, minor, id);
+      if (how instanceof AppError) throw how;
+      if (how === "request") {
+        // Group chats are for people who know each other; a stranger gets a request first.
+        if (group) {
+          const them = await this.personFor(id);
+          throw new AppError(
+            403,
+            "DM_NOT_ALLOWED",
+            `Message ${them.name} on their own first. They can add you to groups once they accept.`,
+          );
+        }
+        requests.add(id);
+      }
     }
 
     if (others.length === 1 && !body.name) {
@@ -339,7 +399,6 @@ export class ConversationsService {
     }
 
     const id = this.deps.ids.next();
-    const group = others.length > 1 || Boolean(body.name);
     const everyone = [userId, ...others];
     await this.db.transaction(async (tx) => {
       await tx.insert(channels).values({
@@ -354,11 +413,26 @@ export class ConversationsService {
           userId: u,
           // The other side sees a new DM only once something is said in it.
           closedAt: group || u === userId ? null : new Date(),
+          requestedAt: requests.has(u) ? new Date() : null,
         })),
       );
     });
-    await this.announce(id, group ? everyone : [userId], "CHANNEL_CREATE");
+    // Everyone's live connection follows it from the start, so the first message arrives live.
+    // (The other side's list still shows a DM only once something is said in it.)
+    await this.announce(id, everyone, "CHANNEL_CREATE");
     return this.one(id, userId);
+  }
+
+  /** Accept a message request: it moves to your inbox, and they can now see you've read it. */
+  async accept(channelId: bigint, userId: bigint): Promise<Conversation> {
+    const ctx = await roomAccess(this.db, channelId, userId);
+    if (!ctx.recipients) throw notFound("Conversation");
+    await this.db
+      .update(channelRecipients)
+      .set({ requestedAt: null, closedAt: null })
+      .where(and(eq(channelRecipients.channelId, channelId), eq(channelRecipients.userId, userId)));
+    await this.announce(channelId, ctx.recipients, "CHANNEL_UPDATE");
+    return this.one(channelId, userId);
   }
 
   /** Rename a group, or pin or unpin a conversation in your own list. */
@@ -408,8 +482,16 @@ export class ConversationsService {
     }
     const me = await this.personFor(userId);
     for (const t of fresh) {
-      const no = await this.refusal(userId, isMinor(me.birthDate), t);
-      if (no) throw no;
+      const how = await this.reach(userId, isMinor(me.birthDate), t);
+      if (how instanceof AppError) throw how;
+      if (how === "request") {
+        const them = await this.personFor(t);
+        throw new AppError(
+          403,
+          "DM_NOT_ALLOWED",
+          `Message ${them.name} on their own first. They can join groups once they accept.`,
+        );
+      }
     }
     for (const t of fresh) {
       await this.db
