@@ -86,4 +86,7 @@ export const Limits = {
   themeReview: { bucket: "theme:review:user", limit: 20, windowSeconds: 3600 },
   themeGet: { bucket: "theme:get:user", limit: 120, windowSeconds: 3600 },
   themeStore: { bucket: "theme:store:key", limit: 120, windowSeconds: 60 },
+  // Music: searching the free library asks Openverse, which allows few requests.
+  soundSearch: { bucket: "music:search:user", limit: 30, windowSeconds: 60 },
+  storyCreate: { bucket: "story:create:user", limit: 30, windowSeconds: 3600 },
 } satisfies Record<string, RateLimitRule>;

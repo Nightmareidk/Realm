@@ -23,6 +23,7 @@ import { summaryColumns, toMediaRef, toUserSummary } from "../../lib/serialize-s
 import { guardMessage } from "../../lib/spam";
 import { blockedEitherWay } from "../spaces/access";
 import { canSeePost, followsActively, isMember, isPrivateAccount } from "./access";
+import { MusicService } from "../music/service";
 
 const {
   posts,
@@ -104,6 +105,8 @@ export class SocialService {
     const visibility: PostVisibility =
       body.visibility ?? ((await isPrivateAccount(this.db, authorId)) ? "followers" : "public");
 
+    if (body.sound && body.kind === "text") throw invalid("Music goes on photos and Clips.");
+    const sound = await new MusicService(this.deps).pick(body.sound);
     const id = this.deps.ids.next();
     await this.db.insert(posts).values({
       id,
@@ -112,6 +115,7 @@ export class SocialService {
       kind: body.kind,
       body: caption,
       visibility: toDbVisibility(visibility),
+      ...(sound ?? {}),
     });
     if (files.length) {
       await this.db
@@ -432,12 +436,14 @@ export class SocialService {
             .where(and(eq(saves.userId, viewerId), inArray(saves.postId, ids)))
         : Promise.resolve([]),
     ]);
+    const soundList = await new MusicService(this.deps).uses(rows);
     const likedSet = new Set(liked.map((l) => l.id.toString()));
     const savedSet = new Set(saved.map((s) => s.id.toString()));
-    return rows.map((r) => {
+    return rows.map((r, i) => {
       const author = authors.find((a) => a.id === r.authorId);
       const space = r.communityId ? spaces.find((s) => s.id === r.communityId) : undefined;
       return {
+        sound: soundList[i] ?? null,
         id: r.id.toString(),
         author: author ? toUserSummary(author) : deletedUser(r.authorId),
         kind: r.kind === "clip" ? "clip" : r.kind === "text" ? "text" : "image",

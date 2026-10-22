@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Snowflake } from "../ids";
 import { Limits } from "../limits";
 import { IsoDateTime, MediaRef } from "./common";
+import { SoundPick, SoundUse } from "./music";
 import { PublicUser, ThemeAccent, UserSummary } from "./users";
 
 /**
@@ -41,6 +42,8 @@ export const Post = z
     caption: z.string().nullable(),
     media: z.array(MediaRef),
     space: PostSpace.nullable(),
+    /** The music on it, and the part that plays. */
+    sound: SoundUse.nullable(),
     visibility: PostVisibility,
     likeCount: z.number().int(),
     commentCount: z.number().int(),
@@ -73,6 +76,8 @@ export const CreatePostBody = z
     spaceId: Snowflake.optional(),
     /** Left out: public, or followers for a private account; "space" needs a spaceId. */
     visibility: PostVisibility.optional(),
+    /** Music: a sound from the library or a creator's own, and which part plays. */
+    sound: SoundPick.optional(),
   })
   .meta({ id: "CreatePostBody" });
 export type CreatePostBody = z.infer<typeof CreatePostBody>;

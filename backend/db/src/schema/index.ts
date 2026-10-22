@@ -2,6 +2,7 @@ export * from "./communities";
 export * from "./content";
 export * from "./media";
 export * from "./messages";
+export * from "./music";
 export * from "./moderation";
 export * from "./notifications";
 export * from "./releases";

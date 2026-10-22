@@ -8,6 +8,7 @@ export * from "./schemas/common";
 export * from "./schemas/communities";
 export * from "./schemas/media";
 export * from "./schemas/messages";
+export * from "./schemas/music";
 export * from "./schemas/releases";
 export * from "./schemas/safety";
 export * from "./schemas/social";

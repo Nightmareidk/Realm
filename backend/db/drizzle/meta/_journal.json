@@ -57,6 +57,13 @@
       "when": 1792665456527,
       "tag": "0007_themes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792704705419,
+      "tag": "0008_music",
+      "breakpoints": true
     }
   ]
 }

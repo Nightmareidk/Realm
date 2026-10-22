@@ -52,9 +52,10 @@ const CSP = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""} ${GOOGLE_SCRIPT}`.trim(),
   `style-src 'self' 'unsafe-inline'${GOOGLE ? " https://fonts.googleapis.com" : ""}`,
-  `img-src 'self' data: blob: https://api.mapbox.com ${GOOGLE_IMG} ${STORAGE_ORIGIN}`.trim(),
+  // Free library music: covers from Openverse and Jamendo, tracks streamed from Jamendo.
+  `img-src 'self' data: blob: https://api.mapbox.com https://api.openverse.org https://usercontent.jamendo.com ${GOOGLE_IMG} ${STORAGE_ORIGIN}`.trim(),
   `font-src 'self'${GOOGLE ? " https://fonts.gstatic.com" : ""}`,
-  `media-src 'self' blob: ${STORAGE_ORIGIN}`.trim(),
+  `media-src 'self' blob: https://prod-1.storage.jamendo.com https://*.jamendo.com ${STORAGE_ORIGIN}`.trim(),
   `connect-src 'self' blob: data: ${GATEWAY_ORIGIN} ${LAN_GATEWAYS} ${STORAGE_ORIGIN} ${LIVEKIT} ${LIVEKIT_LOCAL} ${MAPBOX} ${GOOGLE_CONNECT} ${FIREBASE}`.replace(
     /\s+/g,
     " ",

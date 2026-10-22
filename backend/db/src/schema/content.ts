@@ -47,6 +47,10 @@ export const posts = pgTable(
     search: tsvector().generatedAlwaysAs(
       sql`to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(body, ''))`,
     ),
+    /** Music on a post or Clip (music.ts), and the part that plays. */
+    soundId: id(),
+    soundStartMs: integer(),
+    soundPlayMs: integer(),
     lockedAt: tstz(),
     removedAt: tstz(),
     removedBy: id(),
