@@ -25,5 +25,9 @@ export const config = {
     "/feed/:path*",
     "/explore/:path*",
     "/settings/:path*",
+    "/themes/store",
+    "/themes/add",
+    "/themes/studio",
+    "/themes/:id(d+)",
   ],
 };

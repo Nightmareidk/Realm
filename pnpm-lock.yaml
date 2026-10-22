@@ -470,6 +470,9 @@ importers:
       '@realm/design-tokens':
         specifier: workspace:*
         version: link:../design-tokens
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       firebase:
         specifier: 12.19.0
         version: 12.19.0
@@ -494,6 +497,9 @@ importers:
       three:
         specifier: 0.186.1
         version: 0.186.1
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
     devDependencies:
       '@tailwindcss/postcss':
         specifier: 4.3.3

@@ -1,0 +1,81 @@
+/* A theme's art (docs/THEMING.md): fixed behind the app, never taking a click. Values come only
+   from the theme compiler (engine.ts), as --r-wallpaper*, --r-pattern* on <html>. */
+
+.art {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wallpaper {
+  position: absolute;
+  inset: -40px;
+  background-image: var(--r-wallpaper, none);
+  background-size: cover;
+  background-position: center;
+  filter: blur(var(--r-wallpaper-blur, 0px));
+}
+.wallpaper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--r-bg);
+  opacity: var(--r-wallpaper-dim, 0);
+}
+
+.pattern {
+  position: absolute;
+  inset: 0;
+  background-image: var(--r-pattern, none);
+  opacity: var(--r-pattern-opacity, 0);
+}
+
+.effects {
+  position: absolute;
+  inset: 0;
+}
+.faller {
+  position: absolute;
+  top: -2rem;
+  line-height: 1;
+  opacity: 0.85;
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+.effects[data-rise] .faller {
+  animation-name: rise;
+}
+
+@keyframes fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(var(--sway), 55vh, 0) rotate(120deg);
+  }
+  100% {
+    transform: translate3d(0, 110vh, 0) rotate(240deg);
+  }
+}
+@keyframes rise {
+  0% {
+    transform: translate3d(0, 110vh, 0);
+  }
+  100% {
+    transform: translate3d(var(--sway), -5vh, 0);
+  }
+}
+
+/* Motion off: no effects at all. */
+@media (prefers-reduced-motion: reduce) {
+  .effects {
+    display: none;
+  }
+}
+:global(html[data-motion="paused"]) .effects {
+  display: none;
+}

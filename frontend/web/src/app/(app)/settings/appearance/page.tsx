@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { MotionToggle } from "@/components/motion-toggle";
+import { pill } from "@/components/pill";
 import { AccentPicker } from "@/features/app/accent-picker";
 import { SoonTag } from "@/features/app/place";
 import { SettingsPlace, SettingsSection } from "@/features/settings/settings-place";
@@ -32,10 +34,12 @@ export default function AppearancePage() {
       </SettingsSection>
       <SettingsSection
         id="own"
-        title="Your own themes"
-        lead="Later you'll be able to make Realm look like anything: colours, backgrounds, fonts, and share them with friends."
+        title="Themes"
+        lead="Realm's three looks, themes people made, and your own: colours, wallpapers, stickers and more."
       >
-        <SoonTag>Later</SoonTag>
+        <Link href="/settings/themes" className={pill("ghost", "md")}>
+          Open Themes
+        </Link>
       </SettingsSection>
     </SettingsPlace>
   );

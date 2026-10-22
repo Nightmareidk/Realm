@@ -30,6 +30,7 @@ export const SETTINGS: {
   {
     group: "App",
     items: [
+      { href: "/settings/themes", label: "Themes" },
       { href: "/settings/appearance", label: "Appearance" },
       { href: "/settings/notifications", label: "Notifications" },
     ],

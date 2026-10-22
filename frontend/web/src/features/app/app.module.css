@@ -207,3 +207,43 @@
     border-left: 1px solid var(--r-border);
   }
 }
+
+/* ── The looks (docs/THEMING.md): Now Playing is the default ─────────────────────────────────── */
+
+/* Now Playing: the nav and the page are two rounded panels floating on the lit ground, and the
+   phone's tabs float as a pill. */
+:global(html[data-look="now-playing"]) .tabs {
+  inset: auto 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
+  height: 4rem;
+  padding-bottom: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--r-surface-raised);
+  box-shadow: 0 16px 36px -12px rgb(0 0 0 / 0.65);
+}
+@media (width >= 48rem) {
+  :global(html[data-look="now-playing"]) .nav {
+    margin: 0.625rem 0 0.625rem 0.625rem;
+    border-radius: 1.375rem;
+    background: var(--r-surface);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  }
+  :global(html[data-look="now-playing"]) .sheet {
+    margin-left: 0.5rem;
+    border-radius: 1.75rem;
+  }
+}
+
+/* Plain and clear: no panels, just columns divided by thin lines on the ground. */
+@media (width >= 48rem) {
+  :global(html[data-look="plain"]) .sheet {
+    margin: 0;
+    border-radius: 0;
+    background: var(--r-bg);
+    box-shadow: none;
+    border-left: 1px solid var(--r-border);
+  }
+  :global(html[data-look="plain"]) .bar {
+    border-bottom: 1px solid var(--r-border);
+  }
+}

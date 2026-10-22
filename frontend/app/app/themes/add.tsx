@@ -11,18 +11,22 @@ import { themeChoice, useApplyTheme } from "@/themes/use";
 import { Pill } from "@/ui";
 
 /** The first thing wrong with a pasted file, said plainly with where it is. */
-function whatsWrong(raw: string): string | null {
+function readFile(raw: string): { file: ThemeFile } | { error: string } {
   let json: unknown;
   try {
     json = JSON.parse(raw);
   } catch {
-    return "That isn't a theme file. A theme file starts with { and ends with }.";
+    return { error: "That isn't a theme file. A theme file starts with { and ends with }." };
+  }
+  if (json && typeof json === "object" && "$schema" in json) {
+    const { $schema: _, ...rest } = json as Record<string, unknown>;
+    json = rest;
   }
   const parsed = ThemeFile.safeParse(json);
-  if (parsed.success) return null;
+  if (parsed.success) return { file: parsed.data };
   const issue = parsed.error.issues[0];
   const where = issue?.path.length ? ` (at ${issue.path.join(" › ")})` : "";
-  return `${issue?.message ?? "Something in the file isn't right"}${where}.`;
+  return { error: `${issue?.message ?? "Something in the file isn't right"}${where}.` };
 }
 
 /**
@@ -42,13 +46,13 @@ export default function AddTheme() {
 
   async function check(text = raw) {
     setChecked(null);
-    const wrong = whatsWrong(text);
-    if (wrong) return setError(wrong);
+    const read = readFile(text);
+    if ("error" in read) return setError(read.error);
     setError(null);
     setBusy("check");
     try {
       const res = await api<ThemeCheck>("/themes/check", {
-        body: { file: JSON.parse(text) },
+        body: { file: read.file },
       });
       if (!res.ok) setError(res.problems[0] ?? "Realm couldn't use this theme.");
       else setChecked(res);

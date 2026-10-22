@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque, Funnel_Display } from "next/font/google";
 import { SITE } from "@/lib/site";
 import "./globals.css";
+import { themeBootScript } from "@/features/themes/engine";
 
 /**
  * Headlines: a modern editorial grotesk. Its optical sizes tighten it up at display sizes (the
@@ -97,7 +98,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static, first-party preferences bootstrap */}
-        <script dangerouslySetInnerHTML={{ __html: bootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: bootScript + themeBootScript }} />
       </head>
       <body>{children}</body>
     </html>
