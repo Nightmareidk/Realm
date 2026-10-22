@@ -1,4 +1,13 @@
-import { ChatCircle, Hash, Heart, House, PaperPlaneTilt, SquaresFour } from "@phosphor-icons/react";
+import {
+  ChatCircle,
+  Hash,
+  Heart,
+  House,
+  MusicNotes,
+  MusicNotesSimple,
+  PaperPlaneTilt,
+  SquaresFour,
+} from "@phosphor-icons/react";
 import type { ResolvedTheme } from "@realm/contracts";
 import type { CSSProperties } from "react";
 import { pill } from "@/components/pill";
@@ -283,6 +292,7 @@ export function ThemeStage({ theme, height = 380 }: { theme: ResolvedTheme; heig
             <div style={{ minWidth: 0 }}>
               <div style={{ ...display, fontWeight: 800, fontSize: 14 }}>Noor's post</div>
               <div style={{ color: v("text-soft"), fontSize: 12 }}>coffee before ranked</div>
+              <MusicTag theme={theme} />
               <div style={{ display: "flex", gap: 10, marginTop: 4, color: v("text-soft") }}>
                 <Heart size={14} weight="fill" color="#ff5f7a" aria-hidden="true" />
                 <ChatCircle size={14} aria-hidden="true" />
@@ -308,6 +318,84 @@ export function ThemeStage({ theme, height = 380 }: { theme: ResolvedTheme; heig
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The music on a post, as the phone draws it in this theme's post style: a lit pill (glow), a
+ * dashed ticket strip in the display face (ticket), or one quiet line (thread).
+ */
+function MusicTag({ theme }: { theme: ResolvedTheme }) {
+  const v = (name: string) => `var(--r-${name})`;
+  const kind = theme.style.posts;
+  const song = "Lofi House";
+  const artist = "AstroShroom";
+  if (kind === "thread") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          marginTop: 3,
+          color: v("text-soft"),
+          fontSize: 11,
+        }}
+      >
+        <MusicNotes size={11} aria-hidden="true" />
+        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {song} · {artist}
+        </span>
+      </div>
+    );
+  }
+  if (kind === "ticket") {
+    return (
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+          marginTop: 4,
+          padding: "2px 7px",
+          border: `1.5px dashed ${v("text")}`,
+          fontFamily: `${v("font-display")}, system-ui`,
+          fontSize: 9.5,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <MusicNotesSimple size={10} weight="fill" aria-hidden="true" />
+        {song}
+        <span
+          style={{ textTransform: "none", letterSpacing: 0, fontFamily: "inherit", opacity: 0.8 }}
+        >
+          / {artist}
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        marginTop: 4,
+        padding: "2px 8px",
+        borderRadius: 999,
+        background: v("accent"),
+        color: v("on-accent"),
+        boxShadow: `0 0 12px color-mix(in srgb, ${v("accent")} 55%, transparent)`,
+        fontSize: 10.5,
+        fontWeight: 700,
+        whiteSpace: "nowrap",
+      }}
+    >
+      <MusicNotesSimple size={10} weight="fill" aria-hidden="true" />
+      {song} · {artist}
     </div>
   );
 }

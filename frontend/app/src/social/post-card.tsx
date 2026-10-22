@@ -25,6 +25,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { postsChanged } from "../data";
 import { Icon } from "../icon";
+import { SoundChip } from "../music/chip";
 import { ApiError, api, mediaSource } from "../server";
 import { useSession } from "../session";
 import { useSheet } from "../sheet";
@@ -143,6 +144,11 @@ export const PostCard = memo(function PostCard({
         </View>
       ) : null}
 
+      {post.sound && post.kind !== "clip" ? (
+        <View style={[s.sound, kind === "thread" && s.threadIndent]}>
+          <SoundChip sound={post.sound} playKey={`post:${post.id}`} />
+        </View>
+      ) : null}
       {kind === "thread" && post.caption && post.kind !== "text" ? (
         <Text style={[s.caption, s.threadIndent]} numberOfLines={expanded ? undefined : 4}>
           {post.caption}
@@ -470,6 +476,7 @@ const make = (t: NativeTheme) =>
       paddingBottom: 10,
     },
     threadIndent: { marginLeft: 58, marginRight: 14 },
+    sound: { paddingHorizontal: 12, paddingBottom: 10 },
     threadIndentActions: { marginLeft: 46 },
     mediaWrap: { marginHorizontal: 12 },
     glow: {

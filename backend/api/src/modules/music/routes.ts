@@ -28,7 +28,7 @@ export const soundRoutes =
       { preHandler: requireAuth, schema: { querystring: SoundSearchQuery, response: { 200: SoundList } } },
       async (req) => {
         await enforceLimit(deps, Limits.soundSearch, authOf(req).userId.toString());
-        return { items: await music.search(req.query.q) };
+        return music.search(req.query.q);
       },
     );
     app.get(

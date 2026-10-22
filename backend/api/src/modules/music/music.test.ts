@@ -20,6 +20,16 @@ beforeAll(async () => {
     const url = String(input);
     if (!url.startsWith("https://api.openverse.org/")) return realFetch(input, init);
     openverseCalls += 1;
+    if (url.includes("q=slow")) {
+      // A search Openverse hasn't seen before, answered late.
+      await new Promise((r) => setTimeout(r, 4400));
+      return new Response(
+        JSON.stringify({
+          results: [{ id: "s1", title: "Slow Song", creator: "Late", url: "https://prod-1.storage.jamendo.com/?trackid=9", license: "cc0", duration: 60000 }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
     return new Response(
       JSON.stringify({
         results: [
@@ -87,6 +97,19 @@ describe("the free music library", () => {
     await call(noor.cookie, "GET", "/sounds?q=LOFI");
     expect(openverseCalls).toBe(before);
   });
+});
+
+describe("a slow library", () => {
+  it("answers with what Realm has, keeps looking, and has the rest when asked again", async () => {
+    const noor = await person();
+    const first = (await call(noor.cookie, "GET", "/sounds?q=slow")).json();
+    expect(first.searching).toBe(true);
+    expect(first.items.map((i: { title: string }) => i.title)).not.toContain("Slow Song");
+    await new Promise((r) => setTimeout(r, 900));
+    const again = (await call(noor.cookie, "GET", "/sounds?q=slow")).json();
+    expect(again.searching).toBe(false);
+    expect(again.items.map((i: { title: string }) => i.title)).toEqual(["Slow Song"]);
+  }, 15_000);
 });
 
 describe("music on posts and creators' own sounds", () => {

@@ -54,6 +54,14 @@ export default function RootLayout() {
                   <Stack.Screen name="index" options={{ animation: "fade" }} />
                   <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
                   <Stack.Screen name="create" options={{ presentation: "modal" }} />
+                  <Stack.Screen
+                    name="stories"
+                    options={{
+                      presentation: "fullScreenModal",
+                      animation: "fade",
+                      contentStyle: { backgroundColor: "#000000" },
+                    }}
+                  />
                   <Stack.Screen name="report" options={{ presentation: "modal" }} />
                 </Stack>
               </SessionGate>

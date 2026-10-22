@@ -16,6 +16,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePosts } from "@/data";
 import { Icon } from "@/icon";
+import { SoundChip } from "@/music/chip";
+import { playUse, stopSound } from "@/music/player";
 import { api, mediaSource } from "@/server";
 import { Avatar } from "@/social/avatar";
 import { LIKED } from "@/social/post-card";
@@ -128,13 +130,22 @@ function Clip({
   const player = useVideoPlayer(video ? mediaSource(video.url) : null, (p) => {
     p.loop = true;
   });
+  const sound = post.sound;
+  // With music on it, the music plays (its chosen part, looping) and the video's own sound is off.
   useEffect(() => {
-    player.muted = muted;
-  }, [muted, player]);
+    player.muted = muted || Boolean(sound);
+  }, [muted, player, sound]);
   useEffect(() => {
     if (playing) player.play();
     else player.pause();
   }, [playing, player]);
+  useEffect(() => {
+    if (!sound) return;
+    if (playing && !muted) {
+      playUse(sound, `clip:${post.id}`);
+      return () => stopSound();
+    }
+  }, [sound, playing, muted, post.id]);
 
   async function like() {
     const on = !post.liked;
@@ -212,6 +223,16 @@ function Clip({
           <Text style={s.caption} numberOfLines={2}>
             {post.caption}
           </Text>
+        ) : null}
+        {sound ? (
+          <View style={s.sound}>
+            <SoundChip
+              sound={sound}
+              playKey={`clip:${post.id}`}
+              over
+              autoPlaying={playing && !muted}
+            />
+          </View>
         ) : null}
       </View>
     </View>
@@ -291,6 +312,7 @@ const make = (t: NativeTheme) =>
       ...shadow,
     },
     info: { position: "absolute", left: 16, right: 84, bottom: 28 },
+    sound: { marginTop: 10, alignItems: "flex-start" },
     author: { fontFamily: t.fonts.bold, fontSize: 16 * t.textScale, color: "#ffffff", ...shadow },
     caption: {
       fontFamily: t.fonts.body,

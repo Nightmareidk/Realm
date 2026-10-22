@@ -28,6 +28,9 @@ const invalid = (message: string) => new AppError(400, "BAD_REQUEST", message);
 const AUDIO_HOST = /^https:\/\/([a-z0-9-]+\.)*jamendo\.com\//i;
 const COVER_HOST = /^https:\/\/(api\.openverse\.org|([a-z0-9-]+\.)*jamendo\.com)\//i;
 const SEARCH_TTL = 24 * 3600;
+/** How long a search waits on Openverse before answering with what Realm already has. */
+const LIBRARY_WAIT_MS = 4000;
+const inFlight = new Map<string, Promise<bigint[] | null>>();
 
 interface OpenverseTrack {
   id: string;
@@ -80,12 +83,44 @@ export class MusicService {
   }
 
   /** Ask Openverse for free music (Jamendo, licences that allow reuse). Null when it can't answer. */
+  /** Realm's Openverse key, if it has one (a token that lasts hours, kept until near its end). */
+  private async openverseToken(): Promise<string | null> {
+    const { OPENVERSE_CLIENT_ID: id, OPENVERSE_CLIENT_SECRET: secret } = this.deps.config;
+    if (!id || !secret) return null;
+    const cached = await this.deps.kv.get("music:openverse-token");
+    if (cached) return cached;
+    try {
+      const res = await fetch("https://api.openverse.org/v1/auth_tokens/token/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+        body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) throw new Error(`token ${res.status}`);
+      const body = (await res.json()) as { access_token?: string; expires_in?: number };
+      if (!body.access_token) throw new Error("no token");
+      const ttl = Math.max(60, Math.min(12 * 3600, Number(body.expires_in ?? 3600) - 300));
+      await this.deps.kv.set("music:openverse-token", body.access_token, ttl);
+      return body.access_token;
+    } catch (err) {
+      // Searching without the key still works, just with a lower limit.
+      this.deps.logger.warn({ err }, "openverse token failed");
+      return null;
+    }
+  }
+
   private async openverse(q: string): Promise<OpenverseTrack[] | null> {
     const url = `https://api.openverse.org/v1/audio/?q=${encodeURIComponent(q)}&category=music&license=by,by-sa,cc0&source=jamendo&page_size=20`;
     try {
+      const token = await this.openverseToken();
       const res = await fetch(url, {
-        headers: { Accept: "application/json", "User-Agent": "Realm (tomyrealm.com)" },
-        signal: AbortSignal.timeout(8000),
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "Realm (tomyrealm.com)",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        // Openverse can be slow on a search nobody has made before.
+        signal: AbortSignal.timeout(11_000),
       });
       if (!res.ok) return null;
       const body = (await res.json()) as { results?: OpenverseTrack[] };
@@ -96,48 +131,82 @@ export class MusicService {
     }
   }
 
-  /** Search the free library; results are kept for a day so Openverse isn't asked twice. */
-  async search(q?: string): Promise<Sound[]> {
+  /** Ask Openverse, keep what it finds (as sounds Realm knows), and remember the answer a day. */
+  private async fetchLibrary(query: string, key: string): Promise<bigint[] | null> {
+    const found = await this.openverse(query);
+    if (!found) return null;
+    const ids: bigint[] = [];
+    for (const t of found) {
+      const audio = t.url && AUDIO_HOST.test(t.url) ? t.url : null;
+      const durationMs = Math.round(Number(t.duration ?? 0));
+      if (!audio || durationMs < 15_000) continue;
+      const values = {
+        kind: "library" as const,
+        title: (t.title ?? "Untitled").trim().slice(0, 120),
+        artist: (t.creator ?? "Unknown artist").trim().slice(0, 80),
+        externalId: `openverse:${t.id}`,
+        audioUrl: audio,
+        coverUrl: t.thumbnail && COVER_HOST.test(t.thumbnail) ? t.thumbnail : null,
+        durationMs,
+        licence: licenceName(t.license),
+        sourceUrl: t.foreign_landing_url?.startsWith("https://") ? t.foreign_landing_url : null,
+      };
+      const [row] = await this.db
+        .insert(sounds)
+        .values({ id: this.deps.ids.next(), ...values })
+        .onConflictDoUpdate({ target: sounds.externalId, set: values })
+        .returning({ id: sounds.id });
+      if (row) ids.push(row.id);
+    }
+    await this.deps.kv.set(key, JSON.stringify(ids.map(String)), SEARCH_TTL);
+    return ids;
+  }
+
+  /**
+   * Search the free library. Results are kept for a day so Openverse isn't asked twice. A new
+   * search can take Openverse ten seconds, so after a few the answer is what Realm already knows,
+   * with `searching` set: the search carries on, and asking again shortly gets the rest.
+   */
+  async search(q?: string): Promise<{ items: Sound[]; searching: boolean }> {
     const query = (q?.trim() || "pop").toLowerCase().slice(0, 60);
     const key = `music:search:${createHash("sha1").update(query).digest("base64url")}`;
     const cached = await this.deps.kv.get(key);
     let ids: bigint[] | null = cached ? (JSON.parse(cached) as string[]).map(BigInt) : null;
+    let searching = false;
 
     if (!ids) {
-      const found = await this.openverse(query);
-      if (found) {
-        ids = [];
-        for (const t of found) {
-          const audio = t.url && AUDIO_HOST.test(t.url) ? t.url : null;
-          const durationMs = Math.round(Number(t.duration ?? 0));
-          if (!audio || durationMs < 15_000) continue;
-          const values = {
-            kind: "library" as const,
-            title: (t.title ?? "Untitled").trim().slice(0, 120),
-            artist: (t.creator ?? "Unknown artist").trim().slice(0, 80),
-            externalId: `openverse:${t.id}`,
-            audioUrl: audio,
-            coverUrl: t.thumbnail && COVER_HOST.test(t.thumbnail) ? t.thumbnail : null,
-            durationMs,
-            licence: licenceName(t.license),
-            sourceUrl: t.foreign_landing_url?.startsWith("https://") ? t.foreign_landing_url : null,
-          };
-          const [row] = await this.db
-            .insert(sounds)
-            .values({ id: this.deps.ids.next(), ...values })
-            .onConflictDoUpdate({ target: sounds.externalId, set: values })
-            .returning({ id: sounds.id });
-          if (row) ids.push(row.id);
-        }
-        await this.deps.kv.set(key, JSON.stringify(ids.map(String)), SEARCH_TTL);
+      // The same search from many people at once asks Openverse once.
+      let ask = inFlight.get(key);
+      if (!ask) {
+        ask = this.fetchLibrary(query, key)
+          .catch((err) => {
+            this.deps.logger.warn({ err }, "music library search failed");
+            return null;
+          })
+          .finally(() => inFlight.delete(key));
+        inFlight.set(key, ask);
       }
+      const late = Symbol("late");
+      let wait: ReturnType<typeof setTimeout> | undefined;
+      const answer = await Promise.race([
+        ask,
+        new Promise<typeof late>((r) => {
+          wait = setTimeout(() => r(late), LIBRARY_WAIT_MS);
+        }),
+      ]);
+      clearTimeout(wait);
+      if (answer === late) searching = true;
+      else ids = answer;
     }
 
     if (ids?.length) {
       const rows = await this.db.select().from(sounds).where(inArray(sounds.id, ids));
-      return this.toSounds(ids.flatMap((id) => rows.filter((r) => r.id === id)));
+      return {
+        items: await this.toSounds(ids.flatMap((id) => rows.filter((r) => r.id === id))),
+        searching,
+      };
     }
-    // Openverse is away: search what Realm already knows.
+    // Openverse is away or still looking: search what Realm already knows.
     const like = `%${query.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
     const rows = await this.db
       .select()
@@ -145,7 +214,7 @@ export class MusicService {
       .where(sql`${sounds.title} ilike ${like} or ${sounds.artist} ilike ${like}`)
       .orderBy(desc(sounds.uses))
       .limit(20);
-    return this.toSounds(rows);
+    return { items: await this.toSounds(rows), searching };
   }
 
   /** The sounds people use most, topped up from the library when Realm is new. */
@@ -158,7 +227,7 @@ export class MusicService {
       .limit(20);
     const used = await this.toSounds(rows);
     if (used.length >= 8) return used;
-    const fill = await this.search("pop");
+    const { items: fill } = await this.search("pop");
     return [...used, ...fill.filter((s) => !used.some((u) => u.id === s.id))].slice(0, 20);
   }
 

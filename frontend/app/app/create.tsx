@@ -2,7 +2,7 @@ import type { Post, Profile, SpaceDetail } from "@realm/contracts";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -16,6 +16,9 @@ import {
 } from "react-native";
 import { postsChanged, useApi } from "@/data";
 import { Icon } from "@/icon";
+import { chip, MusicPicker, type Picked, toPick } from "@/music/picker";
+import { clock, playSound, stopSound, usePlaying } from "@/music/player";
+import { loadStories } from "@/music/stories";
 import { ApiError, api, upload } from "@/server";
 import { useSession } from "@/session";
 import { CLIP_MAX_SECONDS, shrinkPhoto } from "@/shrink";
@@ -23,11 +26,24 @@ import { AppScreen, TopBar } from "@/social/screen";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 
-type Mode = "post" | "clip";
+type Mode = "post" | "story" | "clip";
+const MODES: [Mode, string][] = [
+  ["post", "Post"],
+  ["story", "Story"],
+  ["clip", "Clip"],
+];
+const TITLE: Record<Mode, string> = { post: "New post", story: "New Story", clip: "New Clip" };
+/** The longest part of a song each can use: a Story shows for up to 15 seconds. */
+const MUSIC_MAX: Record<Mode, number> = { post: 30_000, story: 15_000, clip: 60_000 };
 
 /**
- * New post: photos (up to 10) or one Clip, a caption, an optional Space to share it to, and who
- * sees it. On a private account each post can still be made public, one by one.
+ * Make something, three ways, each its own:
+ *  - a post: photos (up to 10) or just words, with a caption and music if you like;
+ *  - a Story: one photo or video for a day, with music;
+ *  - a Clip: one short video for the Clips feed, with music, or with its own sound shared as a
+ *    sound others can use.
+ * Posts and Clips can go to a Space and choose who sees them; on a private account each one can
+ * still be made public.
  */
 export default function Create() {
   const { t } = useTheme();
@@ -39,13 +55,24 @@ export default function Create() {
   const me = session.status === "signedIn" ? session.user : null;
   const profile = useApi<Profile>(me ? `/users/${me.username}/profile` : null);
   const spaces = useApi<{ spaces: SpaceDetail[] }>("/users/@me/communities");
-  const [mode, setMode] = useState<Mode>(params.mode === "clip" ? "clip" : "post");
+  const [mode, setMode] = useState<Mode>(
+    params.mode === "clip" || params.mode === "story" ? params.mode : "post",
+  );
   const [picked, setPicked] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [caption, setCaption] = useState("");
   const [spaceId, setSpaceId] = useState<string | null>(null);
   const [flip, setFlip] = useState(false);
   const [spaceOnly, setSpaceOnly] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [music, setMusic] = useState<Picked | null>(null);
+  const [choosing, setChoosing] = useState(false);
+  const [shareSound, setShareSound] = useState(false);
+  const [soundName, setSoundName] = useState("");
+  const playing = usePlaying();
+  const single = mode !== "post";
+  // Words alone can't have music.
+  const canMusic = mode !== "post" || picked.length > 0;
+  useEffect(() => () => stopSound(), []);
 
   const isPrivate = profile.data?.isPrivate ?? false;
   const visibility =
@@ -59,12 +86,13 @@ export default function Create() {
           ? "followers"
           : "public";
   const ready =
-    (mode === "clip" ? picked.length === 1 : picked.length > 0 || caption.trim().length > 0) &&
-    !status;
+    (single ? picked.length === 1 : picked.length > 0 || caption.trim().length > 0) && !status;
+  const what = mode === "story" ? "Story" : "post";
 
   async function pick(from: "library" | "camera") {
     const options: ImagePicker.ImagePickerOptions = {
-      mediaTypes: mode === "clip" ? ["videos"] : ["images"],
+      mediaTypes:
+        mode === "clip" ? ["videos"] : mode === "story" ? ["images", "videos"] : ["images"],
       allowsMultipleSelection: mode === "post" && from === "library",
       selectionLimit: 10,
       orderedSelection: true,
@@ -99,7 +127,14 @@ export default function Create() {
       );
       return;
     }
-    setPicked(mode === "clip" ? res.assets.slice(0, 1) : [...picked, ...res.assets].slice(0, 10));
+    setPicked(single ? res.assets.slice(0, 1) : [...picked, ...res.assets].slice(0, 10));
+  }
+
+  function switchMode(m: Mode) {
+    setMode(m);
+    setPicked([]);
+    // A song's part can be too long for the new kind: keep the song, shorten the part.
+    if (music) setMusic({ ...music, durationMs: Math.min(music.durationMs, MUSIC_MAX[m]) });
   }
 
   async function share() {
@@ -123,15 +158,37 @@ export default function Create() {
         );
       }
       setStatus("Sharing");
+      const sound = music && (mode !== "post" || ids.length) ? toPick(music) : undefined;
+      if (mode === "story") {
+        await api("/stories", {
+          body: {
+            mediaId: ids[0],
+            caption: caption.trim() || undefined,
+            sound,
+            // A private account's Stories go to its followers unless this one is made public.
+            visibility: isPrivate ? (flip ? "public" : "followers") : flip ? "followers" : "public",
+          },
+        });
+        loadStories();
+        router.back();
+        return;
+      }
       await api<Post>("/posts", {
         body: {
           kind: mode === "clip" ? "clip" : ids.length ? "image" : "text",
           caption: caption.trim() || undefined,
           mediaIds: ids,
+          ...(sound ? { sound } : {}),
           ...(spaceId ? { spaceId } : {}),
           visibility,
         },
       });
+      // The Clip's own sound, shared for others to use. The Clip is already up if this fails.
+      if (mode === "clip" && shareSound && !music && ids[0]) {
+        await api("/sounds", {
+          body: { mediaId: ids[0], title: soundName.trim() || "Original sound" },
+        }).catch(() => {});
+      }
       postsChanged();
       router.back();
     } catch (err) {
@@ -146,7 +203,7 @@ export default function Create() {
   return (
     <AppScreen>
       <TopBar
-        title={mode === "clip" ? "New Clip" : "New post"}
+        title={TITLE[mode]}
         right={
           <Pill
             size="md"
@@ -161,20 +218,15 @@ export default function Create() {
       <KeyboardAvoidingView behavior="padding" style={s.fill}>
         <ScrollView contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
           <View style={s.modes} accessibilityRole="radiogroup">
-            {(["post", "clip"] as const).map((m) => (
+            {MODES.map(([m, label]) => (
               <Pressable
                 key={m}
-                onPress={() => {
-                  setMode(m);
-                  setPicked([]);
-                }}
+                onPress={() => switchMode(m)}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: mode === m }}
                 style={[s.mode, mode === m && s.modeOn]}
               >
-                <Text style={[s.modeText, mode === m && s.modeTextOn]}>
-                  {m === "post" ? "Post" : "Clip"}
-                </Text>
+                <Text style={[s.modeText, mode === m && s.modeTextOn]}>{label}</Text>
               </Pressable>
             ))}
           </View>
@@ -203,7 +255,7 @@ export default function Create() {
                 </Pressable>
               </View>
             ))}
-            {(mode === "post" ? picked.length < 10 : picked.length === 0) ? (
+            {(single ? picked.length === 0 : picked.length < 10) ? (
               <>
                 <Pressable
                   onPress={() => pick("library")}
@@ -215,7 +267,13 @@ export default function Create() {
                     size={28}
                     color={t.colors.text}
                   />
-                  <Text style={s.addText}>{mode === "clip" ? "Pick a video" : "Pick photos"}</Text>
+                  <Text style={s.addText}>
+                    {mode === "clip"
+                      ? "Pick a video"
+                      : mode === "story"
+                        ? "Photo or video"
+                        : "Pick photos"}
+                  </Text>
                 </Pressable>
                 <Pressable
                   onPress={() => pick("camera")}
@@ -229,24 +287,137 @@ export default function Create() {
             ) : null}
           </ScrollView>
 
+          <Text style={s.label}>Music</Text>
+          {music ? (
+            <View style={s.music}>
+              <Pressable
+                onPress={() =>
+                  playing === "create"
+                    ? stopSound()
+                    : playSound(music.sound, music.startMs, music.durationMs, "create")
+                }
+                accessibilityRole="button"
+                accessibilityLabel={playing === "create" ? "Stop" : "Listen"}
+                style={s.musicPlay}
+              >
+                <Icon
+                  name={playing === "create" ? "PauseFill" : "PlayFill"}
+                  size={18}
+                  color={t.colors.onAccent}
+                />
+              </Pressable>
+              <View style={s.fill}>
+                <Text style={s.musicTitle} numberOfLines={1}>
+                  {music.sound.title}
+                </Text>
+                <Text style={s.musicLine} numberOfLines={1}>
+                  {music.sound.artist} · {clock(music.startMs)} to{" "}
+                  {clock(music.startMs + music.durationMs)}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setChoosing(true)}
+                accessibilityRole="button"
+                hitSlop={6}
+                style={s.musicBtn}
+              >
+                <Text style={s.musicBtnText}>Change</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  stopSound();
+                  setMusic(null);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Remove the music"
+                hitSlop={6}
+                style={s.musicBtn}
+              >
+                <Icon name="X" size={18} color={t.colors.textSoft} />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              onPress={() => setChoosing(true)}
+              disabled={!canMusic}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !canMusic }}
+              style={({ pressed }) => [
+                s.music,
+                s.musicAdd,
+                pressed && s.pressed,
+                !canMusic && s.off,
+              ]}
+            >
+              <View style={[s.musicPlay, s.musicIcon]}>
+                <Icon name="MusicNotesFill" size={18} color={t.colors.text} />
+              </View>
+              <View style={s.fill}>
+                <Text style={s.musicTitle}>Add music</Text>
+                <Text style={s.musicLine}>
+                  {canMusic
+                    ? "Free songs, or sounds people made"
+                    : "Add a photo first. Posts of just words don't have music."}
+                </Text>
+              </View>
+              <Icon name="CaretRight" size={18} color={t.colors.textSoft} />
+            </Pressable>
+          )}
+
+          {mode === "clip" && !music && picked.length ? (
+            <View style={s.toggle}>
+              <View style={s.fill}>
+                <Text style={s.toggleTitle}>Share this video's sound</Text>
+                <Text style={s.toggleLine}>
+                  Others can use it in their posts, with your name on it.
+                </Text>
+                {shareSound ? (
+                  <TextInput
+                    value={soundName}
+                    onChangeText={setSoundName}
+                    placeholder="Name your sound"
+                    placeholderTextColor={t.colors.textMuted}
+                    selectionColor={accent}
+                    cursorColor={accent}
+                    maxLength={60}
+                    style={s.soundName}
+                    accessibilityLabel="Sound name"
+                  />
+                ) : null}
+              </View>
+              <Switch
+                value={shareSound}
+                onValueChange={setShareSound}
+                trackColor={{ true: accent }}
+                accessibilityLabel="Share this video's sound"
+              />
+            </View>
+          ) : null}
+
           <Text style={s.label}>Caption</Text>
           <TextInput
             value={caption}
             onChangeText={setCaption}
             placeholder={
-              mode === "clip" ? "Say what happened" : "Write a caption, or post just words"
+              mode === "clip"
+                ? "Say what happened"
+                : mode === "story"
+                  ? "Add a few words (if you like)"
+                  : "Write a caption, or post just words"
             }
             placeholderTextColor={t.colors.textMuted}
             selectionColor={accent}
             cursorColor={accent}
             multiline
-            maxLength={2200}
+            maxLength={mode === "story" ? 200 : 2200}
             style={s.caption}
             accessibilityLabel="Caption"
           />
-          <Text style={s.count}>{caption.length} / 2200</Text>
+          <Text style={s.count}>
+            {caption.length} / {mode === "story" ? 200 : 2200}
+          </Text>
 
-          {spaces.data?.spaces.length ? (
+          {mode !== "story" && spaces.data?.spaces.length ? (
             <>
               <Text style={s.label}>Also share to a Space</Text>
               <View style={s.chips}>
@@ -276,8 +447,8 @@ export default function Create() {
               <Text style={s.toggleTitle}>{isPrivate ? "Show publicly" : "Only my followers"}</Text>
               <Text style={s.toggleLine}>
                 {isPrivate
-                  ? "Your account is private. Turn this on and anyone can see this one post."
-                  : "Your account is public. Turn this on to show this post to your followers only."}
+                  ? `Your account is private. Turn this on and anyone can see this one ${what}.`
+                  : `Your account is public. Turn this on to show this ${what} to your followers only.`}
               </Text>
             </View>
             <Switch
@@ -287,7 +458,7 @@ export default function Create() {
               accessibilityLabel={isPrivate ? "Show publicly" : "Only my followers"}
             />
           </View>
-          {spaceId ? (
+          {spaceId && mode !== "story" ? (
             <View style={s.toggle}>
               <View style={s.fill}>
                 <Text style={s.toggleTitle}>Only in this Space</Text>
@@ -305,6 +476,15 @@ export default function Create() {
           ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
+      <MusicPicker
+        visible={choosing}
+        maxMs={MUSIC_MAX[mode]}
+        onClose={() => setChoosing(false)}
+        onPick={(p) => {
+          setMusic(p);
+          setChoosing(false);
+        }}
+      />
     </AppScreen>
   );
 }
@@ -313,12 +493,54 @@ const make = (t: NativeTheme) =>
   StyleSheet.create({
     fill: { flex: 1 },
     off: { opacity: 0.45 },
+    pressed: { opacity: 0.75 },
+    music: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      minHeight: 64,
+      paddingHorizontal: 12,
+      borderRadius: t.radius.card,
+      backgroundColor: t.colors.surface,
+      borderWidth: t.panels.border === "none" ? 0 : 1,
+      borderColor: t.panels.border === "accent" ? t.colors.accent : t.colors.border,
+    },
+    musicAdd: { borderStyle: "dashed", borderWidth: 1.5, borderColor: t.colors.borderStrong },
+    musicPlay: {
+      width: 40,
+      height: 40,
+      borderRadius: t.buttons.shape === "square" ? 4 : 20,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: t.colors.accent,
+    },
+    musicIcon: { backgroundColor: t.colors.surfaceRaised },
+    musicTitle: { fontFamily: t.fonts.bold, fontSize: 15.5 * t.textScale, color: t.colors.text },
+    musicLine: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
+    musicBtn: { minHeight: 44, minWidth: 36, alignItems: "center", justifyContent: "center" },
+    musicBtnText: { fontFamily: t.fonts.bold, fontSize: 14.5 * t.textScale, color: t.colors.link },
+    soundName: {
+      minHeight: 44,
+      marginTop: 10,
+      borderRadius: t.radius.input,
+      borderWidth: 1.5,
+      borderColor: t.colors.borderStrong,
+      paddingHorizontal: 12,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      color: t.colors.text,
+    },
     body: { padding: 16, paddingBottom: 40 },
     modes: { flexDirection: "row", gap: 8, marginBottom: 16 },
     mode: {
       minHeight: 40,
       paddingHorizontal: 18,
-      borderRadius: 999,
+      borderRadius: chip(t),
       justifyContent: "center",
       borderWidth: 1.5,
       borderColor: t.colors.border,

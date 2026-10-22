@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApi, usePosts } from "@/data";
 import { Icon } from "@/icon";
+import { loadStories, useStories } from "@/music/stories";
 import { api } from "@/server";
 import { useSession } from "@/session";
 import { Avatar, fillFor } from "@/social/avatar";
@@ -81,7 +82,7 @@ export default function Home() {
           <Icon name="CaretRight" size={18} color={t.colors.textSoft} />
         </Pressable>
       ) : null}
-      <People />
+      <StoriesRow />
     </>
   );
 
@@ -119,17 +120,30 @@ export default function Home() {
 }
 
 /**
- * The row under the header: you (tap to post), then the people you follow. Live rings come with
- * presence in the app; until then it never pretends anyone is live.
+ * Stories, under the header: you first (tap the plus to add one), then people you follow with
+ * Stories, new ones first, then the rest of the people you follow, so the row is never empty.
  */
-function People() {
+function StoriesRow() {
   const { t } = useTheme();
   const s = useStyles(make);
   const router = useRouter();
   const { session } = useSession();
   const me = session.status === "signedIn" ? session.user : null;
+  const rings = useStories();
   const { data } = useApi<{ items: UserSummary[] }>(me ? `/users/${me.username}/following` : null);
+  useFocusEffect(
+    useCallback(() => {
+      loadStories();
+    }, []),
+  );
   if (!me) return null;
+  const mine = rings?.find((r) => r.author.id === me.id);
+  const others = rings?.filter((r) => r.author.id !== me.id) ?? [];
+  const withStory = new Set(others.map((r) => r.author.id));
+  const rest = (data?.items ?? []).filter((u) => !withStory.has(u.id));
+  const watch = (id: string) => router.push({ pathname: "/stories", params: { start: id } });
+  const add = () => router.push({ pathname: "/create", params: { mode: "story" } });
+  const named = t.style.stories !== "bands";
   return (
     <ScrollView
       horizontal
@@ -137,23 +151,46 @@ function People() {
       contentContainerStyle={s.people}
       style={s.peopleRow}
     >
-      <Pressable
-        onPress={() => router.push("/create")}
-        accessibilityRole="button"
-        accessibilityLabel="Your post: share something"
-        style={s.person}
-      >
-        <View>
-          <Avatar user={me} size={64} />
-          <View style={s.plus}>
-            <Icon name="PlusBold" size={14} color={t.colors.bg} />
-          </View>
-        </View>
-        <Text style={s.personName} numberOfLines={1}>
-          You
-        </Text>
-      </Pressable>
-      {data?.items.map((u) => (
+      <View style={s.person}>
+        <Pressable
+          onPress={mine ? () => watch(me.id) : add}
+          accessibilityRole="button"
+          accessibilityLabel={mine ? "Your Story" : "Add to your Story"}
+        >
+          <Face user={me} state={mine ? "new" : "none"} />
+        </Pressable>
+        <Pressable
+          onPress={add}
+          accessibilityRole="button"
+          accessibilityLabel="Add to your Story"
+          hitSlop={6}
+          style={[s.plus, t.style.stories === "bands" && s.plusBand]}
+        >
+          <Icon name="PlusBold" size={14} color={t.colors.bg} />
+        </Pressable>
+        {named ? (
+          <Text style={s.personName} numberOfLines={1}>
+            Your Story
+          </Text>
+        ) : null}
+      </View>
+      {others.map((r) => (
+        <Pressable
+          key={r.author.id}
+          onPress={() => watch(r.author.id)}
+          accessibilityRole="button"
+          accessibilityLabel={`${r.author.displayName}'s Story${r.unseen ? ", new" : ""}`}
+          style={s.person}
+        >
+          <Face user={r.author} state={r.unseen ? "new" : "seen"} />
+          {named ? (
+            <Text style={[s.personName, r.unseen && s.personNew]} numberOfLines={1}>
+              {r.author.displayName.split(" ")[0]}
+            </Text>
+          ) : null}
+        </Pressable>
+      ))}
+      {rest.map((u) => (
         <Pressable
           key={u.id}
           onPress={() =>
@@ -163,20 +200,24 @@ function People() {
           accessibilityLabel={u.displayName}
           style={s.person}
         >
-          <Face user={u} />
-          {t.style.stories === "bands" ? null : (
+          <Face user={u} state="none" />
+          {named ? (
             <Text style={s.personName} numberOfLines={1}>
               {u.displayName.split(" ")[0]}
             </Text>
-          )}
+          ) : null}
         </Pressable>
       ))}
     </ScrollView>
   );
 }
 
-/** A person in the row, in the theme's story style. */
-function Face({ user }: { user: UserSummary }) {
+/**
+ * A person in the row, in the theme's story style: a lit ring (Now Playing), a wristband tile
+ * (Wristband) or a fine line (Plain and clear). A new Story is the strongest mark; one you've
+ * seen is quieter; no Story, nothing.
+ */
+function Face({ user, state }: { user: UserSummary; state: "new" | "seen" | "none" }) {
   const { t } = useTheme();
   const s = useStyles(make);
   const colour = user.accentColor
@@ -184,10 +225,15 @@ function Face({ user }: { user: UserSummary }) {
     : fillFor(user.id);
   if (t.style.stories === "bands") {
     return (
-      <View style={s.band}>
+      <View style={[s.band, state === "new" && s.bandNew, state === "none" && s.bandNone]}>
         <Avatar user={user} size={84} square />
-        <View style={[s.bandStrip, { backgroundColor: colour }]}>
-          <Text style={s.bandName} numberOfLines={1}>
+        <View
+          style={[
+            s.bandStrip,
+            { backgroundColor: state === "none" ? t.colors.surfaceRaised : colour },
+          ]}
+        >
+          <Text style={[s.bandName, state === "none" && s.bandNameNone]} numberOfLines={1}>
             {user.displayName.split(" ")[0]}
           </Text>
         </View>
@@ -196,22 +242,31 @@ function Face({ user }: { user: UserSummary }) {
   }
   if (t.style.stories === "thin") {
     return (
-      <View style={s.thin}>
+      <View style={[s.thin, state === "new" ? s.thinNew : state === "seen" ? s.thinSeen : null]}>
         <Avatar user={user} size={60} />
       </View>
     );
   }
+  if (state === "new") {
+    return (
+      <LinearGradient
+        colors={[colour, t.colors.lights[1], t.colors.accent]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={s.ring}
+      >
+        <View style={s.ringGap}>
+          <Avatar user={user} size={58} />
+        </View>
+      </LinearGradient>
+    );
+  }
   return (
-    <LinearGradient
-      colors={[colour, t.colors.lights[1], colour]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={s.ring}
-    >
+    <View style={[s.ring, state === "seen" ? s.ringSeen : null]}>
       <View style={s.ringGap}>
         <Avatar user={user} size={58} />
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -265,6 +320,7 @@ const make = (t: NativeTheme) =>
     person: { alignItems: "center", gap: 6, minWidth: 70 },
     brand: { flexDirection: "row", alignItems: "center", gap: 6 },
     ring: { width: 68, height: 68, borderRadius: 34, padding: 2.5 },
+    ringSeen: { borderWidth: 1.5, borderColor: t.colors.borderStrong, padding: 1 },
     ringGap: {
       flex: 1,
       borderRadius: 32,
@@ -273,7 +329,9 @@ const make = (t: NativeTheme) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    thin: { borderRadius: 34, borderWidth: 1.5, borderColor: t.colors.text, padding: 3 },
+    thin: { borderRadius: 34, borderWidth: 1.5, borderColor: "transparent", padding: 3 },
+    thinNew: { borderWidth: 2, borderColor: t.colors.text },
+    thinSeen: { borderColor: t.colors.borderStrong },
     band: {
       width: 84,
       height: 118,
@@ -281,6 +339,8 @@ const make = (t: NativeTheme) =>
       overflow: "hidden",
       backgroundColor: t.colors.surfaceRaised,
     },
+    bandNew: { borderWidth: 2.5, borderColor: t.colors.accent },
+    bandNone: { opacity: 0.8 },
     bandStrip: {
       position: "absolute",
       left: 0,
@@ -297,16 +357,18 @@ const make = (t: NativeTheme) =>
       textTransform: "uppercase",
       color: "#0b0b0e",
     },
+    bandNameNone: { color: t.colors.textSoft },
     personName: {
       fontFamily: t.fonts.body,
       fontSize: 12.5 * t.textScale,
       color: t.colors.textSoft,
       maxWidth: 70,
     },
+    personNew: { color: t.colors.text, fontFamily: t.fonts.bold },
     plus: {
       position: "absolute",
-      right: -2,
-      bottom: -2,
+      right: 0,
+      top: 46,
       width: 24,
       height: 24,
       borderRadius: 12,
@@ -316,4 +378,5 @@ const make = (t: NativeTheme) =>
       borderWidth: 3,
       borderColor: t.colors.bg,
     },
+    plusBand: { top: 92, right: -4 },
   });

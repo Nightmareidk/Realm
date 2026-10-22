@@ -22,6 +22,8 @@ export interface SheetSpec {
   /** Something above the actions, like a row of reactions. It gets `close` to finish with. */
   top?: (close: () => void) => ReactNode;
   actions: SheetAction[];
+  /** Closed without choosing (Cancel, the backdrop, the back button). */
+  onCancel?: () => void;
 }
 
 const SheetContext = createContext<((spec: SheetSpec) => void) | null>(null);
@@ -37,6 +39,11 @@ export function SheetProvider({ children }: { children: ReactNode }) {
   const [spec, setSpec] = useState<SheetSpec | null>(null);
   const insets = useSafeAreaInsets();
   const close = useCallback(() => setSpec(null), []);
+  const cancel = useCallback(() => {
+    const onCancel = spec?.onCancel;
+    setSpec(null);
+    onCancel?.();
+  }, [spec]);
   const open = useCallback((next: SheetSpec) => setSpec(next), []);
   return (
     <SheetContext.Provider value={open}>
@@ -47,12 +54,12 @@ export function SheetProvider({ children }: { children: ReactNode }) {
         animationType="fade"
         statusBarTranslucent
         navigationBarTranslucent
-        onRequestClose={close}
+        onRequestClose={cancel}
       >
         <View style={s.root}>
           <Pressable
             style={s.backdrop}
-            onPress={close}
+            onPress={cancel}
             accessibilityRole="button"
             accessibilityLabel="Close menu"
           />
@@ -98,7 +105,7 @@ export function SheetProvider({ children }: { children: ReactNode }) {
               </View>
               <Pressable
                 accessibilityRole="button"
-                onPress={close}
+                onPress={cancel}
                 style={({ pressed }) => [s.cancel, pressed && s.rowPressed]}
               >
                 <Text style={s.cancelText}>Cancel</Text>

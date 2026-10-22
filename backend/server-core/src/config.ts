@@ -74,6 +74,12 @@ const Env = z.object({
    */
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  /**
+   * Openverse (the free music library) API keys. Unset, searches run without a key, which
+   * Openverse limits to about 200 a day; with one, thousands.
+   */
+  OPENVERSE_CLIENT_ID: z.string().optional(),
+  OPENVERSE_CLIENT_SECRET: z.string().optional(),
   /** Firebase Cloud Messaging: the service account's JSON, raw or base64. */
   FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),

@@ -32,7 +32,14 @@ export const Sound = z
   .meta({ id: "Sound" });
 export type Sound = z.infer<typeof Sound>;
 
-export const SoundList = z.object({ items: z.array(Sound) }).meta({ id: "SoundList" });
+export const SoundList = z
+  .object({
+    items: z.array(Sound),
+    /** The library is still looking (a new search can take it a few seconds): ask again shortly. */
+    searching: z.boolean().optional(),
+  })
+  .meta({ id: "SoundList" });
+export type SoundList = z.infer<typeof SoundList>;
 
 export const SoundSearchQuery = z.object({ q: z.string().trim().max(60).optional() });
 
