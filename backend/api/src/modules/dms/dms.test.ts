@@ -28,7 +28,7 @@ async function person(overrides: Partial<Record<string, string>> = {}) {
   });
   const cookie = sessionCookie(res);
   if (!cookie) throw new Error("no session");
-  return { cookie, id: res.json().user.id as string };
+  return { cookie, id: res.json().user.id as string, username: account.username as string };
 }
 
 type Method = "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
@@ -112,6 +112,18 @@ describe("direct messages", () => {
       recipientIds: [kenji.id],
     });
     expect(reopen.json().error.code).toBe("BLOCKED");
+  });
+
+  it("lets people who follow each other message, but not a one-way follow", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const open = () =>
+      call(noor.cookie, "POST", "/users/@me/channels", { recipientIds: [kenji.id] });
+    expect((await open()).json().error.code).toBe("DM_NOT_ALLOWED");
+    await call(noor.cookie, "PUT", `/users/${kenji.username}/follow`);
+    expect((await open()).json().error.code).toBe("DM_NOT_ALLOWED");
+    await call(kenji.cookie, "PUT", `/users/${noor.username}/follow`);
+    expect((await open()).statusCode).toBe(200);
   });
 
   it("keeps under-18s to people they know", async () => {

@@ -10,6 +10,7 @@ import { alias, and, asc, eq, inArray, isNull, ne, schema, sql } from "@realm/db
 import type { Deps } from "../../deps";
 import { AppError, badRequest, forbidden, notFound } from "../../lib/errors";
 import { summaryColumns, toChannel, toUserSummary } from "../../lib/serialize-spaces";
+import { followsActively } from "../social/access";
 import { blockedEitherWay, roomAccess } from "../spaces/access";
 import type { MessagesService } from "../spaces/messages";
 
@@ -67,7 +68,7 @@ export class ConversationsService {
       .where(eq(users.id, toId))
       .limit(1);
     if (!target) return notFound("Person");
-    const [friend] = await this.db
+    const [friendship] = await this.db
       .select({ t: relationships.type })
       .from(relationships)
       .where(
@@ -78,6 +79,11 @@ export class ConversationsService {
         ),
       )
       .limit(1);
+    // Friends, the Instagram way: people who follow each other.
+    const friend =
+      Boolean(friendship) ||
+      ((await followsActively(this.db, fromId, toId)) &&
+        (await followsActively(this.db, toId, fromId)));
     const a = alias(communityMembers, "mine");
     const [shared] = await this.db
       .select({ id: a.communityId })
@@ -105,8 +111,8 @@ export class ConversationsService {
       policy === "nobody"
         ? `${target.name} isn't taking new messages.`
         : policy === "friends"
-          ? `${target.name} only gets messages from friends.`
-          : `${target.name} only gets messages from friends and people in their Spaces.`;
+          ? `${target.name} only gets messages from friends. Follow each other to message.`
+          : `${target.name} only gets messages from friends and people in their Spaces. Follow each other to message.`;
     return new AppError(403, "DM_NOT_ALLOWED", why);
   }
 
