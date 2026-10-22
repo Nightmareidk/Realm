@@ -100,6 +100,12 @@ describe("registration", () => {
     expect(unnamed.json().session.deviceName).toBe("Realm app on Android phone");
   });
 
+  it("saves usernames in lowercase, however they're typed", async () => {
+    const { res } = await register(newAccount({ username: "NigHtmaRe_Up" }));
+    expect(res.statusCode).toBe(201);
+    expect(res.json().user.username).toBe("nightmare_up");
+  });
+
   it("rejects taken usernames case-insensitively and taken emails", async () => {
     const { account } = await register();
     const dupeName = await register(newAccount({ username: account.username.toUpperCase() }));

@@ -294,7 +294,8 @@ function Account({
           label="Username"
           hint="Your @handle: letters, numbers, underscores and single dots."
           value={f.username}
-          onChangeText={set("username")}
+          // Usernames are lowercase: @NigHtmaRe is saved as @nightmare, so it shows that way too.
+          onChangeText={(v) => set("username")(v.toLowerCase())}
           error={
             errors.username ??
             (taken && taken === f.username.trim().toLowerCase()

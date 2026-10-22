@@ -112,7 +112,7 @@ export default function EditProfile() {
             label="Username"
             hint="Your @handle: letters, numbers, underscores and single dots."
             value={username}
-            onChangeText={setUsername}
+            onChangeText={(v) => setUsername(v.toLowerCase())}
             error={errors.username}
             autoCapitalize="none"
             autoCorrect={false}
