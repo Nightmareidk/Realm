@@ -1,5 +1,4 @@
 import type { Profile, UserSettings } from "@realm/contracts";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
@@ -9,7 +8,7 @@ import type { IconName } from "@/icon-paths";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, THEME_ORDER, themes, useStyles, useTheme } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Field, Pill } from "@/ui";
 
 /**
@@ -22,7 +21,7 @@ export default function Settings() {
   const router = useRouter();
   const { session, signOut } = useSession();
   const me = session.status === "signedIn" ? session.user : null;
-  const { id: themeId, setTheme, accent } = useTheme();
+  const { accent } = useTheme();
   const settings = useApi<UserSettings>("/users/@me/settings");
   const profile = useApi<Profile>(me ? `/users/${me.username}/profile` : null);
   const [category, setCategory] = useState("");
@@ -79,11 +78,6 @@ export default function Settings() {
     } finally {
       setSaving(false);
     }
-  }
-
-  async function pickColour(id: (typeof THEME_ORDER)[number]) {
-    setTheme(id);
-    await api("/users/@me/settings", { method: "PATCH", body: { accent: id } }).catch(() => {});
   }
 
   return (
@@ -176,32 +170,13 @@ export default function Settings() {
           </View>
         ) : null}
 
-        <Text style={s.heading}>Your colour</Text>
-        <View style={s.swatches} accessibilityRole="radiogroup">
-          {THEME_ORDER.map((t) => {
-            const [l1, l2, l3] = themes[t].lights;
-            const on = t === themeId;
-            return (
-              <Pressable
-                key={t}
-                onPress={() => pickColour(t)}
-                accessibilityRole="radio"
-                accessibilityLabel={themes[t].name}
-                accessibilityState={{ checked: on }}
-                style={[s.swatchWrap, on && s.swatchOn]}
-              >
-                <LinearGradient
-                  colors={[l1, l2, l3]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={s.swatch}
-                >
-                  <Text style={s.swatchName}>{themes[t].name}</Text>
-                </LinearGradient>
-              </Pressable>
-            );
-          })}
-        </View>
+        <Text style={s.heading}>Look</Text>
+        <NavRow
+          icon="Palette"
+          title="Themes"
+          line="Now Playing, Wristband, Plain and clear, your colour, and themes people made"
+          onPress={() => router.push("/themes")}
+        />
 
         <Text style={s.heading}>Security and login</Text>
         <NavRow

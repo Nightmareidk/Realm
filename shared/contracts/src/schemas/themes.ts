@@ -200,3 +200,4 @@ export const ThemePayments = z
     priceTiersCents: z.array(z.number().int()),
   })
   .meta({ id: "ThemePayments" });
+export type ThemePayments = z.infer<typeof ThemePayments>;
