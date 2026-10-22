@@ -15,8 +15,17 @@ import {
   themes,
 } from "@realm/design-tokens";
 import { File, Paths } from "expo-file-system";
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Platform } from "react-native";
+import { BUILT_IN_FONTS, loadFont } from "./themes/fonts";
 
 export type { NativeTheme, ThemeId };
 /**
@@ -100,7 +109,37 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [choice, setChoice] = useState<ThemeChoice>(() => readCache() ?? START);
   const [trying, setTrying] = useState<ResolvedTheme | null>(null);
   const resolved = useMemo(() => trying ?? resolveChoice(choice), [choice, trying]);
-  const t = useMemo(() => nativeTheme(resolved), [resolved]);
+  // A theme's own fonts load when it's chosen; until then it reads in Realm's fonts.
+  const [ready, setReady] = useState<Set<string>>(() => new Set(BUILT_IN_FONTS));
+  const { display, body } = resolved.type;
+  useEffect(() => {
+    let live = true;
+    for (const id of [display, body]) {
+      if (ready.has(id)) continue;
+      loadFont(id).then((ok) => {
+        if (ok && live) setReady((r) => new Set(r).add(id));
+      });
+    }
+    return () => {
+      live = false;
+    };
+  }, [display, body, ready]);
+  const t = useMemo(() => {
+    const n = nativeTheme(resolved);
+    const fallback = nativeTheme({
+      ...resolved,
+      type: { ...resolved.type, display: "funnel", body: "atkinson" },
+    });
+    return {
+      ...n,
+      fonts: {
+        display: ready.has(display) ? n.fonts.display : fallback.fonts.display,
+        displayBold: ready.has(display) ? n.fonts.displayBold : fallback.fonts.displayBold,
+        body: ready.has(body) ? n.fonts.body : fallback.fonts.body,
+        bold: ready.has(body) ? n.fonts.bold : fallback.fonts.bold,
+      },
+    };
+  }, [resolved, ready, display, body]);
   const choose = useCallback((c: ThemeChoice) => {
     setChoice(c);
     setTrying(null);

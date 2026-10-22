@@ -4,7 +4,7 @@ import { StyleSheet, Text, type TextInput, View } from "react-native";
 import { FormScreen } from "@/screen";
 import { ApiError } from "@/server";
 import { useSession } from "@/session";
-import { fonts, type NativeTheme, useStyles } from "@/theme";
+import { type NativeTheme, useStyles } from "@/theme";
 import { Field, Notice, Pill, TextLink, Title } from "@/ui";
 
 export default function SignIn() {
@@ -93,5 +93,5 @@ const make = (t: NativeTheme) =>
     form: { marginTop: 32, gap: 22 },
     foot: { marginTop: "auto", paddingTop: 32, gap: 8 },
     across: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
-    acrossText: { fontFamily: fonts.body, fontSize: 16, color: t.colors.textSoft },
+    acrossText: { fontFamily: t.fonts.body, fontSize: 16 * t.textScale, color: t.colors.textSoft },
   });

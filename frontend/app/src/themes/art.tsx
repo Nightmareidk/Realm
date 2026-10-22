@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { memo, useEffect, useMemo } from "react";
 import { Image as RNImage, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
@@ -215,17 +216,34 @@ export function Backdrop({ lightOpacity = 0.38 }: { lightOpacity?: number }) {
             source={src}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
+            contentPosition={w.focus ?? "center"}
             blurRadius={w.blur === "strong" ? 28 : w.blur === "soft" ? 10 : 0}
             accessible={false}
           />
-          <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: t.colors.bg, opacity: w.dim }]}
+          {/* Brightness: darker under 1, lighter over it (colour strength is the website's). */}
+          {(w.brightness ?? 1) !== 1 ? (
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                (w.brightness ?? 1) < 1
+                  ? { backgroundColor: "#000000", opacity: 1 - (w.brightness ?? 1) }
+                  : { backgroundColor: "#ffffff", opacity: ((w.brightness ?? 1) - 1) * 0.6 },
+              ]}
+            />
+          ) : null}
+          <LinearGradient
+            colors={[w.overlay ?? t.colors.bg, w.overlay2 ?? w.overlay ?? t.colors.bg]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.4, y: 1 }}
+            style={[StyleSheet.absoluteFill, { opacity: w.dim }]}
           />
         </>
       ) : null}
-      <View style={[StyleSheet.absoluteFill, { opacity: lightOpacity }]}>
-        <LightField />
-      </View>
+      {w && src ? null : (
+        <View style={[StyleSheet.absoluteFill, { opacity: lightOpacity }]}>
+          <LightField />
+        </View>
+      )}
       <PatternLayer />
       <EffectLayer />
     </View>

@@ -28,7 +28,7 @@ import { Icon } from "../icon";
 import { ApiError, api, mediaSource } from "../server";
 import { useSession } from "../session";
 import { useSheet } from "../sheet";
-import { fonts, type NativeTheme, useStyles, useTheme } from "../theme";
+import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Avatar } from "./avatar";
 import { useSafety } from "./safety";
 import { ago, agoLong, compact } from "./time";
@@ -505,9 +505,9 @@ const make = (t: NativeTheme) =>
     },
     hiddenText: {
       flex: 1,
-      fontFamily: fonts.body,
-      fontSize: 14,
-      lineHeight: 20,
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      lineHeight: 20 * t.textScale,
       color: t.colors.text,
     },
     head: {
@@ -519,26 +519,41 @@ const make = (t: NativeTheme) =>
     },
     who: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 48 },
     whoText: { flex: 1 },
-    name: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.text },
-    meta: { fontFamily: fonts.body, fontSize: 13, color: t.colors.textSoft, marginTop: 1 },
-    metaStrong: { fontFamily: fonts.bold, color: t.colors.text },
+    name: { fontFamily: t.fonts.bold, fontSize: 15 * t.textScale, color: t.colors.text },
+    meta: {
+      fontFamily: t.fonts.body,
+      fontSize: 13 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 1,
+    },
+    metaStrong: { fontFamily: t.fonts.bold, color: t.colors.text },
     textPost: { paddingHorizontal: 16, paddingVertical: 10 },
-    textBody: { fontFamily: fonts.body, fontSize: 20, lineHeight: 29, color: t.colors.text },
+    textBody: {
+      fontFamily: t.fonts.body,
+      fontSize: 20 * t.textScale,
+      lineHeight: 29 * t.textScale,
+      color: t.colors.text,
+    },
     actions: { flexDirection: "row", alignItems: "center", paddingHorizontal: 4, paddingTop: 4 },
     iconBtn: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
     grow: { flex: 1 },
-    likes: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.text, paddingHorizontal: 14 },
+    likes: {
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
+      color: t.colors.text,
+      paddingHorizontal: 14,
+    },
     caption: {
-      fontFamily: fonts.body,
-      fontSize: 15,
-      lineHeight: 22,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 22 * t.textScale,
       color: t.colors.text,
       paddingHorizontal: 14,
       marginTop: 4,
     },
-    captionName: { fontFamily: fonts.bold },
+    captionName: { fontFamily: t.fonts.bold },
     commentsLink: { paddingHorizontal: 14, paddingVertical: 6 },
-    soft: { fontFamily: fonts.body, fontSize: 14, color: t.colors.textSoft },
+    soft: { fontFamily: t.fonts.body, fontSize: 14 * t.textScale, color: t.colors.textSoft },
     burst: {
       position: "absolute",
       top: 0,
@@ -574,8 +589,8 @@ const make = (t: NativeTheme) =>
       position: "absolute",
       right: 12,
       bottom: 12,
-      fontFamily: fonts.bold,
-      fontSize: 13,
+      fontFamily: t.fonts.bold,
+      fontSize: 13 * t.textScale,
       color: "#ffffff",
       backgroundColor: "rgba(11,11,14,0.7)",
       paddingHorizontal: 8,

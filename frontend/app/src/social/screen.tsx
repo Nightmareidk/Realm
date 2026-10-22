@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../icon";
-import { fonts, type NativeTheme, useStyles, useTheme } from "../theme";
+import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Backdrop, Sticker } from "../themes/art";
 
 /**
@@ -102,20 +102,25 @@ const make = (t: NativeTheme) =>
       backgroundColor: t.colors.bg,
     },
     icon: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
-    title: { flex: 1, fontFamily: fonts.displayBold, fontSize: 19, color: t.colors.text },
+    title: {
+      flex: 1,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 19 * t.textScale,
+      color: t.colors.text,
+    },
     right: { minWidth: 48, alignItems: "flex-end", paddingRight: 8 },
     center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
     empty: { paddingHorizontal: 28, paddingVertical: 48, alignItems: "center" },
     emptyTitle: {
-      fontFamily: fonts.displayBold,
-      fontSize: 22,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 22 * t.textScale,
       color: t.colors.text,
       textAlign: "center",
     },
     emptyLine: {
-      fontFamily: fonts.body,
-      fontSize: 16,
-      lineHeight: 24,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      lineHeight: 24 * t.textScale,
       color: t.colors.textSoft,
       textAlign: "center",
       marginTop: 8,
@@ -130,8 +135,8 @@ const make = (t: NativeTheme) =>
     },
     retry: { minHeight: 48, justifyContent: "center", marginTop: 8 },
     retryText: {
-      fontFamily: fonts.bold,
-      fontSize: 16,
+      fontFamily: t.fonts.bold,
+      fontSize: 16 * t.textScale,
       color: t.colors.text,
       textDecorationLine: "underline",
     },

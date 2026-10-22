@@ -7,7 +7,7 @@ import { Icon } from "./icon";
 import type { IconName } from "./icon-paths";
 import { useSession } from "./session";
 import { Avatar } from "./social/avatar";
-import { fonts, type NativeTheme, useStyles, useTheme } from "./theme";
+import { type NativeTheme, useStyles, useTheme } from "./theme";
 import { useUnreadCount } from "./unread";
 
 type BarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0];
@@ -140,7 +140,7 @@ const make = (t: NativeTheme) =>
       borderWidth: 2,
       borderColor: t.colors.bg,
     },
-    badgeText: { fontFamily: fonts.bold, fontSize: 10.5 },
-    label: { fontFamily: fonts.bold, fontSize: 11.5, color: t.colors.textSoft },
+    badgeText: { fontFamily: t.fonts.bold, fontSize: 10.5 * t.textScale },
+    label: { fontFamily: t.fonts.bold, fontSize: 11.5 * t.textScale, color: t.colors.textSoft },
     labelOn: { color: t.colors.text },
   });

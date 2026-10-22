@@ -14,7 +14,7 @@ import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Field, Pill, TextLink } from "@/ui";
 
 /**
@@ -132,17 +132,22 @@ const make = (t: NativeTheme) =>
   StyleSheet.create({
     fill: { flex: 1 },
     body: { padding: 20 },
-    title: { fontFamily: fonts.displayBold, fontSize: 24, color: t.colors.text },
+    title: { fontFamily: t.fonts.displayBold, fontSize: 24 * t.textScale, color: t.colors.text },
     lead: {
-      fontFamily: fonts.body,
-      fontSize: 16,
-      lineHeight: 24,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      lineHeight: 24 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 6,
     },
     form: { marginTop: 24, gap: 10 },
-    code: { fontFamily: fonts.bold, fontSize: 24, letterSpacing: 8 },
-    resent: { fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: t.colors.textSoft },
+    code: { fontFamily: t.fonts.bold, fontSize: 24 * t.textScale, letterSpacing: 8 },
+    resent: {
+      fontFamily: t.fonts.body,
+      fontSize: 14.5 * t.textScale,
+      lineHeight: 21 * t.textScale,
+      color: t.colors.textSoft,
+    },
     foot: { marginTop: 28 },
     mark: {
       width: 56,

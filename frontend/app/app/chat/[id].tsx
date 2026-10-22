@@ -24,7 +24,7 @@ import { useSheet } from "@/sheet";
 import { shrinkPhoto } from "@/shrink";
 import { useSafety } from "@/social/safety";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, THEME_ORDER, themes, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, THEME_ORDER, themes, useStyles, useTheme } from "@/theme";
 import { markRead, olderId } from "@/unread";
 
 /** A short id for an outgoing message, so its echo can be matched. */
@@ -683,8 +683,8 @@ const make = (t: NativeTheme) =>
     fill: { flex: 1 },
     notice: { alignItems: "center", paddingVertical: 6 },
     noticeText: {
-      fontFamily: fonts.bold,
-      fontSize: 12.5,
+      fontFamily: t.fonts.bold,
+      fontSize: 12.5 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 11,
       paddingVertical: 5,
@@ -696,16 +696,16 @@ const make = (t: NativeTheme) =>
     },
     list: { paddingHorizontal: 10, paddingVertical: 12 },
     empty: {
-      fontFamily: fonts.body,
-      fontSize: 15,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
       color: t.colors.textSoft,
       textAlign: "center",
       padding: 24,
       transform: [{ scaleY: -1 }],
     },
     typing: {
-      fontFamily: fonts.body,
-      fontSize: 13.5,
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 16,
       paddingBottom: 4,
@@ -726,8 +726,12 @@ const make = (t: NativeTheme) =>
       borderRadius: 14,
       backgroundColor: t.colors.surface,
     },
-    contextTitle: { fontFamily: fonts.bold, fontSize: 13.5, color: t.colors.text },
-    contextLine: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft },
+    contextTitle: { fontFamily: t.fonts.bold, fontSize: 13.5 * t.textScale, color: t.colors.text },
+    contextLine: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
     picked: { flexDirection: "row", gap: 8, paddingHorizontal: 4 },
     pickedPhoto: {
       width: 64,
@@ -759,8 +763,8 @@ const make = (t: NativeTheme) =>
       paddingHorizontal: 16,
       paddingTop: 12,
       paddingBottom: 12,
-      fontFamily: fonts.body,
-      fontSize: 15.5,
+      fontFamily: t.fonts.body,
+      fontSize: 15.5 * t.textScale,
       color: t.colors.text,
     },
     send: {
@@ -781,7 +785,7 @@ const make = (t: NativeTheme) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    quickEmoji: { fontSize: 26 },
+    quickEmoji: { fontSize: 26 * t.textScale },
     outRow: { alignItems: "flex-end", marginTop: 3 },
     outBubble: {
       maxWidth: 280,
@@ -791,10 +795,14 @@ const make = (t: NativeTheme) =>
       gap: 4,
     },
     sending: { opacity: 0.7 },
-    outText: { fontFamily: fonts.body, fontSize: 15.5, lineHeight: 21 },
+    outText: {
+      fontFamily: t.fonts.body,
+      fontSize: 15.5 * t.textScale,
+      lineHeight: 21 * t.textScale,
+    },
     outState: {
-      fontFamily: fonts.body,
-      fontSize: 12,
+      fontFamily: t.fonts.body,
+      fontSize: 12 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 3,
       marginRight: 6,

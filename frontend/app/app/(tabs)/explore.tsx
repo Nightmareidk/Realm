@@ -10,7 +10,7 @@ import { PersonRow } from "@/social/person-row";
 import { AppScreen, Loading } from "@/social/screen";
 import { SpaceBadge } from "@/social/space-badge";
 import { compact } from "@/social/time";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 
 /**
  * Explore: search people and Spaces at the top (the magnifying glass, like Instagram); below it
@@ -212,8 +212,8 @@ const make = (t: NativeTheme) =>
       borderBottomColor: t.colors.border,
     },
     title: {
-      fontFamily: fonts.displayBold,
-      fontSize: 28,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 28 * t.textScale,
       color: t.colors.text,
       letterSpacing: -0.5,
     },
@@ -227,20 +227,26 @@ const make = (t: NativeTheme) =>
       borderRadius: 999,
       backgroundColor: t.colors.surfaceSunken,
     },
-    input: { flex: 1, minHeight: 46, fontFamily: fonts.body, fontSize: 16, color: t.colors.text },
+    input: {
+      flex: 1,
+      minHeight: 46,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      color: t.colors.text,
+    },
     body: { paddingBottom: 40 },
     heading: {
-      fontFamily: fonts.bold,
-      fontSize: 16,
+      fontFamily: t.fonts.bold,
+      fontSize: 16 * t.textScale,
       color: t.colors.text,
       paddingHorizontal: 16,
       paddingTop: 22,
       paddingBottom: 6,
     },
     none: {
-      fontFamily: fonts.body,
-      fontSize: 15,
-      lineHeight: 22,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 22 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 16,
       paddingVertical: 12,
@@ -253,8 +259,13 @@ const make = (t: NativeTheme) =>
       paddingVertical: 8,
       minHeight: 64,
     },
-    spaceName: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
-    spaceLine: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft, marginTop: 1 },
+    spaceName: { fontFamily: t.fonts.bold, fontSize: 15.5 * t.textScale, color: t.colors.text },
+    spaceLine: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 1,
+    },
     boards: {
       margin: 16,
       marginTop: 26,
@@ -263,10 +274,15 @@ const make = (t: NativeTheme) =>
       borderTopColor: t.colors.border,
     },
     boardsHead: { flexDirection: "row", alignItems: "center", gap: 10 },
-    boardsTitle: { flex: 1, fontFamily: fonts.displayBold, fontSize: 19, color: t.colors.text },
+    boardsTitle: {
+      flex: 1,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 19 * t.textScale,
+      color: t.colors.text,
+    },
     soon: {
-      fontFamily: fonts.bold,
-      fontSize: 12.5,
+      fontFamily: t.fonts.bold,
+      fontSize: 12.5 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 10,
       paddingVertical: 5,
@@ -277,9 +293,9 @@ const make = (t: NativeTheme) =>
       borderColor: "rgba(255,255,255,0.14)",
     },
     boardsLine: {
-      fontFamily: fonts.body,
-      fontSize: 14.5,
-      lineHeight: 21,
+      fontFamily: t.fonts.body,
+      fontSize: 14.5 * t.textScale,
+      lineHeight: 21 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 8,
     },

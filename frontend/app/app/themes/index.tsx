@@ -9,15 +9,7 @@ import { Icon } from "@/icon";
 import type { IconName } from "@/icon-paths";
 import { webOrigin } from "@/server";
 import { AppScreen, TopBar } from "@/social/screen";
-import {
-  fonts,
-  type NativeTheme,
-  THEME_ORDER,
-  type ThemeId,
-  themes,
-  useStyles,
-  useTheme,
-} from "@/theme";
+import { type NativeTheme, THEME_ORDER, type ThemeId, themes, useStyles, useTheme } from "@/theme";
 import { ThemePreview } from "@/themes/preview";
 import { themeChoice, useApplyTheme } from "@/themes/use";
 
@@ -256,9 +248,9 @@ const make = (t: NativeTheme) =>
   StyleSheet.create({
     body: { paddingBottom: 48 },
     lead: {
-      fontFamily: fonts.body,
-      fontSize: 16,
-      lineHeight: 23,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      lineHeight: 23 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 20,
       paddingTop: 16,
@@ -273,17 +265,22 @@ const make = (t: NativeTheme) =>
       alignItems: "center",
       gap: 12,
     },
-    tryingText: { flex: 1, fontFamily: fonts.bold, fontSize: 15, color: t.colors.text },
+    tryingText: {
+      flex: 1,
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
+      color: t.colors.text,
+    },
     tryingBtn: { minHeight: 40, justifyContent: "center", paddingHorizontal: 14 },
     tryingBtnText: {
-      fontFamily: fonts.bold,
-      fontSize: 15,
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
       color: t.colors.text,
       textDecorationLine: "underline",
     },
     heading: {
-      fontFamily: fonts.displayBold,
-      fontSize: 19,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 19 * t.textScale,
       color: t.colors.text,
       paddingHorizontal: 20,
       marginTop: 26,
@@ -301,8 +298,13 @@ const make = (t: NativeTheme) =>
     },
     lookOn: { borderColor: t.colors.text },
     lookName: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    lookTitle: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.text },
-    lookLine: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: t.colors.textSoft },
+    lookTitle: { fontFamily: t.fonts.bold, fontSize: 15 * t.textScale, color: t.colors.text },
+    lookLine: {
+      fontFamily: t.fonts.body,
+      fontSize: 13 * t.textScale,
+      lineHeight: 18 * t.textScale,
+      color: t.colors.textSoft,
+    },
     swatches: { flexDirection: "row", gap: 10, paddingHorizontal: 16 },
     swatchWrap: {
       flex: 1,
@@ -313,7 +315,7 @@ const make = (t: NativeTheme) =>
     },
     swatchOn: { borderColor: t.colors.text },
     swatch: { height: 64, borderRadius: 14, justifyContent: "flex-end", padding: 8 },
-    swatchName: { fontFamily: fonts.bold, fontSize: 13, color: "#ffffff" },
+    swatchName: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: "#ffffff" },
     row: {
       flexDirection: "row",
       alignItems: "center",
@@ -322,9 +324,14 @@ const make = (t: NativeTheme) =>
       paddingVertical: 10,
     },
     rowText: { flex: 1, minWidth: 0 },
-    rowTitle: { fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
-    rowLine: { fontFamily: fonts.body, fontSize: 14, color: t.colors.textSoft, marginTop: 2 },
-    using: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.textSoft },
+    rowTitle: { fontFamily: t.fonts.bold, fontSize: 16 * t.textScale, color: t.colors.text },
+    rowLine: {
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
+    using: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.textSoft },
     useBtn: {
       minHeight: 40,
       paddingHorizontal: 18,
@@ -332,10 +339,10 @@ const make = (t: NativeTheme) =>
       backgroundColor: t.colors.surfaceRaised,
       justifyContent: "center",
     },
-    useText: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.text },
+    useText: { fontFamily: t.fonts.bold, fontSize: 15 * t.textScale, color: t.colors.text },
     none: {
-      fontFamily: fonts.body,
-      fontSize: 15,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 20,
     },

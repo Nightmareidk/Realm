@@ -318,7 +318,40 @@ importers:
       '@expo-google-fonts/atkinson-hyperlegible-next':
         specifier: 0.4.1
         version: 0.4.1
+      '@expo-google-fonts/bangers':
+        specifier: 0.4.1
+        version: 0.4.1
+      '@expo-google-fonts/bebas-neue':
+        specifier: 0.4.1
+        version: 0.4.1
+      '@expo-google-fonts/comfortaa':
+        specifier: 0.4.2
+        version: 0.4.2
+      '@expo-google-fonts/fredoka':
+        specifier: 0.4.1
+        version: 0.4.1
       '@expo-google-fonts/funnel-display':
+        specifier: 0.4.1
+        version: 0.4.1
+      '@expo-google-fonts/lexend':
+        specifier: 0.4.1
+        version: 0.4.1
+      '@expo-google-fonts/nunito':
+        specifier: 0.4.2
+        version: 0.4.2
+      '@expo-google-fonts/orbitron':
+        specifier: 0.4.2
+        version: 0.4.2
+      '@expo-google-fonts/pacifico':
+        specifier: 0.4.1
+        version: 0.4.1
+      '@expo-google-fonts/permanent-marker':
+        specifier: 0.4.0
+        version: 0.4.0
+      '@expo-google-fonts/press-start-2p':
+        specifier: 0.4.1
+        version: 0.4.1
+      '@expo-google-fonts/righteous':
         specifier: 0.4.1
         version: 0.4.1
       '@expo/metro-runtime':
@@ -1634,11 +1667,44 @@ packages:
   '@expo-google-fonts/atkinson-hyperlegible-next@0.4.1':
     resolution: {integrity: sha512-tA5NUQCrb4GnQ8kvghyF6Kqw72zr4zSNmMwhCTcHlsu/jE5JoF8Fje5/WwL44y17Lue99pG9cyq3PW5X/7ZDng==}
 
+  '@expo-google-fonts/bangers@0.4.1':
+    resolution: {integrity: sha512-yc/iz6OOs3b6JW5KXZFhiwyAxsZHR3JQC854frmsOVWcOeZzCuwvFE/dIywHR+wy6Y7pv0eBwgMJqO7gkav2mQ==}
+
+  '@expo-google-fonts/bebas-neue@0.4.1':
+    resolution: {integrity: sha512-Ibnf0EQgMUj01tT/ws64RlsMQmOvDP+UDFW93bld0C/WwaOaCGWKgNnqxNkKxmL73y2kpT8EB4dkSNUOyAOEJA==}
+
+  '@expo-google-fonts/comfortaa@0.4.2':
+    resolution: {integrity: sha512-eGz3aw5gQ4NA/saaiMv5CH709vB5tG+puP9vy+rFX3XXc20JQ0A/qeBiCH+J8enPvXDi0rXyG3EgqbJ4Er2htg==}
+
+  '@expo-google-fonts/fredoka@0.4.1':
+    resolution: {integrity: sha512-px3uHDidG1RI7mMAjfKQktK9yZoVn/Uvqgp1G/Zkd6ZN9flXFxhUoPDRZdcCj2knFvkKmlvOx96SD3j4fxq7ig==}
+
   '@expo-google-fonts/funnel-display@0.4.1':
     resolution: {integrity: sha512-147RN7fhwx8pNoJxUbXgZfnMxvRXfBG9fdZM4Xqg1DQ2XgqYWQ5cu29KDA9ObDFYRmaPUBwlJ2FgV3/IMBnYPg==}
 
+  '@expo-google-fonts/lexend@0.4.1':
+    resolution: {integrity: sha512-uddqvCw9zFeYVUqUmPkCxFqEd+YbmCKqpNpdzj+LhJwYM2AwjR8i+Zq5Qx7KhbP/vzIZUfSwC5bnZ3cx2ltqGw==}
+
   '@expo-google-fonts/material-symbols@0.4.49':
     resolution: {integrity: sha512-HtoaXYCk7A9kOjwoxrjq6i0iDtAoQnOPm31zUn+TgmKlHVUU+yyqvQDxN830MvGmBQV8eINv/SK7JRtWhB2xcg==}
+
+  '@expo-google-fonts/nunito@0.4.2':
+    resolution: {integrity: sha512-1KCWphw/I2ugqfs9iRHUCkPTnomNgGPtF4AvqVquoEKxr0EL+mcLNLgeixsslbaSFevRR6/KJAE3sc8g0VaY0Q==}
+
+  '@expo-google-fonts/orbitron@0.4.2':
+    resolution: {integrity: sha512-lp92oZ6FF1tA9dzJxKYPHae8hVxfVJzh5jRvjPCN8P1kkF615n/mq0U4ZQ7EXiEJvO7Cpwg+lZlkSbRw7CiDug==}
+
+  '@expo-google-fonts/pacifico@0.4.1':
+    resolution: {integrity: sha512-w21ZIeNdwVWPH173HNszX8ML1deogOsHcxhJ0ghpbyBzr7R6PGSJ6yWL5jBixvWV/E34xDk28aNn/cX+gqzf3Q==}
+
+  '@expo-google-fonts/permanent-marker@0.4.0':
+    resolution: {integrity: sha512-yqKSFt3Wu/06XAGFNlT4z5iLmnjtAuSV/vkeumnM/2cgbEv3dQVKDbcdQnowW8N3vNOABGqWxbs4KEiewNOzqA==}
+
+  '@expo-google-fonts/press-start-2p@0.4.1':
+    resolution: {integrity: sha512-L6SjPh8qwQ9i34VRNa8XPHH0gYACE1AGcq2MDLGfmBpxDnJnbECuChv6pWO81F2XqPx+V7gUlvSL0rbgh/F6/w==}
+
+  '@expo-google-fonts/righteous@0.4.1':
+    resolution: {integrity: sha512-oWlxXmRNYRN5aHW2cLJopUTr7T+mNRGfKjBeQlYLbOIf1yn6UF5kcg9PqkD6gG8BG1pKxzT3jXzcRvFSRL1HKA==}
 
   '@expo/cli@57.0.28':
     resolution: {integrity: sha512-4969gk/B2JyP3kAv2ftpwU1f9dLG2j9TsQuYCTTjfnyRx0O49Jwu1O1mie2c3HmKXbwfNA6QTS+3i3sNetMTag==}
@@ -7242,9 +7308,31 @@ snapshots:
 
   '@expo-google-fonts/atkinson-hyperlegible-next@0.4.1': {}
 
+  '@expo-google-fonts/bangers@0.4.1': {}
+
+  '@expo-google-fonts/bebas-neue@0.4.1': {}
+
+  '@expo-google-fonts/comfortaa@0.4.2': {}
+
+  '@expo-google-fonts/fredoka@0.4.1': {}
+
   '@expo-google-fonts/funnel-display@0.4.1': {}
 
+  '@expo-google-fonts/lexend@0.4.1': {}
+
   '@expo-google-fonts/material-symbols@0.4.49': {}
+
+  '@expo-google-fonts/nunito@0.4.2': {}
+
+  '@expo-google-fonts/orbitron@0.4.2': {}
+
+  '@expo-google-fonts/pacifico@0.4.1': {}
+
+  '@expo-google-fonts/permanent-marker@0.4.0': {}
+
+  '@expo-google-fonts/press-start-2p@0.4.1': {}
+
+  '@expo-google-fonts/righteous@0.4.1': {}
 
   '@expo/cli@57.0.28(@expo/dom-webview@57.0.1)(@expo/metro-runtime@57.0.16)(expo-constants@57.0.21)(expo-font@57.0.4)(expo-router@57.0.25)(expo@57.0.27)(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)':
     dependencies:

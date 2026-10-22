@@ -16,7 +16,7 @@ import { useSession } from "@/session";
 import { shrinkPhoto } from "@/shrink";
 import { Avatar } from "@/social/avatar";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles } from "@/theme";
+import { type NativeTheme, useStyles } from "@/theme";
 import { Field, Notice, Pill } from "@/ui";
 
 /** Your picture, name, @handle, bio and pronouns. */
@@ -148,8 +148,8 @@ const make = (t: NativeTheme) =>
     pic: { alignItems: "center", gap: 6, marginTop: 6 },
     change: { minHeight: 44, justifyContent: "center" },
     changeText: {
-      fontFamily: fonts.bold,
-      fontSize: 15.5,
+      fontFamily: t.fonts.bold,
+      fontSize: 15.5 * t.textScale,
       color: t.colors.text,
       textDecorationLine: "underline",
     },

@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Field, Notice, Pill } from "@/ui";
 
 /** Change your password. Every other device is signed out, so a lost phone loses its way in. */
@@ -146,11 +146,11 @@ const make = (t: NativeTheme) =>
   StyleSheet.create({
     fill: { flex: 1 },
     body: { padding: 20 },
-    title: { fontFamily: fonts.displayBold, fontSize: 24, color: t.colors.text },
+    title: { fontFamily: t.fonts.displayBold, fontSize: 24 * t.textScale, color: t.colors.text },
     lead: {
-      fontFamily: fonts.body,
-      fontSize: 16,
-      lineHeight: 24,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      lineHeight: 24 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 6,
     },

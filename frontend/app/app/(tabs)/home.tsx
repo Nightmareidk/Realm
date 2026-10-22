@@ -12,7 +12,7 @@ import { useSession } from "@/session";
 import { Avatar, fillFor } from "@/social/avatar";
 import { PostCard } from "@/social/post-card";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Sticker } from "@/themes/art";
 import { Pill, Wordmark } from "@/ui";
 
@@ -232,8 +232,13 @@ const make = (t: NativeTheme) =>
       backgroundColor: t.colors.surface,
     },
     confirmText: { flex: 1 },
-    confirmTitle: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
-    confirmLine: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft, marginTop: 2 },
+    confirmTitle: { fontFamily: t.fonts.bold, fontSize: 15.5 * t.textScale, color: t.colors.text },
+    confirmLine: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
     top: {
       flexDirection: "row",
       alignItems: "center",
@@ -286,13 +291,18 @@ const make = (t: NativeTheme) =>
       paddingHorizontal: 8,
     },
     bandName: {
-      fontFamily: fonts.display,
-      fontSize: 11,
+      fontFamily: t.fonts.display,
+      fontSize: 11 * t.textScale,
       letterSpacing: 0.8,
       textTransform: "uppercase",
       color: "#0b0b0e",
     },
-    personName: { fontFamily: fonts.body, fontSize: 12.5, color: t.colors.textSoft, maxWidth: 70 },
+    personName: {
+      fontFamily: t.fonts.body,
+      fontSize: 12.5 * t.textScale,
+      color: t.colors.textSoft,
+      maxWidth: 70,
+    },
     plus: {
       position: "absolute",
       right: -2,

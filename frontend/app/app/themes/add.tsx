@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ApiError, api } from "@/server";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { ThemePreview } from "@/themes/preview";
 import { themeChoice, useApplyTheme } from "@/themes/use";
 import { Pill } from "@/ui";
@@ -162,19 +162,29 @@ export default function AddTheme() {
 const make = (t: NativeTheme) =>
   StyleSheet.create({
     body: { padding: 20, gap: 14, paddingBottom: 56 },
-    lead: { fontFamily: fonts.body, fontSize: 16, lineHeight: 23, color: t.colors.textSoft },
+    lead: {
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      lineHeight: 23 * t.textScale,
+      color: t.colors.textSoft,
+    },
     input: {
       minHeight: 180,
       borderRadius: t.radius.input,
       borderWidth: 1,
       borderColor: t.colors.borderStrong,
       padding: 14,
-      fontFamily: fonts.body,
-      fontSize: 13,
+      fontFamily: t.fonts.body,
+      fontSize: 13 * t.textScale,
       color: t.colors.text,
       textAlignVertical: "top",
     },
-    error: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 21, color: t.colors.danger },
+    error: {
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
+      lineHeight: 21 * t.textScale,
+      color: t.colors.danger,
+    },
     result: {
       flexDirection: "row",
       gap: 14,
@@ -183,12 +193,17 @@ const make = (t: NativeTheme) =>
       backgroundColor: t.colors.surface,
     },
     resultText: { flex: 1, gap: 6 },
-    name: { fontFamily: fonts.displayBold, fontSize: 19, color: t.colors.text },
-    note: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: t.colors.textSoft },
+    name: { fontFamily: t.fonts.displayBold, fontSize: 19 * t.textScale, color: t.colors.text },
+    note: {
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      lineHeight: 20 * t.textScale,
+      color: t.colors.textSoft,
+    },
     small: {
-      fontFamily: fonts.body,
-      fontSize: 13,
-      lineHeight: 19,
+      fontFamily: t.fonts.body,
+      fontSize: 13 * t.textScale,
+      lineHeight: 19 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 8,
     },

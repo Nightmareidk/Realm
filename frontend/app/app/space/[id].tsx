@@ -8,7 +8,7 @@ import { ApiError, api } from "@/server";
 import { AppScreen, Empty, Loading, TopBar } from "@/social/screen";
 import { SpaceBadge } from "@/social/space-badge";
 import { compact } from "@/social/time";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 
 /**
@@ -118,18 +118,23 @@ const make = (t: NativeTheme) =>
     fill: { flex: 1 },
     body: { padding: 16, paddingBottom: 40 },
     head: { flexDirection: "row", alignItems: "center", gap: 14 },
-    name: { fontFamily: fonts.displayBold, fontSize: 24, color: t.colors.text },
-    line: { fontFamily: fonts.body, fontSize: 14, color: t.colors.textSoft, marginTop: 2 },
+    name: { fontFamily: t.fonts.displayBold, fontSize: 24 * t.textScale, color: t.colors.text },
+    line: {
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
     desc: {
-      fontFamily: fonts.body,
-      fontSize: 15.5,
-      lineHeight: 23,
+      fontFamily: t.fonts.body,
+      fontSize: 15.5 * t.textScale,
+      lineHeight: 23 * t.textScale,
       color: t.colors.text,
       marginTop: 14,
     },
     heading: {
-      fontFamily: fonts.bold,
-      fontSize: 16,
+      fontFamily: t.fonts.bold,
+      fontSize: 16 * t.textScale,
       color: t.colors.text,
       marginTop: 24,
       marginBottom: 4,
@@ -150,5 +155,10 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
       backgroundColor: t.colors.surfaceRaised,
     },
-    roomName: { flex: 1, fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
+    roomName: {
+      flex: 1,
+      fontFamily: t.fonts.bold,
+      fontSize: 16 * t.textScale,
+      color: t.colors.text,
+    },
   });

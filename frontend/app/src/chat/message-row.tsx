@@ -14,7 +14,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { Icon } from "../icon";
 import { mediaSource } from "../server";
 import { Avatar } from "../social/avatar";
-import { fonts, type NativeTheme, useStyles, useTheme } from "../theme";
+import { type NativeTheme, useStyles, useTheme } from "../theme";
 
 /** The same quick six as the website; double-tap sends the first. */
 export const QUICK_REACTIONS = ["❤️", "😂", "👍", "😮", "😢", "🔥"] as const;
@@ -275,8 +275,8 @@ const make = (t: NativeTheme) =>
     col: { maxWidth: "82%" },
     colMine: { alignItems: "flex-end" },
     author: {
-      fontFamily: fonts.bold,
-      fontSize: 12.5,
+      fontFamily: t.fonts.bold,
+      fontSize: 12.5 * t.textScale,
       color: t.colors.textSoft,
       marginLeft: 12,
       marginBottom: 3,
@@ -292,18 +292,22 @@ const make = (t: NativeTheme) =>
     // A photo on its own: a thin frame (the side padding has to be undone by name, not by "padding").
     bare: { paddingHorizontal: 4, paddingVertical: 4 },
     theirs: { backgroundColor: t.colors.surfaceSunken },
-    text: { fontFamily: fonts.body, fontSize: 15.5, lineHeight: 21 },
+    text: { fontFamily: t.fonts.body, fontSize: 15.5 * t.textScale, lineHeight: 21 * t.textScale },
     hiddenText: { fontStyle: "italic" },
-    time: { fontFamily: fonts.body, fontSize: 11.5, opacity: 0.75 },
+    time: { fontFamily: t.fonts.body, fontSize: 11.5 * t.textScale, opacity: 0.75 },
     timeAlone: { alignSelf: "flex-end", paddingHorizontal: 8, paddingBottom: 2 },
     quote: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
     quoteMine: { backgroundColor: "rgba(0,0,0,0.14)" },
     quoteTheirs: { backgroundColor: "rgba(255,255,255,0.07)" },
-    quoteName: { fontFamily: fonts.bold, fontSize: 13 },
-    quoteText: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 18 },
+    quoteName: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale },
+    quoteText: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      lineHeight: 18 * t.textScale,
+    },
     photo: { borderRadius: 14, backgroundColor: t.colors.surfaceRaised },
     file: { flexDirection: "row", alignItems: "center", gap: 8 },
-    fileName: { flexShrink: 1, fontFamily: fonts.bold, fontSize: 14.5 },
+    fileName: { flexShrink: 1, fontFamily: t.fonts.bold, fontSize: 14.5 * t.textScale },
     replyHint: { position: "absolute", left: 4, top: 0, bottom: 0, justifyContent: "center" },
     reactions: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 3, marginLeft: 6 },
     reactionsMine: { justifyContent: "flex-end", marginLeft: 0, marginRight: 6 },
@@ -318,18 +322,18 @@ const make = (t: NativeTheme) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    reactionText: { fontFamily: fonts.bold, fontSize: 13, color: t.colors.text },
+    reactionText: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: t.colors.text },
     seen: {
-      fontFamily: fonts.body,
-      fontSize: 12,
+      fontFamily: t.fonts.body,
+      fontSize: 12 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 3,
       marginRight: 6,
     },
     system: {
       alignSelf: "center",
-      fontFamily: fonts.body,
-      fontSize: 13,
+      fontFamily: t.fonts.body,
+      fontSize: 13 * t.textScale,
       color: t.colors.textSoft,
       paddingVertical: 8,
       paddingHorizontal: 20,

@@ -5,7 +5,7 @@ import { Linking, StyleSheet, Text, type TextInput, View } from "react-native";
 import { FormScreen } from "@/screen";
 import { ApiError, api, waitFor, webOrigin } from "@/server";
 import { useSession } from "@/session";
-import { fonts, type NativeTheme, themes, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, themes, useStyles, useTheme } from "@/theme";
 import { Field, Lead, Notice, Pill, TextLink, Title } from "@/ui";
 
 type Step = "birthday" | "account" | "held";
@@ -397,7 +397,12 @@ const make = (t: NativeTheme) =>
     head: { marginTop: 28 },
     heldHead: { marginTop: 64 },
     lead: { marginTop: 12 },
-    step: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.textSoft, marginTop: 14 },
+    step: {
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 14,
+    },
     center: { textAlign: "center", marginTop: 4 },
     form: { marginTop: 30, gap: 22 },
     row: { flexDirection: "row", gap: 12 },
@@ -406,5 +411,5 @@ const make = (t: NativeTheme) =>
     foot: { marginTop: "auto", paddingTop: 32, gap: 8 },
     across: { flexDirection: "row", justifyContent: "center" },
     terms: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 5 },
-    termsText: { fontFamily: fonts.body, fontSize: 15, color: t.colors.textSoft },
+    termsText: { fontFamily: t.fonts.body, fontSize: 15 * t.textScale, color: t.colors.textSoft },
   });

@@ -20,7 +20,7 @@ import { ApiError, api, upload } from "@/server";
 import { useSession } from "@/session";
 import { CLIP_MAX_SECONDS, shrinkPhoto } from "@/shrink";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 
 type Mode = "post" | "clip";
@@ -324,7 +324,7 @@ const make = (t: NativeTheme) =>
       borderColor: t.colors.border,
     },
     modeOn: { backgroundColor: t.colors.surfaceRaised, borderColor: t.colors.text },
-    modeText: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.textSoft },
+    modeText: { fontFamily: t.fonts.bold, fontSize: 15 * t.textScale, color: t.colors.textSoft },
     modeTextOn: { color: t.colors.text },
     picked: { gap: 8, paddingBottom: 4 },
     thumb: {
@@ -356,10 +356,10 @@ const make = (t: NativeTheme) =>
       borderStyle: "dashed",
       backgroundColor: "transparent",
     },
-    addText: { fontFamily: fonts.bold, fontSize: 13.5, color: t.colors.text },
+    addText: { fontFamily: t.fonts.bold, fontSize: 13.5 * t.textScale, color: t.colors.text },
     label: {
-      fontFamily: fonts.bold,
-      fontSize: 15,
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
       color: t.colors.text,
       marginTop: 22,
       marginBottom: 8,
@@ -371,15 +371,15 @@ const make = (t: NativeTheme) =>
       borderColor: t.colors.borderStrong,
       backgroundColor: "rgba(11,11,14,0.7)",
       padding: 14,
-      fontFamily: fonts.body,
-      fontSize: 16,
-      lineHeight: 23,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      lineHeight: 23 * t.textScale,
       color: t.colors.text,
       textAlignVertical: "top",
     },
     count: {
-      fontFamily: fonts.body,
-      fontSize: 12.5,
+      fontFamily: t.fonts.body,
+      fontSize: 12.5 * t.textScale,
       color: t.colors.textSoft,
       alignSelf: "flex-end",
       marginTop: 4,
@@ -394,7 +394,7 @@ const make = (t: NativeTheme) =>
       borderColor: t.colors.border,
     },
     chipOn: { backgroundColor: t.colors.surfaceRaised, borderColor: t.colors.text },
-    chipText: { fontFamily: fonts.bold, fontSize: 14.5, color: t.colors.textSoft },
+    chipText: { fontFamily: t.fonts.bold, fontSize: 14.5 * t.textScale, color: t.colors.textSoft },
     chipTextOn: { color: t.colors.text },
     toggle: {
       flexDirection: "row",
@@ -405,11 +405,11 @@ const make = (t: NativeTheme) =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: t.colors.border,
     },
-    toggleTitle: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
+    toggleTitle: { fontFamily: t.fonts.bold, fontSize: 15.5 * t.textScale, color: t.colors.text },
     toggleLine: {
-      fontFamily: fonts.body,
-      fontSize: 14,
-      lineHeight: 20,
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      lineHeight: 20 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 2,
     },

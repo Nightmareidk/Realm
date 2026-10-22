@@ -10,7 +10,7 @@ import { useSheet } from "@/sheet";
 import { Avatar } from "@/social/avatar";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
 import { ago } from "@/social/time";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import {
   isMuted,
   isUnread,
@@ -297,8 +297,8 @@ const make = (t: NativeTheme) =>
     },
     titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     title: {
-      fontFamily: fonts.displayBold,
-      fontSize: 28,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 28 * t.textScale,
       color: t.colors.text,
       letterSpacing: -0.5,
     },
@@ -309,7 +309,12 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
       marginRight: -10,
     },
-    note: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft, marginTop: 2 },
+    note: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
     chips: { flexDirection: "row", gap: 8, marginTop: 12 },
     chip: {
       minHeight: 36,
@@ -320,7 +325,7 @@ const make = (t: NativeTheme) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    chipText: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.text },
+    chipText: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.text },
     row: {
       flexDirection: "row",
       alignItems: "center",
@@ -330,11 +335,16 @@ const make = (t: NativeTheme) =>
       minHeight: 72,
     },
     top: { flexDirection: "row", alignItems: "center", gap: 6 },
-    name: { flex: 1, fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
-    strong: { fontFamily: fonts.bold },
-    when: { fontFamily: fonts.body, fontSize: 13, color: t.colors.textSoft },
+    name: { flex: 1, fontFamily: t.fonts.bold, fontSize: 16 * t.textScale, color: t.colors.text },
+    strong: { fontFamily: t.fonts.bold },
+    when: { fontFamily: t.fonts.body, fontSize: 13 * t.textScale, color: t.colors.textSoft },
     bottom: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
-    preview: { flex: 1, fontFamily: fonts.body, fontSize: 14.5, color: t.colors.textSoft },
-    previewUnread: { fontFamily: fonts.bold, color: t.colors.text },
+    preview: {
+      flex: 1,
+      fontFamily: t.fonts.body,
+      fontSize: 14.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
+    previewUnread: { fontFamily: t.fonts.bold, color: t.colors.text },
     dot: { width: 10, height: 10, borderRadius: 5 },
   });

@@ -18,7 +18,7 @@ import { useApi, usePosts } from "../data";
 import { Icon } from "../icon";
 import { ApiError, api, mediaSource } from "../server";
 import { useSheet } from "../sheet";
-import { fonts, type NativeTheme, useStyles, useTheme } from "../theme";
+import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Pill } from "../ui";
 import { Avatar, fillFor } from "./avatar";
 import { useSafety } from "./safety";
@@ -469,13 +469,18 @@ const make = (t: NativeTheme) =>
     picRow: { flexDirection: "row", alignItems: "flex-end" },
     pic: { borderRadius: 48, borderWidth: 4, borderColor: t.colors.bg },
     name: {
-      fontFamily: fonts.displayBold,
-      fontSize: 24,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 24 * t.textScale,
       color: t.colors.text,
       marginTop: 10,
       letterSpacing: -0.4,
     },
-    handle: { fontFamily: fonts.body, fontSize: 15, color: t.colors.textSoft, marginTop: 2 },
+    handle: {
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
     category: {
       flexDirection: "row",
       alignItems: "center",
@@ -489,25 +494,33 @@ const make = (t: NativeTheme) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: "rgba(255,255,255,0.14)",
     },
-    categoryText: { fontFamily: fonts.bold, fontSize: 13, color: t.colors.textSoft },
+    categoryText: {
+      fontFamily: t.fonts.bold,
+      fontSize: 13 * t.textScale,
+      color: t.colors.textSoft,
+    },
     bio: {
-      fontFamily: fonts.body,
-      fontSize: 15.5,
-      lineHeight: 23,
+      fontFamily: t.fonts.body,
+      fontSize: 15.5 * t.textScale,
+      lineHeight: 23 * t.textScale,
       color: t.colors.text,
       marginTop: 10,
     },
     site: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 40 },
     siteText: {
-      fontFamily: fonts.bold,
-      fontSize: 15,
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
       color: t.colors.text,
       textDecorationLine: "underline",
     },
     counts: { flexDirection: "row", gap: 24, marginTop: 12 },
     count: { minHeight: 48, justifyContent: "center" },
-    countN: { fontFamily: fonts.bold, fontSize: 17, color: t.colors.text },
-    countLabel: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft },
+    countN: { fontFamily: t.fonts.bold, fontSize: 17 * t.textScale, color: t.colors.text },
+    countLabel: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
     actions: { flexDirection: "row", gap: 8, marginTop: 10 },
     more: {
       width: 44,
@@ -528,11 +541,11 @@ const make = (t: NativeTheme) =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: t.colors.border,
     },
-    privateTitle: { fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
+    privateTitle: { fontFamily: t.fonts.bold, fontSize: 16 * t.textScale, color: t.colors.text },
     privateLine: {
-      fontFamily: fonts.body,
-      fontSize: 14.5,
-      lineHeight: 21,
+      fontFamily: t.fonts.body,
+      fontSize: 14.5 * t.textScale,
+      lineHeight: 21 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 2,
     },
@@ -551,7 +564,7 @@ const make = (t: NativeTheme) =>
       minHeight: 48,
     },
     tabOn: { borderBottomWidth: 2, borderBottomColor: t.colors.text },
-    tabText: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.textSoft },
+    tabText: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.textSoft },
     tabTextOn: { color: t.colors.text },
     tile: {
       margin: 0.66,
@@ -560,9 +573,9 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
     },
     tileText: {
-      fontFamily: fonts.body,
-      fontSize: 13,
-      lineHeight: 18,
+      fontFamily: t.fonts.body,
+      fontSize: 13 * t.textScale,
+      lineHeight: 18 * t.textScale,
       color: t.colors.text,
       padding: 10,
     },

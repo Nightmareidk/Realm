@@ -22,7 +22,7 @@ import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { useSheet } from "@/sheet";
 import { AppScreen, Loading, Problem, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { ThemePreview } from "@/themes/preview";
 import { price, themeChoice, useApplyTheme } from "@/themes/use";
 import { Pill } from "@/ui";
@@ -343,10 +343,15 @@ const make = (t: NativeTheme) =>
   StyleSheet.create({
     body: { paddingHorizontal: 20, paddingBottom: 56 },
     hero: { alignItems: "center", paddingVertical: 20 },
-    name: { fontFamily: fonts.display, fontSize: 30, color: t.colors.text, textAlign: "center" },
+    name: {
+      fontFamily: t.fonts.display,
+      fontSize: 30 * t.textScale,
+      color: t.colors.text,
+      textAlign: "center",
+    },
     by: {
-      fontFamily: fonts.bold,
-      fontSize: 15,
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
       color: t.colors.textSoft,
       textAlign: "center",
       marginTop: 4,
@@ -359,34 +364,34 @@ const make = (t: NativeTheme) =>
       marginTop: 10,
     },
     stat: { flexDirection: "row", alignItems: "center", gap: 4 },
-    statText: { fontFamily: fonts.body, fontSize: 14, color: t.colors.textSoft },
+    statText: { fontFamily: t.fonts.body, fontSize: 14 * t.textScale, color: t.colors.textSoft },
     buttons: { gap: 10, marginTop: 22 },
     status: {
-      fontFamily: fonts.body,
-      fontSize: 15,
-      lineHeight: 22,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 22 * t.textScale,
       color: t.colors.textSoft,
       textAlign: "center",
     },
     heading: {
-      fontFamily: fonts.displayBold,
-      fontSize: 19,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 19 * t.textScale,
       color: t.colors.text,
       marginTop: 28,
       marginBottom: 8,
     },
     text: {
-      fontFamily: fonts.body,
-      fontSize: 15,
-      lineHeight: 22,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 22 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 8,
     },
-    bold: { fontFamily: fonts.bold, color: t.colors.text },
+    bold: { fontFamily: t.fonts.bold, color: t.colors.text },
     tags: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
     tag: {
-      fontFamily: fonts.bold,
-      fontSize: 13,
+      fontFamily: t.fonts.bold,
+      fontSize: 13 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 12,
       paddingVertical: 6,
@@ -402,8 +407,8 @@ const make = (t: NativeTheme) =>
       borderWidth: 1,
       borderColor: t.colors.borderStrong,
       padding: 12,
-      fontFamily: fonts.body,
-      fontSize: 15,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
       color: t.colors.text,
       textAlignVertical: "top",
     },
@@ -414,5 +419,5 @@ const make = (t: NativeTheme) =>
     },
     footer: { marginTop: 28, gap: 6 },
     link: { flexDirection: "row", alignItems: "center", gap: 10, minHeight: 44 },
-    linkText: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.text },
+    linkText: { fontFamily: t.fonts.bold, fontSize: 15 * t.textScale, color: t.colors.text },
   });

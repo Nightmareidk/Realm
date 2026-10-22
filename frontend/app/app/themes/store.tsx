@@ -21,7 +21,7 @@ import {
 import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { AppScreen, Empty, Loading, Problem, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles } from "@/theme";
+import { type NativeTheme, useStyles } from "@/theme";
 import { ThemePreview } from "@/themes/preview";
 import { price } from "@/themes/use";
 import { Pill } from "@/ui";
@@ -274,8 +274,8 @@ const make = (t: NativeTheme) =>
     },
     searchInput: {
       flex: 1,
-      fontFamily: fonts.body,
-      fontSize: 16,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
       color: t.colors.text,
       height: 48,
     },
@@ -289,7 +289,7 @@ const make = (t: NativeTheme) =>
       borderColor: t.colors.border,
     },
     chipOn: { backgroundColor: t.colors.text, borderColor: t.colors.text },
-    chipText: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.textSoft },
+    chipText: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.textSoft },
     chipTextOn: { color: t.colors.bg },
     card: {
       padding: 8,
@@ -299,17 +299,22 @@ const make = (t: NativeTheme) =>
       gap: 2,
     },
     pressed: { opacity: 0.8 },
-    name: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.text, marginTop: 8 },
-    by: { fontFamily: fonts.body, fontSize: 13, color: t.colors.textSoft },
+    name: {
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
+      color: t.colors.text,
+      marginTop: 8,
+    },
+    by: { fontFamily: t.fonts.body, fontSize: 13 * t.textScale, color: t.colors.textSoft },
     meta: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       marginTop: 4,
     },
-    price: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.text },
+    price: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.text },
     owned: { color: t.colors.textSoft },
     rating: { flexDirection: "row", alignItems: "center", gap: 3 },
-    ratingText: { fontFamily: fonts.bold, fontSize: 13, color: t.colors.textSoft },
+    ratingText: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: t.colors.textSoft },
     more: { alignItems: "center", paddingVertical: 20 },
   });

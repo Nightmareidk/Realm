@@ -5,7 +5,7 @@ import Animated, { Easing, ReduceMotion, SlideInDown } from "react-native-reanim
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "./icon";
 import type { IconName } from "./icon-paths";
-import { fonts, motion, type NativeTheme, useStyles, useTheme } from "./theme";
+import { motion, type NativeTheme, useStyles, useTheme } from "./theme";
 
 export interface SheetAction {
   label: string;
@@ -147,16 +147,16 @@ const make = (t: NativeTheme) =>
       marginBottom: 10,
     },
     title: {
-      fontFamily: fonts.displayBold,
-      fontSize: 20,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 20 * t.textScale,
       color: t.colors.text,
       paddingHorizontal: 12,
       marginTop: 4,
     },
     line: {
-      fontFamily: fonts.body,
-      fontSize: 15,
-      lineHeight: 22,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 22 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 12,
       marginTop: 6,
@@ -172,7 +172,12 @@ const make = (t: NativeTheme) =>
       borderRadius: 14,
     },
     rowPressed: { backgroundColor: t.colors.surfaceRaised },
-    rowText: { flex: 1, fontFamily: fonts.bold, fontSize: 16.5, color: t.colors.text },
+    rowText: {
+      flex: 1,
+      fontFamily: t.fonts.bold,
+      fontSize: 16.5 * t.textScale,
+      color: t.colors.text,
+    },
     danger: { color: t.colors.danger },
     cancel: {
       minHeight: 54,
@@ -183,5 +188,9 @@ const make = (t: NativeTheme) =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: t.colors.border,
     },
-    cancelText: { fontFamily: fonts.bold, fontSize: 16.5, color: t.colors.textSoft },
+    cancelText: {
+      fontFamily: t.fonts.bold,
+      fontSize: 16.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
   });

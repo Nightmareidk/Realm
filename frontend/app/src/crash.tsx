@@ -42,8 +42,8 @@ const make = (t: NativeTheme) =>
       paddingHorizontal: 28,
       gap: 14,
     },
-    title: { fontSize: 28, fontWeight: "800", color: t.colors.text },
-    line: { fontSize: 17, lineHeight: 26, color: t.colors.textSoft },
+    title: { fontSize: 28 * t.textScale, fontWeight: "800", color: t.colors.text },
+    line: { fontSize: 17 * t.textScale, lineHeight: 26 * t.textScale, color: t.colors.textSoft },
     button: {
       marginTop: 12,
       minHeight: 56,
@@ -52,5 +52,5 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
       backgroundColor: t.colors.text,
     },
-    buttonText: { fontSize: 17, fontWeight: "700", color: t.colors.bg },
+    buttonText: { fontSize: 17 * t.textScale, fontWeight: "700", color: t.colors.bg },
   });

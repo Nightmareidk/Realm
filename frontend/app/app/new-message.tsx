@@ -15,7 +15,7 @@ import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { Avatar } from "@/social/avatar";
 import { AppScreen, Empty, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 
 /**
  * Start a conversation: search people by name or @username, tap one, and the chat opens (the one
@@ -161,11 +161,17 @@ const make = (t: NativeTheme) =>
       borderColor: t.colors.borderStrong,
       backgroundColor: t.colors.surfaceSunken,
     },
-    search: { flex: 1, minHeight: 46, fontFamily: fonts.body, fontSize: 16, color: t.colors.text },
+    search: {
+      flex: 1,
+      minHeight: 46,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      color: t.colors.text,
+    },
     problem: {
-      fontFamily: fonts.body,
-      fontSize: 14.5,
-      lineHeight: 21,
+      fontFamily: t.fonts.body,
+      fontSize: 14.5 * t.textScale,
+      lineHeight: 21 * t.textScale,
       color: t.colors.danger,
       paddingHorizontal: 18,
       paddingBottom: 6,
@@ -178,11 +184,16 @@ const make = (t: NativeTheme) =>
       paddingVertical: 8,
       minHeight: 64,
     },
-    name: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
-    handle: { fontFamily: fonts.body, fontSize: 14, color: t.colors.textSoft, marginTop: 1 },
+    name: { fontFamily: t.fonts.bold, fontSize: 15.5 * t.textScale, color: t.colors.text },
+    handle: {
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 1,
+    },
     hint: {
-      fontFamily: fonts.body,
-      fontSize: 15,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 18,
       paddingTop: 12,

@@ -9,7 +9,7 @@ import { Avatar } from "@/social/avatar";
 import { PersonRow } from "@/social/person-row";
 import { AppScreen, Empty, Loading, Problem, TopBar } from "@/social/screen";
 import { ago } from "@/social/time";
-import { fonts, type NativeTheme, useStyles } from "@/theme";
+import { type NativeTheme, useStyles } from "@/theme";
 import { Pill } from "@/ui";
 
 /** The heart on Home: follow requests first, then likes, comments and follows. */
@@ -131,8 +131,8 @@ const make = (t: NativeTheme) =>
       borderBottomColor: t.colors.border,
     },
     heading: {
-      fontFamily: fonts.bold,
-      fontSize: 15,
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
       color: t.colors.text,
       paddingHorizontal: 16,
       paddingTop: 10,
@@ -148,8 +148,14 @@ const make = (t: NativeTheme) =>
       minHeight: 64,
     },
     unread: { backgroundColor: "rgba(255,255,255,0.03)" },
-    text: { flex: 1, fontFamily: fonts.body, fontSize: 15, lineHeight: 21, color: t.colors.text },
-    name: { fontFamily: fonts.bold },
-    when: { color: t.colors.textSoft, fontSize: 13.5 },
+    text: {
+      flex: 1,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 21 * t.textScale,
+      color: t.colors.text,
+    },
+    name: { fontFamily: t.fonts.bold },
+    when: { color: t.colors.textSoft, fontSize: 13.5 * t.textScale },
     thumb: { width: 44, height: 55, borderRadius: 6, backgroundColor: t.colors.surfaceSunken },
   });

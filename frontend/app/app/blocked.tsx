@@ -6,7 +6,7 @@ import { ApiError, api } from "@/server";
 import { useSheet } from "@/sheet";
 import { PersonRow } from "@/social/person-row";
 import { AppScreen, Empty, Loading, Problem, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles } from "@/theme";
+import { type NativeTheme, useStyles } from "@/theme";
 import { Pill } from "@/ui";
 
 /** The people you've blocked, and the way to unblock them. */
@@ -85,9 +85,9 @@ export default function Blocked() {
 const make = (t: NativeTheme) =>
   StyleSheet.create({
     lead: {
-      fontFamily: fonts.body,
-      fontSize: 15,
-      lineHeight: 22,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 22 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 16,
       paddingTop: 14,

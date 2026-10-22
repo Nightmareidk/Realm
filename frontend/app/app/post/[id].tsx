@@ -22,7 +22,7 @@ import { PostCard } from "@/social/post-card";
 import { useSafety } from "@/social/safety";
 import { AppScreen, Loading, Problem, TopBar } from "@/social/screen";
 import { ago } from "@/social/time";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 
 /** One post, its comments (replies sit under the comment they answer), and a box to add one. */
 export default function PostScreen() {
@@ -303,20 +303,30 @@ const make = (t: NativeTheme) =>
       marginBottom: 6,
     },
     heading: {
-      fontFamily: fonts.bold,
-      fontSize: 15,
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 16,
       paddingBottom: 12,
     },
     comment: { flexDirection: "row", gap: 10, paddingHorizontal: 14, paddingVertical: 10 },
     reply: { paddingLeft: 58 },
-    body: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: t.colors.text },
-    author: { fontFamily: fonts.bold },
+    body: {
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 22 * t.textScale,
+      color: t.colors.text,
+    },
+    author: { fontFamily: t.fonts.bold },
     meta: { flexDirection: "row", gap: 16, marginTop: 4, alignItems: "center" },
-    metaText: { fontFamily: fonts.body, fontSize: 13, color: t.colors.textSoft },
-    metaAction: { fontFamily: fonts.bold, fontSize: 13, color: t.colors.textSoft },
-    hiddenText: { fontFamily: fonts.bold, fontSize: 13, color: t.colors.danger, marginTop: 4 },
+    metaText: { fontFamily: t.fonts.body, fontSize: 13 * t.textScale, color: t.colors.textSoft },
+    metaAction: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: t.colors.textSoft },
+    hiddenText: {
+      fontFamily: t.fonts.bold,
+      fontSize: 13 * t.textScale,
+      color: t.colors.danger,
+      marginTop: 4,
+    },
     composer: {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: t.colors.border,
@@ -330,8 +340,13 @@ const make = (t: NativeTheme) =>
       paddingBottom: 8,
       paddingHorizontal: 4,
     },
-    replyingText: { flex: 1, fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft },
-    cancel: { fontFamily: fonts.bold, fontSize: 13.5, color: t.colors.text },
+    replyingText: {
+      flex: 1,
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
+    cancel: { fontFamily: t.fonts.bold, fontSize: 13.5 * t.textScale, color: t.colors.text },
     row: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
     input: {
       flex: 1,
@@ -344,8 +359,8 @@ const make = (t: NativeTheme) =>
       paddingHorizontal: 16,
       paddingTop: 11,
       paddingBottom: 11,
-      fontFamily: fonts.body,
-      fontSize: 15.5,
+      fontFamily: t.fonts.body,
+      fontSize: 15.5 * t.textScale,
       color: t.colors.text,
     },
     send: {

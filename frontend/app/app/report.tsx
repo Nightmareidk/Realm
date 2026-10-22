@@ -7,7 +7,7 @@ import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { KIND_NAME, type ReportKind, useSafety } from "@/social/safety";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Field, Notice, Pill } from "@/ui";
 
 /** The reasons, in the words people use. */
@@ -185,16 +185,16 @@ const make = (t: NativeTheme) =>
     fill: { flex: 1 },
     body: { padding: 20, gap: 4 },
     title: {
-      fontFamily: fonts.displayBold,
-      fontSize: 24,
-      lineHeight: 29,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 24 * t.textScale,
+      lineHeight: 29 * t.textScale,
       color: t.colors.text,
       letterSpacing: -0.3,
     },
     lead: {
-      fontFamily: fonts.body,
-      fontSize: 16,
-      lineHeight: 24,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      lineHeight: 24 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 6,
     },
@@ -211,7 +211,12 @@ const make = (t: NativeTheme) =>
     },
     reasonOn: { borderColor: t.colors.text, backgroundColor: t.colors.surfaceRaised },
     pressed: { backgroundColor: t.colors.surfaceRaised },
-    reasonText: { flex: 1, fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
+    reasonText: {
+      flex: 1,
+      fontFamily: t.fonts.bold,
+      fontSize: 15.5 * t.textScale,
+      color: t.colors.text,
+    },
     radio: {
       width: 22,
       height: 22,

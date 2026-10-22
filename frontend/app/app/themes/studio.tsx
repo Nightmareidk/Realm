@@ -1,8 +1,11 @@
 import {
+  BODY_FONTS,
   checkTheme,
+  DISPLAY_FONTS,
   EFFECT_SHAPES,
   fixTheme,
   PATTERN_SHAPES,
+  type PaletteSuggestion,
   type ResolvedTheme,
   resolveTheme,
   type ThemeArt,
@@ -12,7 +15,7 @@ import {
   type ThemeStyle,
   type ThemeTag,
 } from "@realm/contracts";
-import { LOOKS } from "@realm/design-tokens";
+import { LOOKS, lookTheme, PRESETS } from "@realm/design-tokens";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -21,7 +24,7 @@ import { Icon } from "@/icon";
 import { ApiError, api, upload } from "@/server";
 import { shrinkPhoto } from "@/shrink";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { ThemePreview } from "@/themes/preview";
 import { themeChoice, useApplyTheme } from "@/themes/use";
 import { Pill } from "@/ui";
@@ -36,10 +39,29 @@ function toFile(r: ResolvedTheme, name: string): ThemeFile {
     look: r.look,
     colors: r.colors,
     style: r.style,
+    panels: r.panels,
+    buttons: r.buttons,
     type: r.type,
     ...(Object.keys(r.art).length ? { art: r.art } : {}),
   });
 }
+
+const FONT_NAMES: Record<string, string> = {
+  funnel: "Funnel",
+  atkinson: "Atkinson",
+  system: "Phone's own",
+  bangers: "Bangers",
+  fredoka: "Fredoka",
+  pacifico: "Pacifico",
+  "press-start": "Press Start",
+  bebas: "Bebas",
+  righteous: "Righteous",
+  orbitron: "Orbitron",
+  "permanent-marker": "Marker",
+  comfortaa: "Comfortaa",
+  lexend: "Lexend",
+  nunito: "Nunito",
+};
 
 const PALETTE = [
   "#000000",
@@ -96,6 +118,8 @@ const TAGS: ThemeTag[] = [
 ];
 
 const HEX = /^#[0-9a-f]{6}$/i;
+type DisplayFont = (typeof DISPLAY_FONTS)[number];
+type BodyFont = (typeof BODY_FONTS)[number];
 
 /**
  * "Make your own": a theme maker on the phone. Start from what you're using (or a theme of yours),
@@ -114,6 +138,7 @@ export default function Studio() {
   const [busy, setBusy] = useState<string | null>(null);
   const [saved, setSaved] = useState<ThemeDetail | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
+  const [ideas, setIdeas] = useState<PaletteSuggestion[]>([]);
 
   // Editing one of your themes: start from its newest version.
   useEffect(() => {
@@ -185,6 +210,21 @@ export default function Studio() {
       put(`media:${mediaId}`);
     } catch (err) {
       Alert.alert("Picture not added", err instanceof ApiError ? err.message : "Try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /** Colour sets from your picture (the server reads its colours). */
+  async function suggest(ref: string) {
+    setBusy("ideas");
+    try {
+      const { suggestions } = await api<{ suggestions: PaletteSuggestion[] }>("/themes/palette", {
+        body: { mediaId: ref.slice(6) },
+      });
+      setIdeas(suggestions);
+    } catch (err) {
+      Alert.alert("No colours yet", err instanceof ApiError ? err.message : "Try again.");
     } finally {
       setBusy(null);
     }
@@ -300,7 +340,46 @@ export default function Studio() {
           </View>
         ) : null}
 
-        <Section title="Look">
+        <Section title="Start from">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.row}
+          >
+            {[
+              ...LOOKS.map((l) => ({ key: l.id, name: l.name, file: lookTheme(l.id, "mint") })),
+              ...PRESETS.map((p) => ({
+                key: p.id,
+                name: p.file.name,
+                file: ThemeFile.parse(p.file),
+              })),
+            ].map((o) => (
+              <Pressable
+                key={o.key}
+                onPress={() => {
+                  const keepArt = file.art?.wallpaper
+                    ? { ...o.file.art, wallpaper: file.art.wallpaper }
+                    : o.file.art;
+                  setFile(
+                    ThemeFile.parse({
+                      ...o.file,
+                      name: file.name,
+                      ...(keepArt ? { art: keepArt } : {}),
+                    }),
+                  );
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Start from ${o.name}`}
+                style={s.start}
+              >
+                <ThemePreview theme={resolveTheme(o.file)} width={84} />
+                <Text style={s.startName} numberOfLines={1}>
+                  {o.name}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <Label>Base look (then change any part below)</Label>
           <Options
             value={file.look}
             items={LOOKS.map((l) => [l.id, l.name])}
@@ -313,7 +392,7 @@ export default function Studio() {
             <ColorRow
               key={k}
               label={label}
-              value={file.colors[k]}
+              value={live.colors[k]}
               onChange={(v) => setColor(k, v)}
             />
           ))}
@@ -454,6 +533,88 @@ export default function Studio() {
                 ]}
                 onChange={(blur) => setArt({ wallpaper: { ...wall, blur } })}
               />
+              <Label>Keep this part in view</Label>
+              <Options
+                value={wall.focus ?? "center"}
+                items={[
+                  ["center", "Middle"],
+                  ["top", "Top"],
+                  ["bottom", "Bottom"],
+                  ["left", "Left"],
+                  ["right", "Right"],
+                ]}
+                onChange={(focus) => setArt({ wallpaper: { ...wall, focus } })}
+              />
+              <Label>Brightness</Label>
+              <Options
+                value={String(wall.brightness ?? 1)}
+                items={[
+                  ["0.6", "Darker"],
+                  ["0.8", "A bit darker"],
+                  ["1", "As it is"],
+                  ["1.1", "Brighter"],
+                ]}
+                onChange={(v) => setArt({ wallpaper: { ...wall, brightness: Number(v) } })}
+              />
+              <ColorRow
+                label="Layer colour"
+                value={wall.overlay ?? live.colors.ground}
+                onChange={(overlay) => setArt({ wallpaper: { ...wall, overlay } })}
+              />
+              <ColorRow
+                label="Layer fades to"
+                value={wall.overlay2 ?? wall.overlay ?? live.colors.ground}
+                onChange={(overlay2) => setArt({ wallpaper: { ...wall, overlay2 } })}
+              />
+              <Pill
+                size="md"
+                kind="ghost"
+                label="Suggest colours from it"
+                pending={busy === "ideas"}
+                pendingLabel="Looking"
+                onPress={() => suggest(wall.image)}
+              />
+              {ideas.length ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={s.row}
+                >
+                  {ideas.map((idea) => (
+                    <Pressable
+                      key={idea.name}
+                      onPress={() =>
+                        edit({
+                          colors: idea.colors,
+                          panels: { ...file.panels, ...idea.panels },
+                          buttons: { ...file.buttons, ...idea.buttons },
+                          art: {
+                            ...file.art,
+                            wallpaper: { ...wall, overlay: idea.overlay, overlay2: idea.overlay2 },
+                          },
+                        })
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={idea.name}
+                      style={s.idea}
+                    >
+                      <View style={s.ideaStrip}>
+                        {[
+                          idea.colors.ground,
+                          idea.colors.surface,
+                          idea.colors.accent,
+                          idea.colors.accent2 ?? idea.colors.accent,
+                          idea.colors.text,
+                        ].map((c, i) => (
+                          // biome-ignore lint/suspicious/noArrayIndexKey: a fixed strip
+                          <View key={i} style={{ flex: 1, backgroundColor: c }} />
+                        ))}
+                      </View>
+                      <Text style={s.startName}>{idea.name}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              ) : null}
               <Pill
                 size="md"
                 kind="quiet"
@@ -473,6 +634,89 @@ export default function Studio() {
               }
             />
           )}
+        </Section>
+
+        <Section title="Panels">
+          <Label>How solid (see-through lets your picture show)</Label>
+          <Options
+            value={String(live.panels.opacity)}
+            items={[
+              ["0.45", "See-through"],
+              ["0.6", "Glass"],
+              ["0.8", "Mostly solid"],
+              ["1", "Solid"],
+            ]}
+            onChange={(v) => edit({ panels: { ...file.panels, opacity: Number(v) } })}
+          />
+          <Label>Section titles</Label>
+          <Options
+            value={live.panels.headers}
+            items={[
+              ["plain", "Plain words"],
+              ["bar", "On a coloured strip"],
+            ]}
+            onChange={(headers) => edit({ panels: { ...file.panels, headers } })}
+          />
+          <Label>Edges</Label>
+          <Options
+            value={live.panels.border}
+            items={[
+              ["none", "None"],
+              ["line", "Thin line"],
+              ["accent", "Your colour"],
+            ]}
+            onChange={(border) => edit({ panels: { ...file.panels, border } })}
+          />
+        </Section>
+
+        <Section title="Buttons">
+          <Options
+            value={live.buttons.shape}
+            items={[
+              ["pill", "Pill"],
+              ["rounded", "Rounded"],
+              ["square", "Square"],
+            ]}
+            onChange={(shape) => edit({ buttons: { ...file.buttons, shape } })}
+          />
+          <Options
+            value={live.buttons.fill}
+            items={[
+              ["solid", "Solid"],
+              ["gradient", "Gradient"],
+              ["outline", "Outline"],
+            ]}
+            onChange={(fill) => edit({ buttons: { ...file.buttons, fill } })}
+          />
+          <Options
+            value={live.buttons.glow ? "on" : "off"}
+            items={[
+              ["off", "No glow"],
+              ["on", "Glow"],
+            ]}
+            onChange={(v) => edit({ buttons: { ...file.buttons, glow: v === "on" } })}
+          />
+          <ColorRow
+            label="Second colour (gradient end)"
+            value={live.colors.accent2}
+            onChange={(v) => setColor("accent2", v)}
+          />
+        </Section>
+
+        <Section title="Fonts">
+          <Label>Titles and names</Label>
+          <Options
+            value={live.type.display}
+            items={DISPLAY_FONTS.map((f) => [f, FONT_NAMES[f] ?? f] as [DisplayFont, string])}
+            onChange={(display) => edit({ type: { ...file.type, display } })}
+          />
+          <Label>Reading text</Label>
+          <Options
+            value={live.type.body}
+            items={BODY_FONTS.map((f) => [f, FONT_NAMES[f] ?? f] as [BodyFont, string])}
+            onChange={(body) => edit({ type: { ...file.type, body } })}
+          />
+          <Text style={[s.fontSample, { fontFamily: t.fonts.display }]}>Friday squad</Text>
         </Section>
 
         <Section title="Pattern">
@@ -769,28 +1013,28 @@ const make = (t: NativeTheme) =>
     },
     stageText: { flex: 1, gap: 10, justifyContent: "center" },
     nameInput: {
-      fontFamily: fonts.displayBold,
-      fontSize: 20,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 20 * t.textScale,
       color: t.colors.text,
       borderBottomWidth: 1,
       borderBottomColor: t.colors.borderStrong,
       paddingVertical: 6,
     },
     warn: { gap: 4 },
-    warnText: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.danger },
+    warnText: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.danger },
     fixBtn: { minHeight: 32, justifyContent: "center" },
     fixText: {
-      fontFamily: fonts.bold,
-      fontSize: 14,
+      fontFamily: t.fonts.bold,
+      fontSize: 14 * t.textScale,
       color: t.colors.text,
       textDecorationLine: "underline",
     },
-    ok: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.success },
+    ok: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.success },
     body: { paddingBottom: 64 },
     note: {
-      fontFamily: fonts.body,
-      fontSize: 14,
-      lineHeight: 20,
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      lineHeight: 20 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 20,
       marginTop: 10,
@@ -803,9 +1047,19 @@ const make = (t: NativeTheme) =>
       borderBottomColor: t.colors.border,
       gap: 10,
     },
-    heading: { fontFamily: fonts.displayBold, fontSize: 19, color: t.colors.text },
-    label: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.textSoft, marginTop: 4 },
-    small: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: t.colors.textSoft },
+    heading: { fontFamily: t.fonts.displayBold, fontSize: 19 * t.textScale, color: t.colors.text },
+    label: {
+      fontFamily: t.fonts.bold,
+      fontSize: 14 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 4,
+    },
+    small: {
+      fontFamily: t.fonts.body,
+      fontSize: 13 * t.textScale,
+      lineHeight: 19 * t.textScale,
+      color: t.colors.textSoft,
+    },
     wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     row: { gap: 8 },
     chip: {
@@ -817,7 +1071,7 @@ const make = (t: NativeTheme) =>
       borderColor: t.colors.border,
     },
     chipOn: { backgroundColor: t.colors.text, borderColor: t.colors.text },
-    chipText: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.textSoft },
+    chipText: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.textSoft },
     cap: { textTransform: "capitalize" },
     chipTextOn: { color: t.colors.bg },
     colorRow: { gap: 8 },
@@ -829,7 +1083,12 @@ const make = (t: NativeTheme) =>
       borderWidth: 1,
       borderColor: t.colors.borderStrong,
     },
-    colorLabel: { flex: 1, fontFamily: fonts.bold, fontSize: 15, color: t.colors.text },
+    colorLabel: {
+      flex: 1,
+      fontFamily: t.fonts.bold,
+      fontSize: 15 * t.textScale,
+      color: t.colors.text,
+    },
     hex: {
       width: 92,
       height: 38,
@@ -837,13 +1096,18 @@ const make = (t: NativeTheme) =>
       borderWidth: 1,
       borderColor: t.colors.border,
       paddingHorizontal: 10,
-      fontFamily: fonts.body,
-      fontSize: 14,
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
       color: t.colors.text,
     },
     palette: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingLeft: 42 },
     dot: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, borderColor: t.colors.border },
     dotOn: { borderWidth: 3, borderColor: t.colors.text },
+    start: { width: 96, gap: 6 },
+    startName: { fontFamily: t.fonts.bold, fontSize: 12 * t.textScale, color: t.colors.text },
+    idea: { gap: 6, width: 120 },
+    ideaStrip: { height: 34, borderRadius: 8, overflow: "hidden", flexDirection: "row" },
+    fontSample: { fontSize: 26 * t.textScale, color: t.colors.text, marginTop: 6 },
     stickerRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -857,15 +1121,15 @@ const make = (t: NativeTheme) =>
       backgroundColor: t.colors.surfaceRaised,
       justifyContent: "center",
     },
-    smallBtnText: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.text },
+    smallBtnText: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.text },
     input: {
       minHeight: 72,
       borderRadius: t.radius.input,
       borderWidth: 1,
       borderColor: t.colors.borderStrong,
       padding: 12,
-      fontFamily: fonts.body,
-      fontSize: 15,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
       color: t.colors.text,
       textAlignVertical: "top",
     },

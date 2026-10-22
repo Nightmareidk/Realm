@@ -8,7 +8,7 @@ import type { IconName } from "@/icon-paths";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Field, Pill } from "@/ui";
 
 /**
@@ -289,20 +289,20 @@ const make = (t: NativeTheme) =>
       justifyContent: "space-between",
       minHeight: 52,
     },
-    linkText: { fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
+    linkText: { fontFamily: t.fonts.bold, fontSize: 16 * t.textScale, color: t.colors.text },
     heading: {
-      fontFamily: fonts.displayBold,
-      fontSize: 19,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 19 * t.textScale,
       color: t.colors.text,
       marginTop: 26,
       marginBottom: 10,
     },
     row: { flexDirection: "row", alignItems: "center", gap: 14 },
-    title: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
+    title: { fontFamily: t.fonts.bold, fontSize: 15.5 * t.textScale, color: t.colors.text },
     line: {
-      fontFamily: fonts.body,
-      fontSize: 14,
-      lineHeight: 20,
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      lineHeight: 20 * t.textScale,
       color: t.colors.textSoft,
       marginTop: 2,
     },
@@ -338,6 +338,6 @@ const make = (t: NativeTheme) =>
     },
     swatchOn: { borderColor: t.colors.text },
     swatch: { height: 72, borderRadius: 12, justifyContent: "flex-end", padding: 8 },
-    swatchName: { fontFamily: fonts.bold, fontSize: 13, color: "#ffffff" },
+    swatchName: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: "#ffffff" },
     signOut: { marginTop: 36 },
   });

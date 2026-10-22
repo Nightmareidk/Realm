@@ -2,7 +2,7 @@ import type { UserSummary } from "@realm/contracts";
 import { useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { fonts, type NativeTheme, useStyles } from "../theme";
+import { type NativeTheme, useStyles } from "../theme";
 import { Avatar } from "./avatar";
 
 /** A person in a list: picture, name and @handle; tap for their profile (unless it's hidden). */
@@ -57,6 +57,11 @@ const make = (t: NativeTheme) =>
     },
     who: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12, minHeight: 52 },
     text: { flex: 1 },
-    name: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
-    handle: { fontFamily: fonts.body, fontSize: 14, color: t.colors.textSoft, marginTop: 1 },
+    name: { fontFamily: t.fonts.bold, fontSize: 15.5 * t.textScale, color: t.colors.text },
+    handle: {
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 1,
+    },
   });

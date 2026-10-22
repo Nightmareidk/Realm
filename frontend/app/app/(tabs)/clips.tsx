@@ -21,7 +21,7 @@ import { Avatar } from "@/social/avatar";
 import { LIKED } from "@/social/post-card";
 import { Empty, Loading } from "@/social/screen";
 import { compact } from "@/social/time";
-import { fonts, type NativeTheme, useStyles } from "@/theme";
+import { type NativeTheme, useStyles } from "@/theme";
 import { Pill } from "@/ui";
 
 /**
@@ -265,7 +265,12 @@ const make = (t: NativeTheme) =>
       justifyContent: "space-between",
       paddingHorizontal: 16,
     },
-    title: { fontFamily: fonts.displayBold, fontSize: 24, color: "#ffffff", ...shadow },
+    title: {
+      fontFamily: t.fonts.displayBold,
+      fontSize: 24 * t.textScale,
+      color: "#ffffff",
+      ...shadow,
+    },
     icon: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
     clip: { width: "100%", backgroundColor: "#000000" },
     mute: {
@@ -279,18 +284,18 @@ const make = (t: NativeTheme) =>
     side: { position: "absolute", right: 8, bottom: 28, alignItems: "center", gap: 14 },
     sideBtn: { alignItems: "center", minWidth: 52, minHeight: 52, justifyContent: "center" },
     sideLabel: {
-      fontFamily: fonts.bold,
-      fontSize: 12.5,
+      fontFamily: t.fonts.bold,
+      fontSize: 12.5 * t.textScale,
       color: "#ffffff",
       marginTop: 2,
       ...shadow,
     },
     info: { position: "absolute", left: 16, right: 84, bottom: 28 },
-    author: { fontFamily: fonts.bold, fontSize: 16, color: "#ffffff", ...shadow },
+    author: { fontFamily: t.fonts.bold, fontSize: 16 * t.textScale, color: "#ffffff", ...shadow },
     caption: {
-      fontFamily: fonts.body,
-      fontSize: 15,
-      lineHeight: 21,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 21 * t.textScale,
       color: "#ffffff",
       marginTop: 4,
       ...shadow,

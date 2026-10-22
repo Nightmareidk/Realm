@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { forwardRef, type ReactNode, useEffect, useState } from "react";
 import {
@@ -19,7 +20,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Icon } from "./icon";
-import { fonts, motion, type NativeTheme, useStyles, useTheme } from "./theme";
+import { motion, type NativeTheme, useStyles, useTheme } from "./theme";
 
 /** The Mark: a ring with the action colour caught inside it, off-centre. Plus the wordmark. */
 export function Wordmark() {
@@ -67,8 +68,12 @@ export function Pill({
   const { t } = useTheme();
   const s = useStyles(make);
   const { accent, onAccent } = useTheme();
+  // The theme decides how the main button is filled: solid, a gradient, or an outline.
+  const b = t.buttons;
+  const outline = kind === "action" && b.fill === "outline";
+  const gradient = kind === "action" && b.fill === "gradient";
   const fill = useAnimatedStyle(() =>
-    kind === "action"
+    kind === "action" && !outline && !gradient
       ? {
           backgroundColor: withTiming(accent, {
             duration: motion.relight,
@@ -80,13 +85,14 @@ export function Pill({
   const ink = useAnimatedStyle(() =>
     kind === "action"
       ? {
-          color: withTiming(onAccent, {
+          color: withTiming(outline ? accent : onAccent, {
             duration: motion.relight,
             reduceMotion: ReduceMotion.System,
           }),
         }
       : {},
   );
+  const radius = b.shape === "square" ? 6 : b.shape === "rounded" ? 14 : 999;
   return (
     <Pressable
       accessibilityRole="button"
@@ -103,13 +109,31 @@ export function Pill({
         <Animated.View
           style={[
             s.pill,
+            { borderRadius: radius },
             size === "md" && s.pillMd,
             kind === "ghost" && s.ghost,
+            outline && { borderWidth: 2, borderColor: accent },
+            kind === "action" &&
+              b.glow && {
+                shadowColor: accent,
+                shadowOpacity: 0.6,
+                shadowRadius: 14,
+                shadowOffset: { width: 0, height: 0 },
+                elevation: 8,
+              },
             fill,
             pressed && { transform: [{ scale: 0.97 }] },
             pressed && kind !== "action" && { backgroundColor: t.colors.surfaceRaised },
           ]}
         >
+          {gradient ? (
+            <LinearGradient
+              colors={[accent, t.colors.accent2]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
+            />
+          ) : null}
           {pending && (
             <ActivityIndicator color={kind === "action" ? onAccent : t.colors.text} size="small" />
           )}
@@ -275,7 +299,12 @@ const make = (t: NativeTheme) =>
     brand: { flexDirection: "row", alignItems: "center", gap: 9 },
     mark: { width: 24, height: 24, borderRadius: 12, borderWidth: 2.4, borderColor: t.colors.text },
     markDot: { position: "absolute", width: 7, height: 7, borderRadius: 3.5, top: 2.5, right: 2 },
-    word: { fontFamily: fonts.display, fontSize: 23, color: t.colors.text, letterSpacing: -0.7 },
+    word: {
+      fontFamily: t.fonts.display,
+      fontSize: 23 * t.textScale,
+      color: t.colors.text,
+      letterSpacing: -0.7,
+    },
     pill: {
       minHeight: 56,
       borderRadius: 999,
@@ -286,13 +315,13 @@ const make = (t: NativeTheme) =>
       gap: 10,
     },
     pillMd: { minHeight: 44, paddingHorizontal: 18 },
-    pillLabelMd: { fontSize: 15 },
+    pillLabelMd: { fontSize: 15 * t.textScale },
     ghost: { borderWidth: 1.5, borderColor: t.colors.borderStrong },
-    pillLabel: { fontFamily: fonts.bold, fontSize: 17, color: t.colors.text },
+    pillLabel: { fontFamily: t.fonts.bold, fontSize: 17 * t.textScale, color: t.colors.text },
     linkHit: { minHeight: 48, justifyContent: "center" },
     link: {
-      fontFamily: fonts.bold,
-      fontSize: 16,
+      fontFamily: t.fonts.bold,
+      fontSize: 16 * t.textScale,
       color: t.colors.text,
       textDecorationLine: "underline",
     },
@@ -304,11 +333,21 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
       marginLeft: -8,
     },
-    title: { fontFamily: fonts.display, color: t.colors.text, letterSpacing: -1.4 },
-    lead: { fontFamily: fonts.body, fontSize: 17, lineHeight: 26, color: t.colors.textSoft },
+    title: { fontFamily: t.fonts.display, color: t.colors.text, letterSpacing: -1.4 },
+    lead: {
+      fontFamily: t.fonts.body,
+      fontSize: 17 * t.textScale,
+      lineHeight: 26 * t.textScale,
+      color: t.colors.textSoft,
+    },
     field: { gap: 6 },
-    label: { fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
-    hint: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: t.colors.textSoft },
+    label: { fontFamily: t.fonts.bold, fontSize: 16 * t.textScale, color: t.colors.text },
+    hint: {
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      lineHeight: 20 * t.textScale,
+      color: t.colors.textSoft,
+    },
     box: {
       minHeight: 56,
       borderRadius: 14,
@@ -323,18 +362,18 @@ const make = (t: NativeTheme) =>
       flex: 1,
       minHeight: 52,
       paddingHorizontal: 16,
-      fontFamily: fonts.body,
-      fontSize: 17,
+      fontFamily: t.fonts.body,
+      fontSize: 17 * t.textScale,
       color: t.colors.text,
     },
     show: { minWidth: 64, minHeight: 48, alignItems: "center", justifyContent: "center" },
-    showText: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.text },
+    showText: { fontFamily: t.fonts.bold, fontSize: 15 * t.textScale, color: t.colors.text },
     errorRow: { flexDirection: "row", gap: 6, alignItems: "flex-start", marginTop: 2 },
     error: {
       flex: 1,
-      fontFamily: fonts.body,
-      fontSize: 14,
-      lineHeight: 20,
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      lineHeight: 20 * t.textScale,
       color: t.colors.danger,
     },
     notice: {
@@ -349,9 +388,9 @@ const make = (t: NativeTheme) =>
     },
     noticeText: {
       flex: 1,
-      fontFamily: fonts.body,
-      fontSize: 15,
-      lineHeight: 22,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 22 * t.textScale,
       color: t.colors.text,
     },
   });

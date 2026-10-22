@@ -7,7 +7,7 @@ import { ApiError, api } from "@/server";
 import { useSheet } from "@/sheet";
 import { AppScreen, Loading, Problem, TopBar } from "@/social/screen";
 import { agoLong } from "@/social/time";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 
 const APP_PLATFORMS = new Set(["ios", "android"]);
@@ -133,9 +133,9 @@ const make = (t: NativeTheme) =>
   StyleSheet.create({
     fill: { flex: 1 },
     lead: {
-      fontFamily: fonts.body,
-      fontSize: 15,
-      lineHeight: 22,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
+      lineHeight: 22 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 16,
       paddingTop: 14,
@@ -157,12 +157,17 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
       backgroundColor: t.colors.surfaceRaised,
     },
-    name: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
-    line: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft, marginTop: 2 },
+    name: { fontFamily: t.fonts.bold, fontSize: 15.5 * t.textScale, color: t.colors.text },
+    line: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
     foot: { padding: 16, marginTop: 8 },
     alone: {
-      fontFamily: fonts.body,
-      fontSize: 15,
+      fontFamily: t.fonts.body,
+      fontSize: 15 * t.textScale,
       color: t.colors.textSoft,
       paddingHorizontal: 16,
       paddingTop: 16,
