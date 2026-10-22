@@ -68,6 +68,12 @@ const Env = z.object({
    * when it's full. 0 turns the limit off.
    */
   REALM_STORAGE_LIMIT_GB: z.coerce.number().min(0).default(10),
+  /**
+   * Stripe (https://stripe.com) for paid themes: creators connect their own Stripe account and
+   * Realm keeps its share of each sale. Unset: only free themes can be shared.
+   */
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
   /** Firebase Cloud Messaging: the service account's JSON, raw or base64. */
   FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),

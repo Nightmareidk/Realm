@@ -71,12 +71,19 @@ export const friendRequestPolicy = pgEnum("friend_request_policy", [
 /** The person's theme (DESIGN.md): the action colour and the light behind every screen. */
 export const themeAccent = pgEnum("theme_accent", ["mint", "orchid", "aqua", "ember"]);
 
+/** Realm's own looks (themes.ts holds the same list as `theme_look`). */
+export const themeLookPref = pgEnum("theme_look_pref", ["now-playing", "wristband", "plain"]);
+
 export const userSettings = pgTable("user_settings", {
   userId: id()
     .primaryKey()
     .references(() => users.id),
   theme: themePref().notNull().default("system"),
   accent: themeAccent().notNull().default("mint"),
+  /** Which of Realm's looks they use (Now Playing unless they pick another). */
+  look: themeLookPref().notNull().default("now-playing"),
+  /** A theme from their library in place of a look; null for Realm's own looks. */
+  themeId: id(),
   reducedMotion: motionPref().notNull().default("system"),
   locale: text().notNull().default("en"),
   profileVisibility: profileVisibility().notNull().default("public"),

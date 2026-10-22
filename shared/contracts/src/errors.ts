@@ -51,6 +51,9 @@ export const ErrorCode = z.enum([
   "ROOM_NAME_TAKEN",
   "LIMIT_REACHED",
   "COMING_SOON",
+  "THEME_INVALID",
+  "THEME_NOT_OWNED",
+  "PAYMENTS_NOT_SET_UP",
   // uploads, safety, services
   "UPLOAD_INVALID",
   "SLOW_DOWN",

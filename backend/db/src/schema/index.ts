@@ -6,4 +6,5 @@ export * from "./moderation";
 export * from "./notifications";
 export * from "./releases";
 export * from "./social";
+export * from "./themes";
 export * from "./users";

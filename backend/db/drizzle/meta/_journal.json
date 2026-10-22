@@ -50,6 +50,13 @@
       "when": 1792358359529,
       "tag": "0006_owner_alerts",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792665456527,
+      "tag": "0007_themes",
+      "breakpoints": true
     }
   ]
 }

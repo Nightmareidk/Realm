@@ -12,4 +12,6 @@ export * from "./schemas/releases";
 export * from "./schemas/safety";
 export * from "./schemas/social";
 export * from "./schemas/spaces";
+export * from "./schemas/themes";
 export * from "./schemas/users";
+export * from "./themes";

@@ -81,4 +81,9 @@ export const Limits = {
   commentCreate: { bucket: "post:comment:user", limit: 30, windowSeconds: 300 },
   follow: { bucket: "social:follow:user", limit: 120, windowSeconds: 3600 },
   search: { bucket: "social:search:key", limit: 60, windowSeconds: 60 },
+  // Themes: saving drafts while designing is frequent; reviews and adding themes less so.
+  themeSave: { bucket: "theme:save:user", limit: 60, windowSeconds: 3600 },
+  themeReview: { bucket: "theme:review:user", limit: 20, windowSeconds: 3600 },
+  themeGet: { bucket: "theme:get:user", limit: 120, windowSeconds: 3600 },
+  themeStore: { bucket: "theme:store:key", limit: 120, windowSeconds: 60 },
 } satisfies Record<string, RateLimitRule>;

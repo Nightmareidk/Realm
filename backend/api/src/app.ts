@@ -20,6 +20,8 @@ import { meSafetyRoutes, moderationRoutes, reportRoutes } from "./modules/safety
 import { SafetyService } from "./modules/safety/service";
 import { postRoutes, socialUserRoutes } from "./modules/social/routes";
 import { SocialService } from "./modules/social/service";
+import { themeRoutes } from "./modules/themes/routes";
+import { ThemeService } from "./modules/themes/service";
 import {
   channelRoutes,
   communityRoutes,
@@ -92,6 +94,7 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       const social = new SocialService(deps);
       await v1.register(postRoutes(deps, social));
       await v1.register(socialUserRoutes(deps, social), { prefix: "/users" });
+      await v1.register(themeRoutes(deps, new ThemeService(deps)), { prefix: "/themes" });
       // The API's map is for building Realm, not for strangers mapping it out: off in production.
       if (!deps.config.isProduction) {
         v1.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());

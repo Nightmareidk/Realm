@@ -14,6 +14,7 @@ import { MESSAGE_HIDDEN, toMediaInfo } from "../../lib/serialize-spaces";
 import { acceptAs, imageSize, sniff } from "../../lib/sniff";
 import { ensureRoom, noteStorage } from "../../lib/storage-guard";
 import { seenThroughPost } from "../social/access";
+import { ThemeService } from "../themes/service";
 import { roomAccess } from "../spaces/access";
 
 const { media, messageAttachments, messages, users } = schema;
@@ -155,7 +156,8 @@ export class MediaService {
 
   /**
    * Who may open a file: its owner; anyone for profile pictures; a Space's icon and banner for
-   * whoever can see the Space; and for a file in a message,
+   * whoever can see the Space; a theme's pictures (see ThemeService.assetVisible); and for a file
+   * in a message,
    * people who can read that room (moderators only, while the message is hidden after reports).
    */
   async canSee(row: MediaRow, viewerId: bigint | null): Promise<boolean> {
@@ -196,6 +198,8 @@ export class MediaService {
       if (member) return true;
     }
     if (await seenThroughPost(this.db, row.id, viewerId)) return true;
+    // A theme's pictures: anyone once it's in the store, else its creator and whoever has it.
+    if (await new ThemeService(this.deps).assetVisible(row.id, viewerId)) return true;
     if (!viewerId) return false;
     const uses = await this.db
       .select({ channelId: messages.channelId, flags: messages.flags })
