@@ -284,7 +284,7 @@ const make = (t: NativeTheme) =>
     },
     bubble: {
       maxWidth: BUBBLE_MAX,
-      borderRadius: 18,
+      borderRadius: t.style.bubbles === "square" ? 6 : t.style.bubbles === "soft" ? 12 : 20,
       paddingHorizontal: 14,
       paddingVertical: 9,
       gap: 6,

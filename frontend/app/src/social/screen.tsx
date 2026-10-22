@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../icon";
-import { LightField } from "../light-field";
 import { fonts, type NativeTheme, useStyles, useTheme } from "../theme";
+import { Backdrop, Sticker } from "../themes/art";
 
 /**
  * A signed-in screen: the ink ground with the light field held faint (the app leads, not the
@@ -14,9 +14,7 @@ export function AppScreen({ children }: { children: ReactNode }) {
   const s = useStyles(make);
   return (
     <View style={s.screen}>
-      <View style={s.dim} pointerEvents="none">
-        <LightField />
-      </View>
+      <Backdrop />
       {children}
     </View>
   );
@@ -69,6 +67,7 @@ export function Empty({
   const s = useStyles(make);
   return (
     <View style={s.empty}>
+      <Sticker slot="empty" size={96} />
       <Text style={s.emptyTitle} accessibilityRole="header">
         {title}
       </Text>
@@ -93,7 +92,6 @@ export function Problem({ message, onRetry }: { message: string; onRetry: () => 
 const make = (t: NativeTheme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: t.colors.bg },
-    dim: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, opacity: 0.38 },
     top: {
       flexDirection: "row",
       alignItems: "center",

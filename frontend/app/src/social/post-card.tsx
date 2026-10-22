@@ -61,6 +61,7 @@ export const PostCard = memo(function PostCard({
   const { t } = useTheme();
   const s = useStyles(make);
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const [expanded, setExpanded] = useState(standalone);
 
   async function setLike(on: boolean) {
@@ -88,8 +89,26 @@ export const PostCard = memo(function PostCard({
   const profile = () =>
     router.push({ pathname: "/user/[username]", params: { username: post.author.username } });
 
+  const kind = t.style.posts;
+  const media =
+    post.kind === "text" ? (
+      <Pressable onPress={standalone ? undefined : open} style={s.textPost}>
+        <Text style={s.textBody}>{post.caption}</Text>
+      </Pressable>
+    ) : post.kind === "clip" ? (
+      <ClipTile post={post} onPress={open} />
+    ) : (
+      <Photos
+        media={post.media}
+        onDoubleTap={() => setLike(true)}
+        width={kind === "thread" ? width - 72 : width - 24}
+        radius={kind === "ticket" ? 0 : t.radius.media}
+      />
+    );
+  const glowSource = post.kind === "image" ? post.media[0] : undefined;
+
   return (
-    <View style={s.card}>
+    <View style={[s.card, kind === "ticket" && s.ticket, kind === "thread" && s.thread]}>
       <View style={s.head}>
         <Pressable
           onPress={profile}
@@ -124,17 +143,34 @@ export const PostCard = memo(function PostCard({
         </View>
       ) : null}
 
-      {post.kind === "text" ? (
-        <Pressable onPress={standalone ? undefined : open} style={s.textPost}>
-          <Text style={s.textBody}>{post.caption}</Text>
-        </Pressable>
-      ) : post.kind === "clip" ? (
-        <ClipTile post={post} onPress={open} />
-      ) : (
-        <Photos media={post.media} onDoubleTap={() => setLike(true)} />
-      )}
+      {kind === "thread" && post.caption && post.kind !== "text" ? (
+        <Text style={[s.caption, s.threadIndent]} numberOfLines={expanded ? undefined : 4}>
+          {post.caption}
+        </Text>
+      ) : null}
+      <View style={[kind === "glow" && s.mediaWrap, kind === "thread" && s.threadIndent]}>
+        {kind === "glow" && glowSource && t.style.glow > 0 ? (
+          // The photo lights the room: a soft, blurred copy of itself behind it.
+          <Image
+            source={mediaSource(glowSource.url)}
+            style={[s.glow, { opacity: 0.25 + t.style.glow * 0.45 }]}
+            blurRadius={36}
+            contentFit="cover"
+            recyclingKey={`glow-${glowSource.id}`}
+            accessible={false}
+          />
+        ) : null}
+        {media}
+      </View>
+      {kind === "ticket" ? (
+        <View style={s.tear} accessible={false}>
+          <View style={[s.notch, s.notchLeft]} />
+          <View style={s.tearLine} />
+          <View style={[s.notch, s.notchRight]} />
+        </View>
+      ) : null}
 
-      <View style={s.actions}>
+      <View style={[s.actions, kind === "thread" && s.threadIndentActions]}>
         <IconButton
           name={post.liked ? "HeartFill" : "Heart"}
           color={post.liked ? LIKED : t.colors.text}
@@ -164,7 +200,7 @@ export const PostCard = memo(function PostCard({
           {compact(post.likeCount)} {post.likeCount === 1 ? "like" : "likes"}
         </Text>
       ) : null}
-      {post.caption && post.kind !== "text" ? (
+      {post.caption && post.kind !== "text" && kind !== "thread" ? (
         <Pressable onPress={() => setExpanded(true)} disabled={expanded}>
           <Text style={s.caption} numberOfLines={expanded ? undefined : 2}>
             <Text style={s.captionName}>{post.author.displayName} </Text>
@@ -211,10 +247,19 @@ function IconButton({
 }
 
 /** Photos, swiped sideways when there's more than one. A double-tap likes, with a heart. */
-function Photos({ media, onDoubleTap }: { media: MediaRef[]; onDoubleTap: () => void }) {
+function Photos({
+  media,
+  onDoubleTap,
+  width,
+  radius = 0,
+}: {
+  media: MediaRef[];
+  onDoubleTap: () => void;
+  width: number;
+  radius?: number;
+}) {
   const { t } = useTheme();
   const s = useStyles(make);
-  const { width } = useWindowDimensions();
   const height = width / frameRatio(media[0]);
   const [index, setIndex] = useState(0);
   const burst = useSharedValue(0);
@@ -238,7 +283,7 @@ function Photos({ media, onDoubleTap }: { media: MediaRef[]; onDoubleTap: () => 
   return (
     <GestureDetector gesture={tap}>
       <View
-        style={{ width, height }}
+        style={{ width, height, borderRadius: radius, overflow: "hidden" }}
         accessible
         accessibilityLabel={`${media.length === 1 ? "Photo" : `${media.length} photos`}. Double tap to like.`}
       >
@@ -410,6 +455,43 @@ function PostMenu({
 const make = (t: NativeTheme) =>
   StyleSheet.create({
     card: { paddingBottom: 14 },
+    // Look A: a ticket stub, the photo on top and a tear line above the details.
+    ticket: {
+      marginHorizontal: 12,
+      marginBottom: 16,
+      borderRadius: t.radius.box,
+      backgroundColor: t.colors.surface,
+      overflow: "hidden",
+    },
+    // Look C: a thread, divided by thin lines.
+    thread: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border,
+      paddingBottom: 10,
+    },
+    threadIndent: { marginLeft: 58, marginRight: 14 },
+    threadIndentActions: { marginLeft: 46 },
+    mediaWrap: { marginHorizontal: 12 },
+    glow: {
+      position: "absolute",
+      top: "8%",
+      left: "-4%",
+      right: "-4%",
+      bottom: "-6%",
+      borderRadius: 40,
+      transform: [{ scale: 1.04 }],
+    },
+    tear: { height: 20, flexDirection: "row", alignItems: "center" },
+    tearLine: {
+      flex: 1,
+      marginHorizontal: 6,
+      borderTopWidth: 2,
+      borderStyle: "dashed",
+      borderColor: t.colors.border,
+    },
+    notch: { width: 20, height: 20, borderRadius: 10, backgroundColor: t.colors.bg },
+    notchLeft: { marginLeft: -10 },
+    notchRight: { marginRight: -10 },
     hidden: {
       flexDirection: "row",
       gap: 8,

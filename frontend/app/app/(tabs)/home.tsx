@@ -1,5 +1,6 @@
 import type { ActivityPage, UserSummary } from "@realm/contracts";
 import { FlashList } from "@shopify/flash-list";
+import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -8,10 +9,11 @@ import { useApi, usePosts } from "@/data";
 import { Icon } from "@/icon";
 import { api } from "@/server";
 import { useSession } from "@/session";
-import { Avatar } from "@/social/avatar";
+import { Avatar, fillFor } from "@/social/avatar";
 import { PostCard } from "@/social/post-card";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
 import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { Sticker } from "@/themes/art";
 import { Pill, Wordmark } from "@/ui";
 
 /**
@@ -48,7 +50,10 @@ export default function Home() {
         >
           <Icon name="PlusSquare" size={26} color={t.colors.text} />
         </Pressable>
-        <Wordmark />
+        <View style={s.brand}>
+          <Wordmark />
+          <Sticker slot="header" size={34} />
+        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={unread ? `Activity, ${unread} new` : "Activity"}
@@ -158,13 +163,55 @@ function People() {
           accessibilityLabel={u.displayName}
           style={s.person}
         >
-          <Avatar user={u} size={64} />
-          <Text style={s.personName} numberOfLines={1}>
-            {u.displayName.split(" ")[0]}
-          </Text>
+          <Face user={u} />
+          {t.style.stories === "bands" ? null : (
+            <Text style={s.personName} numberOfLines={1}>
+              {u.displayName.split(" ")[0]}
+            </Text>
+          )}
         </Pressable>
       ))}
     </ScrollView>
+  );
+}
+
+/** A person in the row, in the theme's story style. */
+function Face({ user }: { user: UserSummary }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
+  const colour = user.accentColor
+    ? `#${user.accentColor.toString(16).padStart(6, "0")}`
+    : fillFor(user.id);
+  if (t.style.stories === "bands") {
+    return (
+      <View style={s.band}>
+        <Avatar user={user} size={84} square />
+        <View style={[s.bandStrip, { backgroundColor: colour }]}>
+          <Text style={s.bandName} numberOfLines={1}>
+            {user.displayName.split(" ")[0]}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+  if (t.style.stories === "thin") {
+    return (
+      <View style={s.thin}>
+        <Avatar user={user} size={60} />
+      </View>
+    );
+  }
+  return (
+    <LinearGradient
+      colors={[colour, t.colors.lights[1], colour]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={s.ring}
+    >
+      <View style={s.ringGap}>
+        <Avatar user={user} size={58} />
+      </View>
+    </LinearGradient>
   );
 }
 
@@ -210,7 +257,41 @@ const make = (t: NativeTheme) =>
       borderBottomColor: t.colors.border,
     },
     people: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 12, gap: 14 },
-    person: { alignItems: "center", gap: 6, width: 70 },
+    person: { alignItems: "center", gap: 6, minWidth: 70 },
+    brand: { flexDirection: "row", alignItems: "center", gap: 6 },
+    ring: { width: 68, height: 68, borderRadius: 34, padding: 2.5 },
+    ringGap: {
+      flex: 1,
+      borderRadius: 32,
+      padding: 2.5,
+      backgroundColor: t.colors.bg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    thin: { borderRadius: 34, borderWidth: 1.5, borderColor: t.colors.text, padding: 3 },
+    band: {
+      width: 84,
+      height: 118,
+      borderRadius: t.radius.card,
+      overflow: "hidden",
+      backgroundColor: t.colors.surfaceRaised,
+    },
+    bandStrip: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: 26,
+      justifyContent: "center",
+      paddingHorizontal: 8,
+    },
+    bandName: {
+      fontFamily: fonts.display,
+      fontSize: 11,
+      letterSpacing: 0.8,
+      textTransform: "uppercase",
+      color: "#0b0b0e",
+    },
     personName: { fontFamily: fonts.body, fontSize: 12.5, color: t.colors.textSoft, maxWidth: 70 },
     plus: {
       position: "absolute",

@@ -24,7 +24,7 @@ import { useSheet } from "@/sheet";
 import { shrinkPhoto } from "@/shrink";
 import { useSafety } from "@/social/safety";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
-import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
+import { fonts, type NativeTheme, THEME_ORDER, themes, useStyles, useTheme } from "@/theme";
 import { markRead, olderId } from "@/unread";
 
 /** A short id for an outgoing message, so its echo can be matched. */
@@ -67,10 +67,14 @@ export default function Chat() {
   const s = useStyles(make);
   const { id, title, kind } = useLocalSearchParams<{ id: string; title?: string; kind?: string }>();
   const insets = useSafeAreaInsets();
-  const { accent, onAccent } = useTheme();
   const { session } = useSession();
   const meId = session.status === "signedIn" ? session.user.id : null;
   const isDm = kind === "dm" || kind === "group_dm";
+  // Now Playing gives every conversation its own colour; other looks use yours.
+  const theme = useTheme();
+  const own = t.style.chatColours && isDm && id ? chatColour(id) : null;
+  const accent = own?.accent ?? theme.accent;
+  const onAccent = own?.onAccent ?? theme.onAccent;
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [outgoing, setOutgoing] = useState<Outgoing[]>([]);
   const [text, setText] = useState("");
@@ -665,6 +669,13 @@ function OutgoingRow({
       </Text>
     </Pressable>
   );
+}
+
+/** A conversation's own colour (Now Playing): one of Realm's four, picked from its id so it stays. */
+function chatColour(id: string) {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return themes[THEME_ORDER[h % THEME_ORDER.length] ?? "mint"];
 }
 
 const make = (t: NativeTheme) =>

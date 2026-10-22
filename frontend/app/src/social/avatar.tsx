@@ -18,11 +18,14 @@ export function Avatar({
   user,
   size = 40,
   ring,
+  square,
 }: {
   user: Pick<UserSummary, "id" | "displayName" | "avatarUrl">;
   size?: number;
   /** A ring around it: "live" (here now) or "self" (the You tab). */
   ring?: "live" | "self";
+  /** Fill a square tile (a Wristband story) instead of a circle. */
+  square?: boolean;
 }) {
   const { t } = useTheme();
   const s = useStyles(make);
@@ -30,7 +33,12 @@ export function Avatar({
     <View
       style={[
         s.circle,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: fillFor(user.id) },
+        {
+          width: size,
+          height: square ? size * 1.4 : size,
+          borderRadius: square ? 0 : t.style.avatars === "rounded" ? size * 0.3 : size / 2,
+          backgroundColor: fillFor(user.id),
+        },
       ]}
       accessible={false}
     >

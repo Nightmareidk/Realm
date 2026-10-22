@@ -30,66 +30,87 @@ export function TabBar({ state, navigation }: BarProps) {
   const { session } = useSession();
   const { accent, onAccent } = useTheme();
   const unread = useUnreadCount();
+  const floating = t.style.tabBar === "floating";
   return (
     <View
-      style={[s.bar, { paddingBottom: Math.max(insets.bottom, 8) }]}
+      style={
+        floating
+          ? [s.floatWrap, { paddingBottom: Math.max(insets.bottom, 10) }]
+          : [s.bar, { paddingBottom: Math.max(insets.bottom, 8) }]
+      }
       accessibilityRole="tablist"
     >
-      {state.routes.map((route, i) => {
-        const on = state.index === i;
-        const tab = TABS[route.name];
-        const press = () => {
-          const event = navigation.emit({
-            type: "tabPress",
-            target: route.key,
-            canPreventDefault: true,
-          });
-          if (!on && !event.defaultPrevented) {
-            Haptics.selectionAsync();
-            navigation.navigate(route.name);
-          }
-        };
-        return (
-          <Pressable
-            key={route.key}
-            onPress={press}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
-            accessibilityLabel={
-              route.name === "inbox" && unread ? `Inbox, ${unread} unread` : (tab?.label ?? "You")
+      <View style={floating ? s.float : s.row}>
+        {state.routes.map((route, i) => {
+          const on = state.index === i;
+          const tab = TABS[route.name];
+          const press = () => {
+            const event = navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!on && !event.defaultPrevented) {
+              Haptics.selectionAsync();
+              navigation.navigate(route.name);
             }
-            style={s.item}
-          >
-            <View style={[s.pill, on && s.pillOn]}>
-              {tab ? (
-                <Icon
-                  name={on ? tab.on : tab.icon}
-                  size={24}
-                  color={on ? t.colors.text : t.colors.textSoft}
-                />
-              ) : session.status === "signedIn" ? (
-                <Avatar user={session.user} size={26} ring={on ? "self" : undefined} />
-              ) : null}
-              {route.name === "inbox" && unread ? (
-                <View style={[s.badge, { backgroundColor: accent }]} pointerEvents="none">
-                  <Text style={[s.badgeText, { color: onAccent }]} allowFontScaling={false}>
-                    {unread > 9 ? "9+" : unread}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-            <Text style={[s.label, on && s.labelOn]} allowFontScaling={false}>
-              {tab?.label ?? "You"}
-            </Text>
-          </Pressable>
-        );
-      })}
+          };
+          return (
+            <Pressable
+              key={route.key}
+              onPress={press}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={
+                route.name === "inbox" && unread ? `Inbox, ${unread} unread` : (tab?.label ?? "You")
+              }
+              style={s.item}
+            >
+              <View style={[s.pill, on && s.pillOn]}>
+                {tab ? (
+                  <Icon
+                    name={on ? tab.on : tab.icon}
+                    size={24}
+                    color={on ? t.colors.text : t.colors.textSoft}
+                  />
+                ) : session.status === "signedIn" ? (
+                  <Avatar user={session.user} size={26} ring={on ? "self" : undefined} />
+                ) : null}
+                {route.name === "inbox" && unread ? (
+                  <View style={[s.badge, { backgroundColor: accent }]} pointerEvents="none">
+                    <Text style={[s.badgeText, { color: onAccent }]} allowFontScaling={false}>
+                      {unread > 9 ? "9+" : unread}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+              <Text style={[s.label, on && s.labelOn]} allowFontScaling={false}>
+                {tab?.label ?? "You"}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const make = (t: NativeTheme) =>
   StyleSheet.create({
+    row: { flexDirection: "row", flex: 1 },
+    // Now Playing: the bar floats as a rounded pill above the ground.
+    floatWrap: { backgroundColor: t.colors.bg, paddingHorizontal: 14, paddingTop: 6 },
+    float: {
+      flexDirection: "row",
+      borderRadius: 30,
+      paddingVertical: 6,
+      backgroundColor: t.colors.surfaceRaised,
+      shadowColor: "#000000",
+      shadowOpacity: 0.35,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 10,
+    },
     bar: {
       flexDirection: "row",
       backgroundColor: t.colors.bg,
