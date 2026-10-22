@@ -1,0 +1,39 @@
+# What Expo's build service (EAS) doesn't receive when it builds the phone app. When this file
+# exists, Expo reads it instead of the .gitignore files, so their rules are repeated here, plus
+# everything the phone app's build never needs. The website's package.json stays, because the
+# workspace install needs every package's manifest.
+
+# The same as .gitignore
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.data/
+.tools/
+.env
+.env.*
+!.env.example
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+coverage/
+playwright-report/
+test-results/
+.playwright-mcp/
+.cache/
+.expo/
+expo-env.d.ts
+frontend/app/android/
+frontend/app/ios/
+
+# Not needed to build the phone app: the website's own files, docs and design work
+frontend/web/*
+!frontend/web/package.json
+docs/
+infra/
+.impeccable/
+**/.impeccable/
