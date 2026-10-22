@@ -9,11 +9,12 @@ import { Avatar } from "@/social/avatar";
 import { PersonRow } from "@/social/person-row";
 import { AppScreen, Empty, Loading, Problem, TopBar } from "@/social/screen";
 import { ago } from "@/social/time";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles } from "@/theme";
 import { Pill } from "@/ui";
 
 /** The heart on Home: follow requests first, then likes, comments and follows. */
 export default function ActivityScreen() {
+  const s = useStyles(make);
   const feed = useApi<ActivityPage>("/users/@me/activity");
   const requests = useApi<FollowRequest[]>("/users/@me/follow-requests");
 
@@ -99,6 +100,7 @@ function sentence(a: Activity) {
 }
 
 function Row({ item }: { item: Activity }) {
+  const s = useStyles(make);
   const router = useRouter();
   const open = () => {
     if (item.post) router.push({ pathname: "/post/[id]", params: { id: item.post.id } });
@@ -120,33 +122,34 @@ function Row({ item }: { item: Activity }) {
   );
 }
 
-const s = StyleSheet.create({
-  section: {
-    paddingTop: 6,
-    paddingBottom: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: roles.border,
-  },
-  heading: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: roles.text,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  reqActions: { flexDirection: "row", gap: 6 },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    minHeight: 64,
-  },
-  unread: { backgroundColor: "rgba(255,255,255,0.03)" },
-  text: { flex: 1, fontFamily: fonts.body, fontSize: 15, lineHeight: 21, color: roles.text },
-  name: { fontFamily: fonts.bold },
-  when: { color: roles.textSoft, fontSize: 13.5 },
-  thumb: { width: 44, height: 55, borderRadius: 6, backgroundColor: roles.surfaceSunken },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    section: {
+      paddingTop: 6,
+      paddingBottom: 6,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border,
+    },
+    heading: {
+      fontFamily: fonts.bold,
+      fontSize: 15,
+      color: t.colors.text,
+      paddingHorizontal: 16,
+      paddingTop: 10,
+      paddingBottom: 4,
+    },
+    reqActions: { flexDirection: "row", gap: 6 },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      minHeight: 64,
+    },
+    unread: { backgroundColor: "rgba(255,255,255,0.03)" },
+    text: { flex: 1, fontFamily: fonts.body, fontSize: 15, lineHeight: 21, color: t.colors.text },
+    name: { fontFamily: fonts.bold },
+    when: { color: t.colors.textSoft, fontSize: 13.5 },
+    thumb: { width: 44, height: 55, borderRadius: 6, backgroundColor: t.colors.surfaceSunken },
+  });

@@ -24,7 +24,7 @@ import { useSheet } from "@/sheet";
 import { shrinkPhoto } from "@/shrink";
 import { useSafety } from "@/social/safety";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
-import { fonts, roles, useTheme } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 import { markRead, olderId } from "@/unread";
 
 /** A short id for an outgoing message, so its echo can be matched. */
@@ -63,6 +63,8 @@ type Row = { kind: "message"; m: Message } | { kind: "outgoing"; o: Outgoing };
  *   message once they've read it.
  */
 export default function Chat() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const { id, title, kind } = useLocalSearchParams<{ id: string; title?: string; kind?: string }>();
   const insets = useSafeAreaInsets();
   const { accent, onAccent } = useTheme();
@@ -348,7 +350,7 @@ export default function Chat() {
                       accessibilityLabel={on ? `Take back ${e}` : `React with ${e}`}
                       style={({ pressed }) => [
                         s.quickOne,
-                        on && { backgroundColor: roles.surfaceRaised, borderColor: accent },
+                        on && { backgroundColor: t.colors.surfaceRaised, borderColor: accent },
                         pressed && { transform: [{ scale: 0.92 }] },
                       ]}
                     >
@@ -434,7 +436,19 @@ export default function Chat() {
         ],
       });
     },
-    [accent, id, meId, react, reply, safety, sheet],
+    [
+      accent,
+      id,
+      meId,
+      react,
+      reply,
+      safety,
+      sheet,
+      t.colors.surfaceRaised,
+      s.quickOne,
+      s.quickEmoji,
+      s.quick,
+    ],
   );
 
   // "Seen" goes under your newest message that the others have read.
@@ -522,7 +536,7 @@ export default function Chat() {
               <Icon
                 name={editing ? "NotePencil" : "ArrowBendUpLeft"}
                 size={18}
-                color={roles.textSoft}
+                color={t.colors.textSoft}
               />
               <View style={s.fill}>
                 <Text style={s.contextTitle} numberOfLines={1}>
@@ -542,7 +556,7 @@ export default function Chat() {
                 accessibilityLabel={editing ? "Stop editing" : "Cancel reply"}
                 style={s.iconButton}
               >
-                <Icon name="X" size={18} color={roles.text} />
+                <Icon name="X" size={18} color={t.colors.text} />
               </Pressable>
             </View>
           ) : null}
@@ -573,7 +587,7 @@ export default function Chat() {
                 accessibilityLabel="Add photos"
                 style={[s.iconButton, photos.length >= MAX_PHOTOS && s.dim]}
               >
-                <Icon name="Image" size={24} color={roles.text} />
+                <Icon name="Image" size={24} color={t.colors.text} />
               </Pressable>
             ) : null}
             <TextInput
@@ -584,7 +598,7 @@ export default function Chat() {
                 if (v.trim() && !editing) live.typing(id);
               }}
               placeholder={editing ? "Edit message" : `Message ${title ?? ""}`.trim()}
-              placeholderTextColor={roles.textMuted}
+              placeholderTextColor={t.colors.textMuted}
               selectionColor={accent}
               cursorColor={accent}
               multiline
@@ -621,6 +635,8 @@ function OutgoingRow({
   onAccent: string;
   onRetry: (o: Outgoing) => void;
 }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const failed = o.state === "failed";
   return (
     <Pressable
@@ -642,7 +658,7 @@ function OutgoingRow({
         ) : null}
         {o.content ? <Text style={[s.outText, { color: onAccent }]}>{o.content}</Text> : null}
       </View>
-      <Text style={[s.outState, failed && { color: roles.danger }]}>
+      <Text style={[s.outState, failed && { color: t.colors.danger }]}>
         {failed
           ? `Not sent. ${o.error ?? ""} Tap to try again.`
           : `Sending · ${timeOf(new Date().toISOString())}`}
@@ -651,109 +667,127 @@ function OutgoingRow({
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  notice: { alignItems: "center", paddingVertical: 6 },
-  noticeText: {
-    fontFamily: fonts.bold,
-    fontSize: 12.5,
-    color: roles.textSoft,
-    paddingHorizontal: 11,
-    paddingVertical: 5,
-    borderRadius: 999,
-    overflow: "hidden",
-    backgroundColor: "rgba(11,11,14,0.65)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.14)",
-  },
-  list: { paddingHorizontal: 10, paddingVertical: 12 },
-  empty: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    color: roles.textSoft,
-    textAlign: "center",
-    padding: 24,
-    transform: [{ scaleY: -1 }],
-  },
-  typing: {
-    fontFamily: fonts.body,
-    fontSize: 13.5,
-    color: roles.textSoft,
-    paddingHorizontal: 16,
-    paddingBottom: 4,
-  },
-  composer: {
-    paddingHorizontal: 10,
-    paddingTop: 8,
-    gap: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: roles.border,
-    backgroundColor: roles.bg,
-  },
-  context: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingLeft: 8,
-    borderRadius: 14,
-    backgroundColor: roles.surface,
-  },
-  contextTitle: { fontFamily: fonts.bold, fontSize: 13.5, color: roles.text },
-  contextLine: { fontFamily: fonts.body, fontSize: 13.5, color: roles.textSoft },
-  picked: { flexDirection: "row", gap: 8, paddingHorizontal: 4 },
-  pickedPhoto: { width: 64, height: 64, borderRadius: 12, backgroundColor: roles.surfaceRaised },
-  unpick: {
-    position: "absolute",
-    top: 3,
-    right: 3,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(11,11,14,0.75)",
-  },
-  row: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
-  iconButton: { width: 44, height: 46, alignItems: "center", justifyContent: "center" },
-  input: {
-    flex: 1,
-    minHeight: 46,
-    maxHeight: 130,
-    borderRadius: 23,
-    borderWidth: 1.5,
-    borderColor: roles.borderStrong,
-    backgroundColor: roles.surfaceSunken,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
-    fontFamily: fonts.body,
-    fontSize: 15.5,
-    color: roles.text,
-  },
-  send: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
-  dim: { opacity: 0.45 },
-  quick: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
-  quickOne: {
-    flex: 1,
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: "transparent",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quickEmoji: { fontSize: 26 },
-  outRow: { alignItems: "flex-end", marginTop: 3 },
-  outBubble: { maxWidth: 280, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 9, gap: 4 },
-  sending: { opacity: 0.7 },
-  outText: { fontFamily: fonts.body, fontSize: 15.5, lineHeight: 21 },
-  outState: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: roles.textSoft,
-    marginTop: 3,
-    marginRight: 6,
-    maxWidth: 280,
-    textAlign: "right",
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    notice: { alignItems: "center", paddingVertical: 6 },
+    noticeText: {
+      fontFamily: fonts.bold,
+      fontSize: 12.5,
+      color: t.colors.textSoft,
+      paddingHorizontal: 11,
+      paddingVertical: 5,
+      borderRadius: 999,
+      overflow: "hidden",
+      backgroundColor: "rgba(11,11,14,0.65)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(255,255,255,0.14)",
+    },
+    list: { paddingHorizontal: 10, paddingVertical: 12 },
+    empty: {
+      fontFamily: fonts.body,
+      fontSize: 15,
+      color: t.colors.textSoft,
+      textAlign: "center",
+      padding: 24,
+      transform: [{ scaleY: -1 }],
+    },
+    typing: {
+      fontFamily: fonts.body,
+      fontSize: 13.5,
+      color: t.colors.textSoft,
+      paddingHorizontal: 16,
+      paddingBottom: 4,
+    },
+    composer: {
+      paddingHorizontal: 10,
+      paddingTop: 8,
+      gap: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.border,
+      backgroundColor: t.colors.bg,
+    },
+    context: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingLeft: 8,
+      borderRadius: 14,
+      backgroundColor: t.colors.surface,
+    },
+    contextTitle: { fontFamily: fonts.bold, fontSize: 13.5, color: t.colors.text },
+    contextLine: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft },
+    picked: { flexDirection: "row", gap: 8, paddingHorizontal: 4 },
+    pickedPhoto: {
+      width: 64,
+      height: 64,
+      borderRadius: 12,
+      backgroundColor: t.colors.surfaceRaised,
+    },
+    unpick: {
+      position: "absolute",
+      top: 3,
+      right: 3,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(11,11,14,0.75)",
+    },
+    row: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
+    iconButton: { width: 44, height: 46, alignItems: "center", justifyContent: "center" },
+    input: {
+      flex: 1,
+      minHeight: 46,
+      maxHeight: 130,
+      borderRadius: 23,
+      borderWidth: 1.5,
+      borderColor: t.colors.borderStrong,
+      backgroundColor: t.colors.surfaceSunken,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 12,
+      fontFamily: fonts.body,
+      fontSize: 15.5,
+      color: t.colors.text,
+    },
+    send: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    dim: { opacity: 0.45 },
+    quick: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
+    quickOne: {
+      flex: 1,
+      height: 52,
+      borderRadius: 16,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    quickEmoji: { fontSize: 26 },
+    outRow: { alignItems: "flex-end", marginTop: 3 },
+    outBubble: {
+      maxWidth: 280,
+      borderRadius: 18,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      gap: 4,
+    },
+    sending: { opacity: 0.7 },
+    outText: { fontFamily: fonts.body, fontSize: 15.5, lineHeight: 21 },
+    outState: {
+      fontFamily: fonts.body,
+      fontSize: 12,
+      color: t.colors.textSoft,
+      marginTop: 3,
+      marginRight: 6,
+      maxWidth: 280,
+      textAlign: "right",
+    },
+  });

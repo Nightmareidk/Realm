@@ -10,7 +10,7 @@ import { useSheet } from "@/sheet";
 import { Avatar } from "@/social/avatar";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
 import { ago } from "@/social/time";
-import { fonts, roles, useTheme } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 import {
   isMuted,
   isUnread,
@@ -34,6 +34,8 @@ const FILTERS: { id: Filter; label: string }[] = [
  * the pencil starts a new one.
  */
 export default function Inbox() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { accent } = useTheme();
@@ -141,7 +143,7 @@ export default function Inbox() {
             accessibilityLabel="New message"
             style={s.icon}
           >
-            <Icon name="NotePencil" size={25} color={roles.text} />
+            <Icon name="NotePencil" size={25} color={t.colors.text} />
           </Pressable>
         </View>
         <Text style={s.note}>Not end-to-end encrypted yet</Text>
@@ -154,9 +156,12 @@ export default function Inbox() {
                 onPress={() => setFilter(f.id)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on }}
-                style={[s.chip, on && { backgroundColor: roles.text, borderColor: roles.text }]}
+                style={[
+                  s.chip,
+                  on && { backgroundColor: t.colors.text, borderColor: t.colors.text },
+                ]}
               >
-                <Text style={[s.chipText, on && { color: roles.bg }]}>{f.label}</Text>
+                <Text style={[s.chipText, on && { color: t.colors.bg }]}>{f.label}</Text>
               </Pressable>
             );
           })}
@@ -238,6 +243,8 @@ function Row({
   accent: string;
   onLongPress: () => void;
 }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const other = c.recipients.find((r) => r.id !== meId) ?? c.recipients[0];
   const name = title(c, meId);
@@ -250,7 +257,7 @@ function Row({
       accessibilityRole="link"
       accessibilityLabel={`${name}${unread ? ", unread" : ""}${muted ? ", muted" : ""}${c.pinned ? ", pinned" : ""}. ${preview(c, meId)}`}
       accessibilityHint="Long press to pin, mute or mark as read"
-      style={({ pressed }) => [s.row, pressed && { backgroundColor: roles.surface }]}
+      style={({ pressed }) => [s.row, pressed && { backgroundColor: t.colors.surface }]}
     >
       {other ? <Avatar user={other} size={52} /> : null}
       <View style={s.fill}>
@@ -258,10 +265,10 @@ function Row({
           <Text style={[s.name, unread && s.strong]} numberOfLines={1}>
             {name}
           </Text>
-          {c.pinned ? <Icon name="PushPin" size={14} color={roles.textSoft} /> : null}
-          {muted ? <Icon name="BellSlash" size={14} color={roles.textSoft} /> : null}
+          {c.pinned ? <Icon name="PushPin" size={14} color={t.colors.textSoft} /> : null}
+          {muted ? <Icon name="BellSlash" size={14} color={t.colors.textSoft} /> : null}
           {c.lastMessage ? (
-            <Text style={[s.when, unread && { color: roles.text }]}>
+            <Text style={[s.when, unread && { color: t.colors.text }]}>
               {ago(c.lastMessage.createdAt)}
             </Text>
           ) : null}
@@ -271,7 +278,7 @@ function Row({
             {preview(c, meId)}
           </Text>
           {unread ? (
-            <View style={[s.dot, { backgroundColor: muted ? roles.textSoft : accent }]} />
+            <View style={[s.dot, { backgroundColor: muted ? t.colors.textSoft : accent }]} />
           ) : null}
         </View>
       </View>
@@ -279,43 +286,55 @@ function Row({
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  head: {
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: roles.border,
-  },
-  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  title: { fontFamily: fonts.displayBold, fontSize: 28, color: roles.text, letterSpacing: -0.5 },
-  icon: { width: 48, height: 48, alignItems: "center", justifyContent: "center", marginRight: -10 },
-  note: { fontFamily: fonts.body, fontSize: 13.5, color: roles.textSoft, marginTop: 2 },
-  chips: { flexDirection: "row", gap: 8, marginTop: 12 },
-  chip: {
-    minHeight: 36,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: roles.borderStrong,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  chipText: { fontFamily: fonts.bold, fontSize: 14, color: roles.text },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    minHeight: 72,
-  },
-  top: { flexDirection: "row", alignItems: "center", gap: 6 },
-  name: { flex: 1, fontFamily: fonts.bold, fontSize: 16, color: roles.text },
-  strong: { fontFamily: fonts.bold },
-  when: { fontFamily: fonts.body, fontSize: 13, color: roles.textSoft },
-  bottom: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
-  preview: { flex: 1, fontFamily: fonts.body, fontSize: 14.5, color: roles.textSoft },
-  previewUnread: { fontFamily: fonts.bold, color: roles.text },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    head: {
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border,
+    },
+    titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    title: {
+      fontFamily: fonts.displayBold,
+      fontSize: 28,
+      color: t.colors.text,
+      letterSpacing: -0.5,
+    },
+    icon: {
+      width: 48,
+      height: 48,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: -10,
+    },
+    note: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft, marginTop: 2 },
+    chips: { flexDirection: "row", gap: 8, marginTop: 12 },
+    chip: {
+      minHeight: 36,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+      borderWidth: 1.5,
+      borderColor: t.colors.borderStrong,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    chipText: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.text },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      minHeight: 72,
+    },
+    top: { flexDirection: "row", alignItems: "center", gap: 6 },
+    name: { flex: 1, fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
+    strong: { fontFamily: fonts.bold },
+    when: { fontFamily: fonts.body, fontSize: 13, color: t.colors.textSoft },
+    bottom: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
+    preview: { flex: 1, fontFamily: fonts.body, fontSize: 14.5, color: t.colors.textSoft },
+    previewUnread: { fontFamily: fonts.bold, color: t.colors.text },
+    dot: { width: 10, height: 10, borderRadius: 5 },
+  });

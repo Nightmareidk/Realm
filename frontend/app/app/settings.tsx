@@ -9,7 +9,7 @@ import type { IconName } from "@/icon-paths";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
-import { fonts, roles, THEME_ORDER, themes, useTheme } from "@/theme";
+import { fonts, type NativeTheme, THEME_ORDER, themes, useStyles, useTheme } from "@/theme";
 import { Field, Pill } from "@/ui";
 
 /**
@@ -17,6 +17,8 @@ import { Field, Pill } from "@/ui";
  * password, where you're signed in, who you've blocked), and signing out.
  */
 export default function Settings() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const { session, signOut } = useSession();
   const me = session.status === "signedIn" ? session.user : null;
@@ -94,7 +96,7 @@ export default function Settings() {
           style={s.linkRow}
         >
           <Text style={s.linkText}>Edit profile</Text>
-          <Icon name="CaretRight" size={20} color={roles.textSoft} />
+          <Icon name="CaretRight" size={20} color={t.colors.textSoft} />
         </Pressable>
 
         <Text style={s.heading}>Who can see you</Text>
@@ -127,7 +129,7 @@ export default function Settings() {
               accessibilityState={{ checked: on }}
               style={[s.choice, on && s.choiceOn]}
             >
-              <View style={[s.radio, on && { borderColor: roles.text }]}>
+              <View style={[s.radio, on && { borderColor: t.colors.text }]}>
                 {on ? <View style={s.radioDot} /> : null}
               </View>
               <View style={s.fill}>
@@ -261,6 +263,8 @@ function NavRow({
   warn?: boolean;
   onPress: () => void;
 }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   return (
     <Pressable
       onPress={onPress}
@@ -269,89 +273,96 @@ function NavRow({
       style={({ pressed }) => [s.navRow, pressed && s.navRowPressed]}
     >
       <View style={s.navMark}>
-        <Icon name={icon} size={21} color={roles.text} />
+        <Icon name={icon} size={21} color={t.colors.text} />
       </View>
       <View style={s.fill}>
         <Text style={s.title}>{title}</Text>
-        <Text style={[s.line, warn && { color: roles.danger }]} numberOfLines={1}>
+        <Text style={[s.line, warn && { color: t.colors.danger }]} numberOfLines={1}>
           {line}
         </Text>
       </View>
-      <Icon name="CaretRight" size={18} color={roles.textSoft} />
+      <Icon name="CaretRight" size={18} color={t.colors.textSoft} />
     </Pressable>
   );
 }
 
-const s = StyleSheet.create({
-  body: { padding: 16, paddingBottom: 48 },
-  navRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    minHeight: 64,
-    marginHorizontal: -8,
-    paddingHorizontal: 8,
-    borderRadius: 14,
-  },
-  navRowPressed: { backgroundColor: roles.surfaceRaised },
-  navMark: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: roles.surfaceRaised,
-  },
-  fill: { flex: 1 },
-  linkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    minHeight: 52,
-  },
-  linkText: { fontFamily: fonts.bold, fontSize: 16, color: roles.text },
-  heading: {
-    fontFamily: fonts.displayBold,
-    fontSize: 19,
-    color: roles.text,
-    marginTop: 26,
-    marginBottom: 10,
-  },
-  row: { flexDirection: "row", alignItems: "center", gap: 14 },
-  title: { fontFamily: fonts.bold, fontSize: 15.5, color: roles.text },
-  line: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    lineHeight: 20,
-    color: roles.textSoft,
-    marginTop: 2,
-  },
-  choice: {
-    flexDirection: "row",
-    gap: 12,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: roles.border,
-    marginBottom: 8,
-  },
-  choiceOn: { borderColor: roles.text, backgroundColor: roles.surfaceRaised },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: roles.borderStrong,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 2,
-  },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: roles.text },
-  business: { gap: 16, marginTop: 8 },
-  swatches: { flexDirection: "row", gap: 10 },
-  swatchWrap: { flex: 1, borderRadius: 16, padding: 3, borderWidth: 2, borderColor: "transparent" },
-  swatchOn: { borderColor: roles.text },
-  swatch: { height: 72, borderRadius: 12, justifyContent: "flex-end", padding: 8 },
-  swatchName: { fontFamily: fonts.bold, fontSize: 13, color: "#ffffff" },
-  signOut: { marginTop: 36 },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    body: { padding: 16, paddingBottom: 48 },
+    navRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      minHeight: 64,
+      marginHorizontal: -8,
+      paddingHorizontal: 8,
+      borderRadius: 14,
+    },
+    navRowPressed: { backgroundColor: t.colors.surfaceRaised },
+    navMark: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: t.colors.surfaceRaised,
+    },
+    fill: { flex: 1 },
+    linkRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      minHeight: 52,
+    },
+    linkText: { fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
+    heading: {
+      fontFamily: fonts.displayBold,
+      fontSize: 19,
+      color: t.colors.text,
+      marginTop: 26,
+      marginBottom: 10,
+    },
+    row: { flexDirection: "row", alignItems: "center", gap: 14 },
+    title: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
+    line: {
+      fontFamily: fonts.body,
+      fontSize: 14,
+      lineHeight: 20,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
+    choice: {
+      flexDirection: "row",
+      gap: 12,
+      padding: 14,
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: t.colors.border,
+      marginBottom: 8,
+    },
+    choiceOn: { borderColor: t.colors.text, backgroundColor: t.colors.surfaceRaised },
+    radio: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 2,
+      borderColor: t.colors.borderStrong,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 2,
+    },
+    radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: t.colors.text },
+    business: { gap: 16, marginTop: 8 },
+    swatches: { flexDirection: "row", gap: 10 },
+    swatchWrap: {
+      flex: 1,
+      borderRadius: 16,
+      padding: 3,
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    swatchOn: { borderColor: t.colors.text },
+    swatch: { height: 72, borderRadius: 12, justifyContent: "flex-end", padding: 8 },
+    swatchName: { fontFamily: fonts.bold, fontSize: 13, color: "#ffffff" },
+    signOut: { marginTop: 36 },
+  });

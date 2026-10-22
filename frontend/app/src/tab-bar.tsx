@@ -7,7 +7,7 @@ import { Icon } from "./icon";
 import type { IconName } from "./icon-paths";
 import { useSession } from "./session";
 import { Avatar } from "./social/avatar";
-import { fonts, roles, useTheme } from "./theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "./theme";
 import { useUnreadCount } from "./unread";
 
 type BarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0];
@@ -24,6 +24,8 @@ const TABS: Record<string, { label: string; icon: IconName; on: IconName }> = {
  * pill, You as your own picture. Labels always show; nothing is icon-only.
  */
 export function TabBar({ state, navigation }: BarProps) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const insets = useSafeAreaInsets();
   const { session } = useSession();
   const { accent, onAccent } = useTheme();
@@ -63,7 +65,7 @@ export function TabBar({ state, navigation }: BarProps) {
                 <Icon
                   name={on ? tab.on : tab.icon}
                   size={24}
-                  color={on ? roles.text : roles.textSoft}
+                  color={on ? t.colors.text : t.colors.textSoft}
                 />
               ) : session.status === "signedIn" ? (
                 <Avatar user={session.user} size={26} ring={on ? "self" : undefined} />
@@ -86,37 +88,38 @@ export function TabBar({ state, navigation }: BarProps) {
   );
 }
 
-const s = StyleSheet.create({
-  bar: {
-    flexDirection: "row",
-    backgroundColor: roles.bg,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: roles.border,
-    paddingTop: 6,
-  },
-  item: { flex: 1, alignItems: "center", gap: 3, minHeight: 52 },
-  pill: {
-    width: 58,
-    height: 32,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pillOn: { backgroundColor: roles.surfaceRaised },
-  badge: {
-    position: "absolute",
-    top: -2,
-    right: 8,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    paddingHorizontal: 4,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: roles.bg,
-  },
-  badgeText: { fontFamily: fonts.bold, fontSize: 10.5 },
-  label: { fontFamily: fonts.bold, fontSize: 11.5, color: roles.textSoft },
-  labelOn: { color: roles.text },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    bar: {
+      flexDirection: "row",
+      backgroundColor: t.colors.bg,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.border,
+      paddingTop: 6,
+    },
+    item: { flex: 1, alignItems: "center", gap: 3, minHeight: 52 },
+    pill: {
+      width: 58,
+      height: 32,
+      borderRadius: 999,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    pillOn: { backgroundColor: t.colors.surfaceRaised },
+    badge: {
+      position: "absolute",
+      top: -2,
+      right: 8,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      paddingHorizontal: 4,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 2,
+      borderColor: t.colors.bg,
+    },
+    badgeText: { fontFamily: fonts.bold, fontSize: 10.5 },
+    label: { fontFamily: fonts.bold, fontSize: 11.5, color: t.colors.textSoft },
+    labelOn: { color: t.colors.text },
+  });

@@ -7,7 +7,7 @@ import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { KIND_NAME, type ReportKind, useSafety } from "@/social/safety";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Field, Notice, Pill } from "@/ui";
 
 /** The reasons, in the words people use. */
@@ -31,6 +31,8 @@ const URGENT: ReportReason[] = ["violence", "self_harm", "sexual_minors"];
  * plainly what happens next, and offer the block as the thing that works straight away.
  */
 export default function Report() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const params = useLocalSearchParams<{
     kind: ReportKind;
     id: string;
@@ -78,7 +80,7 @@ export default function Report() {
         <TopBar title="Report sent" />
         <ScrollView contentContainerStyle={[s.body, { paddingBottom: insets.bottom + 24 }]}>
           <View style={s.doneMark}>
-            <Icon name="ShieldCheck" size={30} color={roles.success} />
+            <Icon name="ShieldCheck" size={30} color={t.colors.success} />
           </View>
           <Text style={s.title} accessibilityRole="header">
             Thanks for telling us.
@@ -178,58 +180,59 @@ function nextSteps(r: ReportReceipt, kind: ReportKind) {
   return "It's on record. Blocking them stops them reaching you, straight away.";
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  body: { padding: 20, gap: 4 },
-  title: {
-    fontFamily: fonts.displayBold,
-    fontSize: 24,
-    lineHeight: 29,
-    color: roles.text,
-    letterSpacing: -0.3,
-  },
-  lead: {
-    fontFamily: fonts.body,
-    fontSize: 16,
-    lineHeight: 24,
-    color: roles.textSoft,
-    marginTop: 6,
-  },
-  reasons: { marginTop: 18, marginBottom: 22, gap: 8 },
-  reason: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    minHeight: 54,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: roles.border,
-  },
-  reasonOn: { borderColor: roles.text, backgroundColor: roles.surfaceRaised },
-  pressed: { backgroundColor: roles.surfaceRaised },
-  reasonText: { flex: 1, fontFamily: fonts.bold, fontSize: 15.5, color: roles.text },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: roles.borderStrong,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  radioOn: { borderColor: roles.text },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: roles.text },
-  details: { minHeight: 96, textAlignVertical: "top", paddingTop: 14 },
-  send: { marginTop: 24, gap: 14 },
-  doneMark: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: roles.surfaceRaised,
-    marginBottom: 14,
-  },
-  doneActions: { marginTop: 28, gap: 10 },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    body: { padding: 20, gap: 4 },
+    title: {
+      fontFamily: fonts.displayBold,
+      fontSize: 24,
+      lineHeight: 29,
+      color: t.colors.text,
+      letterSpacing: -0.3,
+    },
+    lead: {
+      fontFamily: fonts.body,
+      fontSize: 16,
+      lineHeight: 24,
+      color: t.colors.textSoft,
+      marginTop: 6,
+    },
+    reasons: { marginTop: 18, marginBottom: 22, gap: 8 },
+    reason: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      minHeight: 54,
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: t.colors.border,
+    },
+    reasonOn: { borderColor: t.colors.text, backgroundColor: t.colors.surfaceRaised },
+    pressed: { backgroundColor: t.colors.surfaceRaised },
+    reasonText: { flex: 1, fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
+    radio: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 2,
+      borderColor: t.colors.borderStrong,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    radioOn: { borderColor: t.colors.text },
+    radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: t.colors.text },
+    details: { minHeight: 96, textAlignVertical: "top", paddingTop: 14 },
+    send: { marginTop: 24, gap: 14 },
+    doneMark: {
+      width: 56,
+      height: 56,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: t.colors.surfaceRaised,
+      marginBottom: 14,
+    },
+    doneActions: { marginTop: 28, gap: 10 },
+  });

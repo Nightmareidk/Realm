@@ -22,10 +22,12 @@ import { PostCard } from "@/social/post-card";
 import { useSafety } from "@/social/safety";
 import { AppScreen, Loading, Problem, TopBar } from "@/social/screen";
 import { ago } from "@/social/time";
-import { fonts, roles, useTheme } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 
 /** One post, its comments (replies sit under the comment they answer), and a box to add one. */
 export default function PostScreen() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -197,7 +199,7 @@ export default function PostScreen() {
               placeholder={
                 post.data ? `Add a comment for ${post.data.author.displayName}…` : "Add a comment…"
               }
-              placeholderTextColor={roles.textMuted}
+              placeholderTextColor={t.colors.textMuted}
               selectionColor={accent}
               cursorColor={accent}
               multiline
@@ -242,6 +244,8 @@ function CommentRow({
   onReply: () => void;
   onOptions: () => void;
 }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   return (
     <Pressable
@@ -282,7 +286,7 @@ function CommentRow({
             accessibilityLabel="More"
             hitSlop={10}
           >
-            <Icon name="DotsThreeBold" size={18} color={roles.textSoft} />
+            <Icon name="DotsThreeBold" size={18} color={t.colors.textSoft} />
           </Pressable>
         </View>
       </View>
@@ -290,59 +294,66 @@ function CommentRow({
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  postWrap: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: roles.border,
-    marginBottom: 6,
-  },
-  heading: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: roles.textSoft,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  comment: { flexDirection: "row", gap: 10, paddingHorizontal: 14, paddingVertical: 10 },
-  reply: { paddingLeft: 58 },
-  body: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: roles.text },
-  author: { fontFamily: fonts.bold },
-  meta: { flexDirection: "row", gap: 16, marginTop: 4, alignItems: "center" },
-  metaText: { fontFamily: fonts.body, fontSize: 13, color: roles.textSoft },
-  metaAction: { fontFamily: fonts.bold, fontSize: 13, color: roles.textSoft },
-  hiddenText: { fontFamily: fonts.bold, fontSize: 13, color: roles.danger, marginTop: 4 },
-  composer: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: roles.border,
-    backgroundColor: roles.bg,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-  },
-  replying: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingBottom: 8,
-    paddingHorizontal: 4,
-  },
-  replyingText: { flex: 1, fontFamily: fonts.body, fontSize: 13.5, color: roles.textSoft },
-  cancel: { fontFamily: fonts.bold, fontSize: 13.5, color: roles.text },
-  row: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
-  input: {
-    flex: 1,
-    minHeight: 44,
-    maxHeight: 120,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: roles.borderStrong,
-    backgroundColor: roles.surfaceSunken,
-    paddingHorizontal: 16,
-    paddingTop: 11,
-    paddingBottom: 11,
-    fontFamily: fonts.body,
-    fontSize: 15.5,
-    color: roles.text,
-  },
-  send: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  dim: { opacity: 0.45 },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    postWrap: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border,
+      marginBottom: 6,
+    },
+    heading: {
+      fontFamily: fonts.bold,
+      fontSize: 15,
+      color: t.colors.textSoft,
+      paddingHorizontal: 16,
+      paddingBottom: 12,
+    },
+    comment: { flexDirection: "row", gap: 10, paddingHorizontal: 14, paddingVertical: 10 },
+    reply: { paddingLeft: 58 },
+    body: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: t.colors.text },
+    author: { fontFamily: fonts.bold },
+    meta: { flexDirection: "row", gap: 16, marginTop: 4, alignItems: "center" },
+    metaText: { fontFamily: fonts.body, fontSize: 13, color: t.colors.textSoft },
+    metaAction: { fontFamily: fonts.bold, fontSize: 13, color: t.colors.textSoft },
+    hiddenText: { fontFamily: fonts.bold, fontSize: 13, color: t.colors.danger, marginTop: 4 },
+    composer: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.border,
+      backgroundColor: t.colors.bg,
+      paddingHorizontal: 12,
+      paddingTop: 8,
+    },
+    replying: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingBottom: 8,
+      paddingHorizontal: 4,
+    },
+    replyingText: { flex: 1, fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft },
+    cancel: { fontFamily: fonts.bold, fontSize: 13.5, color: t.colors.text },
+    row: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
+    input: {
+      flex: 1,
+      minHeight: 44,
+      maxHeight: 120,
+      borderRadius: 22,
+      borderWidth: 1.5,
+      borderColor: t.colors.borderStrong,
+      backgroundColor: t.colors.surfaceSunken,
+      paddingHorizontal: 16,
+      paddingTop: 11,
+      paddingBottom: 11,
+      fontFamily: fonts.body,
+      fontSize: 15.5,
+      color: t.colors.text,
+    },
+    send: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    dim: { opacity: 0.45 },
+  });

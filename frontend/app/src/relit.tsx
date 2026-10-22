@@ -35,7 +35,7 @@ export function Relit({
   render: (id: ThemeId) => ReactNode;
   style?: ViewStyle;
 }) {
-  const { id } = useTheme();
+  const { accentId: id } = useTheme();
   return (
     <Animated.View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
       {THEME_ORDER.map((t) => (

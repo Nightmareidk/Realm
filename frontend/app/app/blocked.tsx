@@ -6,11 +6,12 @@ import { ApiError, api } from "@/server";
 import { useSheet } from "@/sheet";
 import { PersonRow } from "@/social/person-row";
 import { AppScreen, Empty, Loading, Problem, TopBar } from "@/social/screen";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles } from "@/theme";
 import { Pill } from "@/ui";
 
 /** The people you've blocked, and the way to unblock them. */
 export default function Blocked() {
+  const s = useStyles(make);
   const insets = useSafeAreaInsets();
   const sheet = useSheet();
   const lists = useApi<SafetyLists>("/users/@me/safety");
@@ -81,14 +82,15 @@ export default function Blocked() {
   );
 }
 
-const s = StyleSheet.create({
-  lead: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    lineHeight: 22,
-    color: roles.textSoft,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 6,
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    lead: {
+      fontFamily: fonts.body,
+      fontSize: 15,
+      lineHeight: 22,
+      color: t.colors.textSoft,
+      paddingHorizontal: 16,
+      paddingTop: 14,
+      paddingBottom: 6,
+    },
+  });

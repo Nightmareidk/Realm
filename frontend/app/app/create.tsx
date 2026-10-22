@@ -20,7 +20,7 @@ import { ApiError, api, upload } from "@/server";
 import { useSession } from "@/session";
 import { CLIP_MAX_SECONDS, shrinkPhoto } from "@/shrink";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, roles, useTheme } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 
 type Mode = "post" | "clip";
@@ -30,6 +30,8 @@ type Mode = "post" | "clip";
  * sees it. On a private account each post can still be made public, one by one.
  */
 export default function Create() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const params = useLocalSearchParams<{ mode?: Mode }>();
   const { accent } = useTheme();
@@ -211,7 +213,7 @@ export default function Create() {
                   <Icon
                     name={mode === "clip" ? "VideoCamera" : "Image"}
                     size={28}
-                    color={roles.text}
+                    color={t.colors.text}
                   />
                   <Text style={s.addText}>{mode === "clip" ? "Pick a video" : "Pick photos"}</Text>
                 </Pressable>
@@ -220,7 +222,7 @@ export default function Create() {
                   accessibilityRole="button"
                   style={[s.thumb, s.add]}
                 >
-                  <Icon name="Camera" size={28} color={roles.text} />
+                  <Icon name="Camera" size={28} color={t.colors.text} />
                   <Text style={s.addText}>Camera</Text>
                 </Pressable>
               </>
@@ -234,7 +236,7 @@ export default function Create() {
             placeholder={
               mode === "clip" ? "Say what happened" : "Write a caption, or post just words"
             }
-            placeholderTextColor={roles.textMuted}
+            placeholderTextColor={t.colors.textMuted}
             selectionColor={accent}
             cursorColor={accent}
             multiline
@@ -307,107 +309,108 @@ export default function Create() {
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  off: { opacity: 0.45 },
-  body: { padding: 16, paddingBottom: 40 },
-  modes: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  mode: {
-    minHeight: 40,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: roles.border,
-  },
-  modeOn: { backgroundColor: roles.surfaceRaised, borderColor: roles.text },
-  modeText: { fontFamily: fonts.bold, fontSize: 15, color: roles.textSoft },
-  modeTextOn: { color: roles.text },
-  picked: { gap: 8, paddingBottom: 4 },
-  thumb: {
-    width: 120,
-    height: 150,
-    borderRadius: 14,
-    overflow: "hidden",
-    backgroundColor: roles.surfaceSunken,
-  },
-  thumbFill: { width: "100%", height: "100%" },
-  video: { alignItems: "center", justifyContent: "center", backgroundColor: "#06080c" },
-  remove: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(11,11,14,0.7)",
-  },
-  add: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: roles.borderStrong,
-    borderStyle: "dashed",
-    backgroundColor: "transparent",
-  },
-  addText: { fontFamily: fonts.bold, fontSize: 13.5, color: roles.text },
-  label: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: roles.text,
-    marginTop: 22,
-    marginBottom: 8,
-  },
-  caption: {
-    minHeight: 110,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: roles.borderStrong,
-    backgroundColor: "rgba(11,11,14,0.7)",
-    padding: 14,
-    fontFamily: fonts.body,
-    fontSize: 16,
-    lineHeight: 23,
-    color: roles.text,
-    textAlignVertical: "top",
-  },
-  count: {
-    fontFamily: fonts.body,
-    fontSize: 12.5,
-    color: roles.textSoft,
-    alignSelf: "flex-end",
-    marginTop: 4,
-  },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: {
-    minHeight: 40,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: roles.border,
-  },
-  chipOn: { backgroundColor: roles.surfaceRaised, borderColor: roles.text },
-  chipText: { fontFamily: fonts.bold, fontSize: 14.5, color: roles.textSoft },
-  chipTextOn: { color: roles.text },
-  toggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    marginTop: 22,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: roles.border,
-  },
-  toggleTitle: { fontFamily: fonts.bold, fontSize: 15.5, color: roles.text },
-  toggleLine: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    lineHeight: 20,
-    color: roles.textSoft,
-    marginTop: 2,
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    off: { opacity: 0.45 },
+    body: { padding: 16, paddingBottom: 40 },
+    modes: { flexDirection: "row", gap: 8, marginBottom: 16 },
+    mode: {
+      minHeight: 40,
+      paddingHorizontal: 18,
+      borderRadius: 999,
+      justifyContent: "center",
+      borderWidth: 1.5,
+      borderColor: t.colors.border,
+    },
+    modeOn: { backgroundColor: t.colors.surfaceRaised, borderColor: t.colors.text },
+    modeText: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.textSoft },
+    modeTextOn: { color: t.colors.text },
+    picked: { gap: 8, paddingBottom: 4 },
+    thumb: {
+      width: 120,
+      height: 150,
+      borderRadius: 14,
+      overflow: "hidden",
+      backgroundColor: t.colors.surfaceSunken,
+    },
+    thumbFill: { width: "100%", height: "100%" },
+    video: { alignItems: "center", justifyContent: "center", backgroundColor: "#06080c" },
+    remove: {
+      position: "absolute",
+      top: 6,
+      right: 6,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(11,11,14,0.7)",
+    },
+    add: {
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      borderWidth: 1.5,
+      borderColor: t.colors.borderStrong,
+      borderStyle: "dashed",
+      backgroundColor: "transparent",
+    },
+    addText: { fontFamily: fonts.bold, fontSize: 13.5, color: t.colors.text },
+    label: {
+      fontFamily: fonts.bold,
+      fontSize: 15,
+      color: t.colors.text,
+      marginTop: 22,
+      marginBottom: 8,
+    },
+    caption: {
+      minHeight: 110,
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: t.colors.borderStrong,
+      backgroundColor: "rgba(11,11,14,0.7)",
+      padding: 14,
+      fontFamily: fonts.body,
+      fontSize: 16,
+      lineHeight: 23,
+      color: t.colors.text,
+      textAlignVertical: "top",
+    },
+    count: {
+      fontFamily: fonts.body,
+      fontSize: 12.5,
+      color: t.colors.textSoft,
+      alignSelf: "flex-end",
+      marginTop: 4,
+    },
+    chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    chip: {
+      minHeight: 40,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+      justifyContent: "center",
+      borderWidth: 1.5,
+      borderColor: t.colors.border,
+    },
+    chipOn: { backgroundColor: t.colors.surfaceRaised, borderColor: t.colors.text },
+    chipText: { fontFamily: fonts.bold, fontSize: 14.5, color: t.colors.textSoft },
+    chipTextOn: { color: t.colors.text },
+    toggle: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      marginTop: 22,
+      paddingTop: 16,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.border,
+    },
+    toggleTitle: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
+    toggleLine: {
+      fontFamily: fonts.body,
+      fontSize: 14,
+      lineHeight: 20,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
+  });

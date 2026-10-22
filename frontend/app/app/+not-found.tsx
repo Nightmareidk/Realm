@@ -1,10 +1,12 @@
 import { useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { FormScreen } from "@/screen";
+import { type NativeTheme, useStyles } from "@/theme";
 import { Lead, Pill, Title } from "@/ui";
 
 /** A link that doesn't lead to a screen (an old link, a typo): say so, and offer the way back. */
 export default function NotFound() {
+  const s = useStyles(make);
   const router = useRouter();
   return (
     <FormScreen>
@@ -21,8 +23,9 @@ export default function NotFound() {
   );
 }
 
-const s = StyleSheet.create({
-  head: { marginTop: 28 },
-  lead: { marginTop: 12 },
-  foot: { marginTop: "auto", paddingTop: 32 },
-});
+const make = (_t: NativeTheme) =>
+  StyleSheet.create({
+    head: { marginTop: 28 },
+    lead: { marginTop: 12 },
+    foot: { marginTop: "auto", paddingTop: 32 },
+  });

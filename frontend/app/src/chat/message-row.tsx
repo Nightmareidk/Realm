@@ -14,7 +14,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { Icon } from "../icon";
 import { mediaSource } from "../server";
 import { Avatar } from "../social/avatar";
-import { fonts, roles } from "../theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "../theme";
 
 /** The same quick six as the website; double-tap sends the first. */
 export const QUICK_REACTIONS = ["❤️", "😂", "👍", "😮", "😢", "🔥"] as const;
@@ -83,6 +83,7 @@ type RowProps = {
 };
 
 export const MessageRow = memo(function MessageRow(props: RowProps) {
+  const s = useStyles(make);
   if (props.m.type.startsWith("system_")) {
     return <Text style={s.system}>{systemLine(props.m)}</Text>;
   }
@@ -90,6 +91,8 @@ export const MessageRow = memo(function MessageRow(props: RowProps) {
 });
 
 function Bubble({ m, mine, showName, seen, accent, onAccent, onReply, onReact, onMenu }: RowProps) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const shift = useSharedValue(0);
   const armed = useSharedValue(false);
 
@@ -147,8 +150,8 @@ function Bubble({ m, mine, showName, seen, accent, onAccent, onReply, onReact, o
   const images = m.hidden ? [] : m.attachments.filter((a) => a.kind === "image");
   const files = m.hidden ? [] : m.attachments.filter((a) => a.kind !== "image");
   const text = m.hidden ? "Hidden after reports" : m.content;
-  const ink = mine ? onAccent : roles.text;
-  const soft = mine ? onAccent : roles.textSoft;
+  const ink = mine ? onAccent : t.colors.text;
+  const soft = mine ? onAccent : t.colors.textSoft;
 
   const bubble = (
     <View
@@ -216,7 +219,7 @@ function Bubble({ m, mine, showName, seen, accent, onAccent, onReply, onReact, o
         {showName && !mine ? <Text style={s.author}>{m.author.displayName}</Text> : null}
         <View>
           <Animated.View style={[s.replyHint, hint]} pointerEvents="none">
-            <Icon name="ArrowBendUpLeft" size={18} color={roles.textSoft} />
+            <Icon name="ArrowBendUpLeft" size={18} color={t.colors.textSoft} />
           </Animated.View>
           <GestureDetector gesture={gestures}>
             <Animated.View style={moved}>{bubble}</Animated.View>
@@ -247,6 +250,7 @@ function Bubble({ m, mine, showName, seen, accent, onAccent, onReply, onReact, o
 
 /** A photo in a message, sized from what the server measured, so the chat doesn't jump. */
 function Photo({ media }: { media: MediaRef }) {
+  const s = useStyles(make);
   const ratio = media.width && media.height ? media.width / media.height : 4 / 3;
   const width = BUBBLE_MAX - 8;
   const height = Math.min(360, Math.max(140, width / ratio));
@@ -262,72 +266,73 @@ function Photo({ media }: { media: MediaRef }) {
   );
 }
 
-const s = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "flex-end", gap: 8, marginTop: 3 },
-  rowMine: { justifyContent: "flex-end" },
-  rowTheirs: { justifyContent: "flex-start" },
-  gap: { width: 28 },
-  col: { maxWidth: "82%" },
-  colMine: { alignItems: "flex-end" },
-  author: {
-    fontFamily: fonts.bold,
-    fontSize: 12.5,
-    color: roles.textSoft,
-    marginLeft: 12,
-    marginBottom: 3,
-    marginTop: 8,
-  },
-  bubble: {
-    maxWidth: BUBBLE_MAX,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    gap: 6,
-  },
-  // A photo on its own: a thin frame (the side padding has to be undone by name, not by "padding").
-  bare: { paddingHorizontal: 4, paddingVertical: 4 },
-  theirs: { backgroundColor: roles.surfaceSunken },
-  text: { fontFamily: fonts.body, fontSize: 15.5, lineHeight: 21 },
-  hiddenText: { fontStyle: "italic" },
-  time: { fontFamily: fonts.body, fontSize: 11.5, opacity: 0.75 },
-  timeAlone: { alignSelf: "flex-end", paddingHorizontal: 8, paddingBottom: 2 },
-  quote: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
-  quoteMine: { backgroundColor: "rgba(0,0,0,0.14)" },
-  quoteTheirs: { backgroundColor: "rgba(255,255,255,0.07)" },
-  quoteName: { fontFamily: fonts.bold, fontSize: 13 },
-  quoteText: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 18 },
-  photo: { borderRadius: 14, backgroundColor: roles.surfaceRaised },
-  file: { flexDirection: "row", alignItems: "center", gap: 8 },
-  fileName: { flexShrink: 1, fontFamily: fonts.bold, fontSize: 14.5 },
-  replyHint: { position: "absolute", left: 4, top: 0, bottom: 0, justifyContent: "center" },
-  reactions: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 3, marginLeft: 6 },
-  reactionsMine: { justifyContent: "flex-end", marginLeft: 0, marginRight: 6 },
-  reaction: {
-    minHeight: 30,
-    minWidth: 44,
-    paddingHorizontal: 9,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: roles.border,
-    backgroundColor: roles.surface,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  reactionText: { fontFamily: fonts.bold, fontSize: 13, color: roles.text },
-  seen: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: roles.textSoft,
-    marginTop: 3,
-    marginRight: 6,
-  },
-  system: {
-    alignSelf: "center",
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: roles.textSoft,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    textAlign: "center",
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    row: { flexDirection: "row", alignItems: "flex-end", gap: 8, marginTop: 3 },
+    rowMine: { justifyContent: "flex-end" },
+    rowTheirs: { justifyContent: "flex-start" },
+    gap: { width: 28 },
+    col: { maxWidth: "82%" },
+    colMine: { alignItems: "flex-end" },
+    author: {
+      fontFamily: fonts.bold,
+      fontSize: 12.5,
+      color: t.colors.textSoft,
+      marginLeft: 12,
+      marginBottom: 3,
+      marginTop: 8,
+    },
+    bubble: {
+      maxWidth: BUBBLE_MAX,
+      borderRadius: 18,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      gap: 6,
+    },
+    // A photo on its own: a thin frame (the side padding has to be undone by name, not by "padding").
+    bare: { paddingHorizontal: 4, paddingVertical: 4 },
+    theirs: { backgroundColor: t.colors.surfaceSunken },
+    text: { fontFamily: fonts.body, fontSize: 15.5, lineHeight: 21 },
+    hiddenText: { fontStyle: "italic" },
+    time: { fontFamily: fonts.body, fontSize: 11.5, opacity: 0.75 },
+    timeAlone: { alignSelf: "flex-end", paddingHorizontal: 8, paddingBottom: 2 },
+    quote: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
+    quoteMine: { backgroundColor: "rgba(0,0,0,0.14)" },
+    quoteTheirs: { backgroundColor: "rgba(255,255,255,0.07)" },
+    quoteName: { fontFamily: fonts.bold, fontSize: 13 },
+    quoteText: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 18 },
+    photo: { borderRadius: 14, backgroundColor: t.colors.surfaceRaised },
+    file: { flexDirection: "row", alignItems: "center", gap: 8 },
+    fileName: { flexShrink: 1, fontFamily: fonts.bold, fontSize: 14.5 },
+    replyHint: { position: "absolute", left: 4, top: 0, bottom: 0, justifyContent: "center" },
+    reactions: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 3, marginLeft: 6 },
+    reactionsMine: { justifyContent: "flex-end", marginLeft: 0, marginRight: 6 },
+    reaction: {
+      minHeight: 30,
+      minWidth: 44,
+      paddingHorizontal: 9,
+      borderRadius: 999,
+      borderWidth: 1.5,
+      borderColor: t.colors.border,
+      backgroundColor: t.colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    reactionText: { fontFamily: fonts.bold, fontSize: 13, color: t.colors.text },
+    seen: {
+      fontFamily: fonts.body,
+      fontSize: 12,
+      color: t.colors.textSoft,
+      marginTop: 3,
+      marginRight: 6,
+    },
+    system: {
+      alignSelf: "center",
+      fontFamily: fonts.body,
+      fontSize: 13,
+      color: t.colors.textSoft,
+      paddingVertical: 8,
+      paddingHorizontal: 20,
+      textAlign: "center",
+    },
+  });

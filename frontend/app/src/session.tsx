@@ -1,4 +1,4 @@
-import type { AuthResult, RegisterBody, SelfUser, ThemeAccent } from "@realm/contracts";
+import type { AuthResult, MyTheme, RegisterBody, SelfUser } from "@realm/contracts";
 import * as SecureStore from "expo-secure-store";
 import {
   createContext,
@@ -12,7 +12,7 @@ import {
 import { Platform } from "react-native";
 import { live } from "./live";
 import { api, setSessionToken, whenSessionEnds } from "./server";
-import { useTheme } from "./theme";
+import { choiceFrom, useTheme } from "./theme";
 import { refreshUnread, resetUnread } from "./unread";
 
 /** The session token lives in the OS keychain (Android Keystore), never in plain storage. */
@@ -60,16 +60,16 @@ const SessionContext = createContext<SessionApi | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session>({ status: "loading" });
-  const { setTheme } = useTheme();
+  const { choose } = useTheme();
 
-  /** Wear the account's own colour once we know who this is. */
+  /** Wear the account's own theme once we know who this is. */
   const adopt = useCallback(
     async (user: SelfUser) => {
       setSession({ status: "signedIn", user });
-      const settings = await api<{ accent: ThemeAccent }>("/users/@me/settings").catch(() => null);
-      if (settings) setTheme(settings.accent);
+      const mine = await api<MyTheme>("/themes/active").catch(() => null);
+      if (mine) choose(choiceFrom(mine));
     },
-    [setTheme],
+    [choose],
   );
 
   useEffect(() => {

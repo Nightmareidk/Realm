@@ -5,7 +5,7 @@ import { Linking, StyleSheet, Text, type TextInput, View } from "react-native";
 import { FormScreen } from "@/screen";
 import { ApiError, api, waitFor, webOrigin } from "@/server";
 import { useSession } from "@/session";
-import { fonts, roles, themes, useTheme } from "@/theme";
+import { fonts, type NativeTheme, themes, useStyles, useTheme } from "@/theme";
 import { Field, Lead, Notice, Pill, TextLink, Title } from "@/ui";
 
 type Step = "birthday" | "account" | "held";
@@ -44,6 +44,7 @@ export default function SignUp() {
 /* ── The birthday ─────────────────────────────────────────────────────────── */
 
 function Birthday({ onDone, onHeld }: { onDone: (date: string) => void; onHeld: () => void }) {
+  const s = useStyles(make);
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
@@ -177,9 +178,10 @@ function Account({
   onBack: () => void;
   onHeld: () => void;
 }) {
+  const s = useStyles(make);
   const router = useRouter();
   const { register } = useSession();
-  const { id: accent } = useTheme();
+  const { accentId: accent } = useTheme();
   const [f, setF] = useState<Form>({ displayName: "", username: "", email: "", password: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [notice, setNotice] = useState<string | null>(null);
@@ -366,6 +368,7 @@ function Account({
 /* ── Under the minimum age ────────────────────────────────────────────────── */
 
 function Held() {
+  const s = useStyles(make);
   const router = useRouter();
   const web = webOrigin();
   return (
@@ -389,18 +392,19 @@ function Held() {
   );
 }
 
-const s = StyleSheet.create({
-  head: { marginTop: 28 },
-  heldHead: { marginTop: 64 },
-  lead: { marginTop: 12 },
-  step: { fontFamily: fonts.bold, fontSize: 15, color: roles.textSoft, marginTop: 14 },
-  center: { textAlign: "center", marginTop: 4 },
-  form: { marginTop: 30, gap: 22 },
-  row: { flexDirection: "row", gap: 12 },
-  part: { flex: 1 },
-  partWide: { flex: 1.4 },
-  foot: { marginTop: "auto", paddingTop: 32, gap: 8 },
-  across: { flexDirection: "row", justifyContent: "center" },
-  terms: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 5 },
-  termsText: { fontFamily: fonts.body, fontSize: 15, color: roles.textSoft },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    head: { marginTop: 28 },
+    heldHead: { marginTop: 64 },
+    lead: { marginTop: 12 },
+    step: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.textSoft, marginTop: 14 },
+    center: { textAlign: "center", marginTop: 4 },
+    form: { marginTop: 30, gap: 22 },
+    row: { flexDirection: "row", gap: 12 },
+    part: { flex: 1 },
+    partWide: { flex: 1.4 },
+    foot: { marginTop: "auto", paddingTop: 32, gap: 8 },
+    across: { flexDirection: "row", justifyContent: "center" },
+    terms: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 5 },
+    termsText: { fontFamily: fonts.body, fontSize: 15, color: t.colors.textSoft },
+  });

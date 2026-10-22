@@ -8,7 +8,7 @@ import { ApiError, api } from "@/server";
 import { AppScreen, Empty, Loading, TopBar } from "@/social/screen";
 import { SpaceBadge } from "@/social/space-badge";
 import { compact } from "@/social/time";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 
 /**
@@ -16,6 +16,8 @@ import { Pill } from "@/ui";
  * here (it works on the website today). Not a member yet: join a public Space from here.
  */
 export default function SpaceScreen() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const space = useApi<SpaceDetail>(`/communities/${id}`);
@@ -85,10 +87,10 @@ export default function SpaceScreen() {
             style={s.room}
           >
             <View style={s.roomIcon}>
-              <Icon name="Hash" size={20} color={roles.textSoft} />
+              <Icon name="Hash" size={20} color={t.colors.textSoft} />
             </View>
             <Text style={s.roomName}>{c.name}</Text>
-            <Icon name="CaretRight" size={18} color={roles.textSoft} />
+            <Icon name="CaretRight" size={18} color={t.colors.textSoft} />
           </Pressable>
         ))}
 
@@ -96,7 +98,7 @@ export default function SpaceScreen() {
         {voice.map((c) => (
           <View key={c.id} style={s.room}>
             <View style={s.roomIcon}>
-              <Icon name="SpeakerHigh" size={20} color={roles.textSoft} />
+              <Icon name="SpeakerHigh" size={20} color={t.colors.textSoft} />
             </View>
             <View style={s.fill}>
               <Text style={s.roomName}>{c.name}</Text>
@@ -111,41 +113,42 @@ export default function SpaceScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  body: { padding: 16, paddingBottom: 40 },
-  head: { flexDirection: "row", alignItems: "center", gap: 14 },
-  name: { fontFamily: fonts.displayBold, fontSize: 24, color: roles.text },
-  line: { fontFamily: fonts.body, fontSize: 14, color: roles.textSoft, marginTop: 2 },
-  desc: {
-    fontFamily: fonts.body,
-    fontSize: 15.5,
-    lineHeight: 23,
-    color: roles.text,
-    marginTop: 14,
-  },
-  heading: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: roles.text,
-    marginTop: 24,
-    marginBottom: 4,
-  },
-  room: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    minHeight: 56,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: roles.border,
-  },
-  roomIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: roles.surfaceRaised,
-  },
-  roomName: { flex: 1, fontFamily: fonts.bold, fontSize: 16, color: roles.text },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    body: { padding: 16, paddingBottom: 40 },
+    head: { flexDirection: "row", alignItems: "center", gap: 14 },
+    name: { fontFamily: fonts.displayBold, fontSize: 24, color: t.colors.text },
+    line: { fontFamily: fonts.body, fontSize: 14, color: t.colors.textSoft, marginTop: 2 },
+    desc: {
+      fontFamily: fonts.body,
+      fontSize: 15.5,
+      lineHeight: 23,
+      color: t.colors.text,
+      marginTop: 14,
+    },
+    heading: {
+      fontFamily: fonts.bold,
+      fontSize: 16,
+      color: t.colors.text,
+      marginTop: 24,
+      marginBottom: 4,
+    },
+    room: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      minHeight: 56,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.border,
+    },
+    roomIcon: {
+      width: 38,
+      height: 38,
+      borderRadius: 11,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: t.colors.surfaceRaised,
+    },
+    roomName: { flex: 1, fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
+  });

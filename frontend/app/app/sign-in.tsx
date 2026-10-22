@@ -4,10 +4,11 @@ import { StyleSheet, Text, type TextInput, View } from "react-native";
 import { FormScreen } from "@/screen";
 import { ApiError } from "@/server";
 import { useSession } from "@/session";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles } from "@/theme";
 import { Field, Notice, Pill, TextLink, Title } from "@/ui";
 
 export default function SignIn() {
+  const s = useStyles(make);
   const router = useRouter();
   const { signIn } = useSession();
   const [login, setLogin] = useState("");
@@ -86,10 +87,11 @@ export default function SignIn() {
   );
 }
 
-const s = StyleSheet.create({
-  head: { marginTop: 28 },
-  form: { marginTop: 32, gap: 22 },
-  foot: { marginTop: "auto", paddingTop: 32, gap: 8 },
-  across: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
-  acrossText: { fontFamily: fonts.body, fontSize: 16, color: roles.textSoft },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    head: { marginTop: 28 },
+    form: { marginTop: 32, gap: 22 },
+    foot: { marginTop: "auto", paddingTop: 32, gap: 8 },
+    across: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+    acrossText: { fontFamily: fonts.body, fontSize: 16, color: t.colors.textSoft },
+  });

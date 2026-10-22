@@ -11,7 +11,7 @@ import { useSession } from "@/session";
 import { Avatar } from "@/social/avatar";
 import { PostCard } from "@/social/post-card";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill, Wordmark } from "@/ui";
 
 /**
@@ -20,6 +20,8 @@ import { Pill, Wordmark } from "@/ui";
  * the feed.
  */
 export default function Home() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const feed = usePosts("/feed");
@@ -44,7 +46,7 @@ export default function Home() {
           onPress={() => router.push("/create")}
           style={s.icon}
         >
-          <Icon name="PlusSquare" size={26} color={roles.text} />
+          <Icon name="PlusSquare" size={26} color={t.colors.text} />
         </Pressable>
         <Wordmark />
         <Pressable
@@ -53,7 +55,7 @@ export default function Home() {
           onPress={() => router.push("/activity")}
           style={s.icon}
         >
-          <Icon name="Heart" size={26} color={roles.text} />
+          <Icon name="Heart" size={26} color={t.colors.text} />
           {unread ? <View style={s.badge} /> : null}
         </Pressable>
       </View>
@@ -61,14 +63,17 @@ export default function Home() {
         <Pressable
           onPress={() => router.push("/verify-email")}
           accessibilityRole="link"
-          style={({ pressed }) => [s.confirm, pressed && { backgroundColor: roles.surfaceRaised }]}
+          style={({ pressed }) => [
+            s.confirm,
+            pressed && { backgroundColor: t.colors.surfaceRaised },
+          ]}
         >
-          <Icon name="EnvelopeSimple" size={22} color={roles.text} />
+          <Icon name="EnvelopeSimple" size={22} color={t.colors.text} />
           <View style={s.confirmText}>
             <Text style={s.confirmTitle}>Confirm your email</Text>
             <Text style={s.confirmLine}>Use the 6-digit code we sent. It takes a moment.</Text>
           </View>
-          <Icon name="CaretRight" size={18} color={roles.textSoft} />
+          <Icon name="CaretRight" size={18} color={t.colors.textSoft} />
         </Pressable>
       ) : null}
       <People />
@@ -113,6 +118,8 @@ export default function Home() {
  * presence in the app; until then it never pretends anyone is live.
  */
 function People() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const { session } = useSession();
   const me = session.status === "signedIn" ? session.user : null;
@@ -134,7 +141,7 @@ function People() {
         <View>
           <Avatar user={me} size={64} />
           <View style={s.plus}>
-            <Icon name="PlusBold" size={14} color={roles.bg} />
+            <Icon name="PlusBold" size={14} color={t.colors.bg} />
           </View>
         </View>
         <Text style={s.personName} numberOfLines={1}>
@@ -161,60 +168,61 @@ function People() {
   );
 }
 
-const s = StyleSheet.create({
-  confirm: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginHorizontal: 12,
-    marginTop: 4,
-    marginBottom: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: roles.border,
-    backgroundColor: roles.surface,
-  },
-  confirmText: { flex: 1 },
-  confirmTitle: { fontFamily: fonts.bold, fontSize: 15.5, color: roles.text },
-  confirmLine: { fontFamily: fonts.body, fontSize: 13.5, color: roles.textSoft, marginTop: 2 },
-  top: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 4,
-  },
-  icon: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
-  badge: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: "#ff5f7a",
-    borderWidth: 1.5,
-    borderColor: roles.bg,
-  },
-  peopleRow: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: roles.border,
-  },
-  people: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 12, gap: 14 },
-  person: { alignItems: "center", gap: 6, width: 70 },
-  personName: { fontFamily: fonts.body, fontSize: 12.5, color: roles.textSoft, maxWidth: 70 },
-  plus: {
-    position: "absolute",
-    right: -2,
-    bottom: -2,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: roles.text,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3,
-    borderColor: roles.bg,
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    confirm: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      marginHorizontal: 12,
+      marginTop: 4,
+      marginBottom: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      borderRadius: 16,
+      borderWidth: 1.5,
+      borderColor: t.colors.border,
+      backgroundColor: t.colors.surface,
+    },
+    confirmText: { flex: 1 },
+    confirmTitle: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
+    confirmLine: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft, marginTop: 2 },
+    top: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 4,
+    },
+    icon: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
+    badge: {
+      position: "absolute",
+      top: 10,
+      right: 10,
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      backgroundColor: "#ff5f7a",
+      borderWidth: 1.5,
+      borderColor: t.colors.bg,
+    },
+    peopleRow: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border,
+    },
+    people: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 12, gap: 14 },
+    person: { alignItems: "center", gap: 6, width: 70 },
+    personName: { fontFamily: fonts.body, fontSize: 12.5, color: t.colors.textSoft, maxWidth: 70 },
+    plus: {
+      position: "absolute",
+      right: -2,
+      bottom: -2,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: t.colors.text,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 3,
+      borderColor: t.colors.bg,
+    },
+  });

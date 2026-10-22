@@ -2,7 +2,7 @@ import type { UserSummary } from "@realm/contracts";
 import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 import { mediaSource } from "../server";
-import { fonts, roles } from "../theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "../theme";
 
 /** Warm, readable fills for people without a picture, picked from their id so it never changes. */
 const FILLS = ["#ffb547", "#8bd3ff", "#ff8fb1", "#b9f27c", "#d4c2f5", "#ffd28a"];
@@ -24,6 +24,8 @@ export function Avatar({
   /** A ring around it: "live" (here now) or "self" (the You tab). */
   ring?: "live" | "self";
 }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const inner = (
     <View
       style={[
@@ -56,7 +58,7 @@ export function Avatar({
         {
           padding: pad,
           borderRadius: size,
-          borderColor: ring === "live" ? roles.presence : roles.text,
+          borderColor: ring === "live" ? t.colors.presence : t.colors.text,
         },
       ]}
     >
@@ -65,8 +67,9 @@ export function Avatar({
   );
 }
 
-const s = StyleSheet.create({
-  circle: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  initial: { fontFamily: fonts.display, color: "#0b0b0e" },
-  ring: { borderWidth: 2.5 },
-});
+const make = (_t: NativeTheme) =>
+  StyleSheet.create({
+    circle: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
+    initial: { fontFamily: fonts.display, color: "#0b0b0e" },
+    ring: { borderWidth: 2.5 },
+  });

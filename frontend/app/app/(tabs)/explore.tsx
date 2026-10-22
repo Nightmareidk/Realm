@@ -10,13 +10,15 @@ import { PersonRow } from "@/social/person-row";
 import { AppScreen, Loading } from "@/social/screen";
 import { SpaceBadge } from "@/social/space-badge";
 import { compact } from "@/social/time";
-import { fonts, roles, useTheme } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 
 /**
  * Explore: search people and Spaces at the top (the magnifying glass, like Instagram); below it
  * your Spaces, public Spaces to discover, and Boards, which are on the way.
  */
 export default function Explore() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const insets = useSafeAreaInsets();
   const { accent } = useTheme();
   const [q, setQ] = useState("");
@@ -49,12 +51,12 @@ export default function Explore() {
           Explore
         </Text>
         <View style={s.search}>
-          <Icon name="MagnifyingGlass" size={20} color={roles.textSoft} />
+          <Icon name="MagnifyingGlass" size={20} color={t.colors.textSoft} />
           <TextInput
             value={q}
             onChangeText={setQ}
             placeholder="Search people and Spaces"
-            placeholderTextColor={roles.textMuted}
+            placeholderTextColor={t.colors.textMuted}
             selectionColor={accent}
             cursorColor={accent}
             autoCapitalize="none"
@@ -70,7 +72,7 @@ export default function Explore() {
               accessibilityLabel="Clear search"
               hitSlop={10}
             >
-              <Icon name="X" size={18} color={roles.textSoft} />
+              <Icon name="X" size={18} color={t.colors.textSoft} />
             </Pressable>
           ) : null}
         </View>
@@ -83,6 +85,7 @@ export default function Explore() {
 }
 
 function Results({ results, searching }: { results: SearchResults | null; searching: boolean }) {
+  const s = useStyles(make);
   if (!results) return searching ? <Loading /> : null;
   if (!results.users.length && !results.spaces.length) {
     return (
@@ -110,6 +113,8 @@ function Results({ results, searching }: { results: SearchResults | null; search
 }
 
 function Browse() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const mine = useApi<{ spaces: SpaceDetail[] }>("/users/@me/communities");
   const discover = useApi<{ spaces: DiscoverSpace[] }>(
     "/discover/communities?sort=active&limit=12",
@@ -149,7 +154,7 @@ function Browse() {
 
       <View style={s.boards}>
         <View style={s.boardsHead}>
-          <Icon name="Article" size={22} color={roles.text} />
+          <Icon name="Article" size={22} color={t.colors.text} />
           <Text style={s.boardsTitle}>Boards</Text>
           <Text style={s.soon}>Coming soon</Text>
         </View>
@@ -173,6 +178,8 @@ function SpaceRow({
   accent: SpaceDetail["accent"];
   line: string;
 }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   return (
     <Pressable
@@ -190,84 +197,90 @@ function SpaceRow({
           {line}
         </Text>
       </View>
-      <Icon name="CaretRight" size={18} color={roles.textSoft} />
+      <Icon name="CaretRight" size={18} color={t.colors.textSoft} />
     </Pressable>
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  head: {
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: roles.border,
-  },
-  title: { fontFamily: fonts.displayBold, fontSize: 28, color: roles.text, letterSpacing: -0.5 },
-  search: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 12,
-    minHeight: 48,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    backgroundColor: roles.surfaceSunken,
-  },
-  input: { flex: 1, minHeight: 46, fontFamily: fonts.body, fontSize: 16, color: roles.text },
-  body: { paddingBottom: 40 },
-  heading: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: roles.text,
-    paddingHorizontal: 16,
-    paddingTop: 22,
-    paddingBottom: 6,
-  },
-  none: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    lineHeight: 22,
-    color: roles.textSoft,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  spaceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 64,
-  },
-  spaceName: { fontFamily: fonts.bold, fontSize: 15.5, color: roles.text },
-  spaceLine: { fontFamily: fonts.body, fontSize: 13.5, color: roles.textSoft, marginTop: 1 },
-  boards: {
-    margin: 16,
-    marginTop: 26,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: roles.border,
-  },
-  boardsHead: { flexDirection: "row", alignItems: "center", gap: 10 },
-  boardsTitle: { flex: 1, fontFamily: fonts.displayBold, fontSize: 19, color: roles.text },
-  soon: {
-    fontFamily: fonts.bold,
-    fontSize: 12.5,
-    color: roles.textSoft,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    overflow: "hidden",
-    backgroundColor: "rgba(11,11,14,0.65)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.14)",
-  },
-  boardsLine: {
-    fontFamily: fonts.body,
-    fontSize: 14.5,
-    lineHeight: 21,
-    color: roles.textSoft,
-    marginTop: 8,
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    head: {
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border,
+    },
+    title: {
+      fontFamily: fonts.displayBold,
+      fontSize: 28,
+      color: t.colors.text,
+      letterSpacing: -0.5,
+    },
+    search: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginTop: 12,
+      minHeight: 48,
+      paddingHorizontal: 16,
+      borderRadius: 999,
+      backgroundColor: t.colors.surfaceSunken,
+    },
+    input: { flex: 1, minHeight: 46, fontFamily: fonts.body, fontSize: 16, color: t.colors.text },
+    body: { paddingBottom: 40 },
+    heading: {
+      fontFamily: fonts.bold,
+      fontSize: 16,
+      color: t.colors.text,
+      paddingHorizontal: 16,
+      paddingTop: 22,
+      paddingBottom: 6,
+    },
+    none: {
+      fontFamily: fonts.body,
+      fontSize: 15,
+      lineHeight: 22,
+      color: t.colors.textSoft,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    spaceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      minHeight: 64,
+    },
+    spaceName: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
+    spaceLine: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft, marginTop: 1 },
+    boards: {
+      margin: 16,
+      marginTop: 26,
+      paddingTop: 16,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.border,
+    },
+    boardsHead: { flexDirection: "row", alignItems: "center", gap: 10 },
+    boardsTitle: { flex: 1, fontFamily: fonts.displayBold, fontSize: 19, color: t.colors.text },
+    soon: {
+      fontFamily: fonts.bold,
+      fontSize: 12.5,
+      color: t.colors.textSoft,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+      overflow: "hidden",
+      backgroundColor: "rgba(11,11,14,0.65)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(255,255,255,0.14)",
+    },
+    boardsLine: {
+      fontFamily: fonts.body,
+      fontSize: 14.5,
+      lineHeight: 21,
+      color: t.colors.textSoft,
+      marginTop: 8,
+    },
+  });

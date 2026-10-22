@@ -21,7 +21,7 @@ import { Avatar } from "@/social/avatar";
 import { LIKED } from "@/social/post-card";
 import { Empty, Loading } from "@/social/screen";
 import { compact } from "@/social/time";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles } from "@/theme";
 import { Pill } from "@/ui";
 
 /**
@@ -29,6 +29,7 @@ import { Pill } from "@/ui";
  * Only the Clip on screen plays, and nothing plays when you leave the tab.
  */
 export default function Clips() {
+  const s = useStyles(make);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const feed = usePosts("/clips");
@@ -121,6 +122,7 @@ function Clip({
   onToggleSound: () => void;
   onChange: (p: Post) => void;
 }) {
+  const s = useStyles(make);
   const router = useRouter();
   const video = post.media[0];
   const player = useVideoPlayer(video ? mediaSource(video.url) : null, (p) => {
@@ -229,6 +231,7 @@ function SideButton({
   onPress: () => void;
   color?: string;
 }) {
+  const s = useStyles(make);
   return (
     <Pressable
       onPress={onPress}
@@ -248,41 +251,48 @@ const shadow = {
   textShadowRadius: 4,
 };
 
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#000000" },
-  fill: { flex: 1, backgroundColor: roles.bg },
-  top: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-  },
-  title: { fontFamily: fonts.displayBold, fontSize: 24, color: "#ffffff", ...shadow },
-  icon: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
-  clip: { width: "100%", backgroundColor: "#000000" },
-  mute: {
-    position: "absolute",
-    top: "50%",
-    alignSelf: "center",
-    padding: 12,
-    borderRadius: 999,
-    backgroundColor: "rgba(11,11,14,0.6)",
-  },
-  side: { position: "absolute", right: 8, bottom: 28, alignItems: "center", gap: 14 },
-  sideBtn: { alignItems: "center", minWidth: 52, minHeight: 52, justifyContent: "center" },
-  sideLabel: { fontFamily: fonts.bold, fontSize: 12.5, color: "#ffffff", marginTop: 2, ...shadow },
-  info: { position: "absolute", left: 16, right: 84, bottom: 28 },
-  author: { fontFamily: fonts.bold, fontSize: 16, color: "#ffffff", ...shadow },
-  caption: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    lineHeight: 21,
-    color: "#ffffff",
-    marginTop: 4,
-    ...shadow,
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: "#000000" },
+    fill: { flex: 1, backgroundColor: t.colors.bg },
+    top: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+    },
+    title: { fontFamily: fonts.displayBold, fontSize: 24, color: "#ffffff", ...shadow },
+    icon: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
+    clip: { width: "100%", backgroundColor: "#000000" },
+    mute: {
+      position: "absolute",
+      top: "50%",
+      alignSelf: "center",
+      padding: 12,
+      borderRadius: 999,
+      backgroundColor: "rgba(11,11,14,0.6)",
+    },
+    side: { position: "absolute", right: 8, bottom: 28, alignItems: "center", gap: 14 },
+    sideBtn: { alignItems: "center", minWidth: 52, minHeight: 52, justifyContent: "center" },
+    sideLabel: {
+      fontFamily: fonts.bold,
+      fontSize: 12.5,
+      color: "#ffffff",
+      marginTop: 2,
+      ...shadow,
+    },
+    info: { position: "absolute", left: 16, right: 84, bottom: 28 },
+    author: { fontFamily: fonts.bold, fontSize: 16, color: "#ffffff", ...shadow },
+    caption: {
+      fontFamily: fonts.body,
+      fontSize: 15,
+      lineHeight: 21,
+      color: "#ffffff",
+      marginTop: 4,
+      ...shadow,
+    },
+  });

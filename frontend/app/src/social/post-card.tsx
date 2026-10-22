@@ -28,7 +28,7 @@ import { Icon } from "../icon";
 import { ApiError, api, mediaSource } from "../server";
 import { useSession } from "../session";
 import { useSheet } from "../sheet";
-import { fonts, roles } from "../theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "../theme";
 import { Avatar } from "./avatar";
 import { useSafety } from "./safety";
 import { ago, agoLong, compact } from "./time";
@@ -58,6 +58,8 @@ export const PostCard = memo(function PostCard({
   /** On the post's own screen: no "view comments" link, the full caption. */
   standalone?: boolean;
 }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const [expanded, setExpanded] = useState(standalone);
 
@@ -115,7 +117,7 @@ export const PostCard = memo(function PostCard({
       </View>
       {post.hidden ? (
         <View style={s.hidden} accessibilityRole="alert">
-          <Icon name="WarningCircle" size={18} color={roles.danger} />
+          <Icon name="WarningCircle" size={18} color={t.colors.danger} />
           <Text style={s.hiddenText}>
             Taken down after reports. Only you can see it now; you can still delete it.
           </Text>
@@ -135,7 +137,7 @@ export const PostCard = memo(function PostCard({
       <View style={s.actions}>
         <IconButton
           name={post.liked ? "HeartFill" : "Heart"}
-          color={post.liked ? LIKED : roles.text}
+          color={post.liked ? LIKED : t.colors.text}
           label={post.liked ? "Unlike" : "Like"}
           onPress={() => setLike(!post.liked)}
         />
@@ -186,13 +188,15 @@ function IconButton({
   name,
   label,
   onPress,
-  color = roles.text,
+  color,
 }: {
   name: Parameters<typeof Icon>[0]["name"];
   label: string;
   onPress: () => void;
   color?: string;
 }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   return (
     <Pressable
       accessibilityRole="button"
@@ -201,13 +205,15 @@ function IconButton({
       hitSlop={4}
       style={({ pressed }) => [s.iconBtn, pressed && { transform: [{ scale: 0.9 }] }]}
     >
-      <Icon name={name} size={27} color={color} />
+      <Icon name={name} size={27} color={color ?? t.colors.text} />
     </Pressable>
   );
 }
 
 /** Photos, swiped sideways when there's more than one. A double-tap likes, with a heart. */
 function Photos({ media, onDoubleTap }: { media: MediaRef[]; onDoubleTap: () => void }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const { width } = useWindowDimensions();
   const height = width / frameRatio(media[0]);
   const [index, setIndex] = useState(0);
@@ -246,7 +252,7 @@ function Photos({ media, onDoubleTap }: { media: MediaRef[]; onDoubleTap: () => 
           renderItem={({ item }) => (
             <Image
               source={mediaSource(item.url)}
-              style={{ width, height, backgroundColor: roles.surfaceSunken }}
+              style={{ width, height, backgroundColor: t.colors.surfaceSunken }}
               contentFit="cover"
               recyclingKey={item.id}
               transition={150}
@@ -270,6 +276,7 @@ function Photos({ media, onDoubleTap }: { media: MediaRef[]; onDoubleTap: () => 
 
 /** A Clip in a list: a dark frame with its length; it plays on its own screen and in Clips. */
 export function ClipTile({ post, onPress }: { post: Post; onPress: () => void }) {
+  const s = useStyles(make);
   const { width } = useWindowDimensions();
   const ms = post.media[0]?.durationMs ?? 0;
   const length = ms
@@ -302,6 +309,8 @@ function PostMenu({
   onChange: (p: Post) => void;
   onRemoved?: (id: string) => void;
 }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const { session } = useSession();
   const sheet = useSheet();
   const safety = useSafety();
@@ -393,96 +402,103 @@ function PostMenu({
       onPress={showMenu}
       style={s.iconBtn}
     >
-      <Icon name="DotsThreeBold" size={22} color={roles.textSoft} />
+      <Icon name="DotsThreeBold" size={22} color={t.colors.textSoft} />
     </Pressable>
   );
 }
 
-const s = StyleSheet.create({
-  card: { paddingBottom: 14 },
-  hidden: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "flex-start",
-    marginHorizontal: 12,
-    marginBottom: 8,
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: roles.dangerLine,
-  },
-  hiddenText: { flex: 1, fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: roles.text },
-  head: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingLeft: 12,
-    paddingRight: 4,
-    paddingVertical: 8,
-  },
-  who: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 48 },
-  whoText: { flex: 1 },
-  name: { fontFamily: fonts.bold, fontSize: 15, color: roles.text },
-  meta: { fontFamily: fonts.body, fontSize: 13, color: roles.textSoft, marginTop: 1 },
-  metaStrong: { fontFamily: fonts.bold, color: roles.text },
-  textPost: { paddingHorizontal: 16, paddingVertical: 10 },
-  textBody: { fontFamily: fonts.body, fontSize: 20, lineHeight: 29, color: roles.text },
-  actions: { flexDirection: "row", alignItems: "center", paddingHorizontal: 4, paddingTop: 4 },
-  iconBtn: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
-  grow: { flex: 1 },
-  likes: { fontFamily: fonts.bold, fontSize: 15, color: roles.text, paddingHorizontal: 14 },
-  caption: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    lineHeight: 22,
-    color: roles.text,
-    paddingHorizontal: 14,
-    marginTop: 4,
-  },
-  captionName: { fontFamily: fonts.bold },
-  commentsLink: { paddingHorizontal: 14, paddingVertical: 6 },
-  soft: { fontFamily: fonts.body, fontSize: 14, color: roles.textSoft },
-  burst: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dots: {
-    position: "absolute",
-    bottom: 10,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 5,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.45)" },
-  dotOn: { backgroundColor: "#ffffff" },
-  clip: { backgroundColor: "#06080c", alignItems: "center", justifyContent: "center" },
-  play: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(11,11,14,0.6)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-  },
-  length: {
-    position: "absolute",
-    right: 12,
-    bottom: 12,
-    fontFamily: fonts.bold,
-    fontSize: 13,
-    color: "#ffffff",
-    backgroundColor: "rgba(11,11,14,0.7)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    overflow: "hidden",
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    card: { paddingBottom: 14 },
+    hidden: {
+      flexDirection: "row",
+      gap: 8,
+      alignItems: "flex-start",
+      marginHorizontal: 12,
+      marginBottom: 8,
+      padding: 12,
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: t.colors.dangerLine,
+    },
+    hiddenText: {
+      flex: 1,
+      fontFamily: fonts.body,
+      fontSize: 14,
+      lineHeight: 20,
+      color: t.colors.text,
+    },
+    head: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingLeft: 12,
+      paddingRight: 4,
+      paddingVertical: 8,
+    },
+    who: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 48 },
+    whoText: { flex: 1 },
+    name: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.text },
+    meta: { fontFamily: fonts.body, fontSize: 13, color: t.colors.textSoft, marginTop: 1 },
+    metaStrong: { fontFamily: fonts.bold, color: t.colors.text },
+    textPost: { paddingHorizontal: 16, paddingVertical: 10 },
+    textBody: { fontFamily: fonts.body, fontSize: 20, lineHeight: 29, color: t.colors.text },
+    actions: { flexDirection: "row", alignItems: "center", paddingHorizontal: 4, paddingTop: 4 },
+    iconBtn: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
+    grow: { flex: 1 },
+    likes: { fontFamily: fonts.bold, fontSize: 15, color: t.colors.text, paddingHorizontal: 14 },
+    caption: {
+      fontFamily: fonts.body,
+      fontSize: 15,
+      lineHeight: 22,
+      color: t.colors.text,
+      paddingHorizontal: 14,
+      marginTop: 4,
+    },
+    captionName: { fontFamily: fonts.bold },
+    commentsLink: { paddingHorizontal: 14, paddingVertical: 6 },
+    soft: { fontFamily: fonts.body, fontSize: 14, color: t.colors.textSoft },
+    burst: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    dots: {
+      position: "absolute",
+      bottom: 10,
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 5,
+    },
+    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.45)" },
+    dotOn: { backgroundColor: "#ffffff" },
+    clip: { backgroundColor: "#06080c", alignItems: "center", justifyContent: "center" },
+    play: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(11,11,14,0.6)",
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.2)",
+    },
+    length: {
+      position: "absolute",
+      right: 12,
+      bottom: 12,
+      fontFamily: fonts.bold,
+      fontSize: 13,
+      color: "#ffffff",
+      backgroundColor: "rgba(11,11,14,0.7)",
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 999,
+      overflow: "hidden",
+    },
+  });

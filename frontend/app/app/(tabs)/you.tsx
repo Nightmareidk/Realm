@@ -5,10 +5,12 @@ import { Icon } from "@/icon";
 import { useSession } from "@/session";
 import { ProfileView } from "@/social/profile-view";
 import { AppScreen } from "@/social/screen";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 
 /** You: your own profile, with New post and Settings in its top bar. */
 export default function You() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { session } = useSession();
@@ -24,7 +26,7 @@ export default function You() {
         onPress={() => router.push("/create")}
         style={s.icon}
       >
-        <Icon name="PlusSquare" size={25} color={roles.text} />
+        <Icon name="PlusSquare" size={25} color={t.colors.text} />
       </Pressable>
       <Pressable
         accessibilityRole="button"
@@ -32,7 +34,7 @@ export default function You() {
         onPress={() => router.push("/settings")}
         style={s.icon}
       >
-        <Icon name="Gear" size={25} color={roles.text} />
+        <Icon name="Gear" size={25} color={t.colors.text} />
       </Pressable>
     </View>
   );
@@ -43,8 +45,9 @@ export default function You() {
   );
 }
 
-const s = StyleSheet.create({
-  top: { flexDirection: "row", alignItems: "center", paddingLeft: 16, paddingRight: 4 },
-  title: { flex: 1, fontFamily: fonts.displayBold, fontSize: 21, color: roles.text },
-  icon: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    top: { flexDirection: "row", alignItems: "center", paddingLeft: 16, paddingRight: 4 },
+    title: { flex: 1, fontFamily: fonts.displayBold, fontSize: 21, color: t.colors.text },
+    icon: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
+  });

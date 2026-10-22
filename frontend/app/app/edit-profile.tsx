@@ -16,11 +16,12 @@ import { useSession } from "@/session";
 import { shrinkPhoto } from "@/shrink";
 import { Avatar } from "@/social/avatar";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles } from "@/theme";
 import { Field, Notice, Pill } from "@/ui";
 
 /** Your picture, name, @handle, bio and pronouns. */
 export default function EditProfile() {
+  const s = useStyles(make);
   const router = useRouter();
   const { session, refreshUser } = useSession();
   const me = session.status === "signedIn" ? session.user : null;
@@ -140,16 +141,17 @@ export default function EditProfile() {
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  body: { padding: 16, paddingBottom: 48, gap: 20 },
-  pic: { alignItems: "center", gap: 6, marginTop: 6 },
-  change: { minHeight: 44, justifyContent: "center" },
-  changeText: {
-    fontFamily: fonts.bold,
-    fontSize: 15.5,
-    color: roles.text,
-    textDecorationLine: "underline",
-  },
-  bio: { minHeight: 90, textAlignVertical: "top", paddingTop: 14 },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    body: { padding: 16, paddingBottom: 48, gap: 20 },
+    pic: { alignItems: "center", gap: 6, marginTop: 6 },
+    change: { minHeight: 44, justifyContent: "center" },
+    changeText: {
+      fontFamily: fonts.bold,
+      fontSize: 15.5,
+      color: t.colors.text,
+      textDecorationLine: "underline",
+    },
+    bio: { minHeight: 90, textAlignVertical: "top", paddingTop: 14 },
+  });

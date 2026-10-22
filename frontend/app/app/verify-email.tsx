@@ -14,7 +14,7 @@ import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Field, Pill, TextLink } from "@/ui";
 
 /**
@@ -22,6 +22,8 @@ import { Field, Pill, TextLink } from "@/ui";
  * address is yours, and lifts the spam limit on links that unconfirmed accounts have.
  */
 export default function VerifyEmail() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { session, setUser } = useSession();
@@ -72,7 +74,7 @@ export default function VerifyEmail() {
           {me.emailVerified ? (
             <>
               <View style={s.mark}>
-                <Icon name="ShieldCheck" size={30} color={roles.success} />
+                <Icon name="ShieldCheck" size={30} color={t.colors.success} />
               </View>
               <Text style={s.title} accessibilityRole="header">
                 Your email is confirmed.
@@ -126,28 +128,29 @@ export default function VerifyEmail() {
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  body: { padding: 20 },
-  title: { fontFamily: fonts.displayBold, fontSize: 24, color: roles.text },
-  lead: {
-    fontFamily: fonts.body,
-    fontSize: 16,
-    lineHeight: 24,
-    color: roles.textSoft,
-    marginTop: 6,
-  },
-  form: { marginTop: 24, gap: 10 },
-  code: { fontFamily: fonts.bold, fontSize: 24, letterSpacing: 8 },
-  resent: { fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: roles.textSoft },
-  foot: { marginTop: 28 },
-  mark: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: roles.surfaceRaised,
-    marginBottom: 14,
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    body: { padding: 20 },
+    title: { fontFamily: fonts.displayBold, fontSize: 24, color: t.colors.text },
+    lead: {
+      fontFamily: fonts.body,
+      fontSize: 16,
+      lineHeight: 24,
+      color: t.colors.textSoft,
+      marginTop: 6,
+    },
+    form: { marginTop: 24, gap: 10 },
+    code: { fontFamily: fonts.bold, fontSize: 24, letterSpacing: 8 },
+    resent: { fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: t.colors.textSoft },
+    foot: { marginTop: 28 },
+    mark: {
+      width: 56,
+      height: 56,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: t.colors.surfaceRaised,
+      marginBottom: 14,
+    },
+  });

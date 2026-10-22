@@ -37,7 +37,7 @@ const SWIPE = 56;
 export function Intro() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { id, setTheme } = useTheme();
+  const { accentId: id, setTheme } = useTheme();
   const calm = useReducedMotion();
   const tilt = useTilt(!calm);
   const drag = useSharedValue(0);

@@ -18,7 +18,7 @@ import { useApi, usePosts } from "../data";
 import { Icon } from "../icon";
 import { ApiError, api, mediaSource } from "../server";
 import { useSheet } from "../sheet";
-import { fonts, roles } from "../theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "../theme";
 import { Pill } from "../ui";
 import { Avatar, fillFor } from "./avatar";
 import { useSafety } from "./safety";
@@ -32,6 +32,9 @@ type Tab = "posts" | "clips" | "saved";
  * or edit, then the grid of Posts, Clips and (yours only) Saved.
  */
 export function ProfileView({ username, top }: { username: string; top: ReactNode }) {
+  const { t } = useTheme();
+  const theme = t;
+  const s = useStyles(make);
   const router = useRouter();
   const { data: profile, setData, error, reload } = useApi<Profile>(`/users/${username}/profile`);
   const [tab, setTab] = useState<Tab>("posts");
@@ -171,7 +174,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
         </Text>
         {profile.accountKind === "business" && profile.category ? (
           <View style={s.category}>
-            <Icon name="Briefcase" size={14} color={roles.textSoft} />
+            <Icon name="Briefcase" size={14} color={t.colors.textSoft} />
             <Text style={s.categoryText}>{profile.category}</Text>
           </View>
         ) : null}
@@ -182,7 +185,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
             onPress={() => Linking.openURL(profile.websiteUrl as string)}
             style={s.site}
           >
-            <Icon name="Link" size={15} color={roles.text} />
+            <Icon name="Link" size={15} color={t.colors.text} />
             <Text style={s.siteText} numberOfLines={1}>
               {profile.websiteUrl.replace(/^https?:\/\//, "")}
             </Text>
@@ -279,10 +282,10 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
                 accessibilityLabel={`More about ${profile.user.displayName}`}
                 style={({ pressed }) => [
                   s.more,
-                  pressed && { backgroundColor: roles.surfaceRaised },
+                  pressed && { backgroundColor: t.colors.surfaceRaised },
                 ]}
               >
-                <Icon name="DotsThreeBold" size={20} color={roles.text} />
+                <Icon name="DotsThreeBold" size={20} color={t.colors.text} />
               </Pressable>
             </>
           )}
@@ -290,7 +293,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
 
         {!profile.canSeeAll ? (
           <View style={s.private}>
-            <Icon name="Lock" size={22} color={roles.text} />
+            <Icon name="Lock" size={22} color={t.colors.text} />
             <View style={s.grow}>
               <Text style={s.privateTitle}>This account is private</Text>
               <Text style={s.privateLine}>
@@ -323,7 +326,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
                       : "BookmarkSimple"
               }
               size={18}
-              color={tab === t ? roles.text : roles.textSoft}
+              color={tab === t ? theme.colors.text : theme.colors.textSoft}
             />
             <Text style={[s.tabText, tab === t && s.tabTextOn]}>
               {t === "posts" ? "Posts" : t === "clips" ? "Clips" : "Saved"}
@@ -374,6 +377,8 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
 }
 
 function Banner({ profile }: { profile: Profile }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const fill = fillFor(profile.user.id);
   return (
     <View style={s.banner}>
@@ -385,7 +390,7 @@ function Banner({ profile }: { profile: Profile }) {
         />
       ) : (
         <LinearGradient
-          colors={[fill, "#2b47ff", roles.bg]}
+          colors={[fill, "#2b47ff", t.colors.bg]}
           locations={[0, 0.55, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -401,6 +406,7 @@ function Banner({ profile }: { profile: Profile }) {
 }
 
 function Count({ n, label, onPress }: { n: number; label: string; onPress?: () => void }) {
+  const s = useStyles(make);
   return (
     <Pressable
       onPress={onPress}
@@ -417,6 +423,7 @@ function Count({ n, label, onPress }: { n: number; label: string; onPress?: () =
 
 /** A square in the grid: the first photo, a Clip's play mark, or a text post's opening words. */
 function Tile({ post }: { post: Post }) {
+  const s = useStyles(make);
   const router = useRouter();
   const { width } = useWindowDimensions();
   const size = (width - 4) / 3;
@@ -455,102 +462,109 @@ function Tile({ post }: { post: Post }) {
   );
 }
 
-const s = StyleSheet.create({
-  banner: { height: 132 },
-  body: { paddingHorizontal: 16, marginTop: -48 },
-  picRow: { flexDirection: "row", alignItems: "flex-end" },
-  pic: { borderRadius: 48, borderWidth: 4, borderColor: roles.bg },
-  name: {
-    fontFamily: fonts.displayBold,
-    fontSize: 24,
-    color: roles.text,
-    marginTop: 10,
-    letterSpacing: -0.4,
-  },
-  handle: { fontFamily: fonts.body, fontSize: 15, color: roles.textSoft, marginTop: 2 },
-  category: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(11,11,14,0.65)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.14)",
-  },
-  categoryText: { fontFamily: fonts.bold, fontSize: 13, color: roles.textSoft },
-  bio: { fontFamily: fonts.body, fontSize: 15.5, lineHeight: 23, color: roles.text, marginTop: 10 },
-  site: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 40 },
-  siteText: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: roles.text,
-    textDecorationLine: "underline",
-  },
-  counts: { flexDirection: "row", gap: 24, marginTop: 12 },
-  count: { minHeight: 48, justifyContent: "center" },
-  countN: { fontFamily: fonts.bold, fontSize: 17, color: roles.text },
-  countLabel: { fontFamily: fonts.body, fontSize: 13.5, color: roles.textSoft },
-  actions: { flexDirection: "row", gap: 8, marginTop: 10 },
-  more: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: roles.borderStrong,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  grow: { flex: 1 },
-  private: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "flex-start",
-    marginTop: 18,
-    paddingVertical: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: roles.border,
-  },
-  privateTitle: { fontFamily: fonts.bold, fontSize: 16, color: roles.text },
-  privateLine: {
-    fontFamily: fonts.body,
-    fontSize: 14.5,
-    lineHeight: 21,
-    color: roles.textSoft,
-    marginTop: 2,
-  },
-  tabs: {
-    flexDirection: "row",
-    marginTop: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: roles.border,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: "row",
-    gap: 6,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 48,
-  },
-  tabOn: { borderBottomWidth: 2, borderBottomColor: roles.text },
-  tabText: { fontFamily: fonts.bold, fontSize: 14, color: roles.textSoft },
-  tabTextOn: { color: roles.text },
-  tile: {
-    margin: 0.66,
-    backgroundColor: roles.surfaceSunken,
-    overflow: "hidden",
-    justifyContent: "center",
-  },
-  tileText: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    lineHeight: 18,
-    color: roles.text,
-    padding: 10,
-  },
-  tileMark: { position: "absolute", top: 6, right: 6 },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    banner: { height: 132 },
+    body: { paddingHorizontal: 16, marginTop: -48 },
+    picRow: { flexDirection: "row", alignItems: "flex-end" },
+    pic: { borderRadius: 48, borderWidth: 4, borderColor: t.colors.bg },
+    name: {
+      fontFamily: fonts.displayBold,
+      fontSize: 24,
+      color: t.colors.text,
+      marginTop: 10,
+      letterSpacing: -0.4,
+    },
+    handle: { fontFamily: fonts.body, fontSize: 15, color: t.colors.textSoft, marginTop: 2 },
+    category: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      alignSelf: "flex-start",
+      marginTop: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+      backgroundColor: "rgba(11,11,14,0.65)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(255,255,255,0.14)",
+    },
+    categoryText: { fontFamily: fonts.bold, fontSize: 13, color: t.colors.textSoft },
+    bio: {
+      fontFamily: fonts.body,
+      fontSize: 15.5,
+      lineHeight: 23,
+      color: t.colors.text,
+      marginTop: 10,
+    },
+    site: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 40 },
+    siteText: {
+      fontFamily: fonts.bold,
+      fontSize: 15,
+      color: t.colors.text,
+      textDecorationLine: "underline",
+    },
+    counts: { flexDirection: "row", gap: 24, marginTop: 12 },
+    count: { minHeight: 48, justifyContent: "center" },
+    countN: { fontFamily: fonts.bold, fontSize: 17, color: t.colors.text },
+    countLabel: { fontFamily: fonts.body, fontSize: 13.5, color: t.colors.textSoft },
+    actions: { flexDirection: "row", gap: 8, marginTop: 10 },
+    more: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      borderWidth: 1.5,
+      borderColor: t.colors.borderStrong,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    grow: { flex: 1 },
+    private: {
+      flexDirection: "row",
+      gap: 12,
+      alignItems: "flex-start",
+      marginTop: 18,
+      paddingVertical: 14,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.border,
+    },
+    privateTitle: { fontFamily: fonts.bold, fontSize: 16, color: t.colors.text },
+    privateLine: {
+      fontFamily: fonts.body,
+      fontSize: 14.5,
+      lineHeight: 21,
+      color: t.colors.textSoft,
+      marginTop: 2,
+    },
+    tabs: {
+      flexDirection: "row",
+      marginTop: 14,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border,
+    },
+    tab: {
+      flex: 1,
+      flexDirection: "row",
+      gap: 6,
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 48,
+    },
+    tabOn: { borderBottomWidth: 2, borderBottomColor: t.colors.text },
+    tabText: { fontFamily: fonts.bold, fontSize: 14, color: t.colors.textSoft },
+    tabTextOn: { color: t.colors.text },
+    tile: {
+      margin: 0.66,
+      backgroundColor: t.colors.surfaceSunken,
+      overflow: "hidden",
+      justifyContent: "center",
+    },
+    tileText: {
+      fontFamily: fonts.body,
+      fontSize: 13,
+      lineHeight: 18,
+      color: t.colors.text,
+      padding: 10,
+    },
+    tileMark: { position: "absolute", top: 6, right: 6 },
+  });

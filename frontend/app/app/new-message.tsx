@@ -15,7 +15,7 @@ import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { Avatar } from "@/social/avatar";
 import { AppScreen, Empty, TopBar } from "@/social/screen";
-import { fonts, roles, useTheme } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 
 /**
  * Start a conversation: search people by name or @username, tap one, and the chat opens (the one
@@ -23,6 +23,8 @@ import { fonts, roles, useTheme } from "@/theme";
  * say no, it says why.
  */
 export default function NewMessage() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const { accent } = useTheme();
   const { session } = useSession();
@@ -82,12 +84,12 @@ export default function NewMessage() {
     <AppScreen>
       <TopBar title="New message" />
       <View style={s.searchWrap}>
-        <Icon name="MagnifyingGlass" size={20} color={roles.textSoft} />
+        <Icon name="MagnifyingGlass" size={20} color={t.colors.textSoft} />
         <TextInput
           value={q}
           onChangeText={setQ}
           placeholder="Search people"
-          placeholderTextColor={roles.textMuted}
+          placeholderTextColor={t.colors.textMuted}
           selectionColor={accent}
           cursorColor={accent}
           autoFocus
@@ -97,7 +99,7 @@ export default function NewMessage() {
           style={s.search}
           accessibilityLabel="Search people"
         />
-        {searching ? <ActivityIndicator color={roles.textSoft} /> : null}
+        {searching ? <ActivityIndicator color={t.colors.textSoft} /> : null}
       </View>
       {problem ? (
         <Text style={s.problem} accessibilityLiveRegion="polite">
@@ -114,7 +116,7 @@ export default function NewMessage() {
             disabled={Boolean(opening)}
             accessibilityRole="button"
             accessibilityLabel={`Message ${item.displayName}, @${item.username}`}
-            style={({ pressed }) => [s.row, pressed && { backgroundColor: roles.surface }]}
+            style={({ pressed }) => [s.row, pressed && { backgroundColor: t.colors.surface }]}
           >
             <Avatar user={item} size={46} />
             <View style={s.fill}>
@@ -126,9 +128,9 @@ export default function NewMessage() {
               </Text>
             </View>
             {opening === item.id ? (
-              <ActivityIndicator color={roles.textSoft} />
+              <ActivityIndicator color={t.colors.textSoft} />
             ) : (
-              <Icon name="ChatCircle" size={22} color={roles.textSoft} />
+              <Icon name="ChatCircle" size={22} color={t.colors.textSoft} />
             )}
           </Pressable>
         )}
@@ -144,44 +146,45 @@ export default function NewMessage() {
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  searchWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    margin: 12,
-    paddingHorizontal: 14,
-    minHeight: 50,
-    borderRadius: 25,
-    borderWidth: 1.5,
-    borderColor: roles.borderStrong,
-    backgroundColor: roles.surfaceSunken,
-  },
-  search: { flex: 1, minHeight: 46, fontFamily: fonts.body, fontSize: 16, color: roles.text },
-  problem: {
-    fontFamily: fonts.body,
-    fontSize: 14.5,
-    lineHeight: 21,
-    color: roles.danger,
-    paddingHorizontal: 18,
-    paddingBottom: 6,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 64,
-  },
-  name: { fontFamily: fonts.bold, fontSize: 15.5, color: roles.text },
-  handle: { fontFamily: fonts.body, fontSize: 14, color: roles.textSoft, marginTop: 1 },
-  hint: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    color: roles.textSoft,
-    paddingHorizontal: 18,
-    paddingTop: 12,
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    searchWrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      margin: 12,
+      paddingHorizontal: 14,
+      minHeight: 50,
+      borderRadius: 25,
+      borderWidth: 1.5,
+      borderColor: t.colors.borderStrong,
+      backgroundColor: t.colors.surfaceSunken,
+    },
+    search: { flex: 1, minHeight: 46, fontFamily: fonts.body, fontSize: 16, color: t.colors.text },
+    problem: {
+      fontFamily: fonts.body,
+      fontSize: 14.5,
+      lineHeight: 21,
+      color: t.colors.danger,
+      paddingHorizontal: 18,
+      paddingBottom: 6,
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      minHeight: 64,
+    },
+    name: { fontFamily: fonts.bold, fontSize: 15.5, color: t.colors.text },
+    handle: { fontFamily: fonts.body, fontSize: 14, color: t.colors.textSoft, marginTop: 1 },
+    hint: {
+      fontFamily: fonts.body,
+      fontSize: 15,
+      color: t.colors.textSoft,
+      paddingHorizontal: 18,
+      paddingTop: 12,
+    },
+  });

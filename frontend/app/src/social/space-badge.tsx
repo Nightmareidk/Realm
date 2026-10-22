@@ -1,6 +1,6 @@
 import type { ThemeAccent } from "@realm/contracts";
 import { StyleSheet, Text, View } from "react-native";
-import { fonts, themes } from "../theme";
+import { fonts, type NativeTheme, themes, useStyles } from "../theme";
 
 /** A Space's badge: its initials on its own colour, a rounded square (things are squircles). */
 export function SpaceBadge({
@@ -12,6 +12,7 @@ export function SpaceBadge({
   accent: ThemeAccent;
   size?: number;
 }) {
+  const s = useStyles(make);
   const initials =
     name
       .split(/\s+/)
@@ -42,7 +43,8 @@ export function SpaceBadge({
   );
 }
 
-const s = StyleSheet.create({
-  badge: { alignItems: "center", justifyContent: "center" },
-  text: { fontFamily: fonts.display },
-});
+const make = (_t: NativeTheme) =>
+  StyleSheet.create({
+    badge: { alignItems: "center", justifyContent: "center" },
+    text: { fontFamily: fonts.display },
+  });

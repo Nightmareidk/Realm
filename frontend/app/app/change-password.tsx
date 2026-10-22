@@ -13,11 +13,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { AppScreen, TopBar } from "@/social/screen";
-import { fonts, roles } from "@/theme";
+import { fonts, type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Field, Notice, Pill } from "@/ui";
 
 /** Change your password. Every other device is signed out, so a lost phone loses its way in. */
 export default function ChangePassword() {
+  const { t } = useTheme();
+  const s = useStyles(make);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [current, setCurrent] = useState("");
@@ -77,7 +79,7 @@ export default function ChangePassword() {
           {done ? (
             <>
               <View style={s.mark}>
-                <Icon name="ShieldCheck" size={30} color={roles.success} />
+                <Icon name="ShieldCheck" size={30} color={t.colors.success} />
               </View>
               <Text style={s.title} accessibilityRole="header">
                 Password changed.
@@ -140,26 +142,27 @@ export default function ChangePassword() {
   );
 }
 
-const s = StyleSheet.create({
-  fill: { flex: 1 },
-  body: { padding: 20 },
-  title: { fontFamily: fonts.displayBold, fontSize: 24, color: roles.text },
-  lead: {
-    fontFamily: fonts.body,
-    fontSize: 16,
-    lineHeight: 24,
-    color: roles.textSoft,
-    marginTop: 6,
-  },
-  form: { marginTop: 24, gap: 22 },
-  foot: { marginTop: 32 },
-  mark: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: roles.surfaceRaised,
-    marginBottom: 14,
-  },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    fill: { flex: 1 },
+    body: { padding: 20 },
+    title: { fontFamily: fonts.displayBold, fontSize: 24, color: t.colors.text },
+    lead: {
+      fontFamily: fonts.body,
+      fontSize: 16,
+      lineHeight: 24,
+      color: t.colors.textSoft,
+      marginTop: 6,
+    },
+    form: { marginTop: 24, gap: 22 },
+    foot: { marginTop: 32 },
+    mark: {
+      width: 56,
+      height: 56,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: t.colors.surfaceRaised,
+      marginBottom: 14,
+    },
+  });

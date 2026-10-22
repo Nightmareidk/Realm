@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { StyleSheet, type TextInput, View } from "react-native";
 import { FormScreen } from "@/screen";
 import { ApiError, api } from "@/server";
+import { type NativeTheme, useStyles } from "@/theme";
 import { Field, Lead, Notice, Pill, TextLink, Title } from "@/ui";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -12,6 +13,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * whether or not the email has an account, so nobody can use it to check who's on Realm.
  */
 export default function Forgot() {
+  const s = useStyles(make);
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | undefined>();
@@ -88,9 +90,10 @@ export default function Forgot() {
   );
 }
 
-const s = StyleSheet.create({
-  head: { marginTop: 28 },
-  lead: { marginTop: 12 },
-  form: { marginTop: 32, gap: 22 },
-  foot: { marginTop: "auto", paddingTop: 32, gap: 8, alignItems: "stretch" },
-});
+const make = (_t: NativeTheme) =>
+  StyleSheet.create({
+    head: { marginTop: 28 },
+    lead: { marginTop: 12 },
+    form: { marginTop: 32, gap: 22 },
+    foot: { marginTop: "auto", paddingTop: 32, gap: 8, alignItems: "stretch" },
+  });

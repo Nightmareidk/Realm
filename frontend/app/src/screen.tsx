@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LightField } from "./light-field";
-import { roles } from "./theme";
+import { type NativeTheme, useStyles } from "./theme";
 import { BackButton } from "./ui";
 
 /**
@@ -10,6 +10,7 @@ import { BackButton } from "./ui";
  * focused field above the keyboard (edge to edge, under the system bars).
  */
 export function FormScreen({ children, back = true }: { children: ReactNode; back?: boolean }) {
+  const s = useStyles(make);
   const insets = useSafeAreaInsets();
   return (
     <View style={s.screen}>
@@ -30,8 +31,9 @@ export function FormScreen({ children, back = true }: { children: ReactNode; bac
   );
 }
 
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: roles.bg },
-  fill: { flex: 1 },
-  content: { flexGrow: 1, paddingHorizontal: 24 },
-});
+const make = (t: NativeTheme) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: t.colors.bg },
+    fill: { flex: 1 },
+    content: { flexGrow: 1, paddingHorizontal: 24 },
+  });
