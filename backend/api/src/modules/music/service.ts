@@ -8,6 +8,7 @@ import type {
   Story,
   StoryFeed,
   StoryRing,
+  StoryViewer,
 } from "@realm/contracts";
 import { STORY_DEFAULT_MS, STORY_HOURS, STORY_MAX_MS } from "@realm/contracts";
 import { and, desc, eq, gt, ilike, inArray, isNotNull, isNull, schema, sql } from "@realm/db";
@@ -570,6 +571,20 @@ export class MusicService {
     if (!row || !(await this.canSee(row, viewerId))) throw notFound("Story");
     if (row.authorId === viewerId) return;
     await this.db.insert(storyViews).values({ storyId, viewerId }).onConflictDoNothing();
+  }
+
+  /** Who watched your Story, newest first (only its author may ask). */
+  async viewers(userId: bigint, storyId: bigint): Promise<StoryViewer[]> {
+    const [row] = await this.db.select().from(stories).where(eq(stories.id, storyId)).limit(1);
+    if (!row || row.deletedAt || row.authorId !== userId) throw notFound("Story");
+    const rows = await this.db
+      .select({ user: summaryColumns, at: storyViews.createdAt })
+      .from(storyViews)
+      .innerJoin(users, eq(users.id, storyViews.viewerId))
+      .where(and(eq(storyViews.storyId, storyId), eq(users.status, "active")))
+      .orderBy(desc(storyViews.createdAt))
+      .limit(500);
+    return rows.map((r) => ({ user: toUserSummary(r.user), viewedAt: r.at.toISOString() }));
   }
 
   async remove(userId: bigint, storyId: bigint) {

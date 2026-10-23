@@ -15,6 +15,8 @@ export const Limits = {
   roomName: { min: 1, max: 32 },
   spacesPerUser: 100,
   roomsPerSpace: 50,
+  /** Posts pinned to the top of a profile. */
+  pinnedPosts: 3,
   /** A teen's presence shows only in Spaces up to this size. */
   teenPresenceSpaceSize: 200,
   channelTopic: { max: 1024 },

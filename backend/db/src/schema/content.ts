@@ -58,6 +58,8 @@ export const posts = pgTable(
     createdAt: createdAt(),
     editedAt: tstz(),
     deletedAt: tstz(),
+    /** Pinned to the top of its author's profile (up to three). */
+    pinnedAt: tstz(),
   },
   (t) => [
     index("posts_community_hot_idx").on(t.communityId, t.hotRank.desc()),

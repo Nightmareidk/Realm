@@ -129,7 +129,14 @@ export const DISPLAY_FONTS = [
   "permanent-marker",
   "comfortaa",
 ] as const;
-export const BODY_FONTS = ["atkinson", "system", "lexend", "nunito", "fredoka", "comfortaa"] as const;
+export const BODY_FONTS = [
+  "atkinson",
+  "system",
+  "lexend",
+  "nunito",
+  "fredoka",
+  "comfortaa",
+] as const;
 
 /** Realm's own app icons that ship inside the app (phones only switch between built-in icons). */
 export const APP_ICONS = [

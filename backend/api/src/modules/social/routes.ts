@@ -120,6 +120,14 @@ export const postRoutes =
 
     for (const method of ["put", "delete"] as const) {
       app[method](
+        "/posts/:postId/pin",
+        { preHandler: requireAuth, schema: { params: PostParams, response: { 200: Post } } },
+        async (req) => social.pin(BigInt(req.params.postId), authOf(req).userId, method === "put"),
+      );
+    }
+
+    for (const method of ["put", "delete"] as const) {
+      app[method](
         "/posts/:postId/comments/:commentId/like",
         {
           preHandler: requireAuth,

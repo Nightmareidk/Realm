@@ -296,7 +296,12 @@ export function fixTheme(t: ResolvedTheme, wallpaper?: WallpaperLight): Resolved
       c.accent2 = mixHex(c.accent2, c.onAccent === "#ffffff" ? "#000000" : "#ffffff", 0.1);
     } else if (p.fix === "accent") {
       c.accent = mixHex(c.accent, away, 0.1);
-    } else if (p.fix === "text" || p.fix === "textSoft" || p.fix === "heading" || p.fix === "link") {
+    } else if (
+      p.fix === "text" ||
+      p.fix === "textSoft" ||
+      p.fix === "heading" ||
+      p.fix === "link"
+    ) {
       c[p.fix] = mixHex(c[p.fix], away, 0.15);
     }
   }

@@ -347,3 +347,39 @@ describe("blocks and spam", () => {
     expect(codes[3]).toBe(429);
   });
 });
+
+describe("profiles like the big apps", () => {
+  it("pins up to three posts to the top, and shows who you know that follows someone", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const ama = await person();
+    const made = [];
+    for (const c of ["one", "two", "three", "four", "five"]) made.push(await say(noor, c));
+    const [one, two, three, four] = made as { id: string }[];
+    for (const p of [one, two, three]) {
+      expect((await call(noor.cookie, "PUT", `/posts/${p?.id}/pin`)).json().pinned).toBe(true);
+    }
+    expect((await call(noor.cookie, "PUT", `/posts/${four?.id}/pin`)).statusCode).toBe(400);
+    expect((await call(kenji.cookie, "PUT", `/posts/${four?.id}/pin`)).statusCode).toBe(403);
+    const page = (await call(kenji.cookie, "GET", `/users/${noor.username}/posts?limit=4`)).json();
+    // Pinned first (newest pin first), then the rest newest first, and no repeats on page two.
+    expect(page.items.slice(0, 3).every((p: { pinned: boolean }) => p.pinned)).toBe(true);
+    const next = (
+      await call(
+        kenji.cookie,
+        "GET",
+        `/users/${noor.username}/posts?limit=4&before=${page.nextCursor}`,
+      )
+    ).json();
+    const seen = [...page.items, ...next.items].map((p: { id: string }) => p.id);
+    expect(new Set(seen).size).toBe(seen.length);
+    expect(seen).toHaveLength(5);
+
+    // Kenji follows Ama, Ama follows Noor: Noor's profile says "Followed by ama".
+    await call(kenji.cookie, "PUT", `/users/${ama.username}/follow`);
+    await call(ama.cookie, "PUT", `/users/${noor.username}/follow`);
+    const profile = (await call(kenji.cookie, "GET", `/users/${noor.username}/profile`)).json();
+    expect(profile.followedBy.count).toBe(1);
+    expect(profile.followedBy.users[0].username).toBe(ama.username);
+  });
+});

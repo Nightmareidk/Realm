@@ -16,7 +16,8 @@ import type {
   UpdatePostBody,
   UserSummary,
 } from "@realm/contracts";
-import { and, desc, eq, inArray, isNull, lt, or, schema, sql } from "@realm/db";
+import { Limits } from "@realm/contracts";
+import { and, desc, eq, inArray, isNotNull, isNull, lt, or, schema, sql } from "@realm/db";
 import type { Deps } from "../../deps";
 import { AppError, badRequest, forbidden, notFound } from "../../lib/errors";
 import { mediaUrl, toPublicUser } from "../../lib/serialize";
@@ -370,13 +371,38 @@ export class SocialService {
           // You still see your own posts once taken down, marked, so you know why.
           self ? undefined : isNull(posts.removedAt),
           kind ? eq(posts.kind, kind) : inArray(posts.kind, ["image", "text"]),
-          before ? lt(posts.id, before) : undefined,
+          // Pinned posts lead the first page only, so they never show twice.
+          before ? and(lt(posts.id, before), isNull(posts.pinnedAt)) : undefined,
           seeing,
         ),
       )
-      .orderBy(desc(posts.id))
+      .orderBy(sql`${posts.pinnedAt} desc nulls last`, desc(posts.id))
       .limit(limit + 1);
     return this.page(rows, limit, viewerId);
+  }
+
+  /** Pin a post to the top of your profile (up to three), or unpin it. */
+  async pin(id: bigint, userId: bigint, on: boolean): Promise<Post> {
+    const [row] = await this.db.select().from(posts).where(eq(posts.id, id)).limit(1);
+    if (!row || row.deletedAt) throw notFound("Post");
+    if (row.authorId !== userId) throw forbidden("Only its author can pin a post.");
+    if (on && !row.pinnedAt) {
+      const [count] = await this.db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(posts)
+        .where(and(eq(posts.authorId, userId), isNotNull(posts.pinnedAt), isNull(posts.deletedAt)));
+      if ((count?.n ?? 0) >= Limits.pinnedPosts) {
+        throw badRequest(
+          "LIMIT_REACHED",
+          `You can pin up to ${Limits.pinnedPosts} posts. Unpin one first.`,
+        );
+      }
+    }
+    await this.db
+      .update(posts)
+      .set({ pinnedAt: on ? (row.pinnedAt ?? new Date()) : null })
+      .where(eq(posts.id, id));
+    return this.get(id, userId);
   }
 
   async saved(userId: bigint, before: bigint | null, limit: number): Promise<PostPage> {
@@ -480,6 +506,7 @@ export class SocialService {
         saved: savedSet.has(r.id.toString()),
         createdAt: r.createdAt.toISOString(),
         editedAt: r.editedAt?.toISOString() ?? null,
+        pinned: r.pinnedAt !== null,
         hidden: r.removedAt !== null,
       } satisfies Post;
     });
@@ -823,11 +850,14 @@ export class SocialService {
       throw notFound("User");
     }
     const isSelf = viewerId === user.id;
-    const [privateAccount, follow, followsYou, counts] = await Promise.all([
+    const [privateAccount, follow, followsYou, counts, followedBy] = await Promise.all([
       isPrivateAccount(this.db, user.id),
       viewerId && !isSelf ? this.followState(viewerId, user.id) : Promise.resolve("none" as const),
       viewerId && !isSelf ? followsActively(this.db, user.id, viewerId) : Promise.resolve(false),
       this.counts(user.id),
+      viewerId && !isSelf
+        ? this.mutuals(viewerId, user.id)
+        : Promise.resolve({ users: [], count: 0 }),
     ]);
     return {
       user: toPublicUser(user),
@@ -839,8 +869,31 @@ export class SocialService {
       counts,
       follow,
       followsYou,
+      followedBy,
       canSeeAll: isSelf || !privateAccount || follow === "following",
     };
+  }
+
+  /** People you follow who also follow them ("Followed by noor, kenji and 4 others"). */
+  private async mutuals(viewerId: bigint, targetId: bigint) {
+    const mine = sql`(select ${follows.followeeId} from ${follows} where ${follows.followerId} = ${viewerId} and ${follows.status} = 'active')`;
+    const where = and(
+      eq(follows.followeeId, targetId),
+      eq(follows.status, "active"),
+      sql`${follows.followerId} in ${mine}`,
+      sql`${follows.followerId} not in ${blockedWith(viewerId)}`,
+    );
+    const [rows, [count]] = await Promise.all([
+      this.db
+        .select(summaryColumns)
+        .from(follows)
+        .innerJoin(users, eq(users.id, follows.followerId))
+        .where(and(where, eq(users.status, "active")))
+        .orderBy(desc(follows.createdAt))
+        .limit(3),
+      this.db.select({ n: sql<number>`count(*)::int` }).from(follows).where(where),
+    ]);
+    return { users: rows.map(toUserSummary), count: count?.n ?? 0 };
   }
 
   private async counts(userId: bigint) {

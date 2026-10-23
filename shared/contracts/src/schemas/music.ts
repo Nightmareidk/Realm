@@ -188,6 +188,12 @@ export const CreateStoryBody = z
   .meta({ id: "CreateStoryBody" });
 export type CreateStoryBody = z.infer<typeof CreateStoryBody>;
 
+/** Who watched one of your Stories, newest first. */
+export const StoryViewer = z
+  .object({ user: UserSummary, viewedAt: IsoDateTime })
+  .meta({ id: "StoryViewer" });
+export type StoryViewer = z.infer<typeof StoryViewer>;
+
 // ── Story highlights ──────────────────────────────────────────────────────────────
 
 /** Most highlights on a profile, and most Stories in one. */

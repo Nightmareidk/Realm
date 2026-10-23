@@ -277,6 +277,20 @@ describe("Stories", () => {
   });
 });
 
+describe("who watched", () => {
+  it("shows a Story's author who watched it, and nobody else", async () => {
+    const noor = await person();
+    const kenji = await person();
+    await call(kenji.cookie, "PUT", `/users/${noor.username}/follow`);
+    const pic = await upload(noor.cookie, "image", await photo(), "image/png");
+    const story = (await call(noor.cookie, "POST", "/stories", { mediaId: pic })).json();
+    await call(kenji.cookie, "POST", `/stories/${story.id}/view`);
+    const viewers = (await call(noor.cookie, "GET", `/stories/${story.id}/viewers`)).json().items;
+    expect(viewers.map((v: { user: { id: string } }) => v.user.id)).toEqual([kenji.id]);
+    expect((await call(kenji.cookie, "GET", `/stories/${story.id}/viewers`)).statusCode).toBe(404);
+  });
+});
+
 describe("Story highlights", () => {
   it("keeps Stories on a profile after their day, for whoever can see the profile", async () => {
     const noor = await person();

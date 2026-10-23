@@ -16,6 +16,7 @@ import {
   SoundSearchQuery,
   Story,
   StoryFeed,
+  StoryViewer,
   UpdateHighlightBody,
   Username,
 } from "@realm/contracts";
@@ -163,6 +164,14 @@ export const storyRoutes =
       },
     );
 
+    app.get(
+      "/:id/viewers",
+      {
+        preHandler: requireAuth,
+        schema: { params: Id, response: { 200: z.object({ items: z.array(StoryViewer) }) } },
+      },
+      async (req) => ({ items: await music.viewers(authOf(req).userId, BigInt(req.params.id)) }),
+    );
     app.post(
       "/:id/view",
       { preHandler: requireAuth, schema: { params: Id } },

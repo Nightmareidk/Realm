@@ -52,6 +52,8 @@ export const Post = z
     saved: z.boolean(),
     createdAt: IsoDateTime,
     editedAt: IsoDateTime.nullable(),
+    /** Pinned to the top of its author's profile. */
+    pinned: z.boolean(),
     /**
      * Taken down after reports, or by a Space's moderators. Only its author still sees it, so
      * they know why it went quiet.
@@ -146,6 +148,8 @@ export const Profile = z
     }),
     follow: FollowState,
     followsYou: z.boolean(),
+    /** People you follow who follow them (up to three), and how many in all. */
+    followedBy: z.object({ users: z.array(UserSummary), count: z.number().int() }),
     /** False for a private account you don't follow: only posts they marked public show. */
     canSeeAll: z.boolean(),
   })
