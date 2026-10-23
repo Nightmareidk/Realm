@@ -28,6 +28,7 @@ export const config = {
     "/themes/store",
     "/themes/add",
     "/themes/studio",
-    "/themes/:id(d+)",
+    "/themes/:id(\\d+)",
+    "/admin/:path*",
   ],
 };

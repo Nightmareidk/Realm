@@ -18,6 +18,8 @@ export const ReportReason = z.enum([
   "violence",
   "self_harm",
   "impersonation",
+  // Someone else's art, music or brand (a theme sold with characters its seller doesn't own).
+  "intellectual_property",
   "other",
 ]);
 export type ReportReason = z.infer<typeof ReportReason>;

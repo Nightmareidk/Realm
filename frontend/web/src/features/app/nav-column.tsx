@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, SpeakerHigh } from "@phosphor-icons/react";
+import { Plus, ShieldCheck, SpeakerHigh } from "@phosphor-icons/react";
 import type { SelfUser, SpaceDetail } from "@realm/contracts";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -169,6 +169,22 @@ export function NavColumn({ viewer }: { viewer: SelfUser }) {
               </li>
             );
           })}
+          {viewer.staff && (
+            <li>
+              <Link
+                href="/admin"
+                aria-current={isActive(pathname, "/admin") ? "page" : undefined}
+                className={navRow}
+              >
+                <ShieldCheck
+                  aria-hidden="true"
+                  size={22}
+                  weight={isActive(pathname, "/admin") ? "fill" : "regular"}
+                />
+                <span className="flex-1">Admin</span>
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
       <div aria-hidden="true" className="mx-3 my-4 h-px shrink-0 bg-line" />

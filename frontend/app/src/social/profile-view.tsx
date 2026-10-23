@@ -25,6 +25,7 @@ import { Avatar, fillFor } from "./avatar";
 import { useSafety } from "./safety";
 import { Empty, Loading, Problem } from "./screen";
 import { compact } from "./time";
+import { Verified } from "./verified";
 
 type Tab = "posts" | "clips" | "saved";
 
@@ -180,9 +181,12 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
             <Avatar user={profile.user} size={88} />
           </View>
         </View>
-        <Text style={s.name} accessibilityRole="header">
-          {profile.user.displayName}
-        </Text>
+        <View style={s.nameRow}>
+          <Text style={s.name} accessibilityRole="header">
+            {profile.user.displayName}
+          </Text>
+          <Verified kind={profile.user.verified} size={20} />
+        </View>
         <Text style={s.handle}>
           @{profile.user.username}
           {profile.user.pronouns ? ` · ${profile.user.pronouns}` : ""}
@@ -479,6 +483,7 @@ function Tile({ post }: { post: Post }) {
 
 const make = (t: NativeTheme) =>
   StyleSheet.create({
+    nameRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
     banner: { height: 132 },
     body: { paddingHorizontal: 16, marginTop: -48 },
     picRow: { flexDirection: "row", alignItems: "flex-end" },

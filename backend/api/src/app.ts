@@ -11,6 +11,7 @@ import {
 } from "fastify-type-provider-zod";
 import type { Deps } from "./deps";
 import { jobHandlers } from "./jobs";
+import { adminRoutes, verificationRoutes } from "./modules/admin/routes";
 import { authRoutes, gatewayRoutes } from "./modules/auth/routes";
 import { conversationRoutes } from "./modules/dms/routes";
 import { ConversationsService } from "./modules/dms/service";
@@ -78,6 +79,8 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       await v1.register(authRoutes(deps), { prefix: "/auth" });
       await v1.register(gatewayRoutes(deps), { prefix: "/gateway" });
       await v1.register(userRoutes(deps), { prefix: "/users" });
+      await v1.register(verificationRoutes(deps), { prefix: "/users" });
+      await v1.register(adminRoutes(deps), { prefix: "/admin" });
       const spaces = spacesModule(deps);
       await v1.register(meSpaceRoutes(deps, spaces), { prefix: "/users" });
       await v1.register(conversationRoutes(deps, new ConversationsService(deps, spaces.messages)), {

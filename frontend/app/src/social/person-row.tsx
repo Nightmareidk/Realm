@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { type NativeTheme, useStyles } from "../theme";
 import { Avatar } from "./avatar";
+import { Verified } from "./verified";
 
 /** A person in a list: picture, name and @handle; tap for their profile (unless it's hidden). */
 export function PersonRow({
@@ -33,9 +34,12 @@ export function PersonRow({
       >
         <Avatar user={user} size={48} />
         <View style={s.text}>
-          <Text style={s.name} numberOfLines={1}>
-            {user.displayName}
-          </Text>
+          <View style={s.nameRow}>
+            <Text style={s.name} numberOfLines={1}>
+              {user.displayName}
+            </Text>
+            <Verified kind={user.verified} size={14} />
+          </View>
           <Text style={s.handle} numberOfLines={1}>
             {line ?? `@${user.username}`}
           </Text>
@@ -48,6 +52,7 @@ export function PersonRow({
 
 const make = (t: NativeTheme) =>
   StyleSheet.create({
+    nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
     row: {
       flexDirection: "row",
       alignItems: "center",

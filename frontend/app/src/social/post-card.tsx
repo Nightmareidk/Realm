@@ -33,6 +33,7 @@ import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Avatar } from "./avatar";
 import { useSafety } from "./safety";
 import { ago, agoLong, compact } from "./time";
+import { Verified } from "./verified";
 
 /** The like colour: a warm pink, the one hue that means "loved" across social apps. */
 export const LIKED = "#ff5f7a";
@@ -121,9 +122,12 @@ export const PostCard = memo(function PostCard({
         >
           <Avatar user={post.author} size={36} />
           <View style={s.whoText}>
-            <Text style={s.name} numberOfLines={1}>
-              {post.author.displayName}
-            </Text>
+            <View style={s.nameRow}>
+              <Text style={s.name} numberOfLines={1}>
+                {post.author.displayName}
+              </Text>
+              <Verified kind={post.author.verified} size={15} />
+            </View>
             <Text style={s.meta} numberOfLines={1}>
               {post.space ? (
                 <>
@@ -485,6 +489,7 @@ const make = (t: NativeTheme) =>
     },
     threadIndent: { marginLeft: 58, marginRight: 14 },
     sound: { paddingHorizontal: 12, paddingBottom: 10 },
+    nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
     soundOver: { position: "absolute", left: 10, right: 10, bottom: 10, alignItems: "flex-start" },
     threadIndentActions: { marginLeft: 46 },
     mediaWrap: { marginHorizontal: 12 },

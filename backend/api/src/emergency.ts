@@ -6,6 +6,9 @@
  *   pnpm emergency signout <username>    one account, on every device
  *   pnpm emergency lock <username>       suspend an account and sign it out everywhere
  *   pnpm emergency unlock <username>     let a suspended account back in
+ *   pnpm emergency staff <username> <admin|moderator|none>
+ *                                        who can open the admin pages (the first admin is
+ *                                        made here; after that, admins choose staff there)
  *
  * Sessions end at once in the database. A running server may still trust a session from its
  * short cache for up to a minute (immediately, when Realm runs with Redis).
@@ -16,12 +19,13 @@ import { createDeps } from "./deps";
 import { revokeAllSessions } from "./lib/sessions";
 
 const { users, sessions } = schema;
-const [command, name] = process.argv.slice(2);
+const [command, name, role] = process.argv.slice(2);
 /** The kit's answers, on the terminal. */
 const say = (line: string) =>
   process.stdout.write(`${line}
 `);
-const USAGE = "Use: signout-everyone | signout <username> | lock <username> | unlock <username>";
+const USAGE =
+  "Use: signout-everyone | signout <username> | lock <username> | unlock <username> | staff <username> <admin|moderator|none>";
 
 const config = loadConfig();
 if (config.DATABASE_URL.startsWith("pglite:")) {
@@ -74,6 +78,25 @@ try {
       }
       await deps.db.update(users).set({ status: "active" }).where(eq(users.id, user.id));
       say(`Unlocked @${user.username}. They can sign in again.`);
+      break;
+    }
+    case "staff": {
+      const user = await person(name);
+      if (role !== "admin" && role !== "moderator" && role !== "none") throw new Error(USAGE);
+      await deps.db
+        .update(users)
+        .set({ staffRole: role === "none" ? null : role })
+        .where(eq(users.id, user.id));
+      await deps.db.insert(schema.staffActions).values({
+        id: deps.ids.next(),
+        actorId: user.id,
+        action: "user.update",
+        targetType: "user",
+        targetId: user.id.toString(),
+        detail: { staff: { after: role === "none" ? null : role } },
+        reason: "Set from the server's emergency kit",
+      });
+      say(role === "none" ? `@${user.username} is no longer staff.` : `@${user.username} is now ${role}.`);
       break;
     }
     default:

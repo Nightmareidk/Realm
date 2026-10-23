@@ -171,6 +171,18 @@ export default function Settings() {
           </View>
         ) : null}
 
+        <Text style={s.heading}>Verified</Text>
+        <NavRow
+          icon="SealCheckFill"
+          title={me?.verified ? "You're verified" : "Request verification"}
+          line={
+            me?.verified
+              ? "Your badge shows next to your name everywhere"
+              : "For notable people and businesses: the badge, and your name kept safe"
+          }
+          onPress={() => router.push("/verification")}
+        />
+
         <Text style={s.heading}>Look</Text>
         <NavRow
           icon="Palette"

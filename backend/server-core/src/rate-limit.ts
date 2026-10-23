@@ -89,4 +89,7 @@ export const Limits = {
   // Music: searching the free library asks Openverse, which allows few requests.
   soundSearch: { bucket: "music:search:user", limit: 30, windowSeconds: 60 },
   storyCreate: { bucket: "story:create:user", limit: 30, windowSeconds: 3600 },
+  // Asking to be verified: a few tries a day; staff actions: steady work, not a script.
+  verifyRequest: { bucket: "verify:request:user", limit: 3, windowSeconds: 86400 },
+  staffAction: { bucket: "staff:action:user", limit: 120, windowSeconds: 600 },
 } satisfies Record<string, RateLimitRule>;
