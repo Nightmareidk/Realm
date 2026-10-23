@@ -14,6 +14,8 @@ import { live } from "./live";
 import { api, setSessionToken, whenSessionEnds } from "./server";
 import { choiceFrom, useTheme } from "./theme";
 import { refreshUnread, resetUnread } from "./unread";
+// Who's around is heard from the moment the live connection signs in.
+import "./presence";
 
 /** The session token lives in the OS keychain (Android Keystore), never in plain storage. */
 const TOKEN_KEY = "realm.session";

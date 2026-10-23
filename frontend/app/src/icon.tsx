@@ -1,3 +1,4 @@
+import { View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { ICON_PATHS, type IconName } from "./icon-paths";
 
@@ -13,20 +14,18 @@ export function Icon({
   color: string;
   label?: string;
 }) {
-  return (
-    <Svg
-      width={size}
-      height={size}
-      viewBox="0 0 256 256"
-      fill={color}
-      pointerEvents="none"
-      accessible={Boolean(label)}
-      accessibilityRole={label ? "image" : undefined}
-      accessibilityLabel={label}
-    >
+  const svg = (
+    <Svg width={size} height={size} viewBox="0 0 256 256" fill={color} pointerEvents="none">
       {ICON_PATHS[name].map((d) => (
         <Path key={d} d={d} />
       ))}
     </Svg>
+  );
+  if (!label) return svg;
+  // The label goes on a wrapper: the drawing itself takes no accessibility props on the web.
+  return (
+    <View accessible accessibilityRole="image" accessibilityLabel={label}>
+      {svg}
+    </View>
   );
 }

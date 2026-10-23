@@ -17,6 +17,7 @@ import { alert } from "../alert";
 import { useApi, usePosts } from "../data";
 import { Icon } from "../icon";
 import { useLiveEvent } from "../live";
+import { useStories } from "../music/stories";
 import { ApiError, api, mediaSource } from "../server";
 import { useSheet } from "../sheet";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
@@ -45,6 +46,9 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
       ? "/users/@me/saved"
       : `/users/${username}/posts${tab === "clips" ? "?kind=clip" : ""}`;
   const list = usePosts(profile ? path : null);
+  // Their Stories right now, for the ring on their picture.
+  const rings = useStories();
+  const ring = rings?.find((r) => r.author.username === username);
   const sheet = useSheet();
   const safety = useSafety();
   // Fresh each time you come back to it, and live while it's open: follower counts change as
@@ -177,8 +181,64 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
       <Banner profile={profile} />
       <View style={s.body}>
         <View style={s.picRow}>
-          <View style={s.pic}>
-            <Avatar user={profile.user} size={88} />
+          <Pressable
+            onPress={
+              ring
+                ? () => router.push({ pathname: "/stories", params: { start: ring.author.id } })
+                : undefined
+            }
+            disabled={!ring}
+            accessibilityRole={ring ? "button" : undefined}
+            accessibilityLabel={ring ? `${profile.user.displayName}'s Story` : undefined}
+            style={s.pic}
+          >
+            {ring ? (
+              <LinearGradient
+                colors={
+                  ring.unseen
+                    ? [theme.colors.lights[0] ?? theme.colors.accent, theme.colors.accent]
+                    : [theme.colors.borderStrong, theme.colors.borderStrong]
+                }
+                start={{ x: 0, y: 1 }}
+                end={{ x: 1, y: 0 }}
+                style={s.storyRing}
+              >
+                <View style={s.storyGap}>
+                  <Avatar user={profile.user} size={80} />
+                </View>
+              </LinearGradient>
+            ) : (
+              <Avatar user={profile.user} size={88} />
+            )}
+          </Pressable>
+          <View style={s.countsBeside}>
+            <Count n={profile.counts.posts} label="posts" />
+            <Count
+              n={profile.counts.followers}
+              label="followers"
+              onPress={
+                profile.canSeeAll
+                  ? () =>
+                      router.push({
+                        pathname: "/people/[username]",
+                        params: { username, side: "followers" },
+                      })
+                  : undefined
+              }
+            />
+            <Count
+              n={profile.counts.following}
+              label="following"
+              onPress={
+                profile.canSeeAll
+                  ? () =>
+                      router.push({
+                        pathname: "/people/[username]",
+                        params: { username, side: "following" },
+                      })
+                  : undefined
+              }
+            />
           </View>
         </View>
         <View style={s.nameRow}>
@@ -211,36 +271,6 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
           </Pressable>
         ) : null}
 
-        <View style={s.counts}>
-          <Count n={profile.counts.posts} label="posts" />
-          <Count
-            n={profile.counts.followers}
-            label="followers"
-            onPress={
-              profile.canSeeAll
-                ? () =>
-                    router.push({
-                      pathname: "/people/[username]",
-                      params: { username, side: "followers" },
-                    })
-                : undefined
-            }
-          />
-          <Count
-            n={profile.counts.following}
-            label="following"
-            onPress={
-              profile.canSeeAll
-                ? () =>
-                    router.push({
-                      pathname: "/people/[username]",
-                      params: { username, side: "following" },
-                    })
-                : undefined
-            }
-          />
-        </View>
-
         <View style={s.actions}>
           {profile.isSelf ? (
             <>
@@ -258,6 +288,17 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
                 onPress={() => Share.share({ message: `@${profile.user.username} on Realm` })}
                 style={s.grow}
               />
+              <Pressable
+                onPress={() => router.push("/explore")}
+                accessibilityRole="button"
+                accessibilityLabel="Find people to follow"
+                style={({ pressed }) => [
+                  s.more,
+                  pressed && { backgroundColor: t.colors.surfaceRaised },
+                ]}
+              >
+                <Icon name="UserPlus" size={20} color={t.colors.text} />
+              </Pressable>
             </>
           ) : (
             <>
@@ -344,12 +385,10 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
                       ? "BookmarkSimpleFill"
                       : "BookmarkSimple"
               }
-              size={18}
+              size={24}
               color={tab === t ? theme.colors.text : theme.colors.textSoft}
+              label={t === "posts" ? "Posts" : t === "clips" ? "Clips" : "Saved"}
             />
-            <Text style={[s.tabText, tab === t && s.tabTextOn]}>
-              {t === "posts" ? "Posts" : t === "clips" ? "Clips" : "Saved"}
-            </Text>
           </Pressable>
         ))}
       </View>
@@ -486,8 +525,22 @@ const make = (t: NativeTheme) =>
     nameRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
     banner: { height: 132 },
     body: { paddingHorizontal: 16, marginTop: -48 },
-    picRow: { flexDirection: "row", alignItems: "flex-end" },
+    picRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
     pic: { borderRadius: 48, borderWidth: 4, borderColor: t.colors.bg },
+    storyRing: { width: 88, height: 88, borderRadius: 44, padding: 3 },
+    storyGap: {
+      flex: 1,
+      borderRadius: 42,
+      backgroundColor: t.colors.bg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    countsBeside: {
+      flex: 1,
+      flexDirection: "row",
+      justifyContent: "space-around",
+      paddingBottom: 6,
+    },
     name: {
       fontFamily: t.fonts.displayBold,
       fontSize: 24 * t.textScale,

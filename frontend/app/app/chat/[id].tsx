@@ -10,6 +10,7 @@ import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { Image, type ImageSource } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -29,13 +30,17 @@ import { bodyOf, MessageRow, QUICK_REACTIONS, timeOf } from "@/chat/message-row"
 import { PhotoSend } from "@/chat/photo-send";
 import { PhotoViewer } from "@/chat/photo-viewer";
 import { Icon } from "@/icon";
+import { leave } from "@/leave";
 import { live, useLiveEvent, useLiveStatus } from "@/live";
+import { usePresence } from "@/presence";
 import { ApiError, api, mediaSource, upload } from "@/server";
 import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
 import { shrinkPhoto } from "@/shrink";
+import { Avatar } from "@/social/avatar";
 import { useSafety } from "@/social/safety";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
+import { Verified } from "@/social/verified";
 import { type NativeTheme, THEME_ORDER, themes, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 import { markRead, olderId, refreshUnread } from "@/unread";
@@ -621,7 +626,16 @@ export default function Chat() {
 
   return (
     <AppScreen>
-      <TopBar title={title ?? "Chat"} />
+      {own ? (
+        // Now Playing: every conversation is lit in its own colour.
+        <LinearGradient
+          colors={[`${own.accent}38`, `${own.accent}10`, "transparent"]}
+          locations={[0, 0.45, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      ) : null}
+      {isDm && conv ? <ChatHeader conv={conv} meId={meId} /> : <TopBar title={title ?? "Chat"} />}
       {isDm ? (
         <View style={s.notice}>
           <Text style={s.noticeText}>Not end-to-end encrypted yet</Text>
@@ -823,6 +837,83 @@ export default function Chat() {
         onClose={closeViewer}
       />
     </AppScreen>
+  );
+}
+
+/**
+ * A conversation's header: who it's with (their picture, name and badge), and whether they're
+ * around right now; tap it for their profile. Groups show their name and how many are in it.
+ */
+function ChatHeader({ conv, meId }: { conv: Conversation; meId: string | null }) {
+  const { t } = useTheme();
+  const s = useStyles(make);
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const others = conv.recipients.filter((r) => r.id !== meId);
+  const one = conv.type === "dm" ? others[0] : undefined;
+  const status = usePresence(one?.id);
+  const name = conv.name ?? others.map((r) => r.displayName).join(", ");
+  const line = one
+    ? status === "online"
+      ? "Active now"
+      : status === "idle"
+        ? "Away"
+        : status === "dnd"
+          ? "Busy"
+          : `@${one.username}`
+    : `${conv.recipients.length} people`;
+  return (
+    <View style={[s.head, { paddingTop: insets.top + 4 }]}>
+      <Pressable
+        onPress={() => leave(router, "/inbox")}
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        style={s.headIcon}
+      >
+        <Icon name="CaretLeft" size={24} color={t.colors.text} />
+      </Pressable>
+      <Pressable
+        onPress={() =>
+          one && router.push({ pathname: "/user/[username]", params: { username: one.username } })
+        }
+        disabled={!one}
+        accessibilityRole={one ? "link" : "header"}
+        accessibilityLabel={`${name}. ${line}`}
+        style={s.headWho}
+      >
+        {one ? (
+          <View>
+            <Avatar user={one} size={38} />
+            {status === "online" ? <View style={s.onlineDot} /> : null}
+          </View>
+        ) : null}
+        <View style={s.fill}>
+          <View style={s.headNameRow}>
+            <Text style={s.headName} numberOfLines={1}>
+              {name}
+            </Text>
+            {one ? <Verified kind={one.verified} size={15} /> : null}
+          </View>
+          <Text style={[s.headLine, status === "online" && s.headOnline]} numberOfLines={1}>
+            {line}
+          </Text>
+        </View>
+      </Pressable>
+      {one ? (
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: "/user/[username]", params: { username: one.username } })
+          }
+          accessibilityRole="button"
+          accessibilityLabel={`About ${one.displayName}`}
+          style={s.headIcon}
+        >
+          <Icon name="DotsThreeBold" size={22} color={t.colors.text} />
+        </Pressable>
+      ) : (
+        <View style={s.headIcon} />
+      )}
+    </View>
   );
 }
 
@@ -1083,6 +1174,41 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
     },
     dim: { opacity: 0.45 },
+    head: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 4,
+      paddingBottom: 8,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border,
+    },
+    headIcon: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+    headWho: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 44 },
+    headNameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+    headName: {
+      fontFamily: t.fonts.bold,
+      fontSize: 16.5 * t.textScale,
+      color: t.colors.text,
+      flexShrink: 1,
+    },
+    headLine: {
+      fontFamily: t.fonts.body,
+      fontSize: 13 * t.textScale,
+      color: t.colors.textSoft,
+      marginTop: 1,
+    },
+    headOnline: { color: t.colors.presence },
+    onlineDot: {
+      position: "absolute",
+      right: -1,
+      bottom: -1,
+      width: 13,
+      height: 13,
+      borderRadius: 7,
+      borderWidth: 2.5,
+      borderColor: t.colors.bg,
+      backgroundColor: t.colors.presence,
+    },
     // No scrollbar or focus ring drawn by the browser on the message box.
     inputWeb: { outlineStyle: "none", scrollbarWidth: "none" } as object,
     awaiting: {
