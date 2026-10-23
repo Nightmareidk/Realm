@@ -12,6 +12,7 @@ import {
   PencilSimple,
   PlayCircle,
   Plus,
+  PushPin,
   Trash,
   X,
 } from "@phosphor-icons/react";
@@ -35,6 +36,7 @@ import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
 import { onMade, openComposer } from "./composer";
 import { PostDialog } from "./post-dialog";
+import { SendSheet } from "./send-sheet";
 import { compact, useFetch, Verified } from "./shared";
 import { Ring, StoryViewer } from "./stories";
 
@@ -273,6 +275,7 @@ export function ProfileView({ username }: { username: string }) {
   const [follow, setFollow] = useState<FollowState>("none");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => setList(posts.data?.items ?? []), [posts.data]);
   useEffect(() => {
@@ -349,15 +352,7 @@ export function ProfileView({ username }: { username: string }) {
       setNote(err instanceof ApiError ? err.message : "Can't message them right now.");
     }
   };
-  const shareProfile = async () => {
-    try {
-      await navigator.clipboard.writeText(`${location.origin}/u/${u.username}`);
-      setNote("Profile link copied");
-    } catch {
-      setNote(`${location.origin}/u/${u.username}`);
-    }
-    setTimeout(() => setNote(""), 2400);
-  };
+
   const openHighlight = async (h: Highlight) => {
     try {
       const d = await api<HighlightDetail>(`/stories/highlights/${h.id}`);
@@ -444,6 +439,40 @@ export function ProfileView({ username }: { username: string }) {
               canList ? () => setPeople("following") : undefined,
             )}
           </p>
+          {p.followedBy.count > 0 && (
+            <p className="mt-2.5 flex items-center gap-2 text-[0.88rem] text-fg-soft">
+              <span className="flex">
+                {p.followedBy.users.map((f, i) => (
+                  <span
+                    key={f.id}
+                    className={cx(
+                      "rounded-full shadow-[0_0_0_2px_var(--r-surface)]",
+                      i > 0 && "-ml-2",
+                    )}
+                  >
+                    <Avatar user={f} size={22} />
+                  </span>
+                ))}
+              </span>
+              <span className="min-w-0">
+                Followed by{" "}
+                {p.followedBy.users.map((f, i) => (
+                  <span key={f.id}>
+                    {i > 0 &&
+                      (i === p.followedBy.users.length - 1 &&
+                      p.followedBy.count === p.followedBy.users.length
+                        ? " and "
+                        : ", ")}
+                    <Link href={`/u/${f.username}`} className="font-bold text-fg hover:underline">
+                      {f.username}
+                    </Link>
+                  </span>
+                ))}
+                {p.followedBy.count > p.followedBy.users.length &&
+                  ` and ${compact(p.followedBy.count - p.followedBy.users.length)} ${p.followedBy.count - p.followedBy.users.length === 1 ? "other" : "others"}`}
+              </span>
+            </p>
+          )}
           {u.bio && (
             <p className="mt-3 max-w-[34rem] whitespace-pre-line text-[0.98rem] leading-relaxed text-fg">
               {u.bio}
@@ -472,7 +501,7 @@ export function ProfileView({ username }: { username: string }) {
                 </Link>
                 <button
                   type="button"
-                  onClick={() => void shareProfile()}
+                  onClick={() => setSharing(true)}
                   className="h-10 rounded-full bg-fg/10 px-4 font-bold text-fg hover:bg-fg/15"
                 >
                   Share profile
@@ -671,6 +700,9 @@ export function ProfileView({ username }: { username: string }) {
                     </span>
                   )}
                   <span className="absolute top-2 right-2 flex gap-1.5 text-fg drop-shadow">
+                    {post.pinned && tab === "posts" && (
+                      <PushPin aria-hidden="true" size={18} weight="fill" />
+                    )}
                     {post.kind === "clip" && (
                       <PlayCircle aria-hidden="true" size={20} weight="fill" />
                     )}
@@ -706,6 +738,12 @@ export function ProfileView({ username }: { username: string }) {
           setOpen(null);
           if (search.get("post")) router.replace(`/u/${u.username}`);
         }}
+      />
+      <SendSheet
+        open={sharing}
+        link={`${typeof location === "undefined" ? "" : location.origin}/u/${u.username}`}
+        what="profile"
+        onClose={() => setSharing(false)}
       />
       <Sheet
         open={people !== null}

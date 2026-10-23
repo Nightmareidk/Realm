@@ -8,18 +8,26 @@ import {
   DotsThree,
   Flag,
   Heart,
+  Link as LinkIcon,
   PaperPlaneTilt,
+  PencilSimple,
+  PushPin,
   Trash,
 } from "@phosphor-icons/react";
 import type { Post } from "@realm/contracts";
 import Link from "next/link";
-import { useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { Popover, row } from "@/features/app/menus";
 import { openReport, useRealm } from "@/features/realtime/store";
 import { Avatar } from "@/features/spaces/person";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
+import { SendSheet } from "./send-sheet";
 import { ago, compact, SongChip, Verified } from "./shared";
+
+/** Where a post lives on the website (what Send and Copy link share). */
+export const postLink = (id: string) =>
+  `${typeof location === "undefined" ? "https://tomyrealm.com" : location.origin}/p/${id}`;
 
 /** Like or save, shown at once and put back if the server says no. */
 export async function toggle(post: Post, what: "like" | "save", onChange: (p: Post) => void) {
@@ -36,7 +44,7 @@ export async function toggle(post: Post, what: "like" | "save", onChange: (p: Po
   }
 }
 
-/** A post's pictures (or its Clip), with arrows between photos. */
+/** A post's pictures (or its Clip), with arrows and dots between photos. */
 export function PostMedia({
   post,
   rounded = "rounded-[28px]",
@@ -51,6 +59,11 @@ export function PostMedia({
   const [at, setAt] = useState(0);
   const m = post.media[at];
   if (!m) return null;
+  const many = post.media.length > 1;
+  const step = (by: number) => (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+    setAt((a) => Math.min(post.media.length - 1, Math.max(0, a + by)));
+  };
   return (
     <div className={cx("relative overflow-hidden bg-surface-sunken", rounded, className)}>
       {m.kind === "video" ? (
@@ -65,6 +78,7 @@ export function PostMedia({
       ) : (
         // biome-ignore lint/performance/noImgElement: people's photos, behind an access check.
         <img
+          key={m.id}
           src={m.url}
           alt={
             post.caption
@@ -76,12 +90,12 @@ export function PostMedia({
           decoding="async"
         />
       )}
-      {post.media.length > 1 && (
+      {many && (
         <>
           {at > 0 && (
             <button
               type="button"
-              onClick={() => setAt(at - 1)}
+              onClick={step(-1)}
               className="absolute top-1/2 left-3 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-fg/85 text-base"
             >
               <CaretLeft aria-hidden="true" size={16} weight="bold" />
@@ -91,15 +105,30 @@ export function PostMedia({
           {at < post.media.length - 1 && (
             <button
               type="button"
-              onClick={() => setAt(at + 1)}
+              onClick={step(1)}
               className="absolute top-1/2 right-3 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-fg/85 text-base"
             >
               <CaretRight aria-hidden="true" size={16} weight="bold" />
               <span className="sr-only">Next photo</span>
             </button>
           )}
-          <span className="absolute top-3 right-3 rounded-full bg-[rgb(9_9_12/0.7)] px-2.5 py-1 text-[0.78rem] font-bold text-fg tabular-nums">
-            {at + 1}/{post.media.length}
+          {/* Dots, the way photo sets show where you are. */}
+          <span
+            className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5"
+            aria-hidden="true"
+          >
+            {post.media.map((x, i) => (
+              <span
+                key={x.id}
+                className={cx(
+                  "h-1.5 rounded-full transition-all duration-200",
+                  i === at ? "w-4 bg-fg" : "w-1.5 bg-fg/50",
+                )}
+              />
+            ))}
+          </span>
+          <span className="sr-only" aria-live="polite">
+            Photo {at + 1} of {post.media.length}
           </span>
         </>
       )}
@@ -107,9 +136,82 @@ export function PostMedia({
   );
 }
 
+/** A long caption shows two lines and "more" (Instagram's way), all of it once opened. */
+function Caption({ post }: { post: Post }) {
+  const [open, setOpen] = useState(false);
+  if (!post.caption) return null;
+  const long = post.caption.length > 140 || post.caption.split("\n").length > 2;
+  return (
+    <div className="px-1.5 pt-1 text-[0.92rem] text-fg-soft">
+      <p className={cx("whitespace-pre-line", !open && long && "line-clamp-2")}>
+        <Link href={`/u/${post.author.username}`} className="font-bold text-fg">
+          {post.author.username}
+        </Link>{" "}
+        {post.caption}
+      </p>
+      {long && !open && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="font-bold text-fg-soft hover:text-fg"
+        >
+          more
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Change a post's caption (the post shows "Edited" afterwards). */
+function EditCaption({ post, onDone }: { post: Post; onDone: (p: Post | null) => void }) {
+  const [text, setText] = useState(post.caption ?? "");
+  const [error, setError] = useState("");
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      onDone(
+        await api<Post>(`/posts/${post.id}`, {
+          method: "PATCH",
+          body: { caption: text.trim() || null },
+        }),
+      );
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Not saved. Try again.");
+    }
+  };
+  return (
+    <form onSubmit={save} className="px-1.5 pt-2">
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        maxLength={2200}
+        rows={3}
+        aria-label="Caption"
+        className="w-full resize-none rounded-input border-[1.5px] border-line-strong bg-base/70 px-3 py-2 text-fg outline-none focus-visible:border-accent"
+      />
+      {error && <p className="text-[0.88rem] text-danger">{error}</p>}
+      <div className="mt-1.5 flex gap-2">
+        <button
+          type="submit"
+          className="h-9 rounded-full bg-accent px-4 text-[0.88rem] font-bold text-on-accent"
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          onClick={() => onDone(null)}
+          className="h-9 rounded-full px-4 text-[0.88rem] font-bold text-fg-soft hover:text-fg"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
 /**
- * A post in Look B: the photo lights the room around it, the song sits on the photo, then likes,
- * comments, share and save, and the caption.
+ * A post in Look B: the photo lights the room around it, the song sits on the photo; double-click
+ * to like (a heart blooms), then likes, comments, Send, save, and the caption.
  */
 export function PostCard({
   post,
@@ -125,29 +227,58 @@ export function PostCard({
 }) {
   const me = useRealm((s) => s.me?.id);
   const [note, setNote] = useState("");
+  const [sending, setSending] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [burst, setBurst] = useState(0);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const first = post.media[0];
   const glow = first && first.kind === "image" ? first.url : null;
   const mine = post.author.id === me;
 
-  const share = async () => {
-    const link = `${location.origin}/u/${post.author.username}?post=${post.id}`;
-    try {
-      await navigator.clipboard.writeText(link);
-      setNote("Link copied");
-    } catch {
-      setNote(link);
-    }
+  const say = (text: string) => {
+    setNote(text);
     setTimeout(() => setNote(""), 2400);
   };
-
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(postLink(post.id));
+      say("Link copied");
+    } catch {
+      say(postLink(post.id));
+    }
+  };
   const remove = async () => {
     if (!confirm("Delete this post? This can't be undone.")) return;
     try {
       await api(`/posts/${post.id}`, { method: "DELETE" });
       onRemoved?.();
     } catch (err) {
-      setNote(err instanceof ApiError ? err.message : "Not deleted. Try again.");
+      say(err instanceof ApiError ? err.message : "Not deleted. Try again.");
     }
+  };
+  const pin = async () => {
+    try {
+      onChange(
+        await api<Post>(`/posts/${post.id}/pin`, { method: post.pinned ? "DELETE" : "PUT" }),
+      );
+      say(post.pinned ? "Unpinned from your profile" : "Pinned to your profile");
+    } catch (err) {
+      say(err instanceof ApiError ? err.message : "That didn't work. Try again.");
+    }
+  };
+  // One click opens the post; two quick ones like it, with a heart.
+  const onMediaClick = () => {
+    if (clickTimer.current) {
+      clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+      setBurst((b) => b + 1);
+      if (!post.liked) void toggle(post, "like", onChange);
+      return;
+    }
+    clickTimer.current = setTimeout(() => {
+      clickTimer.current = null;
+      onOpen();
+    }, 260);
   };
 
   return (
@@ -179,16 +310,59 @@ export function PostCard({
           <p className="truncate text-[0.82rem] text-fg-soft">
             {post.space ? `${post.space.name} · ` : ""}
             {ago(post.createdAt)}
+            {post.editedAt ? " · Edited" : ""}
+            {post.pinned ? " · Pinned" : ""}
           </p>
         </div>
         <Popover
           label="Post options"
           buttonClass="grid size-9 place-items-center rounded-full text-fg-soft hover:bg-fg/8 hover:text-fg aria-expanded:bg-fg/8"
-          panelClass="w-[14rem]"
+          panelClass="w-[15rem]"
           button={<DotsThree aria-hidden="true" size={22} weight="bold" />}
         >
           {(close) => (
             <div>
+              {mine && (
+                <>
+                  <button
+                    type="button"
+                    className={row}
+                    onClick={() => {
+                      close();
+                      void pin();
+                    }}
+                  >
+                    <PushPin aria-hidden="true" size={19} />
+                    {post.pinned ? "Unpin from profile" : "Pin to your profile"}
+                  </button>
+                  <button
+                    type="button"
+                    className={row}
+                    onClick={() => {
+                      close();
+                      setEditing(true);
+                    }}
+                  >
+                    <PencilSimple aria-hidden="true" size={19} />
+                    Edit caption
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                className={row}
+                onClick={() => {
+                  close();
+                  void copy();
+                }}
+              >
+                <LinkIcon aria-hidden="true" size={19} />
+                Copy link
+              </button>
+              <Link href={`/p/${post.id}`} className={row} onClick={close}>
+                <ChatCircle aria-hidden="true" size={19} />
+                Go to post
+              </Link>
               {mine ? (
                 <button
                   type="button"
@@ -204,7 +378,7 @@ export function PostCard({
               ) : (
                 <button
                   type="button"
-                  className={row}
+                  className={cx(row, "text-danger")}
                   onClick={() => {
                     close();
                     openReport({
@@ -225,15 +399,25 @@ export function PostCard({
       </header>
 
       <div className="relative">
-        <button
-          type="button"
-          onClick={onOpen}
-          onDoubleClick={() => !post.liked && void toggle(post, "like", onChange)}
-          className="block w-full"
-          aria-label="Open the post"
-        >
+        {/* Click opens, double-click likes; keyboard users have the button below. */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: the photo also has a real button for keyboards. */}
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: the sr-only button below does the same. */}
+        <div onClick={onMediaClick} className="cursor-pointer">
           <PostMedia post={post} className="aspect-[4/5] max-h-[600px] w-full" />
+        </div>
+        <button type="button" onClick={onOpen} className="sr-only focus:not-sr-only">
+          Open the post
         </button>
+        {burst > 0 && (
+          <span
+            key={burst}
+            aria-hidden="true"
+            className="r-burst pointer-events-none absolute inset-0 grid place-items-center text-[#ff6b8b]"
+            onAnimationEnd={() => setBurst(0)}
+          >
+            <Heart size={110} weight="fill" />
+          </span>
+        )}
         {post.sound && (
           <SongChip
             sound={post.sound}
@@ -265,30 +449,36 @@ export function PostCard({
           <span className="text-[0.88rem] tabular-nums">{compact(post.commentCount)}</span>
           <span className="sr-only">Comments</span>
         </button>
-        <button type="button" onClick={() => void share()}>
+        <button type="button" onClick={() => setSending(true)}>
           <PaperPlaneTilt aria-hidden="true" size={26} />
-          <span className="sr-only">Share</span>
+          <span className="sr-only">Send</span>
         </button>
-        <span role="status" className="text-[0.85rem] text-fg-soft">
+        <span role="status" className="min-w-0 truncate text-[0.85rem] text-fg-soft">
           {note}
         </span>
         <button
           type="button"
           aria-pressed={post.saved}
-          onClick={() => void toggle(post, "save", onChange)}
+          onClick={() => {
+            void toggle(post, "save", onChange);
+            say(post.saved ? "Removed from Saved" : "Saved. Find it on your profile.");
+          }}
           className="ml-auto"
         >
           <BookmarkSimple aria-hidden="true" size={26} weight={post.saved ? "fill" : "regular"} />
           <span className="sr-only">{post.saved ? "Saved" : "Save"}</span>
         </button>
       </div>
-      {post.caption && (
-        <p className="px-1.5 pt-1 text-[0.92rem] text-fg-soft">
-          <Link href={`/u/${post.author.username}`} className="font-bold text-fg">
-            {post.author.username}
-          </Link>{" "}
-          {post.caption}
-        </p>
+      {editing ? (
+        <EditCaption
+          post={post}
+          onDone={(p) => {
+            setEditing(false);
+            if (p) onChange(p);
+          }}
+        />
+      ) : (
+        <Caption post={post} />
       )}
       {post.commentCount > 0 && (
         <button
@@ -299,6 +489,12 @@ export function PostCard({
           View all {compact(post.commentCount)} comments
         </button>
       )}
+      <SendSheet
+        open={sending}
+        link={postLink(post.id)}
+        what="post"
+        onClose={() => setSending(false)}
+      />
     </article>
   );
 }

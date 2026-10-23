@@ -49,6 +49,7 @@ import {
   openReport,
   useRealm,
 } from "@/features/realtime/store";
+import { linkedPostId, PostLinkCard } from "@/features/social/post-link-card";
 import { ApiError } from "@/lib/api";
 import { cx } from "@/lib/cx";
 import { FileList, isVisual, MediaGrid, PlaceCard } from "./attachments";
@@ -1007,6 +1008,7 @@ function Bubble({
         ) : (
           <div className={cx("flex min-w-0 flex-col gap-1", mine ? "items-end" : "items-start")}>
             {visual.length > 0 && <MediaGrid files={visual} />}
+            {linkedPostId(m.content) && <PostLinkCard id={linkedPostId(m.content) as string} />}
             {hasBubble ? (
               <div
                 className={cx(

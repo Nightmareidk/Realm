@@ -1,12 +1,13 @@
 "use client";
 
-import { CaretLeft, CaretRight, Pause, Play, Plus, X } from "@phosphor-icons/react";
-import type { Story, StoryRing } from "@realm/contracts";
+import { CaretLeft, CaretRight, Eye, Pause, Play, Plus, X } from "@phosphor-icons/react";
+import type { Story, StoryRing, StoryViewer as Viewer } from "@realm/contracts";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { player } from "@/features/music/player";
+import { openConversation } from "@/features/realtime/actions";
 import { Avatar } from "@/features/spaces/person";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
 import { ago, Verified } from "./shared";
 
@@ -332,10 +333,10 @@ export function StoryViewer({
                 )}
               </div>
             )}
-            {story.views !== null && (
-              <p className="absolute right-4 bottom-4 rounded-full bg-[rgb(9_9_12/0.7)] px-3 py-1 text-[0.8rem] font-bold">
-                {story.views} {story.views === 1 ? "view" : "views"}
-              </p>
+            {story.views !== null ? (
+              <StoryViews story={story} onOpen={(open) => setPaused(open)} />
+            ) : (
+              <StoryReply story={story} onTyping={(on) => setPaused(on)} />
             )}
           </div>
           <button
@@ -351,5 +352,131 @@ export function StoryViewer({
         </div>
       )}
     </dialog>
+  );
+}
+
+/** Your own Story: how many watched, and (tapped) who, newest first. */
+function StoryViews({ story, onOpen }: { story: Story; onOpen: (open: boolean) => void }) {
+  const [list, setList] = useState<Viewer[] | null>(null);
+  const [open, setOpen] = useState(false);
+  // A different Story: start closed, and ask again who watched it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the Story changes.
+  useEffect(() => {
+    setOpen(false);
+    setList(null);
+  }, [story.id]);
+  const toggle = async () => {
+    const next = !open;
+    setOpen(next);
+    onOpen(next);
+    if (next && !list) {
+      try {
+        setList((await api<{ items: Viewer[] }>(`/stories/${story.id}/viewers`)).items);
+      } catch {
+        setList([]);
+      }
+    }
+  };
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => void toggle()}
+        className="absolute right-4 bottom-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-[rgb(9_9_12/0.7)] px-3 py-1.5 text-[0.82rem] font-bold"
+      >
+        <Eye aria-hidden="true" size={15} />
+        {story.views} {story.views === 1 ? "view" : "views"}
+      </button>
+      {open && (
+        <div className="absolute inset-x-0 bottom-0 z-20 max-h-[60%] overflow-y-auto rounded-t-[22px] bg-surface p-4 pb-14">
+          <p className="mb-2 font-bold">Watched by</p>
+          {!list ? (
+            <p className="text-fg-soft">Loading…</p>
+          ) : list.length === 0 ? (
+            <p className="text-fg-soft">Nobody yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {list.map((v) => (
+                <li key={v.user.id} className="flex items-center gap-2.5">
+                  <Avatar user={v.user} size={34} />
+                  <span className="min-w-0 flex-1 truncate font-bold">{v.user.displayName}</span>
+                  <span className="text-[0.8rem] text-fg-soft">{ago(v.viewedAt)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+const QUICK = ["❤️", "😂", "😮", "😢", "👏", "🔥"];
+
+/**
+ * Someone else's Story: reply or send a quick reaction. It arrives in your chat with them, saying
+ * which Story it was about. The Story waits while you type.
+ */
+function StoryReply({ story, onTyping }: { story: Story; onTyping: (on: boolean) => void }) {
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState("");
+  const send = async (content: string) => {
+    if (!content.trim()) return;
+    try {
+      const dm = await openConversation([story.author.id]);
+      await api(`/channels/${dm.id}/messages`, {
+        body: { content: `Replied to your Story: ${content.trim()}` },
+      });
+      setText("");
+      setSent("Sent");
+    } catch (err) {
+      setSent(err instanceof ApiError ? err.message : "Not sent");
+    }
+    setTimeout(() => setSent(""), 1800);
+  };
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void send(text);
+      }}
+      className="absolute inset-x-3 bottom-3 z-10 space-y-2"
+    >
+      {!text && (
+        <div className="flex justify-center gap-2">
+          {QUICK.map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => void send(q)}
+              className="grid size-10 place-items-center rounded-full bg-[rgb(9_9_12/0.45)] text-[1.25rem] transition-transform duration-150 hover:scale-110 active:scale-90"
+            >
+              {q}
+              <span className="sr-only">React {q}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center gap-2 rounded-full border border-fg/40 bg-[rgb(9_9_12/0.35)] py-1 pr-1 pl-4 backdrop-blur-sm">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onFocus={() => onTyping(true)}
+          onBlur={() => onTyping(false)}
+          maxLength={500}
+          placeholder={sent || `Reply to ${story.author.displayName.split(" ")[0]}…`}
+          aria-label={`Reply to ${story.author.displayName}`}
+          className="h-9 min-w-0 flex-1 bg-transparent text-fg outline-none placeholder:text-fg/75"
+        />
+        {text && (
+          <button
+            type="submit"
+            className="h-9 rounded-full bg-fg px-4 text-[0.88rem] font-bold text-base"
+          >
+            Send
+          </button>
+        )}
+      </div>
+    </form>
   );
 }

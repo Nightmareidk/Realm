@@ -989,3 +989,35 @@ html:not([data-look="plain"]) .r-chat-wall {
   filter: blur(7px) saturate(1.5);
   will-change: transform;
 }
+
+/* Double-click to like: a heart blooms on the photo and fades. */
+@keyframes r-burst {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  18% {
+    transform: scale(1.15);
+    opacity: 0.95;
+  }
+  32% {
+    transform: scale(0.95);
+  }
+  70% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.05) translateY(-12px);
+    opacity: 0;
+  }
+}
+.r-burst > svg {
+  filter: drop-shadow(0 6px 24px rgb(0 0 0 / 0.35));
+  animation: r-burst 900ms var(--r-ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .r-burst > svg {
+    animation-duration: 400ms;
+  }
+}
