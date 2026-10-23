@@ -1,4 +1,5 @@
 import type { SoundUse } from "@realm/contracts";
+import { Image } from "expo-image";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -11,6 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Icon } from "../icon";
+import { mediaSource, resolveUrl } from "../server";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { toggleSound, usePlaying } from "./player";
 
@@ -27,6 +29,7 @@ export function SoundChip({
   playKey,
   over,
   autoPlaying,
+  from = null,
 }: {
   sound: SoundUse;
   /** What the player calls this (the post or Story it's on), to know it's the one playing. */
@@ -34,6 +37,8 @@ export function SoundChip({
   over?: boolean;
   /** Something else plays it (a Story), so the chip only shows it and doesn't toggle. */
   autoPlaying?: boolean;
+  /** Where it's from, for the Now Playing bar ("Noor's post"). */
+  from?: string | null;
 }) {
   const { t } = useTheme();
   const s = useStyles(make);
@@ -68,17 +73,34 @@ export function SoundChip({
         {on ? <Text style={[s.threadOn, over && s.white]}>Playing</Text> : null}
       </View>
     ) : (
-      <View style={[s.glow, over && s.overDark, on && !over && s.glowOn]}>
-        {on ? <Bars color={ink} /> : <Icon name="MusicNotesFill" size={15} color={ink} />}
+      <View
+        style={[s.glow, over && s.overDark, on && !over && s.glowOn, sound.coverUrl && s.glowCover]}
+      >
+        {sound.coverUrl ? (
+          <Image
+            source={
+              sound.coverUrl.startsWith("/")
+                ? mediaSource(sound.coverUrl)
+                : { uri: resolveUrl(sound.coverUrl) }
+            }
+            style={s.cover}
+            contentFit="cover"
+            recyclingKey={sound.coverUrl}
+          />
+        ) : (
+          <Icon name="MusicNotesFill" size={15} color={ink} />
+        )}
         <Text style={[s.glowText, { color: ink }]} numberOfLines={1}>
-          {label}
+          {sound.title}
+          <Text style={s.glowArtist}> {sound.artist}</Text>
         </Text>
+        {on ? <Bars color={over ? t.colors.accent : ink} /> : null}
       </View>
     );
   if (autoPlaying !== undefined) return <View accessibilityLabel={`Music: ${label}`}>{body}</View>;
   return (
     <Pressable
-      onPress={() => toggleSound(sound, playKey)}
+      onPress={() => toggleSound(sound, playKey, from)}
       accessibilityRole="button"
       accessibilityLabel={on ? `Stop the music: ${label}` : `Play the music: ${label}`}
       hitSlop={6}
@@ -146,6 +168,9 @@ const make = (t: NativeTheme) =>
       elevation: 6,
     },
     glowText: { fontFamily: t.fonts.bold, fontSize: 13.5 * t.textScale, flexShrink: 1 },
+    glowArtist: { fontFamily: t.fonts.body, opacity: 0.8 },
+    glowCover: { paddingLeft: 4 },
+    cover: { width: 24, height: 24, borderRadius: 999 },
     // Wristband
     ticket: {
       flexDirection: "row",

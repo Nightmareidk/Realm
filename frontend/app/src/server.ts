@@ -222,7 +222,7 @@ export function mediaSource(url: string) {
  */
 export async function upload(file: {
   uri: string;
-  kind: "image" | "video";
+  kind: "image" | "video" | "audio";
   mimeType: string;
   durationMs?: number;
 }): Promise<string> {

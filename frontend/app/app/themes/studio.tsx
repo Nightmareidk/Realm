@@ -22,6 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { alert } from "@/alert";
 import { Icon } from "@/icon";
+import { leave } from "@/leave";
 import { ApiError, api, upload } from "@/server";
 import { shrinkPhoto } from "@/shrink";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
@@ -155,7 +156,7 @@ export default function Studio() {
         setSaved(d);
       } catch (err) {
         alert("Couldn't open it", err instanceof ApiError ? err.message : "Try again.");
-        router.back();
+        leave(router, "/themes");
       }
     })();
   }, [id, router]);

@@ -82,7 +82,10 @@ export const themeRoutes =
       "/palette",
       {
         preHandler: requireAuth,
-        schema: { body: PaletteBody, response: { 200: z.object({ suggestions: z.array(PaletteSuggestion) }) } },
+        schema: {
+          body: PaletteBody,
+          response: { 200: z.object({ suggestions: z.array(PaletteSuggestion) }) },
+        },
       },
       async (req) => {
         const { userId } = authOf(req);

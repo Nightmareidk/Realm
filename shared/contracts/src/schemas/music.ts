@@ -72,6 +72,10 @@ export type SoundUse = z.infer<typeof SoundUse>;
 
 /** Stories last a day. */
 export const STORY_HOURS = 24;
+/** A photo Story shows for 5 seconds to a minute; 10 unless you choose. */
+export const STORY_MIN_MS = 5_000;
+export const STORY_MAX_MS = 60_000;
+export const STORY_DEFAULT_MS = 10_000;
 
 export const Story = z
   .object({
@@ -80,6 +84,8 @@ export const Story = z
     media: MediaRef,
     sound: SoundUse.nullable(),
     caption: z.string().nullable(),
+    /** How long a photo shows (a video shows for its own length). */
+    durationMs: z.number().int(),
     createdAt: IsoDateTime,
     expiresAt: IsoDateTime,
     /** You've watched it. */
@@ -110,6 +116,8 @@ export const CreateStoryBody = z
     mediaId: Snowflake,
     caption: z.string().trim().max(200).optional(),
     sound: SoundPick.optional(),
+    /** How long a photo shows: 5 seconds to a minute (10 if left out, or its song's part). */
+    durationMs: z.number().int().min(STORY_MIN_MS).max(STORY_MAX_MS).optional(),
     /** Left out: your followers if your account is private, else everyone. */
     visibility: z.enum(["public", "followers"]).optional(),
   })

@@ -15,15 +15,13 @@ import { authRoutes, gatewayRoutes } from "./modules/auth/routes";
 import { conversationRoutes } from "./modules/dms/routes";
 import { ConversationsService } from "./modules/dms/service";
 import { mediaRoutes } from "./modules/media/routes";
+import { soundRoutes, storyRoutes } from "./modules/music/routes";
+import { MusicService } from "./modules/music/service";
 import { releaseRoutes } from "./modules/releases/routes";
 import { meSafetyRoutes, moderationRoutes, reportRoutes } from "./modules/safety/routes";
 import { SafetyService } from "./modules/safety/service";
 import { postRoutes, socialUserRoutes } from "./modules/social/routes";
 import { SocialService } from "./modules/social/service";
-import { soundRoutes, storyRoutes } from "./modules/music/routes";
-import { MusicService } from "./modules/music/service";
-import { themeRoutes } from "./modules/themes/routes";
-import { ThemeService } from "./modules/themes/service";
 import {
   channelRoutes,
   communityRoutes,
@@ -32,6 +30,8 @@ import {
   meSpaceRoutes,
   spacesModule,
 } from "./modules/spaces/routes";
+import { themeRoutes } from "./modules/themes/routes";
+import { ThemeService } from "./modules/themes/service";
 import { userRoutes } from "./modules/users/routes";
 import { registerContext } from "./plugins/context";
 import { registerErrorHandling } from "./plugins/errors";

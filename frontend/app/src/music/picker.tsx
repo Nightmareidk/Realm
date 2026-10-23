@@ -8,6 +8,7 @@ import {
   type GestureResponderEvent,
   Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -36,7 +37,9 @@ export const toPick = (p: Picked): SoundPick => ({
 });
 
 type Tab = "popular" | "mine";
-const LENGTHS = [15_000, 30_000, 60_000] as const;
+const LENGTHS = [10_000, 15_000, 30_000, 60_000] as const;
+/** Song files can be chosen in a browser; the phone needs the document picker (next build). */
+const SONG_FILES = Platform.OS === "web";
 
 /**
  * Add music: search the free library (Creative Commons music from Jamendo) or pick from your
@@ -348,13 +351,96 @@ function Cover({ sound, size }: { sound: Sound; size: number }) {
   );
 }
 
-/** Make your own sound from a video's audio. Anyone can then use it, credited to you. */
+/** Song files a browser can hand over (the phone gets a file picker in its next build). */
+const AUDIO_TYPES = [
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/x-m4a",
+  "audio/wav",
+  "audio/ogg",
+  "audio/webm",
+];
+const AUDIO_MAX_BYTES = 15 * 1024 * 1024;
+
+/** In a browser: choose a song file from the computer. */
+function pickAudioFile(): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = AUDIO_TYPES.join(",");
+    input.onchange = () => resolve(input.files?.[0] ?? null);
+    input.oncancel = () => resolve(null);
+    input.click();
+  });
+}
+
+/** How long a song file is, read by the browser itself (0 if it can't tell). */
+function audioLength(url: string): Promise<number> {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    audio.preload = "metadata";
+    audio.onloadedmetadata = () =>
+      resolve(Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : 0);
+    audio.onerror = () => resolve(0);
+    audio.src = url;
+  });
+}
+
+/**
+ * Make your own sound: a song or recording from a file (in the browser now; on the phone with
+ * its next build), or the sound of one of your videos. Anyone can then use it, credited to you.
+ */
 function MakeSound({ onMade }: { onMade: () => void }) {
   const { t, accent } = useTheme();
   const s = useStyles(make);
   const [name, setName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function save(file: {
+    uri: string;
+    kind: "audio" | "video";
+    mimeType: string;
+    durationMs?: number;
+  }) {
+    try {
+      setStatus("Uploading");
+      const mediaId = await upload(file);
+      setStatus("Saving");
+      await api<Sound>("/sounds", { body: { mediaId, title: name.trim() } });
+      setName("");
+      onMade();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "That didn't work. Try again.");
+    } finally {
+      setStatus(null);
+    }
+  }
+
+  async function pickSongFile() {
+    if (!name.trim()) {
+      setError("Give your sound a name first.");
+      return;
+    }
+    setError(null);
+    const file = await pickAudioFile();
+    if (!file) return;
+    if (!AUDIO_TYPES.includes(file.type)) {
+      setError("Use an MP3, M4A, WAV or OGG file.");
+      return;
+    }
+    if (file.size > AUDIO_MAX_BYTES) {
+      setError("Song files can be up to 15 MB.");
+      return;
+    }
+    const uri = URL.createObjectURL(file);
+    const durationMs = await audioLength(uri);
+    if (durationMs > 5 * 60_000) {
+      setError("Sounds can be up to 5 minutes long.");
+      return;
+    }
+    await save({ uri, kind: "audio", mimeType: file.type, durationMs: durationMs || undefined });
+  }
 
   async function pickVideo() {
     const title = name.trim();
@@ -373,31 +459,21 @@ function MakeSound({ onMade }: { onMade: () => void }) {
       setError(`Use a video up to ${CLIP_MAX_SECONDS} seconds long.`);
       return;
     }
-    try {
-      setStatus("Uploading");
-      const mediaId = await upload({
-        uri: a.uri,
-        kind: "video",
-        mimeType: a.mimeType ?? "video/mp4",
-        durationMs: a.duration ?? undefined,
-      });
-      setStatus("Saving");
-      await api<Sound>("/sounds", { body: { mediaId, title } });
-      setName("");
-      onMade();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "That didn't work. Try again.");
-    } finally {
-      setStatus(null);
-    }
+    await save({
+      uri: a.uri,
+      kind: "video",
+      mimeType: a.mimeType ?? "video/mp4",
+      durationMs: a.duration ?? undefined,
+    });
   }
 
   return (
     <View style={s.make}>
       <Text style={s.makeTitle}>Make your own sound</Text>
       <Text style={s.makeLine}>
-        Pick a video and its sound becomes yours to use, with your name on it. Others can use it
-        too.
+        {SONG_FILES
+          ? "Upload a song or recording you made, or use the sound of one of your videos. It's yours, with your name on it, and others can use it too."
+          : "Use the sound of one of your videos: it's yours, with your name on it, and others can use it too. Song files from your phone come with the next app update."}
       </Text>
       <TextInput
         value={name}
@@ -411,13 +487,25 @@ function MakeSound({ onMade }: { onMade: () => void }) {
         accessibilityLabel="Sound name"
       />
       {error ? <Text style={s.error}>{error}</Text> : null}
-      <Pill
-        size="md"
-        label="Pick a video"
-        pending={Boolean(status)}
-        pendingLabel={status ?? "Saving"}
-        onPress={pickVideo}
-      />
+      <View style={s.makeActions}>
+        {SONG_FILES ? (
+          <Pill
+            size="md"
+            label="Upload a song file"
+            pending={Boolean(status)}
+            pendingLabel={status ?? "Saving"}
+            onPress={pickSongFile}
+          />
+        ) : null}
+        <Pill
+          size="md"
+          kind={SONG_FILES ? "ghost" : "action"}
+          label="Use a video's sound"
+          pending={!SONG_FILES && Boolean(status)}
+          pendingLabel={status ?? "Saving"}
+          onPress={pickVideo}
+        />
+      </View>
     </View>
   );
 }
@@ -748,6 +836,7 @@ const make = (t: NativeTheme) =>
       color: t.colors.text,
     },
     error: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.danger },
+    makeActions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     part: { alignItems: "center", paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
     partTitle: {
       fontFamily: t.fonts.display,

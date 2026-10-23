@@ -13,10 +13,10 @@ import { AppError, notFound } from "../../lib/errors";
 import { MESSAGE_HIDDEN, toMediaInfo } from "../../lib/serialize-spaces";
 import { acceptAs, imageSize, sniff } from "../../lib/sniff";
 import { ensureRoom, noteStorage } from "../../lib/storage-guard";
-import { seenThroughPost } from "../social/access";
 import { MusicService } from "../music/service";
-import { ThemeService } from "../themes/service";
+import { seenThroughPost } from "../social/access";
 import { roomAccess } from "../spaces/access";
+import { ThemeService } from "../themes/service";
 
 const { media, messageAttachments, messages, users } = schema;
 
@@ -205,7 +205,11 @@ export class MediaService {
     if (await new MusicService(this.deps).mediaVisible(row.id, viewerId)) return true;
     if (!viewerId) return false;
     const uses = await this.db
-      .select({ channelId: messages.channelId, flags: messages.flags })
+      .select({
+        channelId: messages.channelId,
+        flags: messages.flags,
+        viewLimit: messages.viewLimit,
+      })
       .from(messageAttachments)
       .innerJoin(messages, eq(messages.id, messageAttachments.messageId))
       .where(and(eq(messageAttachments.mediaId, row.id), isNull(messages.deletedAt)))
@@ -216,6 +220,8 @@ export class MediaService {
         if (!has(permissions, Permission.READ_MESSAGE_HISTORY)) continue;
         if ((use.flags & MESSAGE_HIDDEN) !== 0 && !has(permissions, Permission.MANAGE_MESSAGES))
           continue;
+        // A view-once photo is only handed out by opening it (which counts the view).
+        if (use.viewLimit) continue;
         return true;
       } catch {
         // A room they can't see.

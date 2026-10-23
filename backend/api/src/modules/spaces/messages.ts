@@ -4,11 +4,14 @@ import {
   has,
   isMinor,
   Limits,
+  MESSAGE_UNSEND_WINDOW_MS,
   type MediaRef,
   type Message,
   type MessagePage,
+  type OpenedPhoto,
   Permission,
   type ReadState,
+  VIEW_ONCE_SECONDS,
 } from "@realm/contracts";
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lt, ne, schema, sql } from "@realm/db";
 import type { Deps } from "../../deps";
@@ -34,6 +37,8 @@ const {
   messageReactions,
   channelRecipients,
   userSettings,
+  messageViews,
+  messageHides,
 } = schema;
 
 /** At most this many different emoji on one message, and pinned messages in one room. */
@@ -124,6 +129,10 @@ export class MessagesService {
     }
     const byId = new Map(authors.map((a) => [a.id, a]));
     const replyById = new Map(replies.map((r) => [r.id, r]));
+    const limited = rows.filter((r) => r.viewLimit).map((r) => r.id);
+    const viewsOf = limited.length
+      ? await this.db.select().from(messageViews).where(inArray(messageViews.messageId, limited))
+      : [];
     return rows.flatMap((r) => {
       const author = byId.get(r.authorId);
       if (!author) return [];
@@ -136,6 +145,16 @@ export class MessagesService {
         { attachments: filesFor.get(r.id) ?? [], reveal },
       );
       message.reactions = reactionsFor.get(r.id) ?? [];
+      if (r.viewLimit) {
+        // Its photos come without links: opening one asks for it, and uses up a view.
+        message.attachments = message.attachments.map((a) => ({ ...a, url: "" }));
+        const views = viewsOf.filter((v) => v.messageId === r.id);
+        message.opened = views.some((v) => v.count > 0);
+        if (viewerId && viewerId !== r.authorId) {
+          const mine = views.find((v) => v.userId === viewerId)?.count ?? 0;
+          message.viewsLeft = Math.max(0, r.viewLimit - mine);
+        }
+      }
       return [message];
     });
   }
@@ -156,6 +175,8 @@ export class MessagesService {
         and(
           eq(messages.channelId, channel.id),
           isNull(messages.deletedAt),
+          // Not the ones you deleted for yourself.
+          sql`not exists (select 1 from ${messageHides} where ${messageHides.userId} = ${userId} and ${messageHides.messageId} = ${messages.id})`,
           q.before ? lt(messages.id, BigInt(q.before)) : undefined,
           q.after ? gt(messages.id, BigInt(q.after)) : undefined,
         ),
@@ -213,7 +234,10 @@ export class MessagesService {
         .select({ userId: channelRecipients.userId })
         .from(channelRecipients)
         .where(
-          and(eq(channelRecipients.channelId, channel.id), isNotNull(channelRecipients.requestedAt)),
+          and(
+            eq(channelRecipients.channelId, channel.id),
+            isNotNull(channelRecipients.requestedAt),
+          ),
         );
       accepting = waiting.some((w) => w.userId === userId);
       const theyWait = waiting.some((w) => w.userId !== userId);
@@ -226,6 +250,14 @@ export class MessagesService {
       }
     }
     const files = await this.media.attachable(userId, body.attachmentIds.map(BigInt));
+    if (body.viewLimit) {
+      if (!ctx.recipients) {
+        throw badRequest("BAD_REQUEST", "View once is for conversations, not Space rooms.");
+      }
+      if (files.some((f) => f.kind !== "image")) {
+        throw badRequest("BAD_REQUEST", "Only photos can be sent to view once.");
+      }
+    }
 
     // A place is shared once, by choice. Under 18: only in small Spaces and conversations
     // (their own crowd).
@@ -279,6 +311,7 @@ export class MessagesService {
               }
             : null,
           flags: held ? MESSAGE_HIDDEN : 0,
+          viewLimit: body.viewLimit ?? null,
         })
         .returning();
       if (files.length) {
@@ -370,6 +403,30 @@ export class MessagesService {
     if (row.authorId !== userId && !has(ctx.permissions, Permission.MANAGE_MESSAGES)) {
       throw missingPermission("delete other people's messages");
     }
+    // In a conversation: unsend any time before it's seen, and for 2 minutes after.
+    if (ctx.recipients && row.authorId === userId) {
+      const late = Date.now() - row.createdAt.getTime() > MESSAGE_UNSEND_WINDOW_MS;
+      if (late) {
+        const [seen] = await this.db
+          .select({ userId: readStates.userId })
+          .from(readStates)
+          .where(
+            and(
+              eq(readStates.channelId, row.channelId),
+              ne(readStates.userId, userId),
+              sql`${readStates.lastReadMessageId} >= ${row.id}`,
+            ),
+          )
+          .limit(1);
+        if (seen) {
+          throw new AppError(
+            403,
+            "UNSEND_EXPIRED",
+            "It's been seen, and it's over 2 minutes old, so it can't be unsent. You can delete it for yourself.",
+          );
+        }
+      }
+    }
     await this.db
       .update(messages)
       .set({ deletedAt: new Date(), content: null })
@@ -428,6 +485,56 @@ export class MessagesService {
       });
     }
     return state;
+  }
+
+  /** "Delete for you": it leaves your view of the chat; everyone else still has it. */
+  async hide(channelId: bigint, messageId: bigint, userId: bigint) {
+    const { row } = await this.own(channelId, messageId, userId);
+    await this.db
+      .insert(messageHides)
+      .values({ userId, messageId: row.id, channelId: row.channelId })
+      .onConflictDoNothing();
+  }
+
+  /**
+   * Open a view-once (or view-twice) photo: counts a view, and hands out short links to its
+   * photos. Its sender can't open it again; once the views are used, it's gone for you.
+   */
+  async open(channelId: bigint, messageId: bigint, userId: bigint): Promise<OpenedPhoto> {
+    const { row, ...ctx } = await this.own(channelId, messageId, userId);
+    if (!row.viewLimit) throw badRequest("BAD_REQUEST", "That photo stays in the chat.");
+    if (row.authorId === userId) {
+      throw new AppError(403, "VIEW_USED", "Photos you send to view once can't be opened again.");
+    }
+    const counted = await this.db
+      .insert(messageViews)
+      .values({ messageId: row.id, userId, count: 1 })
+      .onConflictDoUpdate({
+        target: [messageViews.messageId, messageViews.userId],
+        set: { count: sql`${messageViews.count} + 1`, lastAt: new Date() },
+        setWhere: sql`${messageViews.count} < ${row.viewLimit}`,
+      })
+      .returning({ count: messageViews.count });
+    const count = counted[0]?.count;
+    if (count === undefined) {
+      throw new AppError(403, "VIEW_USED", "You've already opened this photo.");
+    }
+    const files = await this.db
+      .select({ key: media.storageKey, mimeType: media.mimeType })
+      .from(messageAttachments)
+      .innerJoin(media, eq(media.id, messageAttachments.mediaId))
+      .where(eq(messageAttachments.messageId, row.id))
+      .orderBy(asc(messageAttachments.position));
+    const urls = await Promise.all(
+      files.map((f) =>
+        this.deps.storage.presignGet(f.key, { expiresSeconds: 60, contentType: f.mimeType }),
+      ),
+    );
+    // Its sender sees "Opened".
+    const [updated] = await this.hydrate([row]);
+    if (updated)
+      await this.deps.bus.publish(topicOf(ctx), { type: "MESSAGE_UPDATE", data: updated });
+    return { urls, viewsLeft: Math.max(0, row.viewLimit - count), seconds: VIEW_ONCE_SECONDS };
   }
 
   async readStates(userId: bigint): Promise<ReadState[]> {

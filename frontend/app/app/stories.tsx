@@ -14,6 +14,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/icon";
+import { leave } from "@/leave";
 import { SoundChip } from "@/music/chip";
 import { playUse, stopSound } from "@/music/player";
 import { dropStory, loadStories, markSeen, useStories } from "@/music/stories";
@@ -24,12 +25,12 @@ import { Avatar } from "@/social/avatar";
 import { ago } from "@/social/time";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
 
-/** A photo shows for 6 seconds, or for its music (up to 15); a video for its length (up to 60). */
+/** A photo shows for as long as its author chose (5 seconds to a minute); a video for its length. */
 function lengthOf(st: Story) {
-  if (st.media.kind === "video")
-    return Math.min(60_000, Math.max(3_000, st.media.durationMs ?? 15_000));
-  if (st.sound) return Math.min(15_000, Math.max(5_000, st.sound.playMs));
-  return 6_000;
+  if (st.media.kind === "video") {
+    return Math.min(60_000, Math.max(3_000, st.media.durationMs ?? st.durationMs));
+  }
+  return Math.min(60_000, Math.max(5_000, st.durationMs));
 }
 
 /**
@@ -55,7 +56,7 @@ export default function Stories() {
     if (at || !rings) return;
     const ring = rings.find((r) => r.author.id === params.start) ?? rings[0];
     if (!ring) {
-      router.back();
+      leave(router);
       return;
     }
     const first = ring.stories.find((st) => !st.seen) ?? ring.stories[0];

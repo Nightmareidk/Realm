@@ -87,6 +87,8 @@ type RowProps = {
   onReply: (m: Message) => void;
   onReact: (m: Message, emoji: string) => void;
   onMenu: (m: Message) => void;
+  /** A photo tapped: open it full screen (or, sent to view once, ask for it). */
+  onOpenPhoto: (m: Message, index: number) => void;
 };
 
 export const MessageRow = memo(function MessageRow(props: RowProps) {
@@ -107,6 +109,7 @@ function Bubble({
   onReply,
   onReact,
   onMenu,
+  onOpenPhoto,
 }: RowProps) {
   const { t } = useTheme();
   const s = useStyles(make);
@@ -189,9 +192,20 @@ function Bubble({
           </Text>
         </View>
       ) : null}
-      {images.map((a) => (
-        <Photo key={a.id} media={a} />
-      ))}
+      {m.viewLimit && images.length ? (
+        <OnceCard m={m} mine={mine} ink={ink} soft={soft} onOpen={() => onOpenPhoto(m, 0)} />
+      ) : (
+        images.map((a, i) => (
+          <Pressable
+            key={a.id}
+            onPress={() => onOpenPhoto(m, i)}
+            accessibilityRole="imagebutton"
+            accessibilityLabel={`Photo ${i + 1} of ${images.length}. Open full screen`}
+          >
+            <Photo media={a} />
+          </Pressable>
+        ))
+      )}
       {files.map((a) => (
         <View key={a.id} style={s.file}>
           <Icon name="Article" size={18} color={ink} />
@@ -308,6 +322,57 @@ function Bubble({
   );
 }
 
+/**
+ * A photo sent to view once (or with one replay): no picture in the chat, just a card. Its sender
+ * sees Delivered, then Opened; the other person taps to view, until the views are used.
+ */
+function OnceCard({
+  m,
+  mine,
+  ink,
+  soft,
+  onOpen,
+}: {
+  m: Message;
+  mine: boolean;
+  ink: string;
+  soft: string;
+  onOpen: () => void;
+}) {
+  const s = useStyles(make);
+  const left = m.viewsLeft ?? m.viewLimit ?? 0;
+  const gone = !mine && left <= 0;
+  const title = m.viewLimit === 2 ? "Photo · replay allowed" : "Photo · view once";
+  const line = mine
+    ? m.opened
+      ? "Opened"
+      : "Delivered"
+    : gone
+      ? "Opened"
+      : left === 2
+        ? "Tap to view"
+        : m.viewLimit === 2
+          ? "Tap to view again"
+          : "Tap to view";
+  return (
+    <Pressable
+      onPress={onOpen}
+      disabled={mine || gone}
+      accessibilityRole={mine || gone ? undefined : "button"}
+      accessibilityLabel={`${title}. ${line}`}
+      style={({ pressed }) => [s.once, pressed && s.oncePressed]}
+    >
+      <View style={[s.onceIcon, { borderColor: ink }, gone && s.onceGone]}>
+        <Text style={[s.onceNumber, { color: ink }]}>{m.viewLimit}</Text>
+      </View>
+      <View>
+        <Text style={[s.onceTitle, { color: ink }]}>{title}</Text>
+        <Text style={[s.onceLine, { color: soft }]}>{line}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
 /** A photo in a message, sized from what the server measured, so the chat doesn't jump. */
 function Photo({ media }: { media: MediaRef }) {
   const s = useStyles(make);
@@ -383,6 +448,28 @@ const make = (t: NativeTheme) =>
       justifyContent: "center",
     },
     reactionText: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: t.colors.text },
+    once: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingVertical: 6,
+      paddingRight: 8,
+      minWidth: 180,
+    },
+    oncePressed: { opacity: 0.7 },
+    onceIcon: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      borderWidth: 2,
+      borderStyle: "dashed",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    onceGone: { opacity: 0.5, borderStyle: "solid" },
+    onceNumber: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale },
+    onceTitle: { fontFamily: t.fonts.bold, fontSize: 14.5 * t.textScale },
+    onceLine: { fontFamily: t.fonts.body, fontSize: 13 * t.textScale, marginTop: 1 },
     tools: {
       flexDirection: "row",
       alignItems: "center",

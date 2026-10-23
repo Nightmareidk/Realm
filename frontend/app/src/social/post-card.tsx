@@ -107,6 +107,8 @@ export const PostCard = memo(function PostCard({
       />
     );
   const glowSource = post.kind === "image" ? post.media[0] : undefined;
+  const soundOnPhoto = kind === "glow" && post.kind === "image";
+  const from = `${post.author.displayName}'s post`;
 
   return (
     <View style={[s.card, kind === "ticket" && s.ticket, kind === "thread" && s.thread]}>
@@ -144,9 +146,9 @@ export const PostCard = memo(function PostCard({
         </View>
       ) : null}
 
-      {post.sound && post.kind !== "clip" ? (
+      {post.sound && post.kind !== "clip" && !soundOnPhoto ? (
         <View style={[s.sound, kind === "thread" && s.threadIndent]}>
-          <SoundChip sound={post.sound} playKey={`post:${post.id}`} />
+          <SoundChip sound={post.sound} playKey={`post:${post.id}`} from={from} />
         </View>
       ) : null}
       {kind === "thread" && post.caption && post.kind !== "text" ? (
@@ -167,6 +169,12 @@ export const PostCard = memo(function PostCard({
           />
         ) : null}
         {media}
+        {soundOnPhoto && post.sound ? (
+          // Now Playing: the song sits on the photo it goes with.
+          <View style={s.soundOver} pointerEvents="box-none">
+            <SoundChip sound={post.sound} playKey={`post:${post.id}`} over from={from} />
+          </View>
+        ) : null}
       </View>
       {kind === "ticket" ? (
         <View style={s.tear} accessible={false}>
@@ -477,6 +485,7 @@ const make = (t: NativeTheme) =>
     },
     threadIndent: { marginLeft: 58, marginRight: 14 },
     sound: { paddingHorizontal: 12, paddingBottom: 10 },
+    soundOver: { position: "absolute", left: 10, right: 10, bottom: 10, alignItems: "flex-start" },
     threadIndentActions: { marginLeft: 46 },
     mediaWrap: { marginHorizontal: 12 },
     glow: {

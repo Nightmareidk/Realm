@@ -9,7 +9,7 @@ import type {
   StoryFeed,
   StoryRing,
 } from "@realm/contracts";
-import { STORY_HOURS } from "@realm/contracts";
+import { STORY_DEFAULT_MS, STORY_HOURS, STORY_MAX_MS } from "@realm/contracts";
 import { and, desc, eq, gt, ilike, inArray, isNull, schema, sql } from "@realm/db";
 import type { Deps } from "../../deps";
 import { AppError, forbidden, notFound } from "../../lib/errors";
@@ -92,8 +92,15 @@ export class MusicService {
     try {
       const res = await fetch("https://api.openverse.org/v1/auth_tokens/token/", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-        body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
+        body: new URLSearchParams({
+          grant_type: "client_credentials",
+          client_id: id,
+          client_secret: secret,
+        }),
         signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) throw new Error(`token ${res.status}`);
@@ -263,7 +270,12 @@ export class MusicService {
     const durationMs = file.durationMs ?? 0;
     if (durationMs > 0 && durationMs < 3000) throw invalid("Sounds need to be at least 3 seconds.");
     const [author] = await this.db
-      .select({ id: users.id, createdAt: users.createdAt, emailVerifiedAt: users.emailVerifiedAt, name: users.displayName })
+      .select({
+        id: users.id,
+        createdAt: users.createdAt,
+        emailVerifiedAt: users.emailVerifiedAt,
+        name: users.displayName,
+      })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
@@ -324,14 +336,19 @@ export class MusicService {
     if (!file || file.ownerId !== userId || file.status !== "ready") {
       throw invalid("Add a photo or video first, and wait for it to finish uploading.");
     }
-    if (file.kind !== "image" && file.kind !== "video") throw invalid("Stories are a photo or a video.");
+    if (file.kind !== "image" && file.kind !== "video")
+      throw invalid("Stories are a photo or a video.");
     if (file.kind === "video" && (file.durationMs ?? 0) > 60_000) {
       throw invalid("Story videos can be up to 60 seconds.");
     }
     const caption = body.caption?.trim() || null;
     if (caption) {
       const [author] = await this.db
-        .select({ id: users.id, createdAt: users.createdAt, emailVerifiedAt: users.emailVerifiedAt })
+        .select({
+          id: users.id,
+          createdAt: users.createdAt,
+          emailVerifiedAt: users.emailVerifiedAt,
+        })
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
@@ -348,6 +365,10 @@ export class MusicService {
       caption,
       visibility,
       expiresAt: new Date(Date.now() + STORY_HOURS * 3600 * 1000),
+      durationMs:
+        file.kind === "video"
+          ? Math.min(STORY_MAX_MS, file.durationMs ?? STORY_MAX_MS)
+          : (body.durationMs ?? sound?.soundPlayMs ?? STORY_DEFAULT_MS),
       ...(sound ?? {}),
     });
     const [row] = await this.db.select().from(stories).where(eq(stories.id, id));
@@ -358,7 +379,8 @@ export class MusicService {
   private async canSee(row: StoryRow, viewerId: bigint | null) {
     if (row.deletedAt || row.expiresAt < new Date()) return false;
     if (viewerId === row.authorId) return true;
-    if (row.visibility === "public" && !(await isPrivateAccount(this.db, row.authorId))) return true;
+    if (row.visibility === "public" && !(await isPrivateAccount(this.db, row.authorId)))
+      return true;
     return viewerId ? followsActively(this.db, viewerId, row.authorId) : false;
   }
 
@@ -373,7 +395,12 @@ export class MusicService {
       this.db
         .select()
         .from(media)
-        .where(inArray(media.id, rows.map((r) => r.mediaId))),
+        .where(
+          inArray(
+            media.id,
+            rows.map((r) => r.mediaId),
+          ),
+        ),
       viewerId
         ? this.db
             .select({ storyId: storyViews.storyId })
@@ -400,6 +427,7 @@ export class MusicService {
           media: toMediaRef(file),
           sound: soundList[i] ?? null,
           caption: r.caption,
+          durationMs: r.durationMs ?? STORY_DEFAULT_MS,
           createdAt: r.createdAt.toISOString(),
           expiresAt: r.expiresAt.toISOString(),
           seen: mine || seenSet.has(String(r.id)),
@@ -457,13 +485,24 @@ export class MusicService {
     const [u] = await this.db
       .select({ id: users.id })
       .from(users)
-      .where(ilike(users.username, username.replace(/[\\%_]/g, (m) => `\\${m}`)))
+      .where(
+        ilike(
+          users.username,
+          username.replace(/[\\%_]/g, (m) => `\\${m}`),
+        ),
+      )
       .limit(1);
     if (!u) throw notFound("User");
     const rows = await this.db
       .select()
       .from(stories)
-      .where(and(eq(stories.authorId, u.id), isNull(stories.deletedAt), gt(stories.expiresAt, new Date())))
+      .where(
+        and(
+          eq(stories.authorId, u.id),
+          isNull(stories.deletedAt),
+          gt(stories.expiresAt, new Date()),
+        ),
+      )
       .orderBy(stories.createdAt)
       .limit(100);
     const visible: StoryRow[] = [];

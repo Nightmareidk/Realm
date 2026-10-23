@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/icon";
+import { leave } from "@/leave";
 import { ApiError, api } from "@/server";
 import { AppScreen, TopBar } from "@/social/screen";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
@@ -88,7 +89,7 @@ export default function ChangePassword() {
                 Every other phone and browser was signed out. This one stays signed in.
               </Text>
               <View style={s.foot}>
-                <Pill label="Done" onPress={() => router.back()} />
+                <Pill label="Done" onPress={() => leave(router, "/settings")} />
               </View>
             </>
           ) : (

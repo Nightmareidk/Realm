@@ -25,7 +25,16 @@ beforeAll(async () => {
       await new Promise((r) => setTimeout(r, 4400));
       return new Response(
         JSON.stringify({
-          results: [{ id: "s1", title: "Slow Song", creator: "Late", url: "https://prod-1.storage.jamendo.com/?trackid=9", license: "cc0", duration: 60000 }],
+          results: [
+            {
+              id: "s1",
+              title: "Slow Song",
+              creator: "Late",
+              url: "https://prod-1.storage.jamendo.com/?trackid=9",
+              license: "cc0",
+              duration: 60000,
+            },
+          ],
         }),
         { status: 200, headers: { "content-type": "application/json" } },
       );
@@ -33,10 +42,42 @@ beforeAll(async () => {
     return new Response(
       JSON.stringify({
         results: [
-          { id: "a1", title: "Lofi House", creator: "AstroShroom", url: "https://prod-1.storage.jamendo.com/?trackid=1", thumbnail: "https://api.openverse.org/v1/audio/a1/thumb/", license: "by-sa", foreign_landing_url: "https://www.jamendo.com/track/1", duration: 123000 },
-          { id: "a2", title: "Pop, Soda Pop!", creator: "Blik", url: "https://prod-1.storage.jamendo.com/?trackid=2", thumbnail: null, license: "cc0", foreign_landing_url: "https://www.jamendo.com/track/2", duration: 147000 },
-          { id: "a3", title: "Sneaky", creator: "Someone", url: "https://evil.example/track.mp3", license: "by", duration: 90000 },
-          { id: "a4", title: "Jingle", creator: "Short", url: "https://prod-1.storage.jamendo.com/?trackid=4", license: "by", duration: 4000 },
+          {
+            id: "a1",
+            title: "Lofi House",
+            creator: "AstroShroom",
+            url: "https://prod-1.storage.jamendo.com/?trackid=1",
+            thumbnail: "https://api.openverse.org/v1/audio/a1/thumb/",
+            license: "by-sa",
+            foreign_landing_url: "https://www.jamendo.com/track/1",
+            duration: 123000,
+          },
+          {
+            id: "a2",
+            title: "Pop, Soda Pop!",
+            creator: "Blik",
+            url: "https://prod-1.storage.jamendo.com/?trackid=2",
+            thumbnail: null,
+            license: "cc0",
+            foreign_landing_url: "https://www.jamendo.com/track/2",
+            duration: 147000,
+          },
+          {
+            id: "a3",
+            title: "Sneaky",
+            creator: "Someone",
+            url: "https://evil.example/track.mp3",
+            license: "by",
+            duration: 90000,
+          },
+          {
+            id: "a4",
+            title: "Jingle",
+            creator: "Short",
+            url: "https://prod-1.storage.jamendo.com/?trackid=4",
+            license: "by",
+            duration: 4000,
+          },
         ],
       }),
       { status: 200, headers: { "content-type": "application/json" } },
@@ -71,16 +112,35 @@ const call = (cookie: string | undefined, method: Method, url: string, payload?:
     ...(payload === undefined ? {} : { payload: payload as object }),
   });
 
-async function upload(cookie: string, kind: "image" | "audio", bytes: Buffer, mimeType: string, extra = {}) {
-  const ticket = await call(cookie, "POST", "/media/uploads", { kind, mimeType, sizeBytes: bytes.length, ...extra });
+async function upload(
+  cookie: string,
+  kind: "image" | "audio",
+  bytes: Buffer,
+  mimeType: string,
+  extra = {},
+) {
+  const ticket = await call(cookie, "POST", "/media/uploads", {
+    kind,
+    mimeType,
+    sizeBytes: bytes.length,
+    ...extra,
+  });
   const { mediaId, uploadUrl } = ticket.json();
-  await t.app.inject({ method: "PUT", url: uploadUrl.replace(/^\/api/, ""), headers: { "content-type": mimeType }, payload: bytes });
+  await t.app.inject({
+    method: "PUT",
+    url: uploadUrl.replace(/^\/api/, ""),
+    headers: { "content-type": mimeType },
+    payload: bytes,
+  });
   const done = await call(cookie, "POST", `/media/${mediaId}/complete`, {});
   expect(done.statusCode, done.body).toBe(200);
   return mediaId as string;
 }
 
-const photo = () => sharp({ create: { width: 20, height: 30, channels: 3, background: "#335577" } }).png().toBuffer();
+const photo = () =>
+  sharp({ create: { width: 20, height: 30, channels: 3, background: "#335577" } })
+    .png()
+    .toBuffer();
 const MP3 = Buffer.concat([Buffer.from("ID3"), Buffer.alloc(200)]);
 
 describe("the free music library", () => {
@@ -92,7 +152,9 @@ describe("the free music library", () => {
     expect(items.map((i) => i.title)).toEqual(["Lofi House", "Pop, Soda Pop!"]);
     expect(items[0]?.licence).toBe("CC BY-SA");
     expect(items[1]?.licence).toBe("CC0");
-    expect(items.every((i) => i.audioUrl.startsWith("https://prod-1.storage.jamendo.com/"))).toBe(true);
+    expect(items.every((i) => i.audioUrl.startsWith("https://prod-1.storage.jamendo.com/"))).toBe(
+      true,
+    );
     const before = openverseCalls;
     await call(noor.cookie, "GET", "/sounds?q=LOFI");
     expect(openverseCalls).toBe(before);
@@ -124,8 +186,14 @@ describe("music on posts and creators' own sounds", () => {
     });
     expect(post.statusCode, post.body).toBe(201);
     expect(post.json().sound).toMatchObject({ title: "Lofi House", startMs: 42000, playMs: 15000 });
-    expect((await call(noor.cookie, "GET", `/sounds/${lofi.id}`)).json().uses).toBeGreaterThanOrEqual(1);
-    const text = await call(noor.cookie, "POST", "/posts", { kind: "text", caption: "hi", sound: { soundId: lofi.id, startMs: 0, durationMs: 15000 } });
+    expect(
+      (await call(noor.cookie, "GET", `/sounds/${lofi.id}`)).json().uses,
+    ).toBeGreaterThanOrEqual(1);
+    const text = await call(noor.cookie, "POST", "/posts", {
+      kind: "text",
+      caption: "hi",
+      sound: { soundId: lofi.id, startMs: 0, durationMs: 15000 },
+    });
     expect(text.statusCode).toBe(400);
   });
 
@@ -135,7 +203,11 @@ describe("music on posts and creators' own sounds", () => {
     const rec = await upload(noor.cookie, "audio", MP3, "audio/mpeg", { durationMs: 20000 });
     const made = await call(noor.cookie, "POST", "/sounds", { mediaId: rec, title: "my beat" });
     expect(made.statusCode, made.body).toBe(201);
-    expect(made.json()).toMatchObject({ kind: "original", title: "my beat", creator: { id: noor.id } });
+    expect(made.json()).toMatchObject({
+      kind: "original",
+      title: "my beat",
+      creator: { id: noor.id },
+    });
     // Someone else's upload can't become your sound.
     const stolen = await call(kenji.cookie, "POST", "/sounds", { mediaId: rec, title: "mine now" });
     expect(stolen.statusCode).toBe(400);
@@ -182,8 +254,12 @@ describe("Stories", () => {
     const pic = await upload(mei.cookie, "image", await photo(), "image/png");
     const story = await call(mei.cookie, "POST", "/stories", { mediaId: pic });
     expect(story.json()).toMatchObject({ id: expect.any(String) });
-    expect((await call(stranger.cookie, "GET", `/stories/of/${mei.username}`)).json().items).toEqual([]);
-    expect((await call(stranger.cookie, "POST", `/stories/${story.json().id}/view`)).statusCode).toBe(404);
+    expect(
+      (await call(stranger.cookie, "GET", `/stories/of/${mei.username}`)).json().items,
+    ).toEqual([]);
+    expect(
+      (await call(stranger.cookie, "POST", `/stories/${story.json().id}/view`)).statusCode,
+    ).toBe(404);
     expect((await call(stranger.cookie, "GET", `/media/${pic}/raw`)).statusCode).toBe(404);
   });
 

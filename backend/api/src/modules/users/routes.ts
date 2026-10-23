@@ -13,9 +13,9 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import type { Deps } from "../../deps";
 import { badRequest, conflict, notFound } from "../../lib/errors";
+import { RESERVED_MESSAGE, whyReserved } from "../../lib/handles";
 import { toPublicUser, toSelfUser, toUserSettings } from "../../lib/serialize";
 import { authOf, requireAuth } from "../../plugins/context";
-import { RESERVED_USERNAMES } from "../auth/reserved";
 
 const { users, userSettings } = schema;
 
@@ -42,10 +42,14 @@ export const userRoutes =
         const { userId } = authOf(req);
         const body = req.body;
 
-        if (body.username !== undefined) {
-          if (RESERVED_USERNAMES.has(body.username)) {
-            throw conflict("USERNAME_RESERVED", "That username isn't available");
-          }
+        const [current] = await deps.db
+          .select({ username: users.username })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+        if (body.username !== undefined && body.username !== current?.username) {
+          const kept = await whyReserved(deps.db, body.username, userId);
+          if (kept) throw conflict("USERNAME_RESERVED", RESERVED_MESSAGE[kept]);
           const [taken] = await deps.db
             .select({ id: users.id })
             .from(users)

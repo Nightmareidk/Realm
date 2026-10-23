@@ -1,4 +1,10 @@
-import type { Post, Profile, SpaceDetail } from "@realm/contracts";
+import {
+  type Post,
+  type Profile,
+  type Sound,
+  type SpaceDetail,
+  STORY_DEFAULT_MS,
+} from "@realm/contracts";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -16,6 +22,7 @@ import {
 import { alert } from "@/alert";
 import { postsChanged, useApi } from "@/data";
 import { Icon } from "@/icon";
+import { leave } from "@/leave";
 import { chip, MusicPicker, type Picked, toPick } from "@/music/picker";
 import { clock, playSound, stopSound, usePlaying } from "@/music/player";
 import { loadStories } from "@/music/stories";
@@ -33,8 +40,10 @@ const MODES: [Mode, string][] = [
   ["clip", "Clip"],
 ];
 const TITLE: Record<Mode, string> = { post: "New post", story: "New Story", clip: "New Clip" };
-/** The longest part of a song each can use: a Story shows for up to 15 seconds. */
-const MUSIC_MAX: Record<Mode, number> = { post: 30_000, story: 15_000, clip: 60_000 };
+/** The longest part of a song each can use. */
+const MUSIC_MAX: Record<Mode, number> = { post: 60_000, story: 60_000, clip: 60_000 };
+/** How long a photo Story shows. */
+const STORY_LENGTHS = [5_000, 10_000, 15_000, 30_000, 60_000] as const;
 
 /**
  * Make something, three ways, each its own:
@@ -49,7 +58,13 @@ export default function Create() {
   const { t } = useTheme();
   const s = useStyles(make);
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: Mode }>();
+  const params = useLocalSearchParams<{
+    mode?: Mode;
+    /** "Use this sound" from the Now Playing bar: start with this song and part. */
+    soundId?: string;
+    start?: string;
+    length?: string;
+  }>();
   const { accent } = useTheme();
   const { session } = useSession();
   const me = session.status === "signedIn" ? session.user : null;
@@ -68,11 +83,27 @@ export default function Create() {
   const [choosing, setChoosing] = useState(false);
   const [shareSound, setShareSound] = useState(false);
   const [soundName, setSoundName] = useState("");
+  /** A photo Story's length; follows the song's part until you choose one yourself. */
+  const [storyMs, setStoryMs] = useState<number | null>(null);
+  const shownFor = storyMs ?? music?.durationMs ?? STORY_DEFAULT_MS;
   const playing = usePlaying();
   const single = mode !== "post";
   // Words alone can't have music.
   const canMusic = mode !== "post" || picked.length > 0;
   useEffect(() => () => stopSound(), []);
+  // Arrived with a song ("Use" on the Now Playing bar): it's already chosen.
+  useEffect(() => {
+    if (!params.soundId || !/^\d{1,20}$/.test(params.soundId)) return;
+    api<Sound>(`/sounds/${params.soundId}`)
+      .then((sound) =>
+        setMusic({
+          sound,
+          startMs: Math.max(0, Number(params.start) || 0),
+          durationMs: Math.min(60_000, Math.max(5_000, Number(params.length) || 15_000)),
+        }),
+      )
+      .catch(() => {});
+  }, [params.soundId, params.start, params.length]);
 
   const isPrivate = profile.data?.isPrivate ?? false;
   const visibility =
@@ -165,12 +196,13 @@ export default function Create() {
             mediaId: ids[0],
             caption: caption.trim() || undefined,
             sound,
+            durationMs: shownFor,
             // A private account's Stories go to its followers unless this one is made public.
             visibility: isPrivate ? (flip ? "public" : "followers") : flip ? "followers" : "public",
           },
         });
         loadStories();
-        router.back();
+        leave(router);
         return;
       }
       await api<Post>("/posts", {
@@ -190,7 +222,7 @@ export default function Create() {
         }).catch(() => {});
       }
       postsChanged();
-      router.back();
+      leave(router);
     } catch (err) {
       setStatus(null);
       alert(
@@ -394,6 +426,31 @@ export default function Create() {
             </View>
           ) : null}
 
+          {mode === "story" && picked[0]?.type !== "video" ? (
+            <>
+              <Text style={s.label}>Shows for</Text>
+              <View style={s.lengths} accessibilityRole="radiogroup">
+                {STORY_LENGTHS.map((ms) => {
+                  const on = shownFor === ms;
+                  return (
+                    <Pressable
+                      key={ms}
+                      onPress={() => setStoryMs(ms)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: on }}
+                      accessibilityLabel={ms === 60_000 ? "1 minute" : `${ms / 1000} seconds`}
+                      style={[s.length, on && s.lengthOn]}
+                    >
+                      <Text style={[s.lengthText, on && s.lengthTextOn]}>
+                        {ms === 60_000 ? "1 min" : `${ms / 1000}s`}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </>
+          ) : null}
+
           <Text style={s.label}>Caption</Text>
           <TextInput
             value={caption}
@@ -494,6 +551,24 @@ const make = (t: NativeTheme) =>
     fill: { flex: 1 },
     off: { opacity: 0.45 },
     pressed: { opacity: 0.75 },
+    lengths: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    length: {
+      minHeight: 40,
+      minWidth: 56,
+      paddingHorizontal: 14,
+      borderRadius: chip(t),
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1.5,
+      borderColor: t.colors.border,
+    },
+    lengthOn: { backgroundColor: t.colors.text, borderColor: t.colors.text },
+    lengthText: {
+      fontFamily: t.fonts.bold,
+      fontSize: 14.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
+    lengthTextOn: { color: t.colors.bg },
     music: {
       flexDirection: "row",
       alignItems: "center",

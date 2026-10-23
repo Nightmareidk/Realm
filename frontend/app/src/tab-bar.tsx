@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "./icon";
 import type { IconName } from "./icon-paths";
+import { NowBar } from "./music/now-bar";
 import { useSession } from "./session";
 import { Avatar } from "./social/avatar";
 import { type NativeTheme, useStyles, useTheme } from "./theme";
@@ -15,7 +16,7 @@ type BarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0
 const TABS: Record<string, { label: string; icon: IconName; on: IconName }> = {
   home: { label: "Home", icon: "House", on: "HouseFill" },
   clips: { label: "Clips", icon: "PlayCircle", on: "PlayCircleFill" },
-  explore: { label: "Explore", icon: "Compass", on: "CompassFill" },
+  explore: { label: "Search", icon: "MagnifyingGlass", on: "MagnifyingGlass" },
   inbox: { label: "Inbox", icon: "ChatCircle", on: "ChatCircleFill" },
 };
 
@@ -37,9 +38,9 @@ export function TabBar({ state, navigation }: BarProps) {
           ? [s.floatWrap, { paddingBottom: Math.max(insets.bottom, 10) }]
           : [s.bar, { paddingBottom: Math.max(insets.bottom, 8) }]
       }
-      accessibilityRole="tablist"
     >
-      <View style={floating ? s.float : s.row}>
+      <NowBar />
+      <View style={floating ? s.float : s.row} accessibilityRole="tablist">
         {state.routes.map((route, i) => {
           const on = state.index === i;
           const tab = TABS[route.name];
@@ -114,7 +115,6 @@ const make = (t: NativeTheme) =>
       elevation: 10,
     },
     bar: {
-      flexDirection: "row",
       backgroundColor: t.colors.bg,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: t.colors.border,

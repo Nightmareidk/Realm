@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { alert } from "@/alert";
+import { leave } from "@/leave";
 import { ApiError, api, upload } from "@/server";
 import { useSession } from "@/session";
 import { shrinkPhoto } from "@/shrink";
@@ -64,7 +65,7 @@ export default function EditProfile() {
         },
       });
       await refreshUser();
-      router.back();
+      leave(router, "/you");
     } catch (err) {
       setSaving(false);
       if (err instanceof ApiError) {

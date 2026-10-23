@@ -1,6 +1,6 @@
 import { createReadStream, createWriteStream } from "node:fs";
 import { rm } from "node:fs/promises";
-import { type Readable, Transform } from "node:stream";
+import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { CreateUploadBody, MediaInfo, Snowflake, UploadTicket } from "@realm/contracts";
 import { contentDisposition, Limits, LocalStore } from "@realm/server-core";
@@ -52,6 +52,23 @@ export const mediaRoutes =
       // In development the link is a web path (/api/v1/…, through the web app's proxy); the
       // phone app talks to the API directly, where the same path has no /api in front.
       const url = req.client.isNative && link.startsWith("/api/v1/") ? link.slice(4) : link;
+      // The phone app running in a browser (development's preview) reads files with its session
+      // in a header. A browser won't carry that header on to the storage service, which turns
+      // the request away, so the file comes through here instead of by redirect.
+      const viaBrowserWithToken = Boolean(req.headers.origin && req.headers.authorization);
+      if (viaBrowserWithToken && /^https:\/\//.test(url)) {
+        const range = req.headers.range;
+        const upstream = await fetch(url, range ? { headers: { range } } : {});
+        if (!upstream.ok || !upstream.body) throw notFound("File");
+        for (const h of ["content-type", "content-length", "content-range", "accept-ranges"]) {
+          const v = upstream.headers.get(h);
+          if (v) reply.header(h, v);
+        }
+        return reply
+          .status(upstream.status)
+          .header("cache-control", "private, max-age=300")
+          .send(Readable.fromWeb(upstream.body as import("node:stream/web").ReadableStream));
+      }
       return reply
         .header("cache-control", "private, max-age=300")
         .header("referrer-policy", "no-referrer")

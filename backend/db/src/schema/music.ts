@@ -53,6 +53,8 @@ export const stories = pgTable(
     soundId: id().references(() => sounds.id),
     soundStartMs: integer(),
     soundPlayMs: integer(),
+    /** How long a photo Story shows (5 to 60 seconds); a video shows for its own length. */
+    durationMs: integer(),
     visibility: storyVisibility().notNull().default("public"),
     createdAt: createdAt(),
     expiresAt: tstz().notNull(),

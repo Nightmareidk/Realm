@@ -20,6 +20,12 @@ export const platform = pgEnum("platform", ["web", "ios", "android", "windows", 
 /** A personal account, or a business one (always public, with a category and a link). */
 export const accountKind = pgEnum("account_kind", ["personal", "business"]);
 
+/** A checked account: a notable person, a business or brand, or Realm itself. */
+export const verifiedKind = pgEnum("verified_kind", ["notable", "business", "official"]);
+
+/** Realm's own staff: moderators handle reports; admins also manage accounts and staff. */
+export const staffRole = pgEnum("staff_role", ["moderator", "admin"]);
+
 export const users = pgTable(
   "users",
   {
@@ -41,6 +47,10 @@ export const users = pgTable(
     /** Business accounts: what they are ("Esports team") and where to find them. */
     category: text(),
     websiteUrl: text(),
+    /** Verified by Realm (the badge), and when. */
+    verified: verifiedKind(),
+    verifiedAt: tstz(),
+    staffRole: staffRole(),
     flags: id().notNull().default(sql`0`),
     status: userStatus().notNull().default("active"),
     createdAt: createdAt(),

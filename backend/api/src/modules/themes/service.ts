@@ -178,7 +178,9 @@ export class ThemeService {
       ...file,
       colors: fixed.colors,
       style: { ...file.style, glow: fixed.style.glow },
-      ...(file.panels || fixed.panels.opacity < 1 ? { panels: { ...file.panels, opacity: fixed.panels.opacity } } : {}),
+      ...(file.panels || fixed.panels.opacity < 1
+        ? { panels: { ...file.panels, opacity: fixed.panels.opacity } }
+        : {}),
       ...(file.art ? { art: fixed.art } : {}),
     });
     return { file: out, problems };
@@ -187,7 +189,8 @@ export class ThemeService {
   /** Colour sets from one of your pictures (or one from a theme you have). */
   async palette(userId: bigint, mediaId: bigint) {
     const [row] = await this.db.select().from(media).where(eq(media.id, mediaId)).limit(1);
-    const yours = row?.ownerId === userId || (row ? await this.assetVisible(row.id, userId) : false);
+    const yours =
+      row?.ownerId === userId || (row ? await this.assetVisible(row.id, userId) : false);
     if (!row || !yours || row.kind !== "image" || row.status !== "ready") throw notFound("Picture");
     try {
       const bytes = await this.deps.storage.read(row.storageKey, 0, row.sizeBytes - 1);

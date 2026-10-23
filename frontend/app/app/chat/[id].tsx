@@ -1,7 +1,14 @@
-import { type Conversation, canStillEdit, type Message, type MessagePage } from "@realm/contracts";
+import {
+  type Conversation,
+  canStillEdit,
+  MESSAGE_UNSEND_WINDOW_MS,
+  type Message,
+  type MessagePage,
+  type OpenedPhoto,
+} from "@realm/contracts";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
+import { Image, type ImageSource } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -19,9 +26,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bodyOf, MessageRow, QUICK_REACTIONS, timeOf } from "@/chat/message-row";
+import { PhotoSend } from "@/chat/photo-send";
+import { PhotoViewer } from "@/chat/photo-viewer";
 import { Icon } from "@/icon";
 import { live, useLiveEvent, useLiveStatus } from "@/live";
-import { ApiError, api, upload } from "@/server";
+import { ApiError, api, mediaSource, upload } from "@/server";
 import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
 import { shrinkPhoto } from "@/shrink";
@@ -54,6 +63,8 @@ interface Outgoing {
   content: string;
   replyTo: Message | null;
   photos: Photo[];
+  /** View once (1) or allow one replay (2); left out, the photos stay in the chat. */
+  viewLimit?: 1 | 2;
   state: "sending" | "failed";
   error?: string;
 }
@@ -98,6 +109,15 @@ export default function Chat() {
   /** This conversation as the list sees it: a request to you, or yours waiting to be accepted. */
   const [conv, setConv] = useState<Conversation | null>(null);
   const [inputHeight, setInputHeight] = useState(INPUT_MIN);
+  /** Photos picked, waiting in the big preview. */
+  const [preview, setPreview] = useState<Photo[] | null>(null);
+  /** A photo open full screen. */
+  const [viewer, setViewer] = useState<{
+    photos: ImageSource[];
+    start: number;
+    seconds?: number;
+    note?: string;
+  } | null>(null);
   const router = useRouter();
   const focused = useRef(true);
   const input = useRef<TextInput>(null);
@@ -250,6 +270,7 @@ export default function Chat() {
             content: o.content,
             nonce: o.nonce,
             attachmentIds,
+            ...(o.viewLimit ? { viewLimit: o.viewLimit } : {}),
             ...(o.replyTo ? { replyToId: o.replyTo.id } : {}),
           },
         });
@@ -321,8 +342,64 @@ export default function Chat() {
       quality: 0.85,
     });
     if (res.canceled) return;
-    setPhotos((now) => [...now, ...res.assets].slice(0, MAX_PHOTOS));
+    // Seen big first, with a caption and how long they last.
+    setPreview([...photos, ...res.assets].slice(0, MAX_PHOTOS));
   }
+
+  /** Send from the photo preview. */
+  function sendPhotos(picked: Photo[], caption: string, viewLimit: 1 | 2 | undefined) {
+    Haptics.selectionAsync();
+    setPreview(null);
+    setPhotos([]);
+    setText("");
+    setInputHeight(INPUT_MIN);
+    const o: Outgoing = {
+      nonce: nonce(),
+      content: caption,
+      replyTo,
+      photos: picked,
+      state: "sending",
+      ...(viewLimit ? { viewLimit } : {}),
+    };
+    setReplyTo(null);
+    deliver(o);
+  }
+
+  /** Tap a photo: full screen. A view-once photo is asked for (which uses a view). */
+  const openPhoto = useCallback(
+    async (m: Message, index: number) => {
+      if (!m.viewLimit) {
+        const images = m.attachments.filter((a) => a.kind === "image");
+        setViewer({ photos: images.map((a) => mediaSource(a.url)), start: index });
+        return;
+      }
+      if (m.author.id === meId) return;
+      try {
+        const opened = await api<OpenedPhoto>(`/channels/${id}/messages/${m.id}/open`, {
+          body: {},
+        });
+        setMessages(
+          (list) =>
+            list?.map((x) => (x.id === m.id ? { ...x, viewsLeft: opened.viewsLeft } : x)) ?? list,
+        );
+        setViewer({
+          photos: opened.urls.map((uri) => ({ uri })),
+          start: 0,
+          seconds: opened.seconds,
+          note: opened.viewsLeft
+            ? "You can open this once more."
+            : "This photo is gone once it closes.",
+        });
+      } catch (err) {
+        sheet({
+          title: "Can't open it",
+          line: err instanceof ApiError ? err.message : "Try again.",
+          actions: [],
+        });
+      }
+    },
+    [id, meId, sheet],
+  );
 
   const react = useCallback(
     async (m: Message, emoji: string) => {
@@ -349,6 +426,18 @@ export default function Chat() {
     setReplyTo(m);
     input.current?.focus();
   }, []);
+
+  /**
+   * Unsend, the rule people asked for: any time before they've seen it, and for 2 minutes after
+   * it's sent. After that, "Delete for you" is still there.
+   */
+  const unsendable = useCallback(
+    (m: Message) => {
+      if (Date.now() - Date.parse(m.createdAt) <= MESSAGE_UNSEND_WINDOW_MS) return true;
+      return !Object.values(seenBy).some((x) => !olderId(x, m.id));
+    },
+    [seenBy],
+  );
 
   /** Long-press: react, reply, copy, and edit or delete yours, or report someone else's. */
   const menu = useCallback(
@@ -410,19 +499,42 @@ export default function Chat() {
                 },
               ]
             : []),
-          ...(mine
+          ...(isDm
             ? [
                 {
-                  label: "Delete",
+                  label: "Delete for you",
+                  icon: "EyeSlash" as const,
+                  onPress: async () => {
+                    setMessages((list) => list?.filter((x) => x.id !== m.id) ?? list);
+                    try {
+                      await api(`/channels/${id}/messages/${m.id}/hide`, { body: {} });
+                    } catch (err) {
+                      load();
+                      sheet({
+                        title: "Not deleted",
+                        line: err instanceof ApiError ? err.message : "Try again.",
+                        actions: [],
+                      });
+                    }
+                  },
+                },
+              ]
+            : []),
+          ...(mine && (!isDm || unsendable(m))
+            ? [
+                {
+                  label: isDm ? "Unsend" : "Delete",
                   icon: "Trash" as const,
                   danger: true,
                   onPress: () =>
                     sheet({
-                      title: "Delete this message?",
-                      line: "It's gone for everyone in this chat.",
+                      title: isDm ? "Unsend this message?" : "Delete this message?",
+                      line: isDm
+                        ? "It's removed for everyone in this chat."
+                        : "It's gone for everyone in this room.",
                       actions: [
                         {
-                          label: "Delete",
+                          label: isDm ? "Unsend" : "Delete",
                           icon: "Trash",
                           danger: true,
                           onPress: async () => {
@@ -471,6 +583,9 @@ export default function Chat() {
       s.quickOne,
       s.quickEmoji,
       s.quick,
+      unsendable,
+      load,
+      isDm,
     ],
   );
 
@@ -494,6 +609,8 @@ export default function Chat() {
     ],
     [messages, outgoing],
   );
+
+  const closeViewer = useCallback(() => setViewer(null), []);
 
   const typers = Object.keys(typing).map(
     (uid) => messages?.find((m) => m.author.id === uid)?.author.displayName ?? "Someone",
@@ -540,6 +657,7 @@ export default function Chat() {
                   onReply={reply}
                   onReact={react}
                   onMenu={menu}
+                  onOpenPhoto={openPhoto}
                 />
               );
             }}
@@ -690,6 +808,20 @@ export default function Chat() {
           </View>
         )}
       </KeyboardAvoidingView>
+      <PhotoSend
+        photos={preview}
+        caption={text}
+        canLimit={isDm}
+        onCancel={() => setPreview(null)}
+        onSend={sendPhotos}
+      />
+      <PhotoViewer
+        photos={viewer?.photos ?? null}
+        start={viewer?.start}
+        seconds={viewer?.seconds}
+        note={viewer?.note}
+        onClose={closeViewer}
+      />
     </AppScreen>
   );
 }

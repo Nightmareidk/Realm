@@ -21,9 +21,9 @@ import { AppError, badRequest, forbidden, notFound } from "../../lib/errors";
 import { mediaUrl, toPublicUser } from "../../lib/serialize";
 import { summaryColumns, toMediaRef, toUserSummary } from "../../lib/serialize-spaces";
 import { guardMessage } from "../../lib/spam";
+import { MusicService } from "../music/service";
 import { blockedEitherWay } from "../spaces/access";
 import { canSeePost, followsActively, isMember, isPrivateAccount } from "./access";
-import { MusicService } from "../music/service";
 
 const {
   posts,
@@ -617,7 +617,11 @@ export class SocialService {
         })
         .from(sql`(select 1) as one`);
       if (!row) continue;
-      const data = { userId: userId.toString(), followers: row.followers, following: row.following };
+      const data = {
+        userId: userId.toString(),
+        followers: row.followers,
+        following: row.following,
+      };
       // To the person, and to anyone looking at them who follows the change through their own.
       await this.deps.bus.publish(`user:${userId}`, { type: "PROFILE_COUNTS", data });
       for (const other of userIds) {
@@ -888,6 +892,18 @@ export class SocialService {
           isNull(notifications.readAt),
         ),
       );
+    // Whether you follow each person back, for the button on their row.
+    const actorIds = [...new Set(shown.flatMap((r) => (r.actor?.id ? [r.actor.id] : [])))];
+    const mine = actorIds.length
+      ? await this.db
+          .select({ id: follows.followeeId, status: follows.status })
+          .from(follows)
+          .where(and(eq(follows.followerId, userId), inArray(follows.followeeId, actorIds)))
+      : [];
+    const standing = (id: bigint | undefined): Activity["youFollow"] => {
+      const f = mine.find((m) => m.id === id);
+      return f?.status === "active" ? "following" : f ? "requested" : "none";
+    };
     return {
       items: shown.map(({ n, actor }) => {
         const thumb = thumbs.find((t) => t.postId === n.subjectId);
@@ -901,6 +917,7 @@ export class SocialService {
               : null,
           text: typeof n.data.text === "string" ? n.data.text : null,
           accepted: n.data.accepted === true,
+          youFollow: standing(actor?.id ?? undefined),
           read: n.readAt !== null,
           createdAt: n.createdAt.toISOString(),
         } satisfies Activity;

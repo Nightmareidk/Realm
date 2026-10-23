@@ -62,6 +62,8 @@ export const messages = pgTable(
     embed: jsonb().$type<MessageEmbed>(),
     /** Bit 0: hidden after enough members reported it, until a moderator looks. */
     flags: integer().notNull().default(0),
+    /** A photo sent to be seen once or twice (then it's gone for them); null keeps it. */
+    viewLimit: smallint(),
     editedAt: tstz(),
     deletedAt: tstz(),
     pinnedAt: tstz(),
@@ -119,4 +121,35 @@ export const readStates = pgTable(
     updatedAt: tstz().notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.channelId] })],
+);
+
+/** How many times each person has opened a view-once (or view-twice) photo. */
+export const messageViews = pgTable(
+  "message_views",
+  {
+    messageId: bigint({ mode: "bigint" })
+      .notNull()
+      .references(() => messages.id),
+    userId: bigint({ mode: "bigint" }).notNull(),
+    count: smallint().notNull().default(0),
+    lastAt: tstz().notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.messageId, t.userId] })],
+);
+
+/** "Delete for you": a message one person no longer wants to see; others still do. */
+export const messageHides = pgTable(
+  "message_hides",
+  {
+    userId: bigint({ mode: "bigint" }).notNull(),
+    messageId: bigint({ mode: "bigint" })
+      .notNull()
+      .references(() => messages.id),
+    channelId: bigint({ mode: "bigint" }).notNull(),
+    createdAt: tstz().notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.messageId] }),
+    index("message_hides_channel_idx").on(t.userId, t.channelId),
+  ],
 );

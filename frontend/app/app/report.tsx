@@ -4,6 +4,7 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/icon";
+import { leave } from "@/leave";
 import { ApiError, api } from "@/server";
 import { KIND_NAME, type ReportKind, useSafety } from "@/social/safety";
 import { AppScreen, TopBar } from "@/social/screen";
@@ -102,7 +103,7 @@ export default function Report() {
                 )
               }
             />
-            <Pill label="Done" onPress={() => router.back()} />
+            <Pill label="Done" onPress={() => leave(router)} />
           </View>
         </ScrollView>
       </AppScreen>

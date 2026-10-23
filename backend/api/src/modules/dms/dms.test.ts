@@ -1,3 +1,5 @@
+import { eq, schema } from "@realm/db";
+import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   browser,
@@ -318,5 +320,96 @@ describe("direct messages", () => {
       reason: "sexual_minors",
     });
     expect(grave.json()).toMatchObject({ goesTo: "realm", hidden: true });
+  });
+
+  it("unsends while unseen or for 2 minutes after, then only deletes for you", async () => {
+    const noor = await person();
+    const kenji = await person();
+    await together(noor, kenji);
+    const dm = (
+      await call(noor.cookie, "POST", "/users/@me/channels", { recipientIds: [kenji.id] })
+    ).json();
+    const say = async (content: string) =>
+      (await call(noor.cookie, "POST", `/channels/${dm.id}/messages`, { content })).json();
+    const old = await say("typo");
+    // Seen, but within 2 minutes: unsend works.
+    await call(kenji.cookie, "POST", `/channels/${dm.id}/ack`, { messageId: old.id });
+    expect(
+      (await call(noor.cookie, "DELETE", `/channels/${dm.id}/messages/${old.id}`)).statusCode,
+    ).toBe(204);
+
+    const late = await say("hello");
+    await t.deps.db
+      .update(schema.messages)
+      .set({ createdAt: new Date(Date.now() - 5 * 60_000) })
+      .where(eq(schema.messages.id, BigInt(late.id)));
+    await call(kenji.cookie, "POST", `/channels/${dm.id}/ack`, { messageId: late.id });
+    const tooLate = await call(noor.cookie, "DELETE", `/channels/${dm.id}/messages/${late.id}`);
+    expect(tooLate.json().error.code).toBe("UNSEND_EXPIRED");
+    // Delete for you: gone for Noor, still there for Kenji.
+    expect(
+      (await call(noor.cookie, "POST", `/channels/${dm.id}/messages/${late.id}/hide`)).statusCode,
+    ).toBe(204);
+    const ids = async (cookie: string) =>
+      (await call(cookie, "GET", `/channels/${dm.id}/messages`))
+        .json()
+        .messages.map((m: { id: string }) => m.id);
+    expect(await ids(noor.cookie)).not.toContain(late.id);
+    expect(await ids(kenji.cookie)).toContain(late.id);
+  });
+
+  it("sends a photo to view once: no link in the chat, one open, then gone", async () => {
+    const noor = await person();
+    const kenji = await person();
+    await together(noor, kenji);
+    const dm = (
+      await call(noor.cookie, "POST", "/users/@me/channels", { recipientIds: [kenji.id] })
+    ).json();
+    const bytes = await sharp({
+      create: { width: 20, height: 20, channels: 3, background: "#123456" },
+    })
+      .png()
+      .toBuffer();
+    const ticket = (
+      await call(noor.cookie, "POST", "/media/uploads", {
+        kind: "image",
+        mimeType: "image/png",
+        sizeBytes: bytes.length,
+      })
+    ).json();
+    await t.app.inject({
+      method: "PUT",
+      url: ticket.uploadUrl.replace(/^\/api/, ""),
+      headers: { "content-type": "image/png" },
+      payload: bytes,
+    });
+    await call(noor.cookie, "POST", `/media/${ticket.mediaId}/complete`, {});
+    const sent = await call(noor.cookie, "POST", `/channels/${dm.id}/messages`, {
+      attachmentIds: [ticket.mediaId],
+      viewLimit: 1,
+    });
+    expect(sent.statusCode, sent.body).toBe(201);
+    const theirs = (await call(kenji.cookie, "GET", `/channels/${dm.id}/messages`)).json()
+      .messages[0];
+    expect(theirs).toMatchObject({ viewLimit: 1, viewsLeft: 1 });
+    expect(theirs.attachments[0].url).toBe("");
+    // Not readable through its file link.
+    expect((await call(kenji.cookie, "GET", `/media/${ticket.mediaId}/raw`)).statusCode).toBe(404);
+    const opened = await call(
+      kenji.cookie,
+      "POST",
+      `/channels/${dm.id}/messages/${sent.json().id}/open`,
+    );
+    expect(opened.json()).toMatchObject({ viewsLeft: 0, seconds: 10 });
+    expect(opened.json().urls).toHaveLength(1);
+    const again = await call(
+      kenji.cookie,
+      "POST",
+      `/channels/${dm.id}/messages/${sent.json().id}/open`,
+    );
+    expect(again.json().error.code).toBe("VIEW_USED");
+    expect(
+      (await call(noor.cookie, "GET", `/channels/${dm.id}/messages`)).json().messages[0].opened,
+    ).toBe(true);
   });
 });

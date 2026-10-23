@@ -13,6 +13,7 @@ import {
   Message,
   MessagePage,
   MessagesQuery,
+  OpenedPhoto,
   ReadState,
   Snowflake,
   SpaceDetail,
@@ -238,6 +239,32 @@ export const channelRoutes =
           authOf(req).userId,
         );
         return reply.status(204).send();
+      },
+    );
+
+    // "Delete for you": gone from your view of the chat only.
+    app.post(
+      "/:channelId/messages/:messageId/hide",
+      { preHandler: requireAuth, schema: { params: MessageParams } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.messageEdit, userId.toString());
+        await m.messages.hide(BigInt(req.params.channelId), BigInt(req.params.messageId), userId);
+        return reply.status(204).send();
+      },
+    );
+
+    // Open a view-once photo (counts a view; short links to its photos).
+    app.post(
+      "/:channelId/messages/:messageId/open",
+      {
+        preHandler: requireAuth,
+        schema: { params: MessageParams, response: { 200: OpenedPhoto } },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.messageEdit, userId.toString());
+        return m.messages.open(BigInt(req.params.channelId), BigInt(req.params.messageId), userId);
       },
     );
 

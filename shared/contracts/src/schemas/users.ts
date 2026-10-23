@@ -23,6 +23,14 @@ export const DisplayName = z
   .min(Limits.displayName.min)
   .max(Limits.displayName.max);
 
+/** A checked account: a notable person, a business or brand, or Realm itself (the badge). */
+export const VerifiedKind = z.enum(["notable", "business", "official"]);
+export type VerifiedKind = z.infer<typeof VerifiedKind>;
+
+/** Realm's staff: moderators handle reports; admins also manage accounts and staff. */
+export const StaffRole = z.enum(["moderator", "admin"]);
+export type StaffRole = z.infer<typeof StaffRole>;
+
 export const PublicUser = z
   .object({
     id: Snowflake,
@@ -34,6 +42,8 @@ export const PublicUser = z
     bio: z.string().nullable(),
     pronouns: z.string().nullable(),
     createdAt: IsoDateTime,
+    /** Verified by Realm; left out for everyone else. */
+    verified: VerifiedKind.optional(),
   })
   .meta({ id: "PublicUser" });
 export type PublicUser = z.infer<typeof PublicUser>;
@@ -45,6 +55,7 @@ export const UserSummary = PublicUser.pick({
   displayName: true,
   avatarUrl: true,
   accentColor: true,
+  verified: true,
 }).meta({ id: "UserSummary" });
 export type UserSummary = z.infer<typeof UserSummary>;
 
@@ -53,6 +64,8 @@ export const SelfUser = PublicUser.extend({
   emailVerified: z.boolean(),
   /** Under 18: the interface hides what the server won't allow (nearby Spaces, for one). */
   teen: z.boolean(),
+  /** Realm staff only: what they may do in the admin pages. */
+  staff: StaffRole.optional(),
 }).meta({ id: "SelfUser" });
 export type SelfUser = z.infer<typeof SelfUser>;
 

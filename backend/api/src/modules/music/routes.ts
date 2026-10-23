@@ -25,7 +25,10 @@ export const soundRoutes =
   async (app) => {
     app.get(
       "/",
-      { preHandler: requireAuth, schema: { querystring: SoundSearchQuery, response: { 200: SoundList } } },
+      {
+        preHandler: requireAuth,
+        schema: { querystring: SoundSearchQuery, response: { 200: SoundList } },
+      },
       async (req) => {
         await enforceLimit(deps, Limits.soundSearch, authOf(req).userId.toString());
         return music.search(req.query.q);
@@ -79,14 +82,21 @@ export const storyRoutes =
       "/of/:username",
       {
         preHandler: requireAuth,
-        schema: { params: z.object({ username: Username }), response: { 200: z.object({ items: z.array(Story) }) } },
+        schema: {
+          params: z.object({ username: Username }),
+          response: { 200: z.object({ items: z.array(Story) }) },
+        },
       },
       async (req) => ({ items: await music.ofUser(req.params.username, authOf(req).userId) }),
     );
-    app.post("/:id/view", { preHandler: requireAuth, schema: { params: Id } }, async (req, reply) => {
-      await music.view(authOf(req).userId, BigInt(req.params.id));
-      return reply.status(204).send();
-    });
+    app.post(
+      "/:id/view",
+      { preHandler: requireAuth, schema: { params: Id } },
+      async (req, reply) => {
+        await music.view(authOf(req).userId, BigInt(req.params.id));
+        return reply.status(204).send();
+      },
+    );
     app.delete("/:id", { preHandler: requireAuth, schema: { params: Id } }, async (req, reply) => {
       await music.remove(authOf(req).userId, BigInt(req.params.id));
       return reply.status(204).send();

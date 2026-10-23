@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/icon";
+import { leave } from "@/leave";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { AppScreen, TopBar } from "@/social/screen";
@@ -83,7 +84,7 @@ export default function VerifyEmail() {
                 {me.email}. Password reset links and account notices go there.
               </Text>
               <View style={s.foot}>
-                <Pill label="Done" onPress={() => router.back()} />
+                <Pill label="Done" onPress={() => leave(router)} />
               </View>
             </>
           ) : (

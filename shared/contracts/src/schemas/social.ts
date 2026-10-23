@@ -205,6 +205,8 @@ export const Activity = z
     text: z.string().nullable(),
     /** A follow notice that's really "they accepted your request". */
     accepted: z.boolean(),
+    /** Where you stand with the person now (for Follow back / Following on the row). */
+    youFollow: FollowState,
     read: z.boolean(),
     createdAt: IsoDateTime,
   })

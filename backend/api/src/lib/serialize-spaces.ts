@@ -22,7 +22,7 @@ type MediaRow = typeof schema.media.$inferSelect;
 export type SummaryRow = Pick<
   typeof schema.users.$inferSelect,
   "id" | "username" | "displayName" | "accentColor" | "avatarMediaId"
->;
+> & { verified?: (typeof schema.users.$inferSelect)["verified"] };
 
 /** The columns a person's summary needs, for `select(summaryColumns)`. */
 export const summaryColumns = {
@@ -31,6 +31,7 @@ export const summaryColumns = {
   displayName: schema.users.displayName,
   accentColor: schema.users.accentColor,
   avatarMediaId: schema.users.avatarMediaId,
+  verified: schema.users.verified,
 };
 
 /** Message flag bit 0: hidden after reports, until a moderator decides. */
@@ -44,6 +45,7 @@ export function toUserSummary(u: SummaryRow): UserSummary {
     displayName: u.displayName,
     avatarUrl: u.avatarMediaId ? mediaUrl(u.avatarMediaId) : null,
     accentColor: u.accentColor,
+    ...(u.verified ? { verified: u.verified } : {}),
   };
 }
 
@@ -184,5 +186,8 @@ export function toMessage(
     editedAt: m.editedAt?.toISOString() ?? null,
     createdAt: m.createdAt.toISOString(),
     nonce: m.nonce,
+    viewLimit: m.viewLimit ?? null,
+    viewsLeft: null,
+    opened: false,
   };
 }

@@ -377,10 +377,14 @@ describe("colours from a picture", () => {
   it("suggests readable colour sets from your own picture, not someone else's", async () => {
     const noor = await person();
     const kenji = await person();
-    const red = await sharp({ create: { width: 32, height: 32, channels: 3, background: "#c01830" } })
+    const red = await sharp({
+      create: { width: 32, height: 32, channels: 3, background: "#c01830" },
+    })
       .composite([
         {
-          input: await sharp({ create: { width: 16, height: 32, channels: 3, background: "#101018" } })
+          input: await sharp({
+            create: { width: 16, height: 32, channels: 3, background: "#101018" },
+          })
             .png()
             .toBuffer(),
           left: 0,
@@ -399,6 +403,8 @@ describe("colours from a picture", () => {
       file: theme({ colors: suggestions[0].colors, panels: suggestions[0].panels }),
     });
     expect(check.json().ok).toBe(true);
-    expect((await call(kenji.cookie, "POST", "/themes/palette", { mediaId: pic })).statusCode).toBe(404);
+    expect((await call(kenji.cookie, "POST", "/themes/palette", { mediaId: pic })).statusCode).toBe(
+      404,
+    );
   });
 });

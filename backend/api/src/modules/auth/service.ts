@@ -21,6 +21,7 @@ import {
 } from "@realm/server-core";
 import type { Deps } from "../../deps";
 import { AppError, badRequest, conflict, rateLimited } from "../../lib/errors";
+import { RESERVED_MESSAGE, whyReserved } from "../../lib/handles";
 import { alertOwnerOnce } from "../../lib/owner-alerts";
 import { type ClientContext, createSession, revokeAllSessions } from "../../lib/sessions";
 import {
@@ -30,7 +31,6 @@ import {
   signInPausedEmail,
   verificationEmail,
 } from "./emails";
-import { RESERVED_USERNAMES } from "./reserved";
 
 const { users, userSettings, emailVerifications, passwordResets, securityEvents, sessions } =
   schema;
@@ -103,9 +103,8 @@ export class AuthService {
   }
 
   async register(body: RegisterBody, client: ClientContext) {
-    if (RESERVED_USERNAMES.has(body.username)) {
-      throw conflict("USERNAME_RESERVED", "That username isn't available");
-    }
+    const kept = await whyReserved(this.deps.db, body.username);
+    if (kept) throw conflict("USERNAME_RESERVED", RESERVED_MESSAGE[kept]);
     const email = body.email.toLowerCase();
     await this.screen(body.password, [body.username, email.split("@")[0] ?? ""]);
 
@@ -479,7 +478,8 @@ export class AuthService {
   async usernameAvailability(raw: string): Promise<UsernameAvailability> {
     const parsed = Username.safeParse(raw.toLowerCase());
     if (!parsed.success) return { available: false, reason: "invalid" };
-    if (RESERVED_USERNAMES.has(parsed.data)) return { available: false, reason: "reserved" };
+    if (await whyReserved(this.deps.db, parsed.data))
+      return { available: false, reason: "reserved" };
     const [taken] = await this.deps.db
       .select({ id: users.id })
       .from(users)

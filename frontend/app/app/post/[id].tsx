@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
+import { leave } from "@/leave";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
@@ -157,7 +158,7 @@ export default function PostScreen() {
                   post={post.data}
                   standalone
                   onChange={post.setData}
-                  onRemoved={() => router.back()}
+                  onRemoved={() => leave(router)}
                 />
                 <Text style={s.heading}>
                   {comments.length ? "Comments" : "No comments yet. Start the conversation."}

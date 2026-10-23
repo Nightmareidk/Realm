@@ -1,16 +1,18 @@
-import type { ActivityPage, UserSummary } from "@realm/contracts";
-import { FlashList } from "@shopify/flash-list";
+import type { ActivityPage, Post, UserSummary } from "@realm/contracts";
+import { FlashList, type ViewToken } from "@shopify/flash-list";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApi, usePosts } from "@/data";
 import { Icon } from "@/icon";
 import { useLiveEvent } from "@/live";
 import { loadStories, useStories } from "@/music/stories";
-import { api } from "@/server";
+import { api, mediaSource } from "@/server";
 import { useSession } from "@/session";
+import { useSheet } from "@/sheet";
 import { Avatar, fillFor } from "@/social/avatar";
 import { PostCard } from "@/social/post-card";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
@@ -20,8 +22,9 @@ import { Pill, Wordmark } from "@/ui";
 
 /**
  * Home (the owner's pick, 2026-10-17: "like Instagram, opening on the posts of people you
- * follow"). New post on the left, the wordmark, the heart for activity; then the people row, then
- * the feed.
+ * follow"). The wordmark, then the heart for activity and + to make something (Post, Story or
+ * Clip); then Stories, then the feed. In Now Playing, the photo you're looking at lights the
+ * whole screen in its own colours.
  */
 export default function Home() {
   const { t } = useTheme();
@@ -34,6 +37,27 @@ export default function Home() {
   useLiveEvent("ACTIVITY_NEW", (d) => setUnread(d.unread));
   const { session } = useSession();
   const unconfirmed = session.status === "signedIn" && !session.user.emailVerified;
+  const sheet = useSheet();
+  // The photo on screen, whose colours light the room (Now Playing's glow).
+  const lit = t.style.posts === "glow" && t.style.glow > 0;
+  const [ambient, setAmbient] = useState<string | null>(null);
+  const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken<Post>[] }) => {
+    const photo = viewableItems.find((v) => v.item?.kind === "image")?.item?.media[0];
+    if (photo) setAmbient(photo.url);
+  }).current;
+
+  function create() {
+    const go = (mode: "post" | "story" | "clip") =>
+      router.push({ pathname: "/create", params: { mode } });
+    sheet({
+      title: "Create",
+      actions: [
+        { label: "Post", icon: "GridFour", onPress: () => go("post") },
+        { label: "Story", icon: "Camera", onPress: () => go("story") },
+        { label: "Clip", icon: "PlayCircle", onPress: () => go("clip") },
+      ],
+    });
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -46,27 +70,29 @@ export default function Home() {
   const header = (
     <>
       <View style={[s.top, { paddingTop: insets.top + 2 }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="New post"
-          onPress={() => router.push("/create")}
-          style={s.icon}
-        >
-          <Icon name="PlusSquare" size={26} color={t.colors.text} />
-        </Pressable>
         <View style={s.brand}>
           <Wordmark />
           <Sticker slot="header" size={34} />
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={unread ? `Activity, ${unread} new` : "Activity"}
-          onPress={() => router.push("/activity")}
-          style={s.icon}
-        >
-          <Icon name="Heart" size={26} color={t.colors.text} />
-          {unread ? <View style={s.badge} /> : null}
-        </Pressable>
+        <View style={s.topRight}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={unread ? `Activity, ${unread} new` : "Activity"}
+            onPress={() => router.push("/activity")}
+            style={s.icon}
+          >
+            <Icon name="Heart" size={26} color={t.colors.text} />
+            {unread ? <View style={s.badge} /> : null}
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Create: a post, a Story or a Clip"
+            onPress={create}
+            style={s.icon}
+          >
+            <Icon name="PlusSquare" size={26} color={t.colors.text} />
+          </Pressable>
+        </View>
       </View>
       {unconfirmed ? (
         <Pressable
@@ -91,7 +117,27 @@ export default function Home() {
 
   return (
     <AppScreen>
+      {lit && ambient ? (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Image
+            source={mediaSource(ambient)}
+            style={[StyleSheet.absoluteFill, { opacity: 0.3 + t.style.glow * 0.3 }]}
+            blurRadius={60}
+            contentFit="cover"
+            transition={700}
+            accessible={false}
+          />
+          <LinearGradient
+            colors={["transparent", t.colors.bg]}
+            start={{ x: 0.5, y: 0.55 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
+      ) : null}
       <FlashList
+        onViewableItemsChanged={lit ? onViewable : undefined}
+        viewabilityConfig={{ itemVisiblePercentThreshold: 40 }}
         data={feed.items}
         keyExtractor={(p) => p.id}
         renderItem={({ item }) => (
@@ -109,7 +155,7 @@ export default function Home() {
               line="Follow people to see their posts here, or share the first one yourself."
             >
               <Pill label="Find people" onPress={() => router.push("/explore")} />
-              <Pill kind="ghost" label="Share a post" onPress={() => router.push("/create")} />
+              <Pill kind="ghost" label="Share a post" onPress={create} />
             </Empty>
           )
         }
@@ -185,7 +231,11 @@ function StoriesRow() {
           accessibilityLabel={`${r.author.displayName}'s Story${r.unseen ? ", new" : ""}`}
           style={s.person}
         >
-          <Face user={r.author} state={r.unseen ? "new" : "seen"} />
+          <Face
+            user={r.author}
+            state={r.unseen ? "new" : "seen"}
+            cover={r.stories.findLast((st) => st.sound?.coverUrl)?.sound?.coverUrl ?? null}
+          />
           {named ? (
             <Text style={[s.personName, r.unseen && s.personNew]} numberOfLines={1}>
               {r.author.displayName.split(" ")[0]}
@@ -220,7 +270,16 @@ function StoriesRow() {
  * (Wristband) or a fine line (Plain and clear). A new Story is the strongest mark; one you've
  * seen is quieter; no Story, nothing.
  */
-function Face({ user, state }: { user: UserSummary; state: "new" | "seen" | "none" }) {
+function Face({
+  user,
+  state,
+  cover = null,
+}: {
+  user: UserSummary;
+  state: "new" | "seen" | "none";
+  /** The song on their newest Story, shown on the ring (Now Playing). */
+  cover?: string | null;
+}) {
   const { t } = useTheme();
   const s = useStyles(make);
   const colour = user.accentColor
@@ -250,18 +309,31 @@ function Face({ user, state }: { user: UserSummary; state: "new" | "seen" | "non
       </View>
     );
   }
+  const disc = cover ? (
+    <View style={s.disc}>
+      <Image
+        source={cover.startsWith("/") ? mediaSource(cover) : { uri: cover }}
+        style={s.discImage}
+        contentFit="cover"
+        recyclingKey={cover}
+      />
+    </View>
+  ) : null;
   if (state === "new") {
     return (
-      <LinearGradient
-        colors={[colour, t.colors.lights[1], t.colors.accent]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={s.ring}
-      >
-        <View style={s.ringGap}>
-          <Avatar user={user} size={58} />
-        </View>
-      </LinearGradient>
+      <View>
+        <LinearGradient
+          colors={[colour, t.colors.lights[1], t.colors.accent]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={s.ring}
+        >
+          <View style={s.ringGap}>
+            <Avatar user={user} size={58} />
+          </View>
+        </LinearGradient>
+        {disc}
+      </View>
     );
   }
   return (
@@ -321,7 +393,21 @@ const make = (t: NativeTheme) =>
     },
     people: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 12, gap: 14 },
     person: { alignItems: "center", gap: 6, minWidth: 70 },
-    brand: { flexDirection: "row", alignItems: "center", gap: 6 },
+    brand: { flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 12 },
+    topRight: { flexDirection: "row", alignItems: "center" },
+    disc: {
+      position: "absolute",
+      right: -2,
+      bottom: -2,
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      borderWidth: 2.5,
+      borderColor: t.colors.bg,
+      overflow: "hidden",
+      backgroundColor: t.colors.surfaceRaised,
+    },
+    discImage: { width: "100%", height: "100%" },
     ring: { width: 68, height: 68, borderRadius: 34, padding: 2.5 },
     ringSeen: { borderWidth: 1.5, borderColor: t.colors.borderStrong, padding: 1 },
     ringGap: {

@@ -28,6 +28,7 @@ export function toPublicUser(u: UserRow): PublicUser {
     bio: u.bio,
     pronouns: u.pronouns,
     createdAt: u.createdAt.toISOString(),
+    ...(u.verified ? { verified: u.verified } : {}),
   };
 }
 
@@ -37,6 +38,7 @@ export function toSelfUser(u: UserRow): SelfUser {
     email: u.email,
     emailVerified: u.emailVerifiedAt !== null,
     teen: isMinor(u.birthDate),
+    ...(u.staffRole ? { staff: u.staffRole } : {}),
   };
 }
 

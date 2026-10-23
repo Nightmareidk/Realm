@@ -33,7 +33,11 @@ function darkSet(source: Hct, second: Hct, third: Hct, name: string): Suggestion
     textSoft: hex(h, 8, 76),
     accent: hex(h, chroma, 66),
     onAccent: hex(h, 20, 8),
-    lights: [hex(h, chroma, 34), hex(second.hue, Math.min(second.chroma, 60), 26), hex(third.hue, 30, 20)],
+    lights: [
+      hex(h, chroma, 34),
+      hex(second.hue, Math.min(second.chroma, 60), 26),
+      hex(third.hue, 30, 20),
+    ],
     accent2: hex(second.hue, Math.max(30, Math.min(second.chroma, 70)), 70),
     heading: hex(h, chroma, 78),
     link: hex(h, Math.min(chroma, 50), 84),
@@ -96,7 +100,9 @@ export async function paletteFromPicture(bytes: Uint8Array): Promise<Suggestion[
     filter: true,
   }).map((argb) => Hct.fromInt(argb));
   const pick = (i: number) => ranked[i % ranked.length] as Hct;
-  const sets = ranked.slice(0, 3).map((c, i) => darkSet(c, pick(i + 1), pick(i + 2), `From your picture ${i + 1}`));
+  const sets = ranked
+    .slice(0, 3)
+    .map((c, i) => darkSet(c, pick(i + 1), pick(i + 2), `From your picture ${i + 1}`));
   // A bright picture also gets a light set first; a dark one gets it last.
   const light = lightSet(pick(0), pick(1), "From your picture, light");
   return bright ? [light, ...sets] : [...sets, light];

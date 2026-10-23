@@ -57,8 +57,8 @@ export function Pill({
   size = "lg",
 }: {
   kind?: "action" | "ghost" | "quiet";
-  /** lg 56dp for a screen's main action; md 44dp for actions in a row. */
-  size?: "lg" | "md";
+  /** lg 56dp for a screen's main action; md 44dp for actions in a row; sm 36dp beside a list row. */
+  size?: "lg" | "md" | "sm";
   label: string;
   onPress: () => void;
   pending?: boolean;
@@ -111,6 +111,7 @@ export function Pill({
             s.pill,
             { borderRadius: radius },
             size === "md" && s.pillMd,
+            size === "sm" && s.pillSm,
             kind === "ghost" && s.ghost,
             outline && { borderWidth: 2, borderColor: accent },
             kind === "action" &&
@@ -141,6 +142,7 @@ export function Pill({
             style={[
               s.pillLabel,
               size === "md" && s.pillLabelMd,
+              size === "sm" && s.pillLabelSm,
               kind === "quiet" && { color: t.colors.textSoft },
               ink,
             ]}
@@ -316,6 +318,8 @@ const make = (t: NativeTheme) =>
     },
     pillMd: { minHeight: 44, paddingHorizontal: 18 },
     pillLabelMd: { fontSize: 15 * t.textScale },
+    pillSm: { minHeight: 36, paddingHorizontal: 16 },
+    pillLabelSm: { fontSize: 14 * t.textScale },
     ghost: { borderWidth: 1.5, borderColor: t.colors.borderStrong },
     pillLabel: { fontFamily: t.fonts.bold, fontSize: 17 * t.textScale, color: t.colors.text },
     linkHit: { minHeight: 48, justifyContent: "center" },
