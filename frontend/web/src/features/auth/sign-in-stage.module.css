@@ -1,0 +1,67 @@
+/*
+ * The light behind the sign-in page: three soft pools of the theme's colours on the dark ground,
+ * drifting slowly. Plain gradients (no blur filter, no noise), so it stays smooth on laptops
+ * without a graphics card; still when motion is turned down.
+ */
+.light {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--r-bg) 70%, #000);
+}
+.light span {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  will-change: transform;
+}
+.one {
+  left: -20vmax;
+  top: -25vmax;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--r-light-1) 38%, transparent),
+    transparent
+  );
+  animation: drift-a 26s var(--r-ease-in-out) infinite alternate;
+}
+.two {
+  right: -25vmax;
+  top: -10vmax;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--r-light-2) 30%, transparent),
+    transparent
+  );
+  animation: drift-b 32s var(--r-ease-in-out) infinite alternate;
+}
+.three {
+  left: 20vmax;
+  bottom: -40vmax;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--r-accent) 18%, transparent),
+    transparent
+  );
+  animation: drift-a 38s var(--r-ease-in-out) infinite alternate-reverse;
+}
+@keyframes drift-a {
+  to {
+    transform: translate(8vmax, 6vmax) scale(1.08);
+  }
+}
+@keyframes drift-b {
+  to {
+    transform: translate(-6vmax, 9vmax) scale(0.94);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .light span {
+    animation: none;
+  }
+}
+:global(html[data-motion="paused"]) .light span {
+  animation: none;
+}

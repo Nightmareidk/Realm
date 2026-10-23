@@ -9,10 +9,13 @@ import {
   Plus,
   Question,
   SquaresFour,
+  User,
 } from "@phosphor-icons/react";
+import type { SearchResults } from "@realm/contracts";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { chatRooms, useRealm } from "@/features/realtime/store";
+import { api } from "@/lib/api";
 import { cx } from "@/lib/cx";
 import { DESTINATIONS, SETTINGS } from "./nav";
 
@@ -35,7 +38,7 @@ const SETTING_WORDS: Record<string, string> = {
   Devices: "sessions sign out security",
 };
 
-/** Everything Travel can always jump to. Your Spaces and rooms are added live; people come later. */
+/** Everything Travel can always jump to. Your Spaces and rooms are added live; people come from search. */
 const ITEMS: Item[] = [
   ...DESTINATIONS.map((d) => ({
     id: d.href,
@@ -146,11 +149,44 @@ export function Travel({ variant = "field" }: { variant?: "field" | "icon" }) {
     [spaces],
   );
 
+  // People (and public Spaces) from the server, a moment after typing stops.
+  const [people, setPeople] = useState<Item[]>([]);
+  useEffect(() => {
+    const q = query.trim().replace(/^@/, "");
+    if (!open || q.length < 2) {
+      setPeople([]);
+      return;
+    }
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      api<SearchResults>(`/search?q=${encodeURIComponent(q)}`, { signal: ctrl.signal })
+        .then((r) =>
+          setPeople(
+            r.users.slice(0, 6).map((u) => ({
+              id: `user-${u.id}`,
+              label: u.displayName,
+              hint: `@${u.username}`,
+              href: `/u/${u.username}`,
+              icon: User,
+            })),
+          ),
+        )
+        .catch(() => {});
+    }, 220);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [query, open]);
+
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return all;
-    return all.filter((i) => `${i.label} ${i.hint} ${i.keywords ?? ""}`.toLowerCase().includes(q));
-  }, [query, all]);
+    return [
+      ...people,
+      ...all.filter((i) => `${i.label} ${i.hint} ${i.keywords ?? ""}`.toLowerCase().includes(q)),
+    ];
+  }, [query, all, people]);
 
   const go = (item: Item | undefined) => {
     if (!item) return;
@@ -183,10 +219,12 @@ export function Travel({ variant = "field" }: { variant?: "field" | "icon" }) {
         <button
           type="button"
           onClick={show}
-          className="flex h-10 w-full max-w-[22rem] min-w-0 items-center gap-2.5 whitespace-nowrap rounded-full bg-fg/[0.05] pr-2 pl-3.5 text-[0.95rem] text-fg-soft transition-colors duration-150 ease-out hover:bg-fg/[0.08] hover:text-fg pointer-coarse:pr-3"
+          className="flex h-12 w-full max-w-[27.5rem] min-w-0 items-center gap-2.5 whitespace-nowrap rounded-full bg-[rgb(9_9_12/0.55)] pr-2 pl-4 text-[0.95rem] text-fg-soft shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)] transition-colors duration-150 ease-out hover:text-fg pointer-coarse:pr-3"
         >
-          <MagnifyingGlass aria-hidden="true" size={17} />
-          <span className="min-w-0 flex-1 truncate text-left">Search or jump to…</span>
+          <MagnifyingGlass aria-hidden="true" size={19} />
+          <span className="min-w-0 flex-1 truncate text-left">
+            Search people, Spaces and sounds
+          </span>
           <kbd className="rounded-[0.45rem] px-2 py-0.5 font-sans text-[0.78rem] font-bold text-fg-soft shadow-[inset_0_0_0_1px_rgb(255_255_255/0.14)] pointer-coarse:hidden">
             {keys}
           </kbd>
@@ -221,8 +259,8 @@ export function Travel({ variant = "field" }: { variant?: "field" | "icon" }) {
                 aria-controls={listId}
                 aria-autocomplete="list"
                 aria-activedescendant={results[index] ? `${listId}-${index}` : undefined}
-                aria-label="Search or jump to"
-                placeholder="Search or jump to…"
+                aria-label="Search people, Spaces and pages"
+                placeholder="Search people, Spaces and pages…"
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);

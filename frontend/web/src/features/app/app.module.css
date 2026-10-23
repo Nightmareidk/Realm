@@ -1,10 +1,9 @@
 /*
- * The signed-in frame, "Wall" (the owner's pick, 2026-10-05; `.impeccable/mocks/shell2/c-*`).
- * From 48rem a labelled nav column sits on the ground itself (the wordmark, the five
- * destinations, your Spaces, you), beside one content sheet that holds a slim bar (Travel, Here
- * now, Create, notifications) and the page. Navigation never collapses to bare icons. Here now
- * opens inside the sheet: beside the page from 80rem when you've opened it, over the page below
- * that. Phones: a slim header and five tabs; inside a room both step aside for the chat.
+ * The signed-in frame, Look B "Now Playing" (the owner's pick, 2026-10-22;
+ * `.impeccable/mocks/redesign/b-web-home.png`). On computers: rounded panels on a dark ground,
+ * 8px apart. Left, a panel of where to go and a panel of your places; right, the page in one lit
+ * panel with the search pill, Activity and Create on top; along the foot, the Now Playing bar.
+ * Phones: a slim header, the song above the tabs, and four tabs plus you.
  */
 
 .app {
@@ -12,7 +11,7 @@
 }
 
 /* Phones first */
-.nav,
+.left,
 .bar,
 .here {
   display: none;
@@ -26,48 +25,61 @@
   gap: 2px;
   height: 3.5rem;
   padding: 0 0.5rem 0 1rem;
-  background: rgb(11 11 14 / 0.92);
+  background: color-mix(in srgb, var(--r-bg) 92%, transparent);
 }
 .main {
+  position: relative;
   min-width: 0;
   outline: none;
-  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(9.5rem + env(safe-area-inset-bottom));
 }
 /* A room: the chat scrolls itself, so the page doesn't. */
 .room {
   overflow: hidden;
 }
-/* From tablets, Messages' inbox fills the sheet and scrolls on its own. */
 @media (width >= 48rem) {
   .fill {
     overflow: hidden;
   }
 }
+.player {
+  position: fixed;
+  z-index: 39;
+  inset: auto 0.5rem calc(5.25rem + env(safe-area-inset-bottom)) 0.5rem;
+  height: 4rem;
+  display: flex;
+  border-radius: 1.1rem;
+  background: var(--r-surface-raised);
+  box-shadow: 0 16px 36px -14px rgb(0 0 0 / 0.7);
+}
 .tabs {
   position: fixed;
-  inset: auto 0 0;
+  inset: auto 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
   z-index: 40;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  height: calc(4.25rem + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  background: rgb(11 11 14 / 0.96);
-  border-top: 1px solid var(--r-border);
+  height: 4.25rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--r-surface-raised) 96%, transparent);
+  box-shadow:
+    0 16px 40px rgb(0 0 0 / 0.55),
+    inset 0 0 0 1px rgb(255 255 255 / 0.06);
 }
 .tab {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  font-size: 0.72rem;
+  gap: 0.15rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--r-text-soft);
 }
 .tabGlyph {
   display: grid;
   place-items: center;
-  height: 1.9rem;
+  height: 2rem;
   width: 3.4rem;
   border-radius: 999px;
   transition: background-color 150ms var(--r-ease-out);
@@ -76,13 +88,13 @@
   color: var(--r-text);
 }
 .tab[aria-current="page"] .tabGlyph {
-  background: rgb(255 255 255 / 0.08);
+  background: rgb(255 255 255 / 0.1);
 }
-/* Phones, inside a room: the Space's own header (with its back arrow) and the composer take the
-   whole screen, the way a conversation does. */
+/* Phones, inside a room: the chat takes the whole screen. */
 @media (width < 48rem) {
   .app[data-room] .phoneTop,
-  .app[data-room] .tabs {
+  .app[data-room] .tabs,
+  .app[data-room] .player {
     display: none;
   }
   .app[data-room] .main {
@@ -90,7 +102,6 @@
   }
 }
 
-/* The scrim under anything open over the page; a click on it closes. */
 .scrim {
   position: fixed;
   inset: 0;
@@ -98,13 +109,12 @@
   background: rgb(11 11 14 / 0.55);
 }
 
-/* Here now, opened over the page: a raised sheet with a firm edge and a real drop. Phones: above
-   the tabs. */
+/* Here now (inside a Space), opened over the page. */
 .app[data-peek] .here {
   display: block;
   position: fixed;
   z-index: 45;
-  inset: auto 0.5rem calc(4.75rem + env(safe-area-inset-bottom)) 0.5rem;
+  inset: auto 0.5rem calc(5.25rem + env(safe-area-inset-bottom)) 0.5rem;
   max-height: calc(100dvh - 9rem);
   overflow-y: auto;
   padding: 1rem 0.9rem 1.25rem;
@@ -116,6 +126,47 @@
     0 24px 48px -12px rgb(0 0 0 / 0.7);
 }
 
+/* The light behind a page: the photo on screen, blurred into the panel's top. */
+.light {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 32.5rem;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.light img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(80px) saturate(1.6);
+  opacity: 0.5;
+  transform: scale(1.2);
+  transition: opacity 600ms var(--r-ease-out);
+}
+.light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent, var(--r-surface));
+}
+.lightPlain {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      60% 70% at 20% 0%,
+      color-mix(in srgb, var(--r-light-1) 30%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 60% at 85% 10%,
+      color-mix(in srgb, var(--r-light-2) 22%, transparent),
+      transparent 70%
+    );
+  opacity: calc(var(--r-glow) + 0.2);
+}
+
 @media (width >= 48rem) {
   .phoneTop,
   .tabs {
@@ -123,45 +174,43 @@
   }
   .app {
     height: 100dvh;
-    display: flex;
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) 76px;
+    gap: 8px;
+    padding: 8px;
+    background: color-mix(in srgb, var(--r-bg) 55%, #000);
   }
-
-  /* The nav column, on the ground. */
-  .nav {
+  .left {
     display: flex;
     flex-direction: column;
-    flex: none;
-    width: 13.5rem;
-    padding: 1.1rem 0.5rem 0.75rem 0.625rem;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: none;
+    gap: 8px;
+    min-height: 0;
   }
 
-  /* The one content sheet. */
+  /* The page's panel. */
   .sheet {
     position: relative;
-    flex: 1;
+    isolation: isolate;
     min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    margin: 0.625rem 0.625rem 0.625rem 0;
-    border-radius: 1.375rem;
+    border-radius: 18px;
     background: var(--r-surface);
-    box-shadow:
-      inset 0 0 0 1px rgb(255 255 255 / 0.06),
-      0 40px 80px -50px var(--r-shadow);
     overflow: hidden;
   }
   .bar {
+    position: relative;
+    z-index: 2;
     display: flex;
     flex: none;
     align-items: center;
-    gap: 0.25rem;
-    height: 4rem;
-    padding: 0 0.75rem 0 1.25rem;
+    gap: 12px;
+    padding: 16px 24px;
   }
   .sheetBody {
+    position: relative;
     flex: 1;
     min-height: 0;
     display: grid;
@@ -176,7 +225,16 @@
     scroll-padding-top: 1rem;
   }
 
-  /* Over the page, inside the sheet's bounds. */
+  /* The Now Playing bar across the foot. */
+  .player {
+    position: static;
+    grid-column: 1 / 3;
+    height: auto;
+    border-radius: 18px;
+    background: var(--r-surface);
+    box-shadow: none;
+  }
+
   .app[data-peek] .here {
     inset: 5.25rem 1.25rem 1.25rem auto;
     width: min(19rem, calc(100vw - 2.5rem));
@@ -185,12 +243,8 @@
 }
 
 @media (width >= 64rem) {
-  .nav {
-    width: 15.5rem;
-    padding: 1.25rem 0.75rem 0.875rem;
-  }
-  .bar {
-    padding-left: 1.75rem;
+  .app {
+    grid-template-columns: 300px minmax(0, 1fr);
   }
 }
 
@@ -210,58 +264,39 @@
 
 /* ── The looks (docs/THEMING.md): Now Playing is the default ─────────────────────────────────── */
 
-/* Now Playing: the nav and the page are two rounded panels floating on the lit ground, and the
-   phone's tabs float as a pill. */
-:global(html[data-look="now-playing"]) .tabs {
-  inset: auto 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
-  height: 4rem;
-  padding-bottom: 0;
-  border: 0;
-  border-radius: 999px;
-  background: var(--r-surface-raised);
-  box-shadow: 0 16px 36px -12px rgb(0 0 0 / 0.65);
-}
-@media (width >= 48rem) {
-  :global(html[data-look="now-playing"]) .nav {
-    margin: 0.625rem 0 0.625rem 0.625rem;
-    border-radius: 1.375rem;
-    background: var(--r-surface);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
-  }
-  :global(html[data-look="now-playing"]) .sheet {
-    margin-left: 0.5rem;
-    border-radius: 1.75rem;
-  }
-}
-
 /* Plain and clear: no panels, just columns divided by thin lines on the ground. */
 @media (width >= 48rem) {
-  :global(html[data-look="plain"]) .sheet {
-    margin: 0;
+  :global(html[data-look="plain"]) .app {
+    gap: 0;
+    padding: 0;
+    background: var(--r-bg);
+  }
+  :global(html[data-look="plain"]) .sheet,
+  :global(html[data-look="plain"]) .player,
+  :global(html[data-look="plain"]) .left > * {
     border-radius: 0;
     background: var(--r-bg);
-    box-shadow: none;
+  }
+  :global(html[data-look="plain"]) .sheet {
     border-left: 1px solid var(--r-border);
   }
-  :global(html[data-look="plain"]) .bar {
-    border-bottom: 1px solid var(--r-border);
+  :global(html[data-look="plain"]) .player {
+    border-top: 1px solid var(--r-border);
+  }
+  :global(html[data-look="plain"]) .light {
+    display: none;
   }
 }
 
-/* See-through panels (a theme with a wallpaper): frosted when the theme asks, with its own edge
-   and shadow. The wallpaper itself is drawn once, behind everything (features/themes/art). */
+/* See-through panels (a theme with a wallpaper): frosted when the theme asks. The wallpaper
+   itself is drawn once, behind everything (features/themes/art). */
 @media (width >= 48rem) {
   .sheet,
-  :global(html[data-look="now-playing"]) .nav {
+  .player,
+  .left > * {
     backdrop-filter: blur(var(--r-panel-blur, 0px));
     box-shadow:
       var(--r-panel-ring, 0 0 0 0 transparent), var(--r-panel-shadow, 0 0 0 0 transparent);
-  }
-  :global(html[data-glass="on"]) .nav {
-    margin: 0.625rem 0 0.625rem 0.625rem;
-    border-radius: 1.375rem;
-    background: var(--r-surface);
-    backdrop-filter: blur(var(--r-panel-blur, 0px));
   }
 }
 :global(html[data-glass="on"]) .phoneTop,

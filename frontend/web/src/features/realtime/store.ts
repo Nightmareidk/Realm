@@ -76,7 +76,7 @@ export interface RealmState {
 export type ManageTab = "settings" | "members" | "roles" | "reports" | "activity";
 
 export interface ReportTarget {
-  targetType: "message" | "user" | "community";
+  targetType: "message" | "user" | "community" | "post" | "comment";
   targetId: string;
   communityId?: string;
   /** What's being reported, in words ("Kenji's message"). */

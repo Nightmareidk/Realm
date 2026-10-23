@@ -1,18 +1,28 @@
-import { ChatCircle, Compass, House, type Icon, Rows, SquaresFour } from "@phosphor-icons/react";
+import {
+  ChatCircle,
+  Heart,
+  House,
+  type Icon,
+  MagnifyingGlass,
+  PlayCircle,
+} from "@phosphor-icons/react";
 
 export type Destination = { href: string; label: string; icon: Icon };
 
-/** The five destinations (docs/UX-ARCHITECTURE.md), in the top bar's order. */
+/**
+ * Where you can go (Look B, the owner's pick 2026-10-22): Home, Search, Clips, Messages and
+ * Activity, then Create. Your Spaces and chats sit in "Your places" below.
+ */
 export const DESTINATIONS: Destination[] = [
   { href: "/home", label: "Home", icon: House },
-  { href: "/spaces", label: "Spaces", icon: SquaresFour },
+  { href: "/explore", label: "Search", icon: MagnifyingGlass },
+  { href: "/clips", label: "Clips", icon: PlayCircle },
   { href: "/messages", label: "Messages", icon: ChatCircle },
-  { href: "/feed", label: "Feed", icon: Rows },
-  { href: "/explore", label: "Explore", icon: Compass },
+  { href: "/activity", label: "Activity", icon: Heart },
 ];
 
-/** Phones put Messages after Feed; Explore lives behind the search button in the header. */
-export const TABS: string[] = ["/home", "/spaces", "/feed", "/messages"];
+/** Phones: four tabs and you. */
+export const TABS: string[] = ["/home", "/explore", "/clips", "/messages"];
 
 /** Settings, in groups (docs/research/2026-10-phase1-app-shell.md §7.6). */
 export const SETTINGS: {

@@ -831,3 +831,104 @@ html:has([data-world="canvas"]) body::after {
 .r-link {
   color: var(--r-link, var(--r-text));
 }
+
+/* Look B's panels: rounded, on the dark ground (the signed-in frame's left column). */
+.r-panel {
+  position: relative;
+  border-radius: 18px;
+  background: var(--r-surface);
+}
+html[data-look="plain"] .r-panel {
+  border-radius: 0;
+  background: var(--r-bg);
+}
+
+/* Look B's sliders (song position, volume): a slim track, filled up to --fill, a white knob. */
+.r-range {
+  appearance: none;
+  height: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+.r-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--r-text) var(--fill, 0%),
+    var(--r-border-strong) var(--fill, 0%)
+  );
+}
+.r-range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--r-text) var(--fill, 0%),
+    var(--r-border-strong) var(--fill, 0%)
+  );
+}
+.r-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--r-text);
+  transform: scale(0.85);
+  transition: transform 150ms var(--r-ease-out);
+}
+.r-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--r-text);
+}
+.r-range:hover::-webkit-slider-thumb,
+.r-range:focus-visible::-webkit-slider-thumb {
+  transform: scale(1);
+}
+.r-range:focus-visible {
+  outline: 2px solid var(--r-focus);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* The playing bars on a song chip. */
+@keyframes r-eq {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.r-eq i {
+  display: block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--r-accent);
+  transform-origin: bottom;
+  transform: scaleY(0.5);
+}
+.r-eq[data-on] i {
+  animation: r-eq 900ms var(--r-ease-in-out) infinite;
+}
+.r-eq[data-on] i:nth-child(2) {
+  animation-delay: -300ms;
+}
+.r-eq[data-on] i:nth-child(3) {
+  animation-delay: -600ms;
+}
+.r-eq[data-on] i:nth-child(4) {
+  animation-delay: -150ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .r-eq[data-on] i {
+    animation: none;
+    transform: scaleY(0.8);
+  }
+}

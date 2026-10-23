@@ -1,10 +1,12 @@
 "use client";
 
 import {
-  Bell,
   ChatCircleDots,
+  CirclesThree,
   GearSix,
+  ImageSquare,
   Plus,
+  PlusSquare,
   Question,
   SignOut,
   SquaresFour,
@@ -16,6 +18,7 @@ import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { MotionToggle } from "@/components/motion-toggle";
 import { openCreateSpace, openInvite, useRealm } from "@/features/realtime/store";
+import { openComposer } from "@/features/social/composer";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
 import { AccentPicker } from "./accent-picker";
@@ -214,13 +217,16 @@ export function YouMenu({
         )
       }
     >
-      <div className="flex items-center gap-3 px-2.5 pt-2 pb-3">
+      <Link
+        href={`/u/${live?.username ?? viewer.username}`}
+        className="mb-2 flex items-center gap-3 rounded-[0.8rem] px-2.5 pt-2 pb-2.5 hover:bg-fg/6"
+      >
         <Me name={viewer.displayName} src={viewer.avatarUrl} size={44} />
         <div className="min-w-0">
-          <p className="truncate font-bold text-fg">{viewer.displayName}</p>
-          <p className="truncate text-[0.92rem] text-fg-soft">@{viewer.username}</p>
+          <p className="truncate font-bold text-fg">{name}</p>
+          <p className="truncate text-[0.92rem] text-fg-soft">See your profile</p>
         </div>
-      </div>
+      </Link>
       <div className="border-t border-line px-2.5 pt-3 pb-3">
         <p className="mb-2.5 text-[0.85rem] font-bold text-fg-soft">Your colour</p>
         <AccentPicker size="sm" />
@@ -260,7 +266,7 @@ export function YouMenu({
  * Create: start a Space, or invite people to the one you're in (or your first). Group chats are
  * said honestly while they're being built.
  */
-export function CreateMenu() {
+export function CreateMenu({ variant = "icon" }: { variant?: "icon" | "pill" | "row" }) {
   const pathname = usePathname();
   const spaces = useRealm((st) => st.spaces);
   const slug = pathname.match(/^\/spaces\/([^/]+)/)?.[1];
@@ -268,13 +274,57 @@ export function CreateMenu() {
   return (
     <Popover
       label="Create"
-      buttonClass={iconButton}
+      className={variant === "row" ? "w-full" : undefined}
+      buttonClass={
+        variant === "pill"
+          ? "inline-flex h-11 items-center gap-2 rounded-full bg-fg px-[18px] font-bold text-base transition-transform duration-150 ease-out hover:brightness-95 active:scale-[0.97]"
+          : variant === "row"
+            ? "flex h-[46px] w-full items-center gap-3.5 rounded-xl px-3 text-left text-[1rem] font-bold text-fg-soft transition-colors duration-150 ease-out hover:bg-fg/6 hover:text-fg aria-expanded:bg-fg/8 aria-expanded:text-fg"
+            : iconButton
+      }
       panelClass="w-[17rem]"
-      button={<Plus aria-hidden="true" size={20} />}
+      placement="below"
+      button={
+        variant === "icon" ? (
+          <Plus aria-hidden="true" size={20} />
+        ) : variant === "pill" ? (
+          <>
+            <Plus aria-hidden="true" size={18} weight="bold" />
+            Create
+          </>
+        ) : (
+          <>
+            <PlusSquare aria-hidden="true" size={24} />
+            <span className="flex-1">Create</span>
+          </>
+        )
+      }
     >
       {(close) => (
         <div>
           <p className="px-3 pt-2 pb-1.5 text-[0.85rem] font-bold text-fg-soft">Create</p>
+          <button
+            type="button"
+            className={row}
+            onClick={() => {
+              close();
+              openComposer({ mode: "post" });
+            }}
+          >
+            <ImageSquare aria-hidden="true" size={20} />
+            New post
+          </button>
+          <button
+            type="button"
+            className={row}
+            onClick={() => {
+              close();
+              openComposer({ mode: "story" });
+            }}
+          >
+            <CirclesThree aria-hidden="true" size={20} />
+            New Story
+          </button>
           <button
             type="button"
             className={row}
@@ -312,25 +362,6 @@ export function CreateMenu() {
           </p>
         </div>
       )}
-    </Popover>
-  );
-}
-
-/** Notifications: an honest empty inbox until the notification centre arrives. */
-export function AlertsMenu() {
-  return (
-    <Popover
-      label="Notifications"
-      buttonClass={iconButton}
-      panelClass="w-[20rem]"
-      button={<Bell aria-hidden="true" size={21} />}
-    >
-      <div className="px-3 pt-2 pb-3">
-        <p className="font-bold text-fg">Notifications</p>
-        <p className="mt-2 text-[0.95rem] leading-relaxed text-fg-soft">
-          Nothing yet. Friend requests, mentions and replies will show up here.
-        </p>
-      </div>
     </Popover>
   );
 }

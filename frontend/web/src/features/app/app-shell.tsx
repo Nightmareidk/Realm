@@ -1,13 +1,15 @@
 "use client";
 
-import { UsersThree } from "@phosphor-icons/react";
+import { Bell, UsersThree } from "@phosphor-icons/react";
 import type { SelfUser } from "@realm/contracts";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Wordmark } from "@/features/home/chrome";
+import { NowPlayingBar } from "@/features/music/now-playing";
 import { realtime } from "@/features/realtime/client";
 import { ReportDialog } from "@/features/safety/report-dialog";
+import { Composer } from "@/features/social/composer";
 import { CreateSpaceDialog } from "@/features/spaces/create-space";
 import { InviteDialog } from "@/features/spaces/invite-dialog";
 import { ManageSpaceDialog } from "@/features/spaces/manage";
@@ -16,10 +18,11 @@ import { ThemeProvider } from "@/features/themes/theme-context";
 import { VoiceDock } from "@/features/voice/voice-dock";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
+import { AmbientLight } from "./ambient";
 import styles from "./app.module.css";
 import { HerePanelContext } from "./here-context";
 import { HereNow } from "./here-now";
-import { AlertsMenu, CreateMenu, Me } from "./menus";
+import { CreateMenu, Me } from "./menus";
 import { DESTINATIONS, isActive, TABS } from "./nav";
 import { NavColumn, useMessagesWaiting } from "./nav-column";
 import { Travel } from "./travel";
@@ -130,6 +133,22 @@ export function AppShell({ viewer, children }: { viewer: SelfUser; children: Rea
   const onMessages = pathname === "/messages";
   const onHome = pathname === "/home";
 
+  const inSpace = /^\/spaces\/[^/]+/.test(pathname);
+  const activityLink = (className: string) => (
+    <Link
+      href="/activity"
+      aria-current={isActive(pathname, "/activity") ? "page" : undefined}
+      className={className}
+    >
+      <Bell
+        aria-hidden="true"
+        size={22}
+        weight={isActive(pathname, "/activity") ? "fill" : "regular"}
+      />
+      <span className="sr-only">Activity</span>
+    </Link>
+  );
+
   return (
     <ThemeProvider>
       <HerePanelContext.Provider value={{ open: hereOpen, toggle: toggleHere }}>
@@ -137,7 +156,7 @@ export function AppShell({ viewer, children }: { viewer: SelfUser; children: Rea
         <div
           className={styles.app}
           data-frame="app"
-          data-here={herePref}
+          data-here={inSpace ? herePref : "closed"}
           data-peek={peek ? "" : undefined}
           data-room={inRoom ? "" : undefined}
         >
@@ -148,8 +167,8 @@ export function AppShell({ viewer, children }: { viewer: SelfUser; children: Rea
             Skip to content
           </a>
 
-          {/* Tablet and up: the nav column. */}
-          <aside aria-label="Navigation" className={styles.nav}>
+          {/* Computers and tablets: where to go, and your places. */}
+          <aside aria-label="Navigation" className={styles.left}>
             <NavColumn viewer={viewer} />
           </aside>
 
@@ -158,11 +177,14 @@ export function AppShell({ viewer, children }: { viewer: SelfUser; children: Rea
             <Link href="/home" aria-label="Realm home" className="mr-auto rounded-full text-fg">
               <Wordmark />
             </Link>
-            {hereButton(
-              "inline-flex size-11 items-center justify-center rounded-full text-fg-soft hover:bg-surface-raised hover:text-fg aria-expanded:bg-surface-raised aria-expanded:text-fg",
+            {inSpace &&
+              hereButton(
+                "inline-flex size-11 items-center justify-center rounded-full text-fg-soft hover:bg-surface-raised hover:text-fg aria-expanded:bg-surface-raised aria-expanded:text-fg",
+              )}
+            {activityLink(
+              "inline-flex size-11 items-center justify-center rounded-full text-fg-soft hover:text-fg aria-[current=page]:text-fg",
             )}
-            <Travel variant="icon" />
-            <AlertsMenu />
+            <CreateMenu />
           </header>
 
           {peek && (
@@ -171,13 +193,14 @@ export function AppShell({ viewer, children }: { viewer: SelfUser; children: Rea
           )}
 
           <div className={styles.sheet}>
+            <AmbientLight />
             <header className={styles.bar}>
               <div className="flex min-w-0 flex-1">
                 <Travel />
               </div>
-              {hereButton(barButton)}
-              <CreateMenu />
-              <AlertsMenu />
+              {inSpace && hereButton(barButton)}
+              {activityLink(barButton)}
+              <CreateMenu variant="pill" />
             </header>
             <div className={styles.sheetBody}>
               <main
@@ -194,6 +217,10 @@ export function AppShell({ viewer, children }: { viewer: SelfUser; children: Rea
             </div>
           </div>
 
+          <footer className={styles.player}>
+            <NowPlayingBar className="w-full" />
+          </footer>
+
           {/* Phones: the tabs. */}
           <nav aria-label="Realm" className={styles.tabs}>
             {TABS.map((href) => {
@@ -209,7 +236,7 @@ export function AppShell({ viewer, children }: { viewer: SelfUser; children: Rea
                   className={styles.tab}
                 >
                   <span className={cx(styles.tabGlyph, "relative")}>
-                    <Icon aria-hidden="true" size={22} weight={active ? "fill" : "regular"} />
+                    <Icon aria-hidden="true" size={23} weight={active ? "fill" : "regular"} />
                     {href === "/messages" && waiting > 0 && (
                       <span className="absolute top-0 right-2.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[0.65rem] font-bold text-on-accent">
                         {waiting}
@@ -222,22 +249,22 @@ export function AppShell({ viewer, children }: { viewer: SelfUser; children: Rea
               );
             })}
             <Link
-              href="/settings/account"
-              aria-current={isActive(pathname, "/settings") ? "page" : undefined}
+              href={`/u/${viewer.username}`}
+              aria-current={isActive(pathname, `/u/${viewer.username}`) ? "page" : undefined}
               className={styles.tab}
             >
               <span className={styles.tabGlyph}>
-                <Me name={viewer.displayName} src={viewer.avatarUrl} size={24} />
+                <Me name={viewer.displayName} src={viewer.avatarUrl} size={26} />
               </span>
               You
             </Link>
           </nav>
-          {/* Below the nav column's dock, a call stays in view above the tabs or the page's foot. */}
-          <VoiceDock className="fixed inset-x-2 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30 md:bottom-3 md:left-auto md:w-[22rem] lg:hidden" />
+          <VoiceDock className="fixed inset-x-2 bottom-[calc(9.75rem+env(safe-area-inset-bottom))] z-30 md:hidden" />
           <CreateSpaceDialog />
           <InviteDialog />
           <ManageSpaceDialog />
           <ReportDialog />
+          <Composer />
         </div>
       </HerePanelContext.Provider>
     </ThemeProvider>
