@@ -6,7 +6,7 @@ import Animated, { FadeInDown, FadeOutDown, ReduceMotion } from "react-native-re
 import { Icon } from "../icon";
 import { mediaSource, resolveUrl } from "../server";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
-import { pauseSound, progress, resumeSound, stopSound, useNowPlaying } from "./player";
+import { pauseSound, progress, resumeSound, skip, stopSound, useNowPlaying } from "./player";
 
 /** Sounds the bar stands in for; Stories, Clips and the picker show their own. */
 const SHOWN = /^(post|bar):/;
@@ -79,6 +79,17 @@ export function NowBar() {
       >
         <Text style={s.useText}>Use</Text>
       </Pressable>
+      {now.queue && now.queue.length > 1 ? (
+        <Pressable
+          onPress={() => skip(-1)}
+          accessibilityRole="button"
+          accessibilityLabel="Previous song"
+          hitSlop={4}
+          style={s.btnSmall}
+        >
+          <Icon name="CaretLeft" size={18} color={t.colors.text} />
+        </Pressable>
+      ) : null}
       <Pressable
         onPress={paused ? resumeSound : pauseSound}
         accessibilityRole="button"
@@ -88,6 +99,17 @@ export function NowBar() {
       >
         <Icon name={paused ? "PlayFill" : "PauseFill"} size={20} color={t.colors.text} />
       </Pressable>
+      {now.queue && now.queue.length > 1 ? (
+        <Pressable
+          onPress={() => skip(1)}
+          accessibilityRole="button"
+          accessibilityLabel="Next song"
+          hitSlop={4}
+          style={s.btnSmall}
+        >
+          <Icon name="CaretRight" size={18} color={t.colors.text} />
+        </Pressable>
+      ) : null}
       <Pressable
         onPress={stopSound}
         accessibilityRole="button"
@@ -169,6 +191,7 @@ const make = (t: NativeTheme) =>
     },
     useText: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: t.colors.onAccent },
     btn: { width: 38, height: 44, alignItems: "center", justifyContent: "center" },
+    btnSmall: { width: 28, height: 44, alignItems: "center", justifyContent: "center" },
     track: {
       position: "absolute",
       left: 0,

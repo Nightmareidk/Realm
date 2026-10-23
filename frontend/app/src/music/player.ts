@@ -20,6 +20,9 @@ export interface NowPlaying {
   /** Where it came from, for the bar ("Noor's post"). */
   from: string | null;
   paused: boolean;
+  /** Listening through a list (Sounds people use): the songs, and where in them. */
+  queue: Sound[] | null;
+  at: number;
 }
 
 let player: VideoPlayer | null = null;
@@ -41,11 +44,18 @@ function clearTimer() {
   timer = null;
 }
 
-/** Keep to the chosen part: back to its start when it ends (or if a seek before loading was lost). */
+/**
+ * Keep to the chosen part: back to its start when it ends (or if a seek before loading was
+ * lost). Listening through a list, the end moves on to the next song instead.
+ */
 function guard(p: VideoPlayer, startMs: number, playMs: number) {
   clearTimer();
   timer = setInterval(() => {
     const at = p.currentTime * 1000;
+    if (at >= startMs + playMs && now?.queue) {
+      skip(1);
+      return;
+    }
     if (at < startMs - 600 || at >= startMs + playMs) p.currentTime = startMs / 1000;
   }, 250);
 }
@@ -57,10 +67,12 @@ export async function playSound(
   playMs = 15_000,
   key = s.id,
   from: string | null = null,
+  queue: Sound[] | null = null,
+  at = 0,
 ) {
   const mine = ++turn;
   clearTimer();
-  now = { key, sound: s, startMs, playMs, from, paused: false };
+  now = { key, sound: s, startMs, playMs, from, paused: false, queue, at };
   emit();
   try {
     if (!player) player = createVideoPlayer(null);
@@ -79,6 +91,28 @@ export async function playSound(
       emit();
     }
   }
+}
+
+/** Listen through a list of songs, whole, one after another, from `at`. */
+export function playList(list: Sound[], at: number, from: string) {
+  const s = list[at];
+  if (!s) return;
+  return playSound(
+    s,
+    0,
+    Math.max(5_000, s.durationMs || 30_000),
+    `bar:list:${s.id}`,
+    from,
+    list,
+    at,
+  );
+}
+
+/** The next (1) or previous (-1) song in the list being played; round the end to the start. */
+export function skip(dir: 1 | -1) {
+  if (!now?.queue?.length) return;
+  const n = now.queue.length;
+  playList(now.queue, (now.at + dir + n) % n, now.from ?? "");
 }
 
 export function playUse(u: SoundUse, key: string, from: string | null = null) {

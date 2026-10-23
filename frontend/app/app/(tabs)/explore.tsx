@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
+import { SoundsRow } from "@/music/sounds-row";
 import { api } from "@/server";
 import { PersonRow } from "@/social/person-row";
 import { AppScreen, Loading } from "@/social/screen";
@@ -48,7 +49,7 @@ export default function Explore() {
     <AppScreen>
       <View style={[s.head, { paddingTop: insets.top + 10 }]}>
         <Text style={s.title} accessibilityRole="header">
-          Explore
+          Search
         </Text>
         <View style={s.search}>
           <Icon name="MagnifyingGlass" size={20} color={t.colors.textSoft} />
@@ -122,6 +123,7 @@ function Browse() {
   const others = discover.data?.spaces.filter((d) => !d.joined) ?? [];
   return (
     <>
+      <SoundsRow />
       <Text style={s.heading}>Your Spaces</Text>
       {mine.data?.spaces.length ? (
         mine.data.spaces.map((sp) => (
