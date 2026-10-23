@@ -15,6 +15,7 @@ import {
   MessagesQuery,
   OpenedPhoto,
   ReadState,
+  ReorderRoomsBody,
   Snowflake,
   SpaceDetail,
   UpdateCommunityBody,
@@ -120,6 +121,23 @@ export const communityRoutes =
       "/:space/members",
       { preHandler: requireAuth, schema: { params: SpaceParams, response: { 200: MemberList } } },
       async (req) => m.spaces.members(req.params.space, authOf(req).userId),
+    );
+
+    app.put(
+      "/:space/channels/order",
+      {
+        preHandler: requireAuth,
+        schema: {
+          params: SpaceParams,
+          body: ReorderRoomsBody,
+          response: { 200: z.object({ channels: z.array(Channel) }) },
+        },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.roomCreate, userId.toString());
+        return { channels: await m.spaces.reorderRooms(req.params.space, userId, req.body) };
+      },
     );
 
     app.post(

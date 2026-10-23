@@ -234,6 +234,24 @@ export class MessagesService {
       if (why) throw new AppError(403, "AUTOMOD", why);
     }
 
+    // Slow mode: one message per wait, except for people who look after the room.
+    if (
+      channel.slowmodeSeconds > 0 &&
+      !has(permissions, Permission.MANAGE_MESSAGES) &&
+      !has(permissions, Permission.MANAGE_CHANNELS)
+    ) {
+      const hit = await this.deps.kv.incr(`slow:${channel.id}:${userId}`, channel.slowmodeSeconds);
+      if (hit.count > 1) {
+        throw new AppError(
+          429,
+          "SLOWMODE",
+          `Slow mode is on here. You can send again in ${Math.max(1, hit.ttlSeconds)}s.`,
+          { retryAfter: Math.max(1, hit.ttlSeconds) },
+          Math.max(1, hit.ttlSeconds),
+        );
+      }
+    }
+
     if (body.attachmentIds.length > 0 && !has(permissions, Permission.ATTACH_FILES)) {
       throw missingPermission("send files");
     }

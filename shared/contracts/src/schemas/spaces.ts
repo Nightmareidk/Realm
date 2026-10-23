@@ -41,21 +41,54 @@ export const RoomName = z
       .max(Limits.roomName.max, `At most ${Limits.roomName.max} characters`),
   );
 
+/** Any words up to the room limit: rooms are made link-shaped by the server, groups keep theirs. */
+const RoomOrGroupName = z.string().trim().min(1).max(100);
+
+/** How long people wait between messages in a slow room (0 is off). */
+export const SLOWMODE_CHOICES = [0, 5, 10, 30, 60, 300, 900, 3600] as const;
+
+/**
+ * Who can see a room: everyone, or only people with the chosen roles (the owner and admins always
+ * can). Changing it needs Manage roles as well as Manage rooms.
+ */
+export const RoomPrivacy = z.object({
+  private: z.boolean(),
+  roleIds: z.array(Snowflake).max(50).default([]),
+});
+export type RoomPrivacy = z.infer<typeof RoomPrivacy>;
+
 export const CreateRoomBody = z.object({
-  name: RoomName,
-  /** Chat or voice. Boards arrive with posts. */
-  type: z.enum(["text", "voice", "board"]).default("text"),
+  name: RoomOrGroupName,
+  /** Chat, voice, or a group (category) to put rooms in. Boards arrive with posts. */
+  type: z.enum(["text", "voice", "board", "category"]).default("text"),
   topic: z.string().trim().max(Limits.channelTopic.max).optional(),
+  /** The group it goes in. */
+  parentId: Snowflake.optional(),
+  privacy: RoomPrivacy.optional(),
 });
 export type CreateRoomBody = z.infer<typeof CreateRoomBody>;
 
 export const UpdateRoomBody = z
   .object({
-    name: RoomName,
+    name: RoomOrGroupName,
     topic: z.string().trim().max(Limits.channelTopic.max).nullable(),
+    /** Its group, or null for none. */
+    parentId: Snowflake.nullable(),
+    slowmodeSeconds: z.literal(SLOWMODE_CHOICES),
+    isNsfw: z.boolean(),
+    privacy: RoomPrivacy,
   })
   .partial();
 export type UpdateRoomBody = z.infer<typeof UpdateRoomBody>;
+
+/** Every room and group you can see, top to bottom, each with the group it sits in. */
+export const ReorderRoomsBody = z.object({
+  items: z
+    .array(z.object({ id: Snowflake, parentId: Snowflake.nullable() }))
+    .min(1)
+    .max(Limits.roomsPerSpace),
+});
+export type ReorderRoomsBody = z.infer<typeof ReorderRoomsBody>;
 
 /** A Space's members, and who among them is around (only people who share their presence). */
 export const MemberList = z

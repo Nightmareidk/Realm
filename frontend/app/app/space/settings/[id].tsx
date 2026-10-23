@@ -69,9 +69,9 @@ const ACTIONS: Record<string, string> = {
 export default function SpaceSettings() {
   const { t } = useTheme();
   const s = useStyles(make);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, tab: start } = useLocalSearchParams<{ id: string; tab?: Tab }>();
   const space = useApi<SpaceDetail>(`/communities/${id}`);
-  const [picked, setPicked] = useState<Tab | null>(null);
+  const [picked, setPicked] = useState<Tab | null>(start ?? null);
   // Roles changed by anyone (here or elsewhere) show up straight away.
   useLiveEvent("COMMUNITY_ROLE_CREATE", (r) => r.communityId === space.data?.id && space.reload());
   useLiveEvent("COMMUNITY_ROLE_UPDATE", (r) => r.communityId === space.data?.id && space.reload());

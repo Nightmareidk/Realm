@@ -294,6 +294,96 @@ describe("rooms, leaving and Explore", () => {
     expect(denied.json().error.code).toBe("MISSING_PERMISSION");
   });
 
+  it("groups rooms, keeps private rooms to chosen roles, slows rooms down and sorts them", async () => {
+    const owner = await person();
+    const member = await person();
+    const space = await newSpace(owner.cookie);
+    const base = `/communities/${space.id}`;
+    const invite = (await call(owner.cookie, "POST", `${base}/invites`, {})).json();
+    await call(member.cookie, "POST", `/invites/${invite.code}`);
+    const general = space.channels[0].id as string;
+    const mods = space.roles.find((r: { name: string }) => r.name === "Mods").id as string;
+
+    const group = await call(owner.cookie, "POST", `${base}/channels`, {
+      name: "Game Nights",
+      type: "category",
+    });
+    expect(group.statusCode).toBe(201);
+    expect(group.json()).toMatchObject({ type: "category", name: "Game Nights" });
+    const lfg = (
+      await call(owner.cookie, "POST", `${base}/channels`, {
+        name: "LFG",
+        parentId: group.json().id,
+      })
+    ).json();
+    expect(lfg.parentId).toBe(group.json().id);
+
+    // Private to Mods: the member stops seeing it, the owner still does.
+    const staff = await call(owner.cookie, "POST", `${base}/channels`, {
+      name: "staff",
+      privacy: { private: true, roleIds: [mods] },
+    });
+    expect(staff.statusCode).toBe(201);
+    const memberSees = (await call(member.cookie, "GET", base))
+      .json()
+      .channels.map((c: { id: string }) => c.id);
+    expect(memberSees).toContain(lfg.id);
+    expect(memberSees).not.toContain(staff.json().id);
+    await call(owner.cookie, "PATCH", `${base}/members/${member.id}`, { roleIds: [mods] });
+    expect(
+      (await call(member.cookie, "GET", base)).json().channels.map((c: { id: string }) => c.id),
+    ).toContain(staff.json().id);
+
+    // Slow mode: a second message too soon is refused; the owner isn't held back.
+    expect(
+      (await call(owner.cookie, "PATCH", `/channels/${general}`, { slowmodeSeconds: 30 }))
+        .statusCode,
+    ).toBe(200);
+    const outsider = await person();
+    await call(outsider.cookie, "POST", `/invites/${invite.code}`);
+    expect(
+      (await call(outsider.cookie, "POST", `/channels/${general}/messages`, { content: "one" }))
+        .statusCode,
+    ).toBe(201);
+    const second = await call(outsider.cookie, "POST", `/channels/${general}/messages`, {
+      content: "two",
+    });
+    expect(second.statusCode).toBe(429);
+    expect(second.json().error.code).toBe("SLOWMODE");
+
+    // Sort: the group first, then #general on its own; #lfg moves out of the group.
+    const seen = (await call(owner.cookie, "GET", base)).json().channels as {
+      id: string;
+      parentId: string | null;
+    }[];
+    const order = [
+      group.json().id,
+      ...seen.map((c) => c.id).filter((id) => id !== group.json().id),
+    ];
+    const sorted = await call(owner.cookie, "PUT", `${base}/channels/order`, {
+      items: order.map((id) => ({ id, parentId: null })),
+    });
+    expect(sorted.statusCode).toBe(200);
+    const after = sorted.json().channels as { id: string; parentId: string | null }[];
+    expect(after[0]?.id).toBe(group.json().id);
+    expect(after.find((c) => c.id === lfg.id)?.parentId).toBeNull();
+    expect(
+      (
+        await call(owner.cookie, "PUT", `${base}/channels/order`, {
+          items: [{ id: general, parentId: null }],
+        })
+      ).statusCode,
+    ).toBe(400);
+
+    // Deleting a group keeps its rooms; a voice room can go even with one chat room left.
+    await call(owner.cookie, "PATCH", `/channels/${lfg.id}`, { parentId: group.json().id });
+    expect((await call(owner.cookie, "DELETE", `/channels/${group.json().id}`)).statusCode).toBe(
+      204,
+    );
+    const left = (await call(owner.cookie, "GET", base)).json().channels;
+    expect(left.find((c: { id: string }) => c.id === lfg.id).parentId).toBeNull();
+  });
+
   it("lets members leave but not the owner", async () => {
     const owner = await person();
     const member = await person();

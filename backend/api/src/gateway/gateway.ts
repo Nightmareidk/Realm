@@ -484,8 +484,18 @@ class Connection {
     const space = await findSpace(this.gw.deps.db, spaceId);
     if (!space) return this.forget(spaceId);
     try {
+      const before = this.visible.get(spaceId) ?? new Set<string>();
       const detail = await this.gw.spaces.detail(space, BigInt(this.person.userId));
-      this.visible.set(spaceId, new Set(detail.channels.map((c) => c.id)));
+      const now = new Set(detail.channels.map((c) => c.id));
+      this.visible.set(spaceId, now);
+      // Rooms that just went out of sight (made private, a role taken away) leave live; rooms
+      // that just came into sight arrive the same way.
+      for (const id of before) {
+        if (!now.has(id)) this.dispatch("CHANNEL_DELETE", { id, communityId: spaceId });
+      }
+      for (const room of detail.channels) {
+        if (before.size && !before.has(room.id)) this.dispatch("CHANNEL_CREATE", room);
+      }
     } catch {
       await this.forget(spaceId);
     }
@@ -546,7 +556,14 @@ class Connection {
       this.dispatch("COMMUNITY_DELETE", { id: spaceId, unavailable: false });
       return;
     }
-    if (SHAPE_EVENTS.has(event.type)) await this.refresh(spaceId);
+    if (SHAPE_EVENTS.has(event.type)) {
+      const had = this.visible.get(spaceId);
+      const knew = had?.has(String(data.id));
+      await this.refresh(spaceId);
+      // refresh() already announced a room that just came into sight.
+      const room = event.type === "CHANNEL_CREATE" || event.type === "CHANNEL_UPDATE";
+      if (room && !knew && had?.size) return;
+    }
     if (event.type === "CHANNEL_CREATE" || event.type === "CHANNEL_UPDATE") {
       if (!this.visible.get(spaceId)?.has(String(data.id))) return;
     }

@@ -9,6 +9,9 @@ import {
   type MemberList,
   Permission,
   type Presence,
+  type ReorderRoomsBody,
+  RoomName,
+  type RoomPrivacy,
   type SpaceDetail,
   type UpdateCommunityBody,
   type UpdateRoomBody,
@@ -35,6 +38,7 @@ import {
   overwritesFor,
   requireSpacePermission,
   roomPermissions,
+  type SpaceAccess,
   spaceRoomAccess,
 } from "./access";
 
@@ -44,6 +48,7 @@ const {
   roles,
   memberRoles,
   channels,
+  channelOverwrites,
   bans,
   messages,
   users,
@@ -606,12 +611,92 @@ export class SpacesService {
         and(
           eq(channels.communityId, communityId),
           isNull(channels.deletedAt),
+          sql`${channels.type} <> 'category'`,
           sql`lower(${channels.name}) = ${name}`,
           except ? sql`${channels.id} <> ${except}` : undefined,
         ),
       )
       .limit(1);
     return Boolean(taken);
+  }
+
+  /** Rooms read like `#late-night`; groups keep the words they were given. */
+  private roomName(type: string, raw: string) {
+    if (type === "category") return raw.trim().slice(0, 100);
+    const parsed = RoomName.safeParse(raw);
+    if (!parsed.success) {
+      throw badRequest("VALIDATION_FAILED", "Give the room a name, using letters or numbers.");
+    }
+    return parsed.data;
+  }
+
+  /** A group in this Space to put a room in. */
+  private async group(communityId: bigint, parentId: string) {
+    const [row] = await this.db
+      .select({ id: channels.id })
+      .from(channels)
+      .where(
+        and(
+          eq(channels.id, BigInt(parentId)),
+          eq(channels.communityId, communityId),
+          eq(channels.type, "category"),
+          isNull(channels.deletedAt),
+        ),
+      )
+      .limit(1);
+    if (!row) throw badRequest("VALIDATION_FAILED", "That group isn't in this Space.");
+    return row.id;
+  }
+
+  /**
+   * Who can see a room. Private: Everyone loses "See rooms" there and each chosen role gets it;
+   * other permissions set on the room stay as they are. Needs Manage roles, like any change to
+   * who can see what.
+   */
+  private async setPrivacy(access: SpaceAccess, channelId: bigint, privacy: RoomPrivacy) {
+    requireSpacePermission(access, Permission.MANAGE_ROLES, "choose who can see rooms");
+    const spaceId = access.community.id.toString();
+    const chosen = new Set(privacy.private ? privacy.roleIds : []);
+    for (const id of chosen) {
+      if (id === spaceId || !access.roles.some((r) => r.id.toString() === id)) {
+        throw badRequest("VALIDATION_FAILED", "Pick roles from this Space.");
+      }
+    }
+    const VIEW = Permission.VIEW_CHANNEL;
+    const existing = await overwritesFor(this.db, [channelId]);
+    const roleRows = existing.filter((o) => o.targetType === "role");
+    const targets = new Set([spaceId, ...chosen, ...roleRows.map((o) => o.targetId.toString())]);
+    await this.db.transaction(async (tx) => {
+      for (const target of targets) {
+        const was = roleRows.find((o) => o.targetId.toString() === target);
+        let allow = was?.allow ?? 0n;
+        let deny = was?.deny ?? 0n;
+        if (target === spaceId) {
+          deny = privacy.private ? deny | VIEW : deny & ~VIEW;
+          allow &= ~VIEW;
+        } else {
+          allow = chosen.has(target) ? allow | VIEW : allow & ~VIEW;
+        }
+        const where = and(
+          eq(channelOverwrites.channelId, channelId),
+          eq(channelOverwrites.targetType, "role"),
+          eq(channelOverwrites.targetId, BigInt(target)),
+        );
+        if (allow === 0n && deny === 0n) {
+          if (was) await tx.delete(channelOverwrites).where(where);
+        } else if (was) {
+          await tx.update(channelOverwrites).set({ allow, deny }).where(where);
+        } else {
+          await tx.insert(channelOverwrites).values({
+            channelId,
+            targetType: "role",
+            targetId: BigInt(target),
+            allow,
+            deny,
+          });
+        }
+      }
+    });
   }
 
   async createRoom(idOrSlug: string, userId: bigint, body: CreateRoomBody) {
@@ -625,9 +710,12 @@ export class SpacesService {
       );
     }
     const id = access.community.id;
-    if (await this.roomNameTaken(id, body.name)) {
-      throw conflict("ROOM_NAME_TAKEN", `There's already a #${body.name} here.`);
+    const group = body.type === "category";
+    const name = this.roomName(body.type, body.name);
+    if (!group && (await this.roomNameTaken(id, name))) {
+      throw conflict("ROOM_NAME_TAKEN", `There's already a #${name} here.`);
     }
+    const parentId = body.parentId && !group ? await this.group(id, body.parentId) : null;
     const [count] = await this.db
       .select({
         n: sql<number>`count(*)::int`,
@@ -646,15 +734,17 @@ export class SpacesService {
       .insert(channels)
       .values({
         id: this.deps.ids.next(),
-        type: body.type === "voice" ? "voice" : "text",
+        type: body.type === "voice" ? "voice" : group ? "category" : "text",
         communityId: id,
-        name: body.name,
-        topic: body.topic || null,
+        parentId,
+        name,
+        topic: group ? null : body.topic || null,
         position: (count?.last ?? -1) + 1,
       })
       .returning();
     if (!row) throw new Error("channel insert returned nothing");
-    const room = toChannel(row);
+    if (body.privacy?.private && !group) await this.setPrivacy(access, row.id, body.privacy);
+    const room = toChannel(row, await overwritesFor(this.db, [row.id]));
     await this.deps.bus.publish(`community:${id}`, { type: "CHANNEL_CREATE", data: room });
     return room;
   }
@@ -662,49 +752,141 @@ export class SpacesService {
   async updateRoom(channelId: bigint, userId: bigint, body: UpdateRoomBody) {
     const { channel, access } = await spaceRoomAccess(this.db, channelId, userId);
     requireSpacePermission(access, Permission.MANAGE_CHANNELS, "change rooms");
-    if (body.name && (await this.roomNameTaken(access.community.id, body.name, channel.id))) {
-      throw conflict("ROOM_NAME_TAKEN", `There's already a #${body.name} here.`);
+    const spaceId = access.community.id;
+    const group = channel.type === "category";
+    const name = body.name === undefined ? undefined : this.roomName(channel.type, body.name);
+    if (name && !group && (await this.roomNameTaken(spaceId, name, channel.id))) {
+      throw conflict("ROOM_NAME_TAKEN", `There's already a #${name} here.`);
+    }
+    if (body.slowmodeSeconds && channel.type !== "text") {
+      throw badRequest("BAD_REQUEST", "Slow mode is for chat rooms.");
+    }
+    let parentId: bigint | null | undefined;
+    if (body.parentId !== undefined) {
+      if (group && body.parentId) throw badRequest("BAD_REQUEST", "Groups can't go inside groups.");
+      parentId = body.parentId ? await this.group(spaceId, body.parentId) : null;
+    }
+    if (body.privacy) {
+      if (group) throw badRequest("BAD_REQUEST", "Make the rooms in a group private instead.");
+      await this.setPrivacy(access, channel.id, body.privacy);
     }
     const [row] = await this.db
       .update(channels)
       .set({
-        name: body.name,
+        name,
         topic: body.topic === undefined ? undefined : body.topic || null,
+        parentId,
+        slowmodeSeconds: body.slowmodeSeconds,
+        isNsfw: body.isNsfw,
+        updatedAt: new Date(),
       })
       .where(eq(channels.id, channel.id))
       .returning();
     if (!row) throw notFound("Room");
     const room = toChannel(row, await overwritesFor(this.db, [row.id]));
-    await this.deps.bus.publish(`community:${access.community.id}`, {
+    await this.deps.bus.publish(`community:${spaceId}`, {
       type: "CHANNEL_UPDATE",
       data: room,
     });
     return room;
   }
 
+  /**
+   * A new order for the rooms and groups you can see, top to bottom, each with its group. Rooms
+   * you can't see keep their places.
+   */
+  async reorderRooms(idOrSlug: string, userId: bigint, body: ReorderRoomsBody) {
+    const access = await memberAccess(this.db, idOrSlug, userId);
+    requireSpacePermission(access, Permission.MANAGE_CHANNELS, "sort rooms");
+    const spaceId = access.community.id;
+    const detail = await this.detail(access.community, userId);
+    const seen = new Map(detail.channels.map((c) => [c.id, c]));
+    const ids = body.items.map((i) => i.id);
+    if (
+      new Set(ids).size !== ids.length ||
+      ids.length !== seen.size ||
+      ids.some((id) => !seen.has(id))
+    ) {
+      throw badRequest("VALIDATION_FAILED", "List every room you can see, once each.");
+    }
+    for (const item of body.items) {
+      if (!item.parentId) continue;
+      if (seen.get(item.id)?.type === "category" || seen.get(item.parentId)?.type !== "category") {
+        throw badRequest("VALIDATION_FAILED", "Rooms go inside groups, and groups don't nest.");
+      }
+    }
+    const changed = await this.db.transaction(async (tx) => {
+      const rows = [];
+      for (const [position, item] of body.items.entries()) {
+        const before = seen.get(item.id);
+        if (before?.position === position && before.parentId === item.parentId) continue;
+        const [row] = await tx
+          .update(channels)
+          .set({ position, parentId: item.parentId ? BigInt(item.parentId) : null })
+          .where(and(eq(channels.id, BigInt(item.id)), eq(channels.communityId, spaceId)))
+          .returning();
+        if (row) rows.push(row);
+      }
+      return rows;
+    });
+    const overwrites = await overwritesFor(
+      this.db,
+      changed.map((r) => r.id),
+    );
+    for (const row of changed) {
+      await this.deps.bus.publish(`community:${spaceId}`, {
+        type: "CHANNEL_UPDATE",
+        data: toChannel(row, overwrites),
+      });
+    }
+    return (await this.detail(access.community, userId)).channels;
+  }
+
   async removeRoom(channelId: bigint, userId: bigint) {
     const { channel, access } = await spaceRoomAccess(this.db, channelId, userId);
     requireSpacePermission(access, Permission.MANAGE_CHANNELS, "delete rooms");
-    const [count] = await this.db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(channels)
-      .where(
-        and(
-          eq(channels.communityId, access.community.id),
-          eq(channels.type, "text"),
-          isNull(channels.deletedAt),
-        ),
-      );
-    if ((count?.n ?? 0) <= 1) {
-      throw badRequest("BAD_REQUEST", "A Space needs at least one room to talk in.");
+    const spaceId = access.community.id;
+    if (channel.type === "text") {
+      const [count] = await this.db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(channels)
+        .where(
+          and(
+            eq(channels.communityId, spaceId),
+            eq(channels.type, "text"),
+            isNull(channels.deletedAt),
+          ),
+        );
+      if ((count?.n ?? 0) <= 1) {
+        throw badRequest("BAD_REQUEST", "A Space needs at least one room to talk in.");
+      }
     }
+    // A group's rooms stay, just ungrouped.
+    const freed =
+      channel.type === "category"
+        ? await this.db
+            .update(channels)
+            .set({ parentId: null })
+            .where(and(eq(channels.parentId, channel.id), isNull(channels.deletedAt)))
+            .returning()
+        : [];
     await this.db
       .update(channels)
       .set({ deletedAt: new Date() })
       .where(eq(channels.id, channel.id));
-    await this.deps.bus.publish(`community:${access.community.id}`, {
+    const overwrites = await overwritesFor(
+      this.db,
+      freed.map((r) => r.id),
+    );
+    for (const row of freed) {
+      await this.deps.bus.publish(`community:${spaceId}`, {
+        type: "CHANNEL_UPDATE",
+        data: toChannel(row, overwrites),
+      });
+    }
+    await this.deps.bus.publish(`community:${spaceId}`, {
       type: "CHANNEL_DELETE",
-      data: { id: channel.id.toString(), communityId: access.community.id.toString() },
+      data: { id: channel.id.toString(), communityId: spaceId.toString() },
     });
   }
 
