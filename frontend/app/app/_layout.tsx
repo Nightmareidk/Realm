@@ -12,6 +12,8 @@ import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { CrashScreen } from "@/crash";
+import { useWide } from "@/layout";
+import { Rail } from "@/rail";
 import { SessionProvider, useSession } from "@/session";
 import { SheetProvider } from "@/sheet";
 import { roles, ThemeProvider } from "@/theme";
@@ -92,6 +94,16 @@ function SessionGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (session.status === "signedOut" && inside) router.replace("/");
   }, [session.status, inside, router]);
+  const wide = useWide();
   if (session.status === "loading") return <View style={{ flex: 1, backgroundColor: roles.bg }} />;
+  // On a computer, signed in: the menu down the left beside every screen, as Instagram does.
+  if (wide && session.status === "signedIn" && inside) {
+    return (
+      <View style={{ flex: 1, flexDirection: "row", backgroundColor: roles.bg }}>
+        <Rail />
+        <View style={{ flex: 1 }}>{children}</View>
+      </View>
+    );
+  }
   return children;
 }

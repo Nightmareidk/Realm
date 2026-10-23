@@ -39,7 +39,7 @@ export default function You() {
     </View>
   );
   return (
-    <AppScreen>
+    <AppScreen max={935}>
       <ProfileView username={session.user.username} top={top} />
     </AppScreen>
   );

@@ -6,7 +6,7 @@ import { AppScreen, TopBar } from "@/social/screen";
 export default function UserProfile() {
   const { username } = useLocalSearchParams<{ username: string }>();
   return (
-    <AppScreen>
+    <AppScreen max={935}>
       <TopBar title={`@${username}`} />
       <ProfileView username={username} top={null} />
     </AppScreen>

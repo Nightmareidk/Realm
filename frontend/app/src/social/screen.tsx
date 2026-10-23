@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../icon";
+import { useWide } from "../layout";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Backdrop, Sticker } from "../themes/art";
 
@@ -10,12 +11,14 @@ import { Backdrop, Sticker } from "../themes/art";
  * A signed-in screen: the ink ground with the light field held faint (the app leads, not the
  * glow), under the status bar. Tab screens leave the bottom to the tab bar.
  */
-export function AppScreen({ children }: { children: ReactNode }) {
+export function AppScreen({ children, max = 680 }: { children: ReactNode; max?: number }) {
   const s = useStyles(make);
+  const wide = useWide();
   return (
     <View style={s.screen}>
       <Backdrop />
-      {children}
+      {/* On a computer, the page sits centred at a readable width (Instagram's 630, a profile's 935). */}
+      {wide ? <View style={[s.column, { maxWidth: max }]}>{children}</View> : children}
     </View>
   );
 }
@@ -92,6 +95,7 @@ export function Problem({ message, onRetry }: { message: string; onRetry: () => 
 const make = (t: NativeTheme) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: t.colors.bg },
+    column: { flex: 1, width: "100%", alignSelf: "center" },
     top: {
       flexDirection: "row",
       alignItems: "center",

@@ -3,15 +3,7 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { memo, useState } from "react";
-import {
-  FlatList,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { FlatList, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   ReduceMotion,
@@ -25,6 +17,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { postsChanged } from "../data";
 import { Icon } from "../icon";
+import { useContentWidth } from "../layout";
 import { SoundChip } from "../music/chip";
 import { ApiError, api, mediaSource } from "../server";
 import { useSession } from "../session";
@@ -54,17 +47,20 @@ export const PostCard = memo(function PostCard({
   onChange,
   onRemoved,
   standalone = false,
+  noMedia = false,
 }: {
   post: Post;
   onChange: (p: Post) => void;
   onRemoved?: (id: string) => void;
   /** On the post's own screen: no "view comments" link, the full caption. */
   standalone?: boolean;
+  /** The photos are shown beside it (a post's page on a computer). */
+  noMedia?: boolean;
 }) {
   const { t } = useTheme();
   const s = useStyles(make);
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const width = useContentWidth(680);
   const [expanded, setExpanded] = useState(standalone);
 
   async function setLike(on: boolean) {
@@ -164,27 +160,35 @@ export const PostCard = memo(function PostCard({
           {post.caption}
         </Text>
       ) : null}
-      <View style={[kind === "glow" && s.mediaWrap, kind === "thread" && s.threadIndent]}>
-        {kind === "glow" && glowSource && t.style.glow > 0 ? (
-          // The photo lights the room: a soft, blurred copy of itself behind it.
-          <Image
-            source={mediaSource(glowSource.url)}
-            style={[s.glow, { opacity: 0.25 + t.style.glow * 0.45 }]}
-            blurRadius={36}
-            contentFit="cover"
-            recyclingKey={`glow-${glowSource.id}`}
-            accessible={false}
-          />
-        ) : null}
-        {media}
-        {soundOnPhoto && post.sound ? (
-          // Now Playing: the song sits on the photo it goes with.
-          <View style={s.soundOver} pointerEvents="box-none">
-            <SoundChip sound={post.sound} playKey={`post:${post.id}`} over from={from} />
+      {noMedia && post.kind === "image" ? (
+        post.sound ? (
+          <View style={s.sound}>
+            <SoundChip sound={post.sound} playKey={`post:${post.id}`} from={from} />
           </View>
-        ) : null}
-      </View>
-      {kind === "ticket" ? (
+        ) : null
+      ) : (
+        <View style={[kind === "glow" && s.mediaWrap, kind === "thread" && s.threadIndent]}>
+          {kind === "glow" && glowSource && t.style.glow > 0 ? (
+            // The photo lights the room: a soft, blurred copy of itself behind it.
+            <Image
+              source={mediaSource(glowSource.url)}
+              style={[s.glow, { opacity: 0.25 + t.style.glow * 0.45 }]}
+              blurRadius={36}
+              contentFit="cover"
+              recyclingKey={`glow-${glowSource.id}`}
+              accessible={false}
+            />
+          ) : null}
+          {media}
+          {soundOnPhoto && post.sound ? (
+            // Now Playing: the song sits on the photo it goes with.
+            <View style={s.soundOver} pointerEvents="box-none">
+              <SoundChip sound={post.sound} playKey={`post:${post.id}`} over from={from} />
+            </View>
+          ) : null}
+        </View>
+      )}
+      {kind === "ticket" && !noMedia ? (
         <View style={s.tear} accessible={false}>
           <View style={[s.notch, s.notchLeft]} />
           <View style={s.tearLine} />
@@ -352,7 +356,7 @@ function Photos({
 /** A Clip in a list: a dark frame with its length; it plays on its own screen and in Clips. */
 export function ClipTile({ post, onPress }: { post: Post; onPress: () => void }) {
   const s = useStyles(make);
-  const { width } = useWindowDimensions();
+  const width = useContentWidth(680);
   const ms = post.media[0]?.durationMs ?? 0;
   const length = ms
     ? `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, "0")}`

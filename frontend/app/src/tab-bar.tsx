@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "./icon";
 import type { IconName } from "./icon-paths";
+import { useWide } from "./layout";
 import { NowBar } from "./music/now-bar";
 import { useSession } from "./session";
 import { Avatar } from "./social/avatar";
@@ -31,6 +32,9 @@ export function TabBar({ state, navigation }: BarProps) {
   const { session } = useSession();
   const unread = useUnreadCount();
   const floating = t.style.tabBar === "floating";
+  const wide = useWide();
+  // On a computer the menu down the left (in the app's frame) stands in for the tabs.
+  if (wide) return null;
   return (
     <View
       style={

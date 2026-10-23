@@ -1,4 +1,5 @@
 import type { Comment, CommentPage, Post } from "@realm/contracts";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -14,8 +15,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
+import { useWide } from "@/layout";
 import { leave } from "@/leave";
-import { ApiError, api } from "@/server";
+import { ApiError, api, mediaSource } from "@/server";
 import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
 import { Avatar } from "@/social/avatar";
@@ -27,6 +29,8 @@ import { type NativeTheme, useStyles, useTheme } from "@/theme";
 
 /** One post, its comments (replies sit under the comment they answer), and a box to add one. */
 export default function PostScreen() {
+  const wide = useWide();
+  const [photo, setPhoto] = useState(0);
   const { t } = useTheme();
   const s = useStyles(make);
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -142,85 +146,131 @@ export default function PostScreen() {
     });
   }
 
+  // On a computer: the photos big on the left, the post and its comments on the right.
+  const side = wide && post.data?.kind === "image" && post.data.media.length > 0;
+  const shown = post.data?.media[Math.min(photo, (post.data?.media.length ?? 1) - 1)];
   return (
-    <AppScreen>
+    <AppScreen max={side ? 1240 : 680}>
       <TopBar title="Post" />
-      <KeyboardAvoidingView behavior="padding" style={s.fill}>
-        {!post.data ? (
-          <Loading />
-        ) : (
-          <FlatList
-            data={comments}
-            keyExtractor={(c) => c.id}
-            ListHeaderComponent={
-              <View style={s.postWrap}>
-                <PostCard
-                  post={post.data}
-                  standalone
-                  onChange={post.setData}
-                  onRemoved={() => leave(router)}
-                />
-                <Text style={s.heading}>
-                  {comments.length ? "Comments" : "No comments yet. Start the conversation."}
+      <View style={[s.fill, side && s.duo]}>
+        {side && post.data && shown ? (
+          <View style={s.duoMedia}>
+            <Image
+              source={mediaSource(shown.url)}
+              style={StyleSheet.absoluteFill}
+              contentFit="contain"
+            />
+            {post.data.media.length > 1 ? (
+              <>
+                {photo > 0 ? (
+                  <Pressable
+                    onPress={() => setPhoto(photo - 1)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Previous photo"
+                    style={[s.arrow, s.arrowLeft]}
+                  >
+                    <Icon name="CaretLeft" size={20} color="#000000" />
+                  </Pressable>
+                ) : null}
+                {photo < post.data.media.length - 1 ? (
+                  <Pressable
+                    onPress={() => setPhoto(photo + 1)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Next photo"
+                    style={[s.arrow, s.arrowRight]}
+                  >
+                    <Icon name="CaretRight" size={20} color="#000000" />
+                  </Pressable>
+                ) : null}
+                <View style={s.dots} pointerEvents="none">
+                  {post.data.media.map((m, i) => (
+                    <View key={m.id} style={[s.dot, i === photo && s.dotOn]} />
+                  ))}
+                </View>
+              </>
+            ) : null}
+          </View>
+        ) : null}
+        <KeyboardAvoidingView behavior="padding" style={side ? s.duoSide : s.fill}>
+          {!post.data ? (
+            <Loading />
+          ) : (
+            <FlatList
+              data={comments}
+              keyExtractor={(c) => c.id}
+              ListHeaderComponent={
+                <View style={s.postWrap}>
+                  <PostCard
+                    post={post.data}
+                    standalone
+                    noMedia={side}
+                    onChange={post.setData}
+                    onRemoved={() => leave(router)}
+                  />
+                  <Text style={s.heading}>
+                    {comments.length ? "Comments" : "No comments yet. Start the conversation."}
+                  </Text>
+                </View>
+              }
+              renderItem={({ item }) => {
+                const canDelete = Boolean(
+                  me && (me.id === item.author.id || me.id === post.data?.author.id),
+                );
+                return (
+                  <CommentRow
+                    comment={item}
+                    onReply={() => reply(item)}
+                    onOptions={() => options(item, canDelete)}
+                  />
+                );
+              }}
+              keyboardShouldPersistTaps="handled"
+            />
+          )}
+          <View style={[s.composer, { paddingBottom: insets.bottom + 8 }]}>
+            {replyTo ? (
+              <View style={s.replying}>
+                <Text style={s.replyingText} numberOfLines={1}>
+                  Replying to {replyTo.author.displayName}
                 </Text>
+                <Pressable onPress={() => setReplyTo(null)} accessibilityRole="button" hitSlop={10}>
+                  <Text style={s.cancel}>Cancel</Text>
+                </Pressable>
               </View>
-            }
-            renderItem={({ item }) => {
-              const canDelete = Boolean(
-                me && (me.id === item.author.id || me.id === post.data?.author.id),
-              );
-              return (
-                <CommentRow
-                  comment={item}
-                  onReply={() => reply(item)}
-                  onOptions={() => options(item, canDelete)}
-                />
-              );
-            }}
-            keyboardShouldPersistTaps="handled"
-          />
-        )}
-        <View style={[s.composer, { paddingBottom: insets.bottom + 8 }]}>
-          {replyTo ? (
-            <View style={s.replying}>
-              <Text style={s.replyingText} numberOfLines={1}>
-                Replying to {replyTo.author.displayName}
-              </Text>
-              <Pressable onPress={() => setReplyTo(null)} accessibilityRole="button" hitSlop={10}>
-                <Text style={s.cancel}>Cancel</Text>
+            ) : null}
+            <View style={s.row}>
+              {me ? <Avatar user={me} size={34} /> : null}
+              <TextInput
+                ref={input}
+                value={text}
+                onChangeText={setText}
+                placeholder={
+                  post.data
+                    ? `Add a comment for ${post.data.author.displayName}…`
+                    : "Add a comment…"
+                }
+                placeholderTextColor={t.colors.textMuted}
+                selectionColor={accent}
+                cursorColor={accent}
+                multiline
+                maxLength={1000}
+                style={s.input}
+                accessibilityLabel="Comment"
+              />
+              <Pressable
+                onPress={send}
+                disabled={!text.trim() || sending}
+                accessibilityRole="button"
+                accessibilityLabel="Post comment"
+                accessibilityState={{ disabled: !text.trim() || sending }}
+                style={[s.send, { backgroundColor: accent }, (!text.trim() || sending) && s.dim]}
+              >
+                <Icon name="ArrowUpBold" size={20} color={onAccent} />
               </Pressable>
             </View>
-          ) : null}
-          <View style={s.row}>
-            {me ? <Avatar user={me} size={34} /> : null}
-            <TextInput
-              ref={input}
-              value={text}
-              onChangeText={setText}
-              placeholder={
-                post.data ? `Add a comment for ${post.data.author.displayName}…` : "Add a comment…"
-              }
-              placeholderTextColor={t.colors.textMuted}
-              selectionColor={accent}
-              cursorColor={accent}
-              multiline
-              maxLength={1000}
-              style={s.input}
-              accessibilityLabel="Comment"
-            />
-            <Pressable
-              onPress={send}
-              disabled={!text.trim() || sending}
-              accessibilityRole="button"
-              accessibilityLabel="Post comment"
-              accessibilityState={{ disabled: !text.trim() || sending }}
-              style={[s.send, { backgroundColor: accent }, (!text.trim() || sending) && s.dim]}
-            >
-              <Icon name="ArrowUpBold" size={20} color={onAccent} />
-            </Pressable>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </View>
     </AppScreen>
   );
 }
@@ -297,6 +347,41 @@ function CommentRow({
 
 const make = (t: NativeTheme) =>
   StyleSheet.create({
+    duo: {
+      flexDirection: "row",
+      margin: 16,
+      borderRadius: 14,
+      overflow: "hidden",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border,
+    },
+    duoMedia: { flexGrow: 1, flexShrink: 1, flexBasis: 0, backgroundColor: "#000000", minHeight: 420 },
+    // A fixed-width column beside the photo: never grows, never squeezed.
+    duoSide: { width: 420, flexGrow: 0, flexShrink: 0, backgroundColor: t.colors.bg },
+    arrow: {
+      position: "absolute",
+      top: "50%",
+      width: 32,
+      height: 32,
+      marginTop: -16,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(255,255,255,0.85)",
+    },
+    arrowLeft: { left: 14 },
+    arrowRight: { right: 14 },
+    dots: {
+      position: "absolute",
+      bottom: 14,
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 5,
+    },
+    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.45)" },
+    dotOn: { backgroundColor: "#ffffff" },
     fill: { flex: 1 },
     postWrap: {
       borderBottomWidth: StyleSheet.hairlineWidth,

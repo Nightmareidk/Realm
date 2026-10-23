@@ -8,6 +8,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApi, usePosts } from "@/data";
 import { Icon } from "@/icon";
+import { useWide } from "@/layout";
 import { live, useLiveEvent } from "@/live";
 import { feedPlay, feedStop } from "@/music/player";
 import { loadStories, useStories } from "@/music/stories";
@@ -39,6 +40,7 @@ export default function Home() {
   const { session } = useSession();
   const unconfirmed = session.status === "signedIn" && !session.user.emailVerified;
   const sheet = useSheet();
+  const wide = useWide();
   // The photo on screen, whose colours light the room (Now Playing's glow).
   const lit = t.style.posts === "glow" && t.style.glow > 0;
   const [ambient, setAmbient] = useState<string | null>(null);
@@ -80,31 +82,35 @@ export default function Home() {
 
   const header = (
     <>
-      <View style={[s.top, { paddingTop: insets.top + 2 }]}>
-        <View style={s.brand}>
-          <Wordmark />
-          <Sticker slot="header" size={34} />
+      {wide ? (
+        <View style={s.wideTop} />
+      ) : (
+        <View style={[s.top, { paddingTop: insets.top + 2 }]}>
+          <View style={s.brand}>
+            <Wordmark />
+            <Sticker slot="header" size={34} />
+          </View>
+          <View style={s.topRight}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={unread ? `Activity, ${unread} new` : "Activity"}
+              onPress={() => router.push("/activity")}
+              style={s.icon}
+            >
+              <Icon name="Heart" size={26} color={t.colors.text} />
+              {unread ? <View style={s.badge} /> : null}
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Create: a post, a Story or a Clip"
+              onPress={create}
+              style={s.icon}
+            >
+              <Icon name="PlusSquare" size={26} color={t.colors.text} />
+            </Pressable>
+          </View>
         </View>
-        <View style={s.topRight}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={unread ? `Activity, ${unread} new` : "Activity"}
-            onPress={() => router.push("/activity")}
-            style={s.icon}
-          >
-            <Icon name="Heart" size={26} color={t.colors.text} />
-            {unread ? <View style={s.badge} /> : null}
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Create: a post, a Story or a Clip"
-            onPress={create}
-            style={s.icon}
-          >
-            <Icon name="PlusSquare" size={26} color={t.colors.text} />
-          </Pressable>
-        </View>
-      </View>
+      )}
       {unconfirmed ? (
         <Pressable
           onPress={() => router.push("/verify-email")}
@@ -406,6 +412,7 @@ const make = (t: NativeTheme) =>
     person: { alignItems: "center", gap: 6, minWidth: 70 },
     brand: { flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 12 },
     topRight: { flexDirection: "row", alignItems: "center" },
+    wideTop: { height: 18 },
     disc: {
       position: "absolute",
       right: -2,

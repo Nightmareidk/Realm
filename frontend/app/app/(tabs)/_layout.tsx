@@ -1,6 +1,7 @@
 import { Redirect, Tabs } from "expo-router";
 import { View } from "react-native";
 import { CrashScreen } from "@/crash";
+import { useWide } from "@/layout";
 import { useSession } from "@/session";
 import { TabBar } from "@/tab-bar";
 import { roles } from "@/theme";
@@ -11,6 +12,8 @@ export const ErrorBoundary = CrashScreen;
 /** The signed-in app: Home, Clips, Explore, Inbox and You. */
 export default function TabsLayout() {
   const { session } = useSession();
+  // On a computer the tabs become a menu down the left.
+  const wide = useWide();
   if (session.status === "loading") return <View style={{ flex: 1, backgroundColor: roles.bg }} />;
   if (session.status === "signedOut") return <Redirect href="/" />;
   return (
@@ -20,6 +23,8 @@ export default function TabsLayout() {
         headerShown: false,
         sceneStyle: { backgroundColor: roles.bg },
         animation: "fade",
+        // On a computer the tabs give way to the menu down the left (app/_layout).
+        tabBarStyle: wide ? { display: "none" } : undefined,
       }}
     >
       <Tabs.Screen name="home" />

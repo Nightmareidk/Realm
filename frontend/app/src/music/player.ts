@@ -1,6 +1,7 @@
 import type { Sound, SoundUse } from "@realm/contracts";
 import { createVideoPlayer, type VideoPlayer } from "expo-video";
 import { useSyncExternalStore } from "react";
+import { Platform } from "react-native";
 import { api, mediaSource, resolveUrl } from "../server";
 
 /**
@@ -34,6 +35,64 @@ let given: Sound[] | null = null;
 const likedHere = new Map<string, boolean>();
 
 let player: VideoPlayer | null = null;
+
+/**
+ * In a browser the phone's video player makes no sound without a screen element to play in, so
+ * the browser gets a plain audio element with the same few controls. A creator's own sound needs
+ * the session to read, which an audio element can't send, so it's fetched first.
+ */
+function browserPlayer(): VideoPlayer {
+  const el = new Audio();
+  el.preload = "auto";
+  let blobUrl: string | null = null;
+  const shim = {
+    get currentTime() {
+      return el.currentTime;
+    },
+    set currentTime(v: number) {
+      try {
+        el.currentTime = v;
+      } catch {
+        // Not loaded yet; the guard puts it right once it is.
+      }
+    },
+    get muted() {
+      return el.muted;
+    },
+    set muted(v: boolean) {
+      el.muted = v;
+    },
+    loop: false,
+    staysActiveInBackground: true,
+    showNowPlayingNotification: false,
+    play() {
+      el.play().catch(() => {
+        // The browser wants a tap on the page first; the next play works.
+      });
+    },
+    pause() {
+      el.pause();
+    },
+    async replaceAsync(src: { uri: string; headers?: Record<string, string> } | null) {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      blobUrl = null;
+      if (!src) {
+        el.removeAttribute("src");
+        return;
+      }
+      if (src.headers) {
+        const res = await fetch(src.uri, { headers: src.headers });
+        if (!res.ok) throw new Error(`audio ${res.status}`);
+        blobUrl = URL.createObjectURL(await res.blob());
+        el.src = blobUrl;
+      } else {
+        el.src = src.uri;
+      }
+      el.load();
+    },
+  };
+  return shim as unknown as VideoPlayer;
+}
 let now: NowPlaying | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 // Each play gets a number, so a slow load can't start a sound you've already moved on from.
@@ -85,7 +144,7 @@ export async function playSound(
   now = { key, sound: s, startMs, playMs, from, paused: false, queue, at };
   emit();
   try {
-    if (!player) player = createVideoPlayer(null);
+    if (!player) player = Platform.OS === "web" ? browserPlayer() : createVideoPlayer(null);
     const p = player;
     p.pause();
     await p.replaceAsync(source(s));

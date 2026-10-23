@@ -4,18 +4,11 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { type ReactNode, useCallback, useState } from "react";
-import {
-  Linking,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { alert } from "../alert";
 import { useApi, usePosts } from "../data";
 import { Icon } from "../icon";
+import { useContentWidth } from "../layout";
 import { useLiveEvent } from "../live";
 import { useStories } from "../music/stories";
 import { ApiError, api, mediaSource } from "../server";
@@ -483,7 +476,7 @@ function Count({ n, label, onPress }: { n: number; label: string; onPress?: () =
 function Tile({ post }: { post: Post }) {
   const s = useStyles(make);
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const width = useContentWidth(935);
   const size = (width - 4) / 3;
   const first = post.media[0];
   return (
@@ -537,6 +530,7 @@ const make = (t: NativeTheme) =>
     },
     countsBeside: {
       flex: 1,
+      maxWidth: 420,
       flexDirection: "row",
       justifyContent: "space-around",
       paddingBottom: 6,
