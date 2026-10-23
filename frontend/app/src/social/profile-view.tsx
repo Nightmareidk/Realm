@@ -16,6 +16,7 @@ import { useSheet } from "../sheet";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Pill } from "../ui";
 import { Avatar, fillFor } from "./avatar";
+import { Highlights } from "./highlights";
 import { useSafety } from "./safety";
 import { Empty, Loading, Problem } from "./screen";
 import { compact } from "./time";
@@ -204,46 +205,54 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
               <Avatar user={profile.user} size={88} />
             )}
           </Pressable>
-          <View style={s.countsBeside}>
-            <Count n={profile.counts.posts} label="posts" />
-            <Count
-              n={profile.counts.followers}
-              label="followers"
-              onPress={
-                profile.canSeeAll
-                  ? () =>
-                      router.push({
-                        pathname: "/people/[username]",
-                        params: { username, side: "followers" },
-                      })
-                  : undefined
-              }
-            />
-            <Count
-              n={profile.counts.following}
-              label="following"
-              onPress={
-                profile.canSeeAll
-                  ? () =>
-                      router.push({
-                        pathname: "/people/[username]",
-                        params: { username, side: "following" },
-                      })
-                  : undefined
-              }
-            />
+          <View style={s.who}>
+            <View style={s.nameRow}>
+              <Text style={s.name} accessibilityRole="header" numberOfLines={2}>
+                {profile.user.displayName}
+              </Text>
+              <Verified kind={profile.user.verified} size={20} />
+            </View>
+            <Text style={s.handle} numberOfLines={1}>
+              @{profile.user.username}
+              {profile.user.pronouns ? ` · ${profile.user.pronouns}` : ""}
+            </Text>
           </View>
         </View>
-        <View style={s.nameRow}>
-          <Text style={s.name} accessibilityRole="header">
-            {profile.user.displayName}
-          </Text>
-          <Verified kind={profile.user.verified} size={20} />
+        {/* The counts, said quietly in one line (the way profiles do it now). */}
+        <View style={s.stats}>
+          <Count n={profile.counts.posts} label={profile.counts.posts === 1 ? "post" : "posts"} />
+          <Count
+            n={profile.counts.followers}
+            label={profile.counts.followers === 1 ? "follower" : "followers"}
+            onPress={
+              profile.canSeeAll
+                ? () =>
+                    router.push({
+                      pathname: "/people/[username]",
+                      params: { username, side: "followers" },
+                    })
+                : undefined
+            }
+          />
+          <Count
+            n={profile.counts.following}
+            label="following"
+            onPress={
+              profile.canSeeAll
+                ? () =>
+                    router.push({
+                      pathname: "/people/[username]",
+                      params: { username, side: "following" },
+                    })
+                : undefined
+            }
+          />
+          {profile.followsYou && !profile.isSelf ? (
+            <View style={s.followsYou}>
+              <Text style={s.followsYouText}>Follows you</Text>
+            </View>
+          ) : null}
         </View>
-        <Text style={s.handle}>
-          @{profile.user.username}
-          {profile.user.pronouns ? ` · ${profile.user.pronouns}` : ""}
-        </Text>
         {profile.accountKind === "business" && profile.category ? (
           <View style={s.category}>
             <Icon name="Briefcase" size={14} color={t.colors.textSoft} />
@@ -357,6 +366,9 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
         ) : null}
       </View>
 
+      {profile.canSeeAll || profile.isSelf ? (
+        <Highlights username={profile.user.username} mine={profile.isSelf} />
+      ) : null}
       <View style={s.tabs} accessibilityRole="tablist">
         {tabs.map((t) => (
           <Pressable
@@ -439,9 +451,17 @@ function Banner({ profile }: { profile: Profile }) {
           style={StyleSheet.absoluteFill}
           contentFit="cover"
         />
+      ) : profile.user.avatarUrl ? (
+        // No banner: their picture, blurred into light (Look B: photos light the room).
+        <Image
+          source={mediaSource(profile.user.avatarUrl)}
+          style={[StyleSheet.absoluteFill, s.bannerLight]}
+          contentFit="cover"
+          blurRadius={60}
+        />
       ) : (
         <LinearGradient
-          colors={[fill, "#2b47ff", t.colors.bg]}
+          colors={[`${fill}b3`, `${fill}38`, t.colors.bg]}
           locations={[0, 0.55, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -466,8 +486,9 @@ function Count({ n, label, onPress }: { n: number; label: string; onPress?: () =
       accessibilityLabel={`${n} ${label}`}
       style={s.count}
     >
-      <Text style={s.countN}>{compact(n)}</Text>
-      <Text style={s.countLabel}>{label}</Text>
+      <Text style={s.countLabel}>
+        <Text style={s.countN}>{compact(n)}</Text> {label}
+      </Text>
     </Pressable>
   );
 }
@@ -516,8 +537,8 @@ function Tile({ post }: { post: Post }) {
 const make = (t: NativeTheme) =>
   StyleSheet.create({
     nameRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
-    banner: { height: 132 },
-    body: { paddingHorizontal: 16, marginTop: -48 },
+    banner: { height: 150, overflow: "hidden" },
+    body: { paddingHorizontal: 16, marginTop: -40 },
     picRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
     pic: { borderRadius: 48, borderWidth: 4, borderColor: t.colors.bg },
     storyRing: { width: 88, height: 88, borderRadius: 44, padding: 3 },
@@ -528,19 +549,27 @@ const make = (t: NativeTheme) =>
       alignItems: "center",
       justifyContent: "center",
     },
-    countsBeside: {
-      flex: 1,
-      maxWidth: 420,
+    who: { flex: 1, minWidth: 0, paddingLeft: 6 },
+    bannerLight: { opacity: 0.75, transform: [{ scale: 1.3 }] },
+    stats: {
       flexDirection: "row",
-      justifyContent: "space-around",
-      paddingBottom: 6,
+      alignItems: "center",
+      flexWrap: "wrap",
+      columnGap: 18,
+      marginTop: 10,
     },
+    followsYou: {
+      paddingHorizontal: 9,
+      paddingVertical: 3,
+      borderRadius: 999,
+      backgroundColor: t.colors.surfaceRaised,
+    },
+    followsYouText: { fontFamily: t.fonts.bold, fontSize: 12 * t.textScale, color: t.colors.text },
     name: {
       fontFamily: t.fonts.displayBold,
       fontSize: 24 * t.textScale,
       color: t.colors.text,
-      marginTop: 10,
-      letterSpacing: -0.4,
+      letterSpacing: -0.5,
     },
     handle: {
       fontFamily: t.fonts.body,
@@ -581,11 +610,11 @@ const make = (t: NativeTheme) =>
       textDecorationLine: "underline",
     },
     counts: { flexDirection: "row", gap: 24, marginTop: 12 },
-    count: { minHeight: 48, justifyContent: "center" },
-    countN: { fontFamily: t.fonts.bold, fontSize: 17 * t.textScale, color: t.colors.text },
+    count: { minHeight: 36, justifyContent: "center" },
+    countN: { fontFamily: t.fonts.bold, color: t.colors.text },
     countLabel: {
       fontFamily: t.fonts.body,
-      fontSize: 13.5 * t.textScale,
+      fontSize: 15 * t.textScale,
       color: t.colors.textSoft,
     },
     actions: { flexDirection: "row", gap: 8, marginTop: 10 },

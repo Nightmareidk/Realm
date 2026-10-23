@@ -1,4 +1,4 @@
-import type { Story, StoryRing } from "@realm/contracts";
+import type { HighlightDetail, Story, StoryRing } from "@realm/contracts";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -40,15 +40,37 @@ function lengthOf(st: Story) {
  */
 export default function Stories() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ start?: string }>();
-  const rings = useStories();
+  const params = useLocalSearchParams<{ start?: string; highlight?: string }>();
+  const feed = useStories();
+  // A highlight from a profile plays its own kept Stories instead of the feed.
+  const [kept, setKept] = useState<StoryRing[] | null>(null);
+  useEffect(() => {
+    if (!params.highlight) return;
+    api<HighlightDetail>(`/stories/highlights/${params.highlight}`)
+      .then((d) => {
+        const first = d.stories[0];
+        setKept(
+          first
+            ? [
+                {
+                  author: first.author,
+                  stories: d.stories.map((st) => ({ ...st, seen: true })),
+                  unseen: false,
+                },
+              ]
+            : [],
+        );
+      })
+      .catch(() => setKept([]));
+  }, [params.highlight]);
+  const rings = params.highlight ? kept : feed;
   const { session } = useSession();
   const me = session.status === "signedIn" ? session.user.id : null;
 
   // Opened from a link with nothing loaded yet: load first.
   useEffect(() => {
-    if (rings === null) loadStories();
-  }, [rings]);
+    if (!params.highlight && feed === null) loadStories();
+  }, [feed, params.highlight]);
 
   // Which person and which of their Stories, kept by id so a deleted one doesn't shift you.
   const [at, setAt] = useState<{ author: string; story: string } | null>(null);
