@@ -1,5 +1,6 @@
 import {
   AuditEntry,
+  AutoModRules,
   Ban,
   BanBody,
   CreateReportBody,
@@ -12,6 +13,7 @@ import {
   ReportReceipt,
   SafetyLists,
   Snowflake,
+  SparkStatus,
   UpdateMemberBody,
 } from "@realm/contracts";
 import { and, eq, schema } from "@realm/db";
@@ -22,6 +24,7 @@ import type { Deps } from "../../deps";
 import { notFound } from "../../lib/errors";
 import { authOf, requireAuth } from "../../plugins/context";
 import { enforceLimit } from "../../plugins/security";
+import { SparksService } from "../spaces/sparks";
 import type { SafetyService } from "./service";
 
 const SpaceParams = z.object({ space: z.string().min(1).max(40) });
@@ -160,6 +163,42 @@ export const moderationRoutes =
         },
       },
       async (req) => ({ entries: await safety.auditLog(req.params.space, authOf(req).userId) }),
+    );
+
+    // Sparks (Realm's boosting) and Glow levels.
+    const sparks = new SparksService(deps);
+    app.get(
+      "/:space/sparks",
+      { preHandler: requireAuth, schema: { params: SpaceParams, response: { 200: SparkStatus } } },
+      async (req) => sparks.status(req.params.space, authOf(req).userId),
+    );
+    app.post(
+      "/:space/sparks",
+      { preHandler: requireAuth, schema: { params: SpaceParams, response: { 200: SparkStatus } } },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.modAction, userId.toString());
+        return sparks.give(req.params.space, userId);
+      },
+    );
+
+    // AutoMod: blocked words, links, invites, and waits for new accounts and members.
+    app.get(
+      "/:space/automod",
+      { preHandler: requireAuth, schema: { params: SpaceParams, response: { 200: AutoModRules } } },
+      async (req) => sparks.automod(req.params.space, authOf(req).userId),
+    );
+    app.put(
+      "/:space/automod",
+      {
+        preHandler: requireAuth,
+        schema: { params: SpaceParams, body: AutoModRules, response: { 200: AutoModRules } },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.modAction, userId.toString());
+        return sparks.setAutomod(req.params.space, userId, req.body);
+      },
     );
 
     app.get(

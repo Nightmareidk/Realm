@@ -13,6 +13,7 @@ export * from "./schemas/music";
 export * from "./schemas/releases";
 export * from "./schemas/safety";
 export * from "./schemas/social";
+export * from "./schemas/sparks";
 export * from "./schemas/spaces";
 export * from "./schemas/themes";
 export * from "./schemas/users";

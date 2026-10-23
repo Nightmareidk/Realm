@@ -42,6 +42,20 @@ export const communities = pgTable(
     lat: doublePrecision(),
     lng: doublePrecision(),
     features: id().notNull().default(sql`0`),
+    /**
+     * AutoMod: words that can't be posted, links and invites blocked, and how new an account
+     * (or a member) has to wait before talking. Mods are never held back by it.
+     */
+    automod: jsonb()
+      .$type<{
+        words?: string[];
+        blockLinks?: boolean;
+        blockInvites?: boolean;
+        minAccountDays?: number;
+        minMemberMinutes?: number;
+      }>()
+      .notNull()
+      .default({}),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
     deletedAt: tstz(),
@@ -219,4 +233,31 @@ export const bans = pgTable(
     createdAt: createdAt(),
   },
   (t) => [primaryKey({ columns: [t.communityId, t.userId] })],
+);
+
+/** Where a Spark came from: paid for, given as a gift, or (before payments) a free test one. */
+export const sparkSource = pgEnum("spark_source", ["paid", "gift", "test"]);
+
+/**
+ * Sparks: members back a Space they love, and enough Sparks light it up to a higher Glow level
+ * with perks for everyone in it (Realm's own take on boosting). Each lasts until `endsAt`.
+ */
+export const spaceSparks = pgTable(
+  "space_sparks",
+  {
+    id: id().primaryKey(),
+    communityId: id()
+      .notNull()
+      .references(() => communities.id),
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    source: sparkSource().notNull(),
+    startedAt: createdAt(),
+    endsAt: tstz().notNull(),
+  },
+  (t) => [
+    index("space_sparks_space_idx").on(t.communityId, t.endsAt),
+    index("space_sparks_user_idx").on(t.userId),
+  ],
 );

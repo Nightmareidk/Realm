@@ -39,6 +39,7 @@ export const ErrorCode = z.enum([
   "DM_NOT_ALLOWED",
   "DM_REQUEST_PENDING",
   "UNSEND_EXPIRED",
+  "AUTOMOD",
   "VIEW_USED",
   "FRIEND_REQUEST_NOT_ALLOWED",
   "ALREADY_MEMBER",

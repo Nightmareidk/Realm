@@ -15,6 +15,7 @@ import { adminRoutes, verificationRoutes } from "./modules/admin/routes";
 import { authRoutes, gatewayRoutes } from "./modules/auth/routes";
 import { conversationRoutes } from "./modules/dms/routes";
 import { ConversationsService } from "./modules/dms/service";
+import { friendRoutes } from "./modules/friends/routes";
 import { mediaRoutes } from "./modules/media/routes";
 import { musicRoutes, soundRoutes, storyRoutes } from "./modules/music/routes";
 import { MusicService } from "./modules/music/service";
@@ -80,6 +81,7 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       await v1.register(gatewayRoutes(deps), { prefix: "/gateway" });
       await v1.register(userRoutes(deps), { prefix: "/users" });
       await v1.register(verificationRoutes(deps), { prefix: "/users" });
+      await v1.register(friendRoutes(deps), { prefix: "/users" });
       await v1.register(adminRoutes(deps), { prefix: "/admin" });
       const spaces = spacesModule(deps);
       await v1.register(meSpaceRoutes(deps, spaces), { prefix: "/users" });

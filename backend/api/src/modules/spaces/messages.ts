@@ -26,6 +26,7 @@ import {
 import { guardMessage } from "../../lib/spam";
 import { MediaService } from "../media/service";
 import { missingPermission, type RoomContext, roomAccess, topicOf } from "./access";
+import { automodBlocks } from "./sparks";
 
 const {
   messages,
@@ -221,6 +222,17 @@ export class MessagesService {
     if (!author) throw notFound("User");
     const content = body.content.trim();
     await guardMessage(this.deps, author, content);
+
+    // A Space's AutoMod: its blocked words, links, invites and waits for new accounts and members.
+    if (access && !has(permissions, Permission.MANAGE_MESSAGES)) {
+      const why = automodBlocks(
+        access.community.automod,
+        content,
+        author,
+        access.member?.joinedAt ?? null,
+      );
+      if (why) throw new AppError(403, "AUTOMOD", why);
+    }
 
     if (body.attachmentIds.length > 0 && !has(permissions, Permission.ATTACH_FILES)) {
       throw missingPermission("send files");
