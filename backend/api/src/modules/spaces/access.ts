@@ -108,6 +108,13 @@ export async function memberAccess(db: Db, idOrSlug: string, userId: bigint) {
   return access;
 }
 
+/** How high someone stands: their highest role's position (the owner is above everyone). */
+export function rankOf(access: SpaceAccess, userId: bigint, roleIds: readonly bigint[]) {
+  if (access.community.ownerId === userId) return Number.POSITIVE_INFINITY;
+  const positions = access.roles.filter((r) => roleIds.includes(r.id)).map((r) => r.position);
+  return Math.max(0, ...positions);
+}
+
 export function requireSpacePermission(access: SpaceAccess, bit: bigint, what: string) {
   if (!has(access.base, bit)) throw missingPermission(what);
 }

@@ -4,17 +4,21 @@ import {
   Ban,
   BanBody,
   CreateReportBody,
+  CreateRoleBody,
   HandleReportBody,
   Member,
   MuteBody,
   MuteTarget,
   RegisterPushToken,
+  ReorderRolesBody,
   ReportedItem,
   ReportReceipt,
+  Role,
   SafetyLists,
   Snowflake,
   SparkStatus,
   UpdateMemberBody,
+  UpdateRoleBody,
 } from "@realm/contracts";
 import { and, eq, schema } from "@realm/db";
 import { Limits } from "@realm/server-core";
@@ -24,6 +28,7 @@ import type { Deps } from "../../deps";
 import { notFound } from "../../lib/errors";
 import { authOf, requireAuth } from "../../plugins/context";
 import { enforceLimit } from "../../plugins/security";
+import { RolesService } from "../spaces/roles";
 import { SparksService } from "../spaces/sparks";
 import type { SafetyService } from "./service";
 
@@ -198,6 +203,60 @@ export const moderationRoutes =
         const { userId } = authOf(req);
         await enforceLimit(deps, Limits.modAction, userId.toString());
         return sparks.setAutomod(req.params.space, userId, req.body);
+      },
+    );
+
+    // Roles: make, change, order and delete them (only below your own, never past your own powers).
+    const roles = new RolesService(deps);
+    const SpaceRole = SpaceParams.extend({ roleId: Snowflake });
+    app.post(
+      "/:space/roles",
+      {
+        preHandler: requireAuth,
+        schema: { params: SpaceParams, body: CreateRoleBody, response: { 201: Role } },
+      },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await limit(userId);
+        return reply.status(201).send(await roles.create(req.params.space, userId, req.body));
+      },
+    );
+    app.put(
+      "/:space/roles/order",
+      {
+        preHandler: requireAuth,
+        schema: {
+          params: SpaceParams,
+          body: ReorderRolesBody,
+          response: { 200: z.object({ roles: z.array(Role) }) },
+        },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await limit(userId);
+        return { roles: await roles.reorder(req.params.space, userId, req.body.roleIds) };
+      },
+    );
+    app.patch(
+      "/:space/roles/:roleId",
+      {
+        preHandler: requireAuth,
+        schema: { params: SpaceRole, body: UpdateRoleBody, response: { 200: Role } },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await limit(userId);
+        return roles.update(req.params.space, userId, BigInt(req.params.roleId), req.body);
+      },
+    );
+    app.delete(
+      "/:space/roles/:roleId",
+      { preHandler: requireAuth, schema: { params: SpaceRole } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await limit(userId);
+        await roles.remove(req.params.space, userId, BigInt(req.params.roleId));
+        return reply.status(204).send();
       },
     );
 

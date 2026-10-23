@@ -26,6 +26,7 @@ import {
   loadAccess,
   memberAccess,
   missingPermission,
+  rankOf,
   requireSpacePermission,
   roomAccess,
   type SpaceAccess,
@@ -594,9 +595,7 @@ export class SafetyService {
 
   /** How high someone stands in a Space: the owner above all, then their highest role. */
   private rank(access: SpaceAccess, userId: bigint, roleIds: readonly bigint[]) {
-    if (access.community.ownerId === userId) return Number.POSITIVE_INFINITY;
-    const positions = access.roles.filter((r) => roleIds.includes(r.id)).map((r) => r.position);
-    return Math.max(0, ...positions);
+    return rankOf(access, userId, roleIds);
   }
 
   /** Moderators act only on people below them, never on the owner or themselves. */

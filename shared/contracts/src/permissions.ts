@@ -172,3 +172,127 @@ export function computeChannelPermissions(
 
 export const serializePermissions = (p: bigint): string => p.toString();
 export const parsePermissions = (s: string): bigint => BigInt(s);
+
+/**
+ * Every permission in plain words, in the groups the role editors show them in (app and website
+ * alike). `danger` ones get a warning before they're switched on.
+ */
+export const PERMISSION_GROUPS: {
+  title: string;
+  items: { key: PermissionName; label: string; line: string; danger?: boolean }[];
+}[] = [
+  {
+    title: "The Space",
+    items: [
+      {
+        key: "VIEW_CHANNEL",
+        label: "See rooms",
+        line: "Open and read the rooms they're allowed in.",
+      },
+      { key: "CREATE_INVITES", label: "Invite people", line: "Make invite links." },
+      {
+        key: "CHANGE_NICKNAME",
+        label: "Change their nickname",
+        line: "Pick a different name here.",
+      },
+      {
+        key: "MANAGE_CHANNELS",
+        label: "Manage rooms",
+        line: "Make, rename, sort and delete rooms.",
+      },
+      {
+        key: "MANAGE_ROLES",
+        label: "Manage roles",
+        line: "Make and change roles below their own, and give them out.",
+      },
+      {
+        key: "MANAGE_COMMUNITY",
+        label: "Manage the Space",
+        line: "Change its name, picture, rules and who can join.",
+      },
+      { key: "VIEW_AUDIT_LOG", label: "See the audit log", line: "See everything moderators did." },
+    ],
+  },
+  {
+    title: "Members",
+    items: [
+      {
+        key: "TIMEOUT_MEMBERS",
+        label: "Time people out",
+        line: "Stop someone talking for a while.",
+      },
+      {
+        key: "KICK_MEMBERS",
+        label: "Remove people",
+        line: "Put someone out. They can come back with an invite.",
+      },
+      { key: "BAN_MEMBERS", label: "Ban people", line: "Keep someone out for good.", danger: true },
+      {
+        key: "MANAGE_NICKNAMES",
+        label: "Change others' nicknames",
+        line: "Fix a name that breaks the rules.",
+      },
+      {
+        key: "MODERATE_REPORTS",
+        label: "Handle reports",
+        line: "See what people reported and deal with it.",
+      },
+    ],
+  },
+  {
+    title: "Chat",
+    items: [
+      { key: "SEND_MESSAGES", label: "Send messages", line: "Talk in rooms." },
+      { key: "READ_MESSAGE_HISTORY", label: "Read old messages", line: "Scroll back past today." },
+      { key: "ADD_REACTIONS", label: "React", line: "Add new reactions to messages." },
+      { key: "ATTACH_FILES", label: "Send photos and files", line: "Attach things to messages." },
+      { key: "EMBED_LINKS", label: "Link previews", line: "Links they send show a preview." },
+      {
+        key: "MENTION_EVERYONE",
+        label: "Mention @everyone",
+        line: "Ping every member at once.",
+      },
+      { key: "PIN_MESSAGES", label: "Pin messages", line: "Keep messages at the top of a room." },
+      {
+        key: "MANAGE_MESSAGES",
+        label: "Delete others' messages",
+        line: "Clean up what breaks the rules.",
+      },
+    ],
+  },
+  {
+    title: "Boards",
+    items: [
+      { key: "CREATE_POSTS", label: "Post", line: "Start threads on boards." },
+      { key: "COMMENT", label: "Comment", line: "Reply under posts." },
+      { key: "MANAGE_POSTS", label: "Remove others' posts", line: "Take down posts and comments." },
+    ],
+  },
+  {
+    title: "Voice",
+    items: [
+      { key: "CONNECT", label: "Join voice rooms", line: "Go in and listen." },
+      { key: "SPEAK", label: "Talk", line: "Use their mic." },
+      { key: "VIDEO", label: "Camera and screen", line: "Turn on their camera or share a screen." },
+      {
+        key: "PRIORITY_SPEAKER",
+        label: "Speak over others",
+        line: "Others go quieter when they talk.",
+      },
+      { key: "MUTE_MEMBERS", label: "Mute others", line: "Turn off someone's mic." },
+      { key: "DEAFEN_MEMBERS", label: "Deafen others", line: "Stop someone hearing the room." },
+      { key: "MOVE_MEMBERS", label: "Move people", line: "Move someone to another voice room." },
+    ],
+  },
+  {
+    title: "Everything",
+    items: [
+      {
+        key: "ADMINISTRATOR",
+        label: "Administrator",
+        line: "Every permission, in every room. Only for people you trust completely.",
+        danger: true,
+      },
+    ],
+  },
+];

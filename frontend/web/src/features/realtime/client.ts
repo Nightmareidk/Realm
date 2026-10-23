@@ -8,6 +8,7 @@ import type {
   Message,
   Presence,
   ReadState,
+  Role,
   SafetyLists,
   SelfUser,
   SpaceDetail,
@@ -442,6 +443,32 @@ export function dispatch(t: string, d: unknown) {
     case "COMMUNITY_UPDATE": {
       const c = d as Community;
       setState((s) => ({ ...s, spaces: patchSpace(s.spaces, c.id, (sp) => ({ ...sp, ...c })) }));
+      return;
+    }
+    case "COMMUNITY_ROLE_CREATE":
+    case "COMMUNITY_ROLE_UPDATE": {
+      const r = d as Role;
+      setState((s) => ({
+        ...s,
+        spaces: patchSpace(s.spaces, r.communityId, (sp) => ({
+          ...sp,
+          roles: sp.roles.some((x) => x.id === r.id)
+            ? sp.roles.map((x) => (x.id === r.id ? r : x))
+            : [...sp.roles, r],
+        })),
+      }));
+      return;
+    }
+    case "COMMUNITY_ROLE_DELETE": {
+      const { communityId, roleId } = d as { communityId: string; roleId: string };
+      setState((s) => ({
+        ...s,
+        spaces: patchSpace(s.spaces, communityId, (sp) => ({
+          ...sp,
+          roles: sp.roles.filter((x) => x.id !== roleId),
+          self: { ...sp.self, roleIds: sp.self.roleIds.filter((id) => id !== roleId) },
+        })),
+      }));
       return;
     }
     case "COMMUNITY_DELETE": {

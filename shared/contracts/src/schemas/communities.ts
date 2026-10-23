@@ -114,7 +114,14 @@ export const CreateRoleBody = z.object({
   hoist: z.boolean().optional(),
   mentionable: z.boolean().optional(),
 });
+export type CreateRoleBody = z.infer<typeof CreateRoleBody>;
 export const UpdateRoleBody = CreateRoleBody.partial();
+export type UpdateRoleBody = z.infer<typeof UpdateRoleBody>;
+/** A new order for the roles you can move, highest first. */
+export const ReorderRolesBody = z.object({ roleIds: z.array(Snowflake).min(1).max(250) });
+export type ReorderRolesBody = z.infer<typeof ReorderRolesBody>;
+/** Most roles a Space can have (Everyone included). */
+export const SPACE_ROLE_LIMIT = 100;
 
 export const Invite = z
   .object({

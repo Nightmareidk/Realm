@@ -73,7 +73,7 @@ export interface RealmState {
   };
 }
 
-export type ManageTab = "settings" | "members" | "reports" | "activity";
+export type ManageTab = "settings" | "members" | "roles" | "reports" | "activity";
 
 export interface ReportTarget {
   targetType: "message" | "user" | "community";

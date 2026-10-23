@@ -2,7 +2,6 @@ import {
   type AuditEntry,
   type AutoModRules,
   GLOW_LEVELS,
-  has,
   Permission,
   type SpaceDetail,
   type SparkStatus,
@@ -23,23 +22,35 @@ import {
 import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
+import { useLiveEvent } from "@/live";
 import { ApiError, api } from "@/server";
 import { AppScreen, Loading, Problem, TopBar } from "@/social/screen";
 import { ago } from "@/social/time";
+import { Members } from "@/space/members";
+import { powerIn } from "@/space/power";
+import { Reports } from "@/space/reports";
+import { Roles } from "@/space/roles";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 
-type Tab = "glow" | "automod" | "log" | "invite";
+type Tab = "members" | "roles" | "reports" | "glow" | "automod" | "log" | "invite";
 
 /** What each audit log action means, in words. */
 const ACTIONS: Record<string, string> = {
-  "member.kick": "removed a member",
-  "member.ban": "banned someone",
-  "member.unban": "lifted a ban",
-  "member.timeout": "timed someone out",
-  "member.update": "changed a member's roles",
+  "member.kick": "removed",
+  "member.ban": "banned",
+  "member.unban": "lifted the ban on",
+  "member.timeout": "timed out",
+  "member.timeout_lift": "ended the time-out for",
+  "member.roles": "changed the roles of",
   "message.delete": "deleted a message",
+  "message.remove": "took down a reported message",
+  "report.dismiss": "let a report go",
   "report.resolve": "dealt with a report",
+  "role.create": "made a role",
+  "role.update": "changed a role",
+  "role.delete": "deleted a role",
+  "role.reorder": "reordered the roles",
   "automod.update": "changed AutoMod",
   "spark.give": "gave a Spark",
   "channel.create": "made a room",
@@ -50,7 +61,8 @@ const ACTIONS: Record<string, string> = {
 };
 
 /**
- * A Space's settings: its Glow (Sparks people gave it, and what each level unlocks), AutoMod
+ * A Space's settings: its members (roles, time-outs, removing and banning), its roles, reports
+ * for moderators, its Glow (Sparks people gave it, and what each level unlocks), AutoMod
  * (blocked words, links, invites, and waits for new accounts), the audit log of everything
  * moderators did, and inviting people. What you see depends on what you're allowed to do.
  */
@@ -59,22 +71,25 @@ export default function SpaceSettings() {
   const s = useStyles(make);
   const { id } = useLocalSearchParams<{ id: string }>();
   const space = useApi<SpaceDetail>(`/communities/${id}`);
-  const [tab, setTab] = useState<Tab>("glow");
-  // What you may do here: your roles' permissions together (and the Space-wide role everyone has).
-  const perms = space.data
-    ? space.data.roles
-        .filter((r) => r.id === space.data?.id || space.data?.self.roleIds.includes(r.id))
-        .reduce((all, r) => all | BigInt(r.permissions), 0n)
-    : 0n;
-  const manage = space.data
-    ? space.data.ownerId === space.data.self.user.id || has(perms, Permission.MANAGE_COMMUNITY)
-    : false;
-  const tabs: [Tab, string][] = [
-    ["glow", "Glow"],
-    ...(manage ? ([["automod", "AutoMod"]] as [Tab, string][]) : []),
-    ["log", "Audit log"],
-    ["invite", "Invite"],
-  ];
+  const [picked, setPicked] = useState<Tab | null>(null);
+  // Roles changed by anyone (here or elsewhere) show up straight away.
+  useLiveEvent("COMMUNITY_ROLE_CREATE", (r) => r.communityId === space.data?.id && space.reload());
+  useLiveEvent("COMMUNITY_ROLE_UPDATE", (r) => r.communityId === space.data?.id && space.reload());
+  useLiveEvent("COMMUNITY_ROLE_DELETE", (r) => r.communityId === space.data?.id && space.reload());
+  const power = space.data ? powerIn(space.data) : null;
+  const can = (bit: bigint) => Boolean(power?.can(bit));
+  const tabs = (
+    [
+      ["members", "Members", true],
+      ["roles", "Roles", can(Permission.MANAGE_ROLES)],
+      ["reports", "Reports", can(Permission.MODERATE_REPORTS)],
+      ["automod", "AutoMod", can(Permission.MANAGE_COMMUNITY)],
+      ["log", "Audit log", can(Permission.VIEW_AUDIT_LOG)],
+      ["glow", "Glow", true],
+      ["invite", "Invite", can(Permission.CREATE_INVITES)],
+    ] as [Tab, string, boolean][]
+  ).filter(([, , show]) => show);
+  const tab = picked && tabs.some(([k]) => k === picked) ? picked : (tabs[0]?.[0] ?? "glow");
 
   return (
     <AppScreen>
@@ -85,11 +100,17 @@ export default function SpaceSettings() {
         <Loading />
       ) : (
         <>
-          <View style={s.tabs} accessibilityRole="tablist">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={s.tabsBar}
+            contentContainerStyle={s.tabs}
+            accessibilityRole="tablist"
+          >
             {tabs.map(([k, label]) => (
               <Pressable
                 key={k}
-                onPress={() => setTab(k)}
+                onPress={() => setPicked(k)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: tab === k }}
                 style={[s.tab, tab === k && { borderBottomColor: t.colors.text }]}
@@ -97,7 +118,10 @@ export default function SpaceSettings() {
                 <Text style={[s.tabText, tab === k && s.tabTextOn]}>{label}</Text>
               </Pressable>
             ))}
-          </View>
+          </ScrollView>
+          {tab === "members" ? <Members space={space.data} onRolesChanged={space.reload} /> : null}
+          {tab === "roles" ? <Roles space={space.data} onChanged={space.reload} /> : null}
+          {tab === "reports" ? <Reports space={space.data} /> : null}
           {tab === "glow" ? <Glow id={id ?? ""} /> : null}
           {tab === "automod" ? <AutoMod id={id ?? ""} /> : null}
           {tab === "log" ? <Log id={id ?? ""} /> : null}
@@ -238,7 +262,8 @@ function AutoMod({ id }: { id: string }) {
       <Switch
         value={rules[key]}
         onValueChange={(v) => setRules({ ...rules, [key]: v })}
-        trackColor={{ true: accent }}
+        trackColor={{ false: t.colors.borderStrong, true: accent }}
+        thumbColor="#ffffff"
         accessibilityLabel={title}
       />
     </View>
@@ -361,12 +386,13 @@ const make = (t: NativeTheme) =>
   StyleSheet.create({
     fill: { flex: 1 },
     pad: { padding: 16, gap: 12, paddingBottom: 120 },
-    tabs: {
-      flexDirection: "row",
-      paddingHorizontal: 8,
+    tabsBar: {
+      flexGrow: 0,
+      flexShrink: 0,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: t.colors.border,
     },
+    tabs: { flexDirection: "row", paddingHorizontal: 8 },
     tab: {
       paddingHorizontal: 12,
       minHeight: 44,

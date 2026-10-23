@@ -9,6 +9,7 @@ import {
   GearSix,
   Hash,
   PencilSimple,
+  ShieldCheck,
   SignOut,
   SpeakerHigh,
   Trash,
@@ -53,6 +54,7 @@ export function SpaceMenu({ space }: { space: SpaceDetail }) {
     spaceCan(space, Permission.BAN_MEMBERS) ||
     spaceCan(space, Permission.TIMEOUT_MEMBERS) ||
     spaceCan(space, Permission.MANAGE_ROLES);
+  const canRoles = spaceCan(space, Permission.MANAGE_ROLES);
   const canReports = spaceCan(space, Permission.MODERATE_REPORTS);
   const canLog = spaceCan(space, Permission.VIEW_AUDIT_LOG);
   const muted = useRealm((s) => isMuted(s, "community", space.id));
@@ -143,6 +145,19 @@ export function SpaceMenu({ space }: { space: SpaceDetail }) {
                   >
                     <UsersThree aria-hidden="true" size={20} />
                     Members
+                  </button>
+                )}
+                {canRoles && (
+                  <button
+                    type="button"
+                    className={row}
+                    onClick={() => {
+                      close();
+                      openManage(space.id, "roles");
+                    }}
+                  >
+                    <ShieldCheck aria-hidden="true" size={20} />
+                    Roles
                   </button>
                 )}
                 {canReports && (

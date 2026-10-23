@@ -6,6 +6,7 @@ import {
   DEFAULT_EVERYONE_PERMISSIONS,
   has,
   type MemberContext,
+  PERMISSION_GROUPS,
   Permission,
 } from "./permissions";
 
@@ -100,5 +101,13 @@ describe("channel overwrites", () => {
       { targetType: "role", targetId: COMMUNITY, allow: 0n, deny: Permission.VIEW_CHANNEL },
     ]);
     expect(p).toBe(ALL_PERMISSIONS);
+  });
+});
+
+describe("permission labels", () => {
+  it("names every permission exactly once, in plain words", () => {
+    const keys = PERMISSION_GROUPS.flatMap((g) => g.items.map((i) => i.key));
+    expect(new Set(keys).size).toBe(keys.length);
+    expect([...keys].sort()).toEqual(Object.keys(Permission).sort());
   });
 });

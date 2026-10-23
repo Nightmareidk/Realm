@@ -7,6 +7,7 @@ import {
   CommunityDescription,
   type Member,
   type ReportedItem,
+  type Role,
   type SpaceDetail,
   TIMEOUT_CHOICES_MS,
 } from "@realm/contracts";
@@ -30,6 +31,7 @@ import { MAPS_ON } from "@/lib/public-config";
 import { uploadFile } from "@/lib/upload";
 import { Permission, spaceCan } from "./permissions";
 import { Avatar } from "./person";
+import { hex, RolesTab, rankIn, topDown } from "./roles-tab";
 import { spaceLight } from "./space-badge";
 
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -50,6 +52,7 @@ const REASON_LABEL: Record<string, string> = {
   sexual_minors: "Involves a minor",
   self_harm: "Self-harm",
   impersonation: "Impersonation",
+  intellectual_property: "Someone else's work",
   other: "Other",
 };
 /** What a moderator can take down from the queue, and what the button says. */
@@ -60,7 +63,7 @@ const TAKE_DOWN: Partial<Record<ReportedItem["targetType"], string>> = {
 };
 
 /**
- * Running a Space: its settings, its people, the reports its members sent, and the log of what
+ * Running a Space: its settings, its people, its roles, the reports its members sent, and the log of what
  * moderators did. Each tab shows only to people with the matching permission.
  */
 export function ManageSpaceDialog() {
@@ -78,6 +81,7 @@ export function ManageSpaceDialog() {
         spaceCan(space, Permission.TIMEOUT_MEMBERS) ||
         spaceCan(space, Permission.MANAGE_ROLES),
     },
+    { id: "roles", label: "Roles", show: spaceCan(space, Permission.MANAGE_ROLES) },
     { id: "reports", label: "Reports", show: spaceCan(space, Permission.MODERATE_REPORTS) },
     { id: "activity", label: "Activity", show: spaceCan(space, Permission.VIEW_AUDIT_LOG) },
   ];
@@ -147,6 +151,7 @@ export function ManageSpaceDialog() {
       >
         {tab === "settings" && <SettingsTab space={space} />}
         {tab === "members" && <MembersTab space={space} />}
+        {tab === "roles" && <RolesTab space={space} />}
         {tab === "reports" && <ReportsTab space={space} />}
         {tab === "activity" && <ActivityTab space={space} />}
       </div>
@@ -421,7 +426,6 @@ function MembersTab({ space }: { space: SpaceDetail }) {
   const [assignable, setAssignable] = useState<string[]>([]);
   const [bans, setBans] = useState<Ban[] | null>(null);
   const [notice, setNotice] = useState("");
-  const mods = space.roles.find((r) => r.name === "Mods");
   const canBan = spaceCan(space, Permission.BAN_MEMBERS);
 
   const reload = useCallback(async () => {
@@ -471,8 +475,7 @@ function MembersTab({ space }: { space: SpaceDetail }) {
               key={m.user.id}
               m={m}
               space={space}
-              modsId={mods?.id ?? null}
-              canGiveMods={Boolean(mods && assignable.includes(mods.id))}
+              assignable={topDown(space).filter((r) => assignable.includes(r.id))}
               act={act}
             />
           ))}
@@ -516,25 +519,26 @@ function MembersTab({ space }: { space: SpaceDetail }) {
 function MemberRow({
   m,
   space,
-  modsId,
-  canGiveMods,
+  assignable,
   act,
 }: {
   m: Member;
   space: SpaceDetail;
-  modsId: string | null;
-  canGiveMods: boolean;
+  /** Roles you may give or take: below your own. */
+  assignable: Role[];
   act: (fn: () => Promise<unknown>) => Promise<void>;
 }) {
   const [confirm, setConfirm] = useState<"kick" | "ban" | null>(null);
   const [wipe, setWipe] = useState(true);
   const me = m.user.id === space.self.user.id;
   const owner = m.user.id === space.ownerId;
-  const isMod = modsId ? m.roleIds.includes(modsId) : false;
+  const theirs = topDown(space).filter((r) => r.id !== space.id && m.roleIds.includes(r.id));
   const timedOut = m.timeoutUntil && Date.parse(m.timeoutUntil) > Date.now();
-  const iAmOwner = space.self.user.id === space.ownerId;
-  // Only people below you: everyone for the owner, ordinary members for Mods.
-  const actionable = !me && !owner && (iAmOwner || !isMod);
+  // Only people below you: everyone for the owner, people under your highest role for others.
+  const actionable =
+    !me &&
+    !owner &&
+    rankIn(space, m.user.id, m.roleIds) < rankIn(space, space.self.user.id, space.self.roleIds);
   const base = `/communities/${space.id}/members/${m.user.id}`;
 
   return (
@@ -545,11 +549,27 @@ function MemberRow({
           <span className="flex items-center gap-2 font-bold text-fg">
             <span className="truncate">{m.nickname ?? m.user.displayName}</span>
             {me && <span className="font-normal text-fg-soft">(you)</span>}
-            {(owner || isMod) && (
+            {owner && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.74rem] text-fg-soft shadow-[inset_0_0_0_1px_var(--r-border-strong)]">
                 <ShieldCheck aria-hidden="true" size={12} />
-                {owner ? "Owner" : "Mods"}
+                Owner
               </span>
+            )}
+            {theirs.slice(0, 3).map((r) => (
+              <span
+                key={r.id}
+                className="inline-flex max-w-[9rem] items-center gap-1.5 rounded-full px-2 py-0.5 text-[0.74rem] text-fg-soft shadow-[inset_0_0_0_1px_var(--r-border-strong)]"
+              >
+                <span
+                  aria-hidden="true"
+                  className="size-2 shrink-0 rounded-full bg-fg-soft"
+                  style={{ backgroundColor: hex(r.color) ?? undefined }}
+                />
+                <span className="truncate">{r.name}</span>
+              </span>
+            ))}
+            {theirs.length > 3 && (
+              <span className="text-[0.74rem] font-normal text-fg-soft">+{theirs.length - 3}</span>
             )}
           </span>
           <span className="block text-[0.86rem] text-fg-soft">
@@ -568,21 +588,25 @@ function MemberRow({
           >
             {(close) => (
               <div>
-                {canGiveMods && modsId && (
-                  <button
-                    type="button"
-                    className={row}
-                    onClick={() => {
-                      close();
-                      const next = isMod
-                        ? m.roleIds.filter((r) => r !== modsId)
-                        : [...m.roleIds, modsId];
-                      void act(() => api(base, { method: "PATCH", body: { roleIds: next } }));
-                    }}
-                  >
-                    {isMod ? "Take away Mods" : "Make a Mod"}
-                  </button>
-                )}
+                {assignable.map((r) => {
+                  const hasIt = m.roleIds.includes(r.id);
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      className={row}
+                      onClick={() => {
+                        close();
+                        const next = hasIt
+                          ? m.roleIds.filter((id) => id !== r.id)
+                          : [...m.roleIds, r.id];
+                        void act(() => api(base, { method: "PATCH", body: { roleIds: next } }));
+                      }}
+                    >
+                      {hasIt ? `Take away ${r.name}` : `Give ${r.name}`}
+                    </button>
+                  );
+                })}
                 {spaceCan(space, Permission.TIMEOUT_MEMBERS) &&
                   (timedOut ? (
                     <button
@@ -883,6 +907,10 @@ const SENTENCE: Record<string, string> = {
   "member.roles": "changed the roles of",
   "message.remove": "removed a reported message",
   "report.dismiss": "dismissed a report",
+  "role.create": "made a role",
+  "role.update": "changed a role",
+  "role.delete": "deleted a role",
+  "role.reorder": "reordered the roles",
 };
 
 function ActivityTab({ space }: { space: SpaceDetail }) {

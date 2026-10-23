@@ -1,3 +1,4 @@
+import { Permission } from "@realm/contracts";
 import { decodeJwt } from "@realm/server-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -235,6 +236,93 @@ describe("moderators", () => {
     ).toBe("spam");
     await call(owner.cookie, "DELETE", `/communities/${space.id}/bans/${spammer.id}`);
     expect((await call(spammer.cookie, "POST", `/invites/${invite.code}`)).statusCode).toBe(200);
+  });
+
+  it("make, change, order and delete roles, only below your own and within your powers", async () => {
+    const { owner, others, space } = await crew(1);
+    const [mod] = others;
+    if (!mod) throw new Error("crew");
+    const base = `/communities/${space.id}`;
+    const mods = space.roles.find((r: { name: string }) => r.name === "Mods");
+    const bits = (...p: bigint[]) => p.reduce((a, b) => a | b, 0n).toString();
+
+    const helpers = await call(owner.cookie, "POST", `${base}/roles`, {
+      name: "Helpers",
+      color: 0x7ef2c4,
+      permissions: bits(Permission.MANAGE_MESSAGES),
+    });
+    expect(helpers.statusCode).toBe(201);
+    expect(helpers.json().position).toBe(1);
+
+    // Mods may now manage roles, then the mod tries things.
+    const modsBits = BigInt(mods.permissions) | Permission.MANAGE_ROLES;
+    expect(
+      (
+        await call(owner.cookie, "PATCH", `${base}/roles/${mods.id}`, {
+          permissions: bits(modsBits),
+        })
+      ).statusCode,
+    ).toBe(200);
+    await call(owner.cookie, "PATCH", `${base}/members/${mod.id}`, { roleIds: [mods.id] });
+
+    const artists = await call(mod.cookie, "POST", `${base}/roles`, { name: "Artists" });
+    expect(artists.statusCode).toBe(201);
+    // Not a power mods have, not their own level, not a name that looks like a mention.
+    expect(
+      (
+        await call(mod.cookie, "POST", `${base}/roles`, {
+          name: "Bouncers",
+          permissions: bits(Permission.BAN_MEMBERS),
+        })
+      ).statusCode,
+    ).toBe(403);
+    expect(
+      (await call(mod.cookie, "PATCH", `${base}/roles/${mods.id}`, { name: "Gods" })).statusCode,
+    ).toBe(403);
+    expect((await call(mod.cookie, "POST", `${base}/roles`, { name: "@here" })).statusCode).toBe(
+      400,
+    );
+
+    const renamed = await call(mod.cookie, "PATCH", `${base}/roles/${helpers.json().id}`, {
+      name: "Helpers ✨",
+    });
+    expect(renamed.json().name).toBe("Helpers ✨");
+
+    // Artists (newest, at the bottom) goes above Helpers; Mods can't be in the list.
+    const order = await call(mod.cookie, "PUT", `${base}/roles/order`, {
+      roleIds: [artists.json().id, helpers.json().id],
+    });
+    expect(order.statusCode).toBe(200);
+    const pos = (id: string) =>
+      order.json().roles.find((r: { id: string }) => r.id === id).position as number;
+    expect(pos(artists.json().id)).toBeGreaterThan(pos(helpers.json().id));
+    expect(pos(mods.id)).toBeGreaterThan(pos(artists.json().id));
+    expect(
+      (
+        await call(mod.cookie, "PUT", `${base}/roles/order`, {
+          roleIds: [mods.id, artists.json().id, helpers.json().id],
+        })
+      ).statusCode,
+    ).toBe(400);
+
+    expect((await call(owner.cookie, "DELETE", `${base}/roles/${space.id}`)).statusCode).toBe(400);
+    expect(
+      (await call(owner.cookie, "DELETE", `${base}/roles/${helpers.json().id}`)).statusCode,
+    ).toBe(204);
+    const after = (await call(owner.cookie, "GET", base)).json().roles as { id: string }[];
+    expect(after.some((r) => r.id === helpers.json().id)).toBe(false);
+
+    const actions = (await call(owner.cookie, "GET", `${base}/audit-log`))
+      .json()
+      .entries.map((e: { action: string }) => e.action);
+    expect(actions.filter((a: string) => a.startsWith("role."))).toEqual([
+      "role.delete",
+      "role.reorder",
+      "role.update",
+      "role.create",
+      "role.update",
+      "role.create",
+    ]);
   });
 });
 
