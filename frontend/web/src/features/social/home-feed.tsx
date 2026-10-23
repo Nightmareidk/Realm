@@ -267,7 +267,7 @@ export function HomeFeed() {
   const rings = stories.data?.rings ?? [];
 
   return (
-    <div className="flex gap-9 px-9 pb-10 max-xl:px-6 max-md:flex-col max-md:px-3">
+    <div className="mx-auto flex w-full max-w-[64rem] justify-center gap-12 px-9 pb-10 max-xl:gap-9 max-xl:px-6 max-md:flex-col max-md:px-3">
       <div className="w-full max-w-[36.25rem] min-w-0 shrink-0 max-md:max-w-none">
         {me && (
           <StoryRings
@@ -327,7 +327,10 @@ export function HomeFeed() {
           <p className="py-6 text-center text-[0.9rem] text-fg-soft">You're all caught up.</p>
         )}
       </div>
-      <aside aria-label="Around you" className="min-w-0 flex-1 pt-1.5 max-lg:hidden">
+      <aside
+        aria-label="Around you"
+        className="sticky top-0 w-[21.5rem] min-w-0 shrink self-start pt-1.5 max-lg:hidden"
+      >
         <HereNowSide />
         <PeopleSide />
         <SoundsSide />
