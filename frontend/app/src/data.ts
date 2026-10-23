@@ -1,5 +1,6 @@
 import type { Post, PostPage } from "@realm/contracts";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { live } from "./live";
 import { ApiError, api } from "./server";
 
 /** Loads one thing from the API, with a way to load it again. */
@@ -84,6 +85,23 @@ export function usePosts(path: string | null) {
   }, [refresh]);
 
   useEffect(() => onPostsChanged(refresh), [refresh]);
+
+  // Likes and comments on posts you're looking at, as they happen.
+  useEffect(
+    () =>
+      live.on((type, data) => {
+        if (type !== "POST_COUNTS") return;
+        const d = data as { id: string; likeCount: number; commentCount: number };
+        setItems((now) =>
+          now.some((p) => p.id === d.id)
+            ? now.map((p) =>
+                p.id === d.id ? { ...p, likeCount: d.likeCount, commentCount: d.commentCount } : p,
+              )
+            : now,
+        );
+      }),
+    [],
+  );
 
   const update = useCallback((post: Post) => {
     setItems((now) => now.map((p) => (p.id === post.id ? post : p)));

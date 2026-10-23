@@ -31,6 +31,7 @@ import { useSession } from "../session";
 import { useSheet } from "../sheet";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Avatar } from "./avatar";
+import { CommentsSheet } from "./comments-sheet";
 import { useSafety } from "./safety";
 import { ago, agoLong, compact } from "./time";
 import { Verified } from "./verified";
@@ -88,6 +89,9 @@ export const PostCard = memo(function PostCard({
   }
 
   const open = () => router.push({ pathname: "/post/[id]", params: { id: post.id } });
+  // Comments come up from the bottom over the post, as on Instagram.
+  const [commenting, setCommenting] = useState(false);
+  const comments = () => setCommenting(true);
   const profile = () =>
     router.push({ pathname: "/user/[username]", params: { username: post.author.username } });
 
@@ -195,7 +199,7 @@ export const PostCard = memo(function PostCard({
           label={post.liked ? "Unlike" : "Like"}
           onPress={() => setLike(!post.liked)}
         />
-        <IconButton name="ChatCircle" label="Comments" onPress={open} />
+        <IconButton name="ChatCircle" label="Comments" onPress={comments} />
         <IconButton
           name="PaperPlaneTilt"
           label="Share"
@@ -227,13 +231,21 @@ export const PostCard = memo(function PostCard({
         </Pressable>
       ) : null}
       {!standalone && post.commentCount > 0 ? (
-        <Pressable onPress={open} accessibilityRole="link" style={s.commentsLink}>
+        <Pressable onPress={comments} accessibilityRole="link" style={s.commentsLink}>
           <Text style={s.soft}>
             View{" "}
             {post.commentCount === 1 ? "1 comment" : `all ${compact(post.commentCount)} comments`}
           </Text>
         </Pressable>
       ) : null}
+      <CommentsSheet
+        post={post}
+        visible={commenting}
+        onClose={() => setCommenting(false)}
+        onCount={(n) => {
+          if (n !== post.commentCount && commenting) onChange({ ...post, commentCount: n });
+        }}
+      />
     </View>
   );
 });

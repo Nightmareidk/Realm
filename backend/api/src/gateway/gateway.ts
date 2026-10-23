@@ -19,6 +19,7 @@ import { presenceVisibleIn, readPresences, writePresence } from "../lib/presence
 import { toSelfUser, toUserSettings } from "../lib/serialize";
 import { resolveSession } from "../lib/sessions";
 import { ConversationsService } from "../modules/dms/service";
+import { canSeePost } from "../modules/social/access";
 import { findSpace, roomAccess, spaceRoomAccess, topicOf } from "../modules/spaces/access";
 import { MessagesService } from "../modules/spaces/messages";
 import { SpacesService } from "../modules/spaces/service";
@@ -281,6 +282,8 @@ class Connection {
         return;
       case Op.VOICE_STATE:
         return this.voiceTo(frame.d.channelId);
+      case Op.WATCH_POSTS:
+        return this.watchPosts(frame.d.postIds);
       case Op.RESUME:
         // No replay buffer yet: start a fresh session and refetch.
         this.send({ op: Op.INVALID_SESSION, d: { resumable: false } });
@@ -437,6 +440,30 @@ class Connection {
   }
 
   /** Follow a DM or group chat. */
+  /** Posts on this person's screen: hear their likes and comments, if they may see them. */
+  private watching = new Set<string>();
+  private async watchPosts(ids: string[]) {
+    if (!this.person) return;
+    const want = new Set(ids.slice(0, 30));
+    for (const id of this.watching) {
+      if (!want.has(id)) {
+        this.watching.delete(id);
+        await this.unsubscribe(`post:${id}`);
+      }
+    }
+    const fresh = [...want].filter((id) => !this.watching.has(id));
+    if (!fresh.length) return;
+    const rows = await this.gw.deps.db
+      .select()
+      .from(schema.posts)
+      .where(inArray(schema.posts.id, fresh.map(BigInt)));
+    for (const post of rows) {
+      if (!(await canSeePost(this.gw.deps.db, post, BigInt(this.person.userId)))) continue;
+      this.watching.add(post.id.toString());
+      await this.subscribe(`post:${post.id}`);
+    }
+  }
+
   private async follow(channelId: string) {
     this.dms.add(channelId);
     await this.subscribe(`dm:${channelId}`);
@@ -489,6 +516,11 @@ class Connection {
           .limit(1);
         if (!still) await this.unfollow(String(data.id));
       }
+      this.dispatch(event.type, event.data);
+      return;
+    }
+
+    if (topic.startsWith("post:")) {
       this.dispatch(event.type, event.data);
       return;
     }

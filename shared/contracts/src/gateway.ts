@@ -3,6 +3,7 @@ import { Snowflake } from "./ids";
 import { Channel, Conversation, ReadState } from "./schemas/channels";
 import { Community, Member, Role } from "./schemas/communities";
 import { Message } from "./schemas/messages";
+import { Comment } from "./schemas/social";
 import { SpaceDetail, VoiceState } from "./schemas/spaces";
 import { Presence, PresenceStatus, Relationship, SelfUser, UserSettings } from "./schemas/users";
 
@@ -23,6 +24,8 @@ export const Op = {
   HEARTBEAT_ACK: 11,
   /** C→S: you joined a voice room (channelId) or left voice (null). */
   VOICE_STATE: 12,
+  /** C→S: the posts on your screen, for their likes and comments as they happen. */
+  WATCH_POSTS: 13,
 } as const;
 export type Op = (typeof Op)[keyof typeof Op];
 
@@ -70,6 +73,7 @@ export const ClientFrame = z.discriminatedUnion("op", [
   z.object({ op: z.literal(Op.UNSUBSCRIBE), d: z.object({ communityId: Snowflake }) }),
   z.object({ op: z.literal(Op.TYPING), d: TypingPayload }),
   z.object({ op: z.literal(Op.VOICE_STATE), d: z.object({ channelId: Snowflake.nullable() }) }),
+  z.object({ op: z.literal(Op.WATCH_POSTS), d: z.object({ postIds: z.array(Snowflake).max(30) }) }),
 ]);
 export type ClientFrame = z.infer<typeof ClientFrame>;
 
@@ -142,6 +146,15 @@ export const DispatchEvents = {
     followers: z.number().int(),
     following: z.number().int(),
   }),
+  /** A post's likes and comments changed (one you're looking at). */
+  POST_COUNTS: z.object({
+    id: Snowflake,
+    likeCount: z.number().int(),
+    commentCount: z.number().int(),
+  }),
+  /** A new comment on a post you're looking at. */
+  COMMENT_CREATE: Comment,
+  COMMENT_DELETE: z.object({ postId: Snowflake, id: Snowflake }),
   /** Something new in your activity (the heart on Home): how many are unread now. */
   ACTIVITY_NEW: z.object({ unread: z.number().int() }),
   VOICE_STATE_UPDATE: z.object({

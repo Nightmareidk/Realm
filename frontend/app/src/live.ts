@@ -3,7 +3,16 @@ import { useEffect, useRef, useState } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import { CLIENT_PLATFORM, CLIENT_VERSION, currentToken, gatewayUrl } from "./server";
 
-const OP = { DISPATCH: 0, HEARTBEAT: 1, IDENTIFY: 2, TYPING: 8, INVALID: 9, HELLO: 10, ACK: 11 };
+const OP = {
+  DISPATCH: 0,
+  HEARTBEAT: 1,
+  IDENTIFY: 2,
+  TYPING: 8,
+  INVALID: 9,
+  HELLO: 10,
+  ACK: 11,
+  WATCH_POSTS: 13,
+};
 /** The gateway turned the session away: it's over, so stop knocking. */
 const AUTH_FAILED = 4004;
 
@@ -65,6 +74,21 @@ class Live {
   }
 
   /** Tell the room you're typing, at most once every few seconds. */
+  /**
+   * The posts on screen: their likes and comments arrive as they happen. Several screens can
+   * watch at once (the feed, an open comments sheet); the gateway hears all of them together.
+   */
+  private watched = new Map<string, string[]>();
+  watchPosts(owner: string, ids: string[]) {
+    if (ids.length) this.watched.set(owner, ids.slice(0, 20));
+    else this.watched.delete(owner);
+    this.sendWatched();
+  }
+  private sendWatched() {
+    const all = [...new Set([...this.watched.values()].flat())].slice(0, 30);
+    this.send({ op: OP.WATCH_POSTS, d: { postIds: all } });
+  }
+
   typing(channelId: string) {
     const now = Date.now();
     if (now - (this.lastTyping.get(channelId) ?? 0) < 5_000) return;
@@ -185,6 +209,8 @@ class Live {
         if (frame.t === "READY") {
           this.attempts = 0;
           this.setStatus("live");
+          // A new connection: tell it again which posts are on screen.
+          if (this.watched.size) this.sendWatched();
         }
         for (const fn of this.listeners) fn(frame.t as DispatchType, frame.d);
         return;

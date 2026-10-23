@@ -227,7 +227,22 @@ export class SocialService {
           .where(eq(posts.id, id));
       }
     }
+    await this.postNews(id);
     return this.get(id, userId);
+  }
+
+  /** Tell everyone looking at a post its likes and comments, as they change. */
+  private async postNews(id: bigint) {
+    const [row] = await this.db
+      .select({ likeCount: posts.score, commentCount: posts.commentCount })
+      .from(posts)
+      .where(eq(posts.id, id))
+      .limit(1);
+    if (!row) return;
+    await this.deps.bus.publish(`post:${id}`, {
+      type: "POST_COUNTS",
+      data: { id: id.toString(), likeCount: row.likeCount, commentCount: row.commentCount },
+    });
   }
 
   async save(id: bigint, userId: bigint, on: boolean): Promise<Post> {
@@ -538,7 +553,10 @@ export class SocialService {
       .innerJoin(users, eq(users.id, comments.authorId))
       .where(eq(comments.id, id));
     if (!row) throw notFound("Comment");
-    return toComment(row.c, row.author);
+    const made = toComment(row.c, row.author);
+    await this.deps.bus.publish(`post:${postId}`, { type: "COMMENT_CREATE", data: made });
+    await this.postNews(postId);
+    return made;
   }
 
   async deleteComment(postId: bigint, commentId: bigint, userId: bigint): Promise<void> {
@@ -557,6 +575,11 @@ export class SocialService {
       .update(posts)
       .set({ commentCount: sql`greatest(${posts.commentCount} - 1, 0)` })
       .where(eq(posts.id, postId));
+    await this.deps.bus.publish(`post:${postId}`, {
+      type: "COMMENT_DELETE",
+      data: { postId: postId.toString(), id: commentId.toString() },
+    });
+    await this.postNews(postId);
   }
 
   /* ── Follows ───────────────────────────────────────────────────────────── */

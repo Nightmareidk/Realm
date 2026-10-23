@@ -8,7 +8,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApi, usePosts } from "@/data";
 import { Icon } from "@/icon";
-import { useLiveEvent } from "@/live";
+import { live, useLiveEvent } from "@/live";
 import { feedPlay, feedStop } from "@/music/player";
 import { loadStories, useStories } from "@/music/stories";
 import { api, mediaSource } from "@/server";
@@ -45,6 +45,11 @@ export default function Home() {
   const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken<Post>[] }) => {
     const photo = viewableItems.find((v) => v.item?.kind === "image")?.item?.media[0];
     if (photo) setAmbient(photo.url);
+    // Their likes and comments, live.
+    live.watchPosts(
+      "home",
+      viewableItems.flatMap((v) => (v.item ? [v.item.id] : [])),
+    );
     // Like Instagram: the post on screen plays its song by itself.
     const withSong = viewableItems.find((v) => v.item?.sound && v.item.kind !== "clip")?.item;
     if (withSong?.sound)
