@@ -305,6 +305,20 @@ describe("moderators", () => {
       ).statusCode,
     ).toBe(400);
 
+    // A low role with powers the mod lacks can't be handed out by the mod.
+    const admins = await call(owner.cookie, "POST", `${base}/roles`, {
+      name: "Admins",
+      permissions: bits(Permission.ADMINISTRATOR),
+    });
+    const extra = await person();
+    const invite = (await call(owner.cookie, "POST", `${base}/invites`, {})).json();
+    await call(extra.cookie, "POST", `/invites/${invite.code}`);
+    const escalate = await call(mod.cookie, "PATCH", `${base}/members/${extra.id}`, {
+      roleIds: [admins.json().id],
+    });
+    expect(escalate.statusCode).toBe(403);
+    await call(owner.cookie, "DELETE", `${base}/roles/${admins.json().id}`);
+
     expect((await call(owner.cookie, "DELETE", `${base}/roles/${space.id}`)).statusCode).toBe(400);
     expect(
       (await call(owner.cookie, "DELETE", `${base}/roles/${helpers.json().id}`)).statusCode,
@@ -317,6 +331,8 @@ describe("moderators", () => {
       .entries.map((e: { action: string }) => e.action);
     expect(actions.filter((a: string) => a.startsWith("role."))).toEqual([
       "role.delete",
+      "role.delete",
+      "role.create",
       "role.reorder",
       "role.update",
       "role.create",

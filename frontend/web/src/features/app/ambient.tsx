@@ -37,8 +37,10 @@ export function AmbientLight() {
     <div aria-hidden="true" className={styles.light}>
       <div className={styles.lightPlain} />
       {url ? (
-        // biome-ignore lint/performance/noImgElement: a decorative blur of the page's own picture.
-        <img key={url} src={url} alt="" />
+        <span key={url} className={`r-soft ${styles.lightImage}`}>
+          {/* biome-ignore lint/performance/noImgElement: a decorative blur of the page's own picture. */}
+          <img src={url} alt="" decoding="async" />
+        </span>
       ) : null}
     </div>
   );

@@ -449,7 +449,7 @@ export function ProfileView({ username }: { username: string }) {
               {u.bio}
             </p>
           )}
-          {p.websiteUrl && (
+          {p.websiteUrl && /^https?:\/\//i.test(p.websiteUrl) && (
             <a
               href={p.websiteUrl}
               target="_blank"

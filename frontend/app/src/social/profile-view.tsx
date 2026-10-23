@@ -260,7 +260,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
           </View>
         ) : null}
         {profile.user.bio ? <Text style={s.bio}>{profile.user.bio}</Text> : null}
-        {profile.websiteUrl ? (
+        {profile.websiteUrl && /^https?:\/\//i.test(profile.websiteUrl) ? (
           <Pressable
             accessibilityRole="link"
             onPress={() => Linking.openURL(profile.websiteUrl as string)}

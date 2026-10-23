@@ -53,9 +53,12 @@ export function Comments({ post, onCount }: { post: Post; onCount?: (n: number) 
     put({ liked: on, likeCount: c.likeCount + (on ? 1 : -1) });
     try {
       put(
-        await api<{ likeCount: number; liked: boolean }>(`/posts/${post.id}/comments/${c.id}/like`, {
-          method: on ? "PUT" : "DELETE",
-        }),
+        await api<{ likeCount: number; liked: boolean }>(
+          `/posts/${post.id}/comments/${c.id}/like`,
+          {
+            method: on ? "PUT" : "DELETE",
+          },
+        ),
       );
     } catch {
       put({ liked: c.liked, likeCount: c.likeCount });
@@ -142,7 +145,9 @@ export function Comments({ post, onCount }: { post: Post; onCount?: (n: number) 
                     )}
                   >
                     <Heart aria-hidden="true" size={15} weight={c.liked ? "fill" : "regular"} />
-                    <span className="sr-only">{c.liked ? "Unlike the comment" : "Like the comment"}</span>
+                    <span className="sr-only">
+                      {c.liked ? "Unlike the comment" : "Like the comment"}
+                    </span>
                   </button>
                 )}
               </li>

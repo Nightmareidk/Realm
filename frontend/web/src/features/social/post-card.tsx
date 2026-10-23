@@ -156,13 +156,13 @@ export function PostCard({
       aria-label={`Post by ${post.author.displayName}`}
     >
       {glow && (
-        // biome-ignore lint/performance/noImgElement: a decorative blur of the post's own photo.
-        <img
-          src={glow}
-          alt=""
+        <span
           aria-hidden="true"
-          className="pointer-events-none absolute top-[12%] -left-[10%] -z-10 h-[70%] w-[120%] rounded-full object-cover opacity-55 blur-[70px] saturate-150"
-        />
+          className="r-soft top-[8%] -left-[12%] -z-10 h-[80%] w-[124%] opacity-60 [mask-image:radial-gradient(closest-side,black_35%,transparent)]"
+        >
+          {/* biome-ignore lint/performance/noImgElement: a decorative blur of the post's own photo. */}
+          <img src={glow} alt="" loading="lazy" decoding="async" />
+        </span>
       )}
       <header className="flex items-center gap-2.5 px-1 pt-1 pb-2.5">
         <Link href={`/u/${post.author.username}`} className="shrink-0">

@@ -644,6 +644,14 @@ export class SafetyService {
       if (wanted.some((id) => !assignable.some((r) => r.id === id))) {
         throw forbidden("You can only give roles below your own.");
       }
+      // Nor a role carrying powers you don't have yourself (a low "Admin" role left lying around).
+      const adding = wanted.filter((id) => !theirs.memberRoleIds.includes(id));
+      for (const id of adding) {
+        const role = access.roles.find((r) => r.id === id);
+        if (role && (role.permissions & ~access.base) !== 0n) {
+          throw forbidden(`You can't give ${role.name}: it has permissions you don't have.`);
+        }
+      }
       // Roles at or above the actor's own stay as they are.
       const kept = theirs.memberRoleIds.filter((id) => !assignable.some((r) => r.id === id));
       await this.db.transaction(async (tx) => {

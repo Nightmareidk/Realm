@@ -222,13 +222,10 @@ export function StoryViewer({
       {story && current && (
         <div className="relative flex size-full items-center justify-center">
           {story.media.kind === "image" && (
-            // biome-ignore lint/performance/noImgElement: a decorative blur of the Story's photo.
-            <img
-              src={story.media.url}
-              alt=""
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 size-full object-cover opacity-40 blur-[90px] saturate-150"
-            />
+            <span aria-hidden="true" className="r-soft inset-0 opacity-45">
+              {/* biome-ignore lint/performance/noImgElement: a decorative blur of the Story's photo. */}
+              <img src={story.media.url} alt="" />
+            </span>
           )}
           <button
             type="button"
