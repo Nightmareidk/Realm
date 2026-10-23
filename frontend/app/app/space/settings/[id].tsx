@@ -196,16 +196,21 @@ function Glow({ id }: { id: string }) {
               {d.level >= g.level ? "Unlocked" : `${g.sparks} Sparks`}
             </Text>
           </View>
-          {g.perks.map((p) => (
-            <View key={p} style={s.perk}>
-              <Icon
-                name={d.level >= g.level ? "CheckCircleFill" : "Sparkle"}
-                size={16}
-                color={d.level >= g.level ? t.colors.accent : t.colors.textSoft}
-              />
-              <Text style={s.perkText}>{p}</Text>
-            </View>
-          ))}
+          {g.perks.map((p) => {
+            const soon = "soon" in p && p.soon;
+            const on = d.level >= g.level && !soon;
+            return (
+              <View key={p.text} style={s.perk}>
+                <Icon
+                  name={on ? "CheckCircleFill" : "Sparkle"}
+                  size={16}
+                  color={on ? t.colors.accent : t.colors.textSoft}
+                />
+                <Text style={[s.perkText, soon && { color: t.colors.textSoft }]}>{p.text}</Text>
+                {soon ? <Text style={s.soon}>Soon</Text> : null}
+              </View>
+            );
+          })}
         </View>
       ))}
       {d.backers.length ? (
@@ -442,6 +447,17 @@ const make = (t: NativeTheme) =>
     },
     levelNeed: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: t.colors.textSoft },
     perk: { flexDirection: "row", alignItems: "center", gap: 8 },
+    soon: {
+      fontFamily: t.fonts.bold,
+      fontSize: 11.5 * t.textScale,
+      color: t.colors.textSoft,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      overflow: "hidden",
+    },
     perkText: {
       fontFamily: t.fonts.body,
       fontSize: 14 * t.textScale,

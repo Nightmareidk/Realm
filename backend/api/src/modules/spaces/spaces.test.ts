@@ -384,6 +384,16 @@ describe("rooms, leaving and Explore", () => {
     expect(left.find((c: { id: string }) => c.id === lfg.id).parentId).toBeNull();
   });
 
+  it("keeps Glow perks for Spaces that have the Sparks", async () => {
+    const owner = await person();
+    const space = await newSpace(owner.cookie);
+    const renamed = await call(owner.cookie, "PATCH", `/communities/${space.id}`, {
+      slug: "my-own-name",
+    });
+    expect(renamed.statusCode).toBe(403);
+    expect(renamed.json().error.message).toContain("Glow 3");
+  });
+
   it("lets members leave but not the owner", async () => {
     const owner = await person();
     const member = await person();

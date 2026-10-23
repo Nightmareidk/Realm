@@ -11,9 +11,9 @@ export const GLOW_LEVELS = [
     sparks: 3,
     name: "Glow 1",
     perks: [
-      "A banner across the top of the Space",
-      "Photos and files up to 50 MB",
-      "Clearer sound in voice rooms",
+      { text: "A banner across the top of the Space" },
+      { text: "Photos and files up to 50 MB", soon: true },
+      { text: "Clearer sound in voice rooms", soon: true },
     ],
   },
   {
@@ -21,9 +21,9 @@ export const GLOW_LEVELS = [
     sparks: 9,
     name: "Glow 2",
     perks: [
-      "A Space look: one theme everyone inside sees",
-      "A moving Space picture",
-      "Up to 100 rooms",
+      { text: "A moving Space picture (a GIF)" },
+      { text: "Up to 100 rooms" },
+      { text: "A Space look: one theme everyone inside sees", soon: true },
     ],
   },
   {
@@ -31,12 +31,22 @@ export const GLOW_LEVELS = [
     sparks: 18,
     name: "Glow 3",
     perks: [
-      "Your own invite name (tomyrealm.com/your-space)",
-      "Studio sound in voice rooms",
-      "Listen together: play music to a whole room",
+      { text: "Your own invite name (tomyrealm.com/your-space)" },
+      { text: "Studio sound in voice rooms", soon: true },
+      { text: "Listen together: play music to a whole room", soon: true },
     ],
   },
-] as const;
+] as const satisfies readonly {
+  level: number;
+  sparks: number;
+  name: string;
+  perks: readonly { text: string; soon?: boolean }[];
+}[];
+
+/** The Glow level each working perk needs (the server checks these). */
+export const GLOW_NEEDS = { banner: 1, movingPicture: 2, moreRooms: 2, inviteName: 3 } as const;
+/** Rooms a Space can have, and with Glow 2. */
+export const ROOMS_AT_GLOW = 100;
 
 /** How many Sparks one person can give one Space at a time. */
 export const SPARKS_PER_PERSON = 2;

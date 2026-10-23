@@ -16,6 +16,26 @@ import { memberAccess } from "./access";
 
 const { spaceSparks, communities, users, auditLog } = schema;
 
+/** A Space's Glow level right now (from its live Sparks). */
+export async function spaceGlow(db: Deps["db"], communityId: bigint) {
+  const [count] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(spaceSparks)
+    .where(and(eq(spaceSparks.communityId, communityId), gt(spaceSparks.endsAt, new Date())));
+  return glowLevel(count?.n ?? 0);
+}
+
+/** Refuses a perk the Space hasn't lit up yet, saying how many Sparks it takes. */
+export async function needGlow(db: Deps["db"], communityId: bigint, level: number, what: string) {
+  if ((await spaceGlow(db, communityId)) >= level) return;
+  const sparks = GLOW_LEVELS.find((g) => g.level === level)?.sparks ?? 0;
+  throw new AppError(
+    403,
+    "MISSING_PERMISSION",
+    `${what} needs Glow ${level} (${sparks} Sparks). Members can give Sparks in Space settings.`,
+  );
+}
+
 /**
  * Sparks (Realm's boosting) and AutoMod for Spaces. Sparks need real payments in production;
  * until those exist, anyone can try them free while Realm is being built (marked as tests).

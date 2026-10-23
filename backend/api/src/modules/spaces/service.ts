@@ -3,6 +3,7 @@ import {
   type CreateRoomBody,
   DEFAULT_EVERYONE_PERMISSIONS,
   type DiscoverSpace,
+  GLOW_NEEDS,
   has,
   isMinor,
   Limits,
@@ -10,6 +11,7 @@ import {
   Permission,
   type Presence,
   type ReorderRoomsBody,
+  ROOMS_AT_GLOW,
   RoomName,
   type RoomPrivacy,
   type SpaceDetail,
@@ -41,6 +43,7 @@ import {
   type SpaceAccess,
   spaceRoomAccess,
 } from "./access";
+import { needGlow, spaceGlow } from "./sparks";
 
 const {
   communities,
@@ -406,6 +409,21 @@ export class SpacesService {
     if (body.joinPolicy === "request") {
       throw new AppError(400, "COMING_SOON", "Asking to join is coming soon.");
     }
+    // Glow perks: your own invite name (Glow 3), a banner (Glow 1), a moving picture (Glow 2).
+    if (body.slug && body.slug !== c.slug.toLowerCase()) {
+      await needGlow(this.db, c.id, GLOW_NEEDS.inviteName, "Your own invite name");
+    }
+    if (body.bannerMediaId) await needGlow(this.db, c.id, GLOW_NEEDS.banner, "A banner");
+    if (body.iconMediaId) {
+      const [icon] = await this.db
+        .select({ mimeType: schema.media.mimeType })
+        .from(schema.media)
+        .where(eq(schema.media.id, BigInt(body.iconMediaId)))
+        .limit(1);
+      if (icon?.mimeType === "image/gif") {
+        await needGlow(this.db, c.id, GLOW_NEEDS.movingPicture, "A moving Space picture");
+      }
+    }
     const slug =
       body.slug && body.slug !== c.slug.toLowerCase() ? await this.freeSlug(body.slug) : undefined;
     // A new icon or banner must be the changer's own finished image upload.
@@ -724,11 +742,18 @@ export class SpacesService {
       .from(channels)
       .where(and(eq(channels.communityId, id), isNull(channels.deletedAt)));
     if ((count?.n ?? 0) >= Limits.roomsPerSpace) {
-      throw new AppError(
-        403,
-        "LIMIT_REACHED",
-        `A Space can have up to ${Limits.roomsPerSpace} rooms.`,
-      );
+      // Glow 2 doubles the rooms a Space can have.
+      const glow = await spaceGlow(this.db, id);
+      if (glow < GLOW_NEEDS.moreRooms) {
+        throw new AppError(
+          403,
+          "LIMIT_REACHED",
+          `A Space can have up to ${Limits.roomsPerSpace} rooms, or ${ROOMS_AT_GLOW} with Glow 2.`,
+        );
+      }
+      if ((count?.n ?? 0) >= ROOMS_AT_GLOW) {
+        throw new AppError(403, "LIMIT_REACHED", `A Space can have up to ${ROOMS_AT_GLOW} rooms.`);
+      }
     }
     const [row] = await this.db
       .insert(channels)

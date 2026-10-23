@@ -1,3 +1,4 @@
+import { schema } from "@realm/db";
 import { NoopPusher, type Pusher } from "@realm/server-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -188,12 +189,32 @@ describe("uploads", () => {
     expect(theirs.json().error.code).toBe("UPLOAD_INVALID");
   });
 
+  /** Lights a Space up with test Sparks from new people. */
+  async function glow(spaceId: string, n: number) {
+    for (let i = 0; i < n; i++) {
+      const giver = await person();
+      await t.deps.db.insert(schema.spaceSparks).values({
+        id: t.deps.ids.next(),
+        communityId: BigInt(spaceId),
+        userId: BigInt(giver.id),
+        source: "test",
+        endsAt: new Date(Date.now() + 86_400_000),
+      });
+    }
+  }
+
   it("gives a Space a banner its members (or anyone, if public) can see", async () => {
     const noor = await person();
     const kenji = await person();
     const stranger = await person();
     const { space } = await spaceWith(noor, kenji);
     const { mediaId } = await upload(noor.cookie, "image", PNG, "image/png");
+    // A banner is a Glow 1 perk: without Sparks it's refused.
+    const early = await call(noor.cookie, "PATCH", `/communities/${space.id}`, {
+      bannerMediaId: mediaId,
+    });
+    expect(early.statusCode).toBe(403);
+    await glow(space.id, 3);
     const set = await call(noor.cookie, "PATCH", `/communities/${space.id}`, {
       bannerMediaId: mediaId,
     });
@@ -212,6 +233,7 @@ describe("uploads", () => {
       await call(noor.cookie, "POST", "/communities", { name: "Open", visibility: "public" })
     ).json();
     const shot = await upload(noor.cookie, "image", PNG, "image/png");
+    await glow(pub.id, 3);
     await call(noor.cookie, "PATCH", `/communities/${pub.id}`, { bannerMediaId: shot.mediaId });
     expect((await call(undefined, "GET", `/media/${shot.mediaId}/raw`)).statusCode).toBe(302);
     const cleared = await call(noor.cookie, "PATCH", `/communities/${pub.id}`, {
