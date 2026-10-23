@@ -3,6 +3,7 @@
 import { CaretLeft, Info, MagnifyingGlass, UserPlus } from "@phosphor-icons/react";
 import type { Conversation, UserSummary } from "@realm/contracts";
 import { Limits } from "@realm/contracts";
+import { THEME_ORDER, themes } from "@realm/design-tokens";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
@@ -85,9 +86,20 @@ export function ConversationView({ id }: { id: string }) {
   const otherStatus = other ? (presence[other.id] ?? "offline") : null;
   const around = c.recipients.filter((r) => presence[r.id] && presence[r.id] !== "offline").length;
 
+  const tint = chatTint(c.id);
   return (
-    <div className="flex h-dvh min-h-0 flex-col md:h-auto md:flex-1">
-      <header className="flex items-center gap-3 border-b border-line px-2 pt-2 pb-2.5 md:px-6 md:pt-0">
+    <div
+      className="r-chat-tint relative isolate flex h-dvh min-h-0 flex-col md:h-auto md:flex-1"
+      style={
+        {
+          "--chat": tint.accent,
+          "--on-chat": tint.onAccent,
+          "--chat-2": tint.lights[1] ?? tint.accent,
+        } as React.CSSProperties
+      }
+    >
+      <div aria-hidden="true" className="r-chat-wall" />
+      <header className="relative flex items-center gap-3 border-b border-line px-2 pt-2 pb-2.5 md:px-6 md:pt-0">
         <Link
           href="/messages"
           className="-mr-1 inline-flex size-10 shrink-0 items-center justify-center rounded-full text-fg-soft hover:bg-fg/8 hover:text-fg lg:hidden"
@@ -437,4 +449,11 @@ function RemoveButton({ name, onRemove }: { name: string; onRemove: () => void }
       Remove<span className="sr-only"> {name}</span>
     </button>
   );
+}
+
+/** A conversation's own colour (Look B): one of Realm's colours, picked from its id so it stays. */
+function chatTint(id: string) {
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return themes[THEME_ORDER[h % THEME_ORDER.length] ?? "mint"];
 }
