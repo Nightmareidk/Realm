@@ -329,7 +329,7 @@ export async function openConversation(recipientIds: string[], name?: string) {
 /** Rename a group, or pin it to the top of your list. */
 export async function updateConversation(
   id: string,
-  body: { name?: string | null; pinned?: boolean },
+  body: { name?: string | null; pinned?: boolean; colour?: Conversation["colour"] },
 ) {
   const c = await api<Conversation>(`/users/@me/channels/${id}`, { method: "PATCH", body });
   putConversation(c);

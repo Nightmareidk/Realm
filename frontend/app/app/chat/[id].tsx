@@ -26,6 +26,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { alert } from "@/alert";
 import { bodyOf, MessageRow, QUICK_REACTIONS, timeOf } from "@/chat/message-row";
 import { PhotoSend } from "@/chat/photo-send";
 import { PhotoViewer } from "@/chat/photo-viewer";
@@ -95,11 +96,7 @@ export default function Chat() {
   const { session } = useSession();
   const meId = session.status === "signedIn" ? session.user.id : null;
   const isDm = kind === "dm" || kind === "group_dm";
-  // Now Playing gives every conversation its own colour; other looks use yours.
   const theme = useTheme();
-  const own = t.style.chatColours && isDm && id ? chatColour(id) : null;
-  const accent = own?.accent ?? theme.accent;
-  const onAccent = own?.onAccent ?? theme.onAccent;
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [outgoing, setOutgoing] = useState<Outgoing[]>([]);
   const [text, setText] = useState("");
@@ -113,6 +110,16 @@ export default function Chat() {
   const [problem, setProblem] = useState<string | null>(null);
   /** This conversation as the list sees it: a request to you, or yours waiting to be accepted. */
   const [conv, setConv] = useState<Conversation | null>(null);
+  // Now Playing gives every conversation its own colour (the one someone in it picked, or one
+  // from its id); other looks use yours.
+  const own =
+    t.style.chatColours && isDm && id
+      ? conv?.colour
+        ? themes[conv.colour]
+        : chatColour(id)
+      : null;
+  const accent = own?.accent ?? theme.accent;
+  const onAccent = own?.onAccent ?? theme.onAccent;
   const [inputHeight, setInputHeight] = useState(INPUT_MIN);
   /** Photos picked, waiting in the big preview. */
   const [preview, setPreview] = useState<Photo[] | null>(null);
@@ -635,7 +642,11 @@ export default function Chat() {
           pointerEvents="none"
         />
       ) : null}
-      {isDm && conv ? <ChatHeader conv={conv} meId={meId} /> : <TopBar title={title ?? "Chat"} />}
+      {isDm && conv ? (
+        <ChatHeader conv={conv} meId={meId} onChange={setConv} />
+      ) : (
+        <TopBar title={title ?? "Chat"} />
+      )}
       {isDm ? (
         <View style={s.notice}>
           <Text style={s.noticeText}>Not end-to-end encrypted yet</Text>
@@ -844,10 +855,19 @@ export default function Chat() {
  * A conversation's header: who it's with (their picture, name and badge), and whether they're
  * around right now; tap it for their profile. Groups show their name and how many are in it.
  */
-function ChatHeader({ conv, meId }: { conv: Conversation; meId: string | null }) {
+function ChatHeader({
+  conv,
+  meId,
+  onChange,
+}: {
+  conv: Conversation;
+  meId: string | null;
+  onChange: (c: Conversation) => void;
+}) {
   const { t } = useTheme();
   const s = useStyles(make);
   const router = useRouter();
+  const sheet = useSheet();
   const insets = useSafeAreaInsets();
   const others = conv.recipients.filter((r) => r.id !== meId);
   const one = conv.type === "dm" ? others[0] : undefined;
@@ -899,20 +919,63 @@ function ChatHeader({ conv, meId }: { conv: Conversation; meId: string | null })
           </Text>
         </View>
       </Pressable>
-      {one ? (
-        <Pressable
-          onPress={() =>
-            router.push({ pathname: "/user/[username]", params: { username: one.username } })
-          }
-          accessibilityRole="button"
-          accessibilityLabel={`About ${one.displayName}`}
-          style={s.headIcon}
-        >
-          <Icon name="DotsThreeBold" size={22} color={t.colors.text} />
-        </Pressable>
-      ) : (
-        <View style={s.headIcon} />
-      )}
+      <Pressable
+        onPress={() => {
+          const colours = () =>
+            sheet({
+              title: "Chat colour",
+              line: "Everyone in this chat sees it.",
+              actions: [
+                {
+                  label: conv.colour ? "Automatic" : "Automatic (now)",
+                  icon: "Sparkle",
+                  onPress: () => setColour(null),
+                },
+                ...THEME_ORDER.map((c) => ({
+                  label: conv.colour === c ? `${themes[c].name} (now)` : themes[c].name,
+                  icon: "Palette" as const,
+                  onPress: () => setColour(c),
+                })),
+              ],
+            });
+          const setColour = async (colour: Conversation["colour"]) => {
+            try {
+              onChange(
+                await api<Conversation>(`/users/@me/channels/${conv.id}`, {
+                  method: "PATCH",
+                  body: { colour },
+                }),
+              );
+            } catch (err) {
+              alert("Colour not changed", err instanceof ApiError ? err.message : "Try again.");
+            }
+          };
+          sheet({
+            title: name,
+            actions: [
+              { label: "Chat colour", icon: "Palette", onPress: colours },
+              ...(one
+                ? [
+                    {
+                      label: "See their profile",
+                      icon: "Eye" as const,
+                      onPress: () =>
+                        router.push({
+                          pathname: "/user/[username]",
+                          params: { username: one.username },
+                        }),
+                    },
+                  ]
+                : []),
+            ],
+          });
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Chat options: colour and profile"
+        style={s.headIcon}
+      >
+        <Icon name="DotsThreeBold" size={22} color={t.colors.text} />
+      </Pressable>
     </View>
   );
 }

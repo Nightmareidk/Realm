@@ -260,6 +260,7 @@ export class ConversationsService {
           request: requestedAt !== null,
           unread: unreadRows.find((u) => u.channelId === channel.id)?.n ?? 0,
           awaiting: channel.type === "dm" && waiting.size > 0,
+          colour: (channel.colour as Conversation["colour"]) ?? null,
           pinnedAt,
         };
       },
@@ -450,6 +451,13 @@ export class ConversationsService {
         .where(
           and(eq(channelRecipients.channelId, channelId), eq(channelRecipients.userId, userId)),
         );
+    }
+    if (body.colour !== undefined && (body.colour ?? null) !== ctx.channel.colour) {
+      await this.db
+        .update(channels)
+        .set({ colour: body.colour ?? null })
+        .where(eq(channels.id, channelId));
+      await this.announce(channelId, ctx.recipients, "CHANNEL_UPDATE");
     }
     if (body.name !== undefined) {
       if (ctx.channel.type !== "group_dm")

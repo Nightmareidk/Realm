@@ -341,7 +341,8 @@ export function useMessagesWaiting() {
   return useRealm(
     (s) =>
       s.conversations.filter(
-        (c) => conversationUnread(s.reads, c, s.me?.id) && !isMuted(s, "channel", c.id),
+        (c) =>
+          !c.request && conversationUnread(s.reads, c, s.me?.id) && !isMuted(s, "channel", c.id),
       ).length,
   );
 }

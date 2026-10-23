@@ -17,7 +17,7 @@ import { Avatar } from "@/features/spaces/person";
 import { cx } from "@/lib/cx";
 import { ConversationAvatar, previewLine, shortWhen } from "./parts";
 
-type Filter = "all" | "unread" | "groups";
+type Filter = "all" | "unread" | "groups" | "requests";
 
 /**
  * The inbox: who's around (a row of faces you can tap to talk to), then your conversations,
@@ -36,6 +36,8 @@ export function Inbox({ activeId, onNew }: { activeId: string | null; onNew: () 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return conversations.filter((c) => {
+      // Message requests wait in Requests until you accept or reply.
+      if ((filter === "requests") !== c.request) return false;
       if (filter === "unread" && !conversationUnread(reads, c, meId)) return false;
       if (filter === "groups" && c.type !== "group_dm") return false;
       if (!q) return true;
@@ -55,7 +57,10 @@ export function Inbox({ activeId, onNew }: { activeId: string | null; onNew: () 
     .filter(({ r }) => presence[r.id] === "online" || presence[r.id] === "idle")
     .slice(0, 12);
 
-  const unreadCount = conversations.filter((c) => conversationUnread(reads, c, meId)).length;
+  const unreadCount = conversations.filter(
+    (c) => !c.request && conversationUnread(reads, c, meId),
+  ).length;
+  const requestCount = conversations.filter((c) => c.request).length;
 
   return (
     <div className="flex min-h-0 flex-col md:h-full">
@@ -100,6 +105,9 @@ export function Inbox({ activeId, onNew }: { activeId: string | null; onNew: () 
               ["all", "All"],
               ["unread", unreadCount ? `Unread ${unreadCount}` : "Unread"],
               ["groups", "Groups"],
+              ...(requestCount || filter === "requests"
+                ? ([["requests", `Requests ${requestCount}`]] as const)
+                : []),
             ] as const
           ).map(([id, label]) => (
             <button

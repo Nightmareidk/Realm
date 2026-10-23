@@ -60,6 +60,7 @@ const inbox = async (cookie: string) =>
     pinned: boolean;
     seen: { userId: string; messageId: string }[];
     request: boolean;
+    colour?: string | null;
     awaiting: boolean;
     unread: number;
   }[];
@@ -218,6 +219,12 @@ describe("direct messages", () => {
       name: "Ranked night",
     });
     expect(named.json().name).toBe("Ranked night");
+    // A colour one person picks is everyone's.
+    const coloured = await call(kenji.cookie, "PATCH", `/users/@me/channels/${group.id}`, {
+      colour: "orchid",
+    });
+    expect(coloured.json().colour).toBe("orchid");
+    expect((await inbox(noor.cookie))[0]?.colour).toBe("orchid");
     const added = await call(
       ama.cookie,
       "PUT",

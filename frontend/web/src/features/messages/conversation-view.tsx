@@ -1,6 +1,6 @@
 "use client";
 
-import { CaretLeft, Info, MagnifyingGlass, UserPlus } from "@phosphor-icons/react";
+import { CaretLeft, Info, MagnifyingGlass, Sparkle, UserPlus } from "@phosphor-icons/react";
 import type { Conversation, UserSummary } from "@realm/contracts";
 import { Limits } from "@realm/contracts";
 import { THEME_ORDER, themes } from "@realm/design-tokens";
@@ -10,6 +10,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Dialog } from "@/components/dialog";
 import { FormNotice, labelClass } from "@/components/form";
 import { pill, textLink } from "@/components/pill";
+import { Popover } from "@/features/app/menus";
 import { conversationScope } from "@/features/chat/scope";
 import { addToGroup, leaveConversation, updateConversation } from "@/features/realtime/actions";
 import {
@@ -86,7 +87,7 @@ export function ConversationView({ id }: { id: string }) {
   const otherStatus = other ? (presence[other.id] ?? "offline") : null;
   const around = c.recipients.filter((r) => presence[r.id] && presence[r.id] !== "offline").length;
 
-  const tint = chatTint(c.id);
+  const tint = chatTint(c.id, c.colour);
   return (
     <div
       className="r-chat-tint relative isolate flex h-dvh min-h-0 flex-col md:h-auto md:flex-1"
@@ -137,6 +138,7 @@ export function ConversationView({ id }: { id: string }) {
           </span>
         </button>
         <NotE2eeChip onClick={() => setExplain(true)} className="max-sm:hidden" />
+        <ChatColour c={c} />
         <button
           type="button"
           onClick={() => setDetails(true)}
@@ -147,6 +149,12 @@ export function ConversationView({ id }: { id: string }) {
         </button>
       </header>
 
+      {c.request && <RequestBar c={c} />}
+      {c.awaiting && (
+        <p className="relative border-b border-line px-6 py-2 text-[0.88rem] text-fg-soft">
+          They haven't accepted yet, so it's words only until they do.
+        </p>
+      )}
       <div className="relative flex min-h-0 flex-1 flex-col">
         <Chat
           key={c.id}
@@ -451,9 +459,155 @@ function RemoveButton({ name, onRemove }: { name: string; onRemove: () => void }
   );
 }
 
-/** A conversation's own colour (Look B): one of Realm's colours, picked from its id so it stays. */
-function chatTint(id: string) {
+/**
+ * A conversation's own colour (Look B): the one someone in it picked, or one of Realm's colours
+ * picked from its id so it stays.
+ */
+function chatTint(id: string, chosen?: Conversation["colour"]) {
+  if (chosen) return themes[chosen];
   let h = 0;
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return themes[THEME_ORDER[h % THEME_ORDER.length] ?? "mint"];
+}
+
+/** Chat colour: anyone in the conversation picks it, and everyone in it sees it. */
+function ChatColour({ c }: { c: Conversation }) {
+  const [error, setError] = useState("");
+  const pick = async (colour: Conversation["colour"], close: () => void) => {
+    setError("");
+    try {
+      await updateConversation(c.id, { colour });
+      close();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "That didn't change. Try again.");
+    }
+  };
+  return (
+    <Popover
+      label="Chat colour"
+      buttonClass="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-fg/10 px-3.5 text-[0.88rem] font-bold text-fg hover:bg-fg/15 aria-expanded:bg-fg/15 max-sm:hidden"
+      panelClass="w-[15rem]"
+      button={
+        <>
+          <Sparkle aria-hidden="true" size={16} />
+          Chat colour
+        </>
+      }
+    >
+      {(close) => (
+        <div className="p-2">
+          <p className="px-1 pb-2 text-[0.85rem] text-fg-soft">Everyone in this chat sees it.</p>
+          <div className="grid grid-cols-5 gap-2">
+            <button
+              type="button"
+              aria-pressed={!c.colour}
+              onClick={() => void pick(null, close)}
+              className={cx(
+                "grid size-10 place-items-center rounded-full bg-fg/8 text-[0.7rem] font-bold text-fg-soft",
+                !c.colour && "ring-[3px] ring-fg",
+              )}
+            >
+              Auto
+            </button>
+            {THEME_ORDER.map((id) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={c.colour === id}
+                aria-label={themes[id].name}
+                onClick={() => void pick(id, close)}
+                className={cx("size-10 rounded-full", c.colour === id && "ring-[3px] ring-fg")}
+                style={{ backgroundColor: themes[id].accent }}
+              />
+            ))}
+          </div>
+          {error && (
+            <p role="alert" className="px-1 pt-2 text-[0.85rem] text-danger">
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+    </Popover>
+  );
+}
+
+/**
+ * A message request (someone you don't follow wrote first): they can't see you've read it, and
+ * nothing more arrives as a notification, until you accept. Replying accepts too.
+ */
+function RequestBar({ c }: { c: Conversation }) {
+  const router = useRouter();
+  const meId = useRealm((s) => s.me?.id);
+  const them = c.recipients.find((r) => r.id !== meId) ?? c.recipients[0];
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const act = async (what: "accept" | "delete" | "block") => {
+    setBusy(true);
+    setError("");
+    try {
+      if (what === "accept") {
+        await api(`/users/@me/channels/${c.id}/accept`, { body: {} });
+        setState((s) => ({
+          ...s,
+          conversations: s.conversations.map((x) => (x.id === c.id ? { ...x, request: false } : x)),
+        }));
+      } else {
+        if (what === "block" && them) {
+          await api(`/users/@me/blocks/${them.id}`, { method: "PUT" });
+        }
+        await leaveConversation(c.id);
+        router.push("/messages");
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "That didn't work. Try again.");
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="relative border-b border-line bg-fg/[0.04] px-6 py-3.5">
+      <p className="font-bold text-fg">Message request</p>
+      <p className="mt-0.5 text-[0.92rem] text-fg-soft">
+        {them ? `${them.displayName} wants to message you.` : "Someone wants to message you."} They
+        won't know you've seen it until you accept. Replying accepts it too.
+      </p>
+      {error && (
+        <p role="alert" className="mt-1.5 text-[0.9rem] text-danger">
+          {error}
+        </p>
+      )}
+      <div className="mt-2.5 flex flex-wrap gap-2">
+        <button
+          type="button"
+          aria-disabled={busy || undefined}
+          onClick={() => void act("accept")}
+          className={pill("action", "sm")}
+        >
+          Accept
+        </button>
+        <button
+          type="button"
+          aria-disabled={busy || undefined}
+          onClick={() => void act("delete")}
+          className={pill("ghost", "sm")}
+        >
+          Delete
+        </button>
+        {them && (
+          <button
+            type="button"
+            aria-disabled={busy || undefined}
+            onClick={() => void act("block")}
+            className={pill(
+              "ghost",
+              "sm",
+              "text-danger shadow-[inset_0_0_0_1.5px_var(--r-danger-line)]",
+            )}
+          >
+            Block
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }

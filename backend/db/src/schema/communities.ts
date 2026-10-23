@@ -149,6 +149,8 @@ export const channels = pgTable(
     ownerId: id(),
     iconMediaId: id(),
     encryption: encryption().notNull().default("none"),
+    /** A conversation's colour, shared by everyone in it (one of the theme accents). */
+    colour: text(),
     lastMessageId: id(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

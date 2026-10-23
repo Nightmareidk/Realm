@@ -3,7 +3,7 @@ import { Snowflake } from "../ids";
 import { Limits } from "../limits";
 import { IsoDateTime } from "./common";
 import { PermissionBits } from "./communities";
-import { UserSummary } from "./users";
+import { ThemeAccent, UserSummary } from "./users";
 
 export const ChannelType = z.enum([
   "text",
@@ -89,11 +89,15 @@ export const OpenDmBody = z.object({
 });
 export type OpenDmBody = z.infer<typeof OpenDmBody>;
 
-/** Rename a group (null clears it), or pin or unpin a conversation in your own list. */
+/**
+ * Rename a group (null clears it), pin or unpin a conversation in your own list, or set its
+ * colour for everyone in it (null goes back to automatic).
+ */
 export const UpdateConversationBody = z
   .object({
     name: z.string().trim().min(1).max(100).nullable(),
     pinned: z.boolean(),
+    colour: ThemeAccent.nullable(),
   })
   .partial();
 export type UpdateConversationBody = z.infer<typeof UpdateConversationBody>;
@@ -131,6 +135,8 @@ export const Conversation = Channel.extend({
   awaiting: z.boolean(),
   /** Messages from others you haven't read yet (counted up to 99). */
   unread: z.number().int(),
+  /** Its colour, chosen by anyone in it; null picks one from its id. */
+  colour: ThemeAccent.nullable(),
 }).meta({ id: "Conversation" });
 export type Conversation = z.infer<typeof Conversation>;
 
