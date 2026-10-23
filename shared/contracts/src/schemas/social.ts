@@ -102,8 +102,16 @@ export const Comment = z
     createdAt: IsoDateTime,
     /** Taken down after reports; only its author still sees it. */
     hidden: z.boolean(),
+    likeCount: z.number().int(),
+    /** Whether the person asking has liked it. */
+    liked: z.boolean(),
   })
   .meta({ id: "Comment" });
+
+export const CommentLike = z
+  .object({ likeCount: z.number().int(), liked: z.boolean() })
+  .meta({ id: "CommentLike" });
+export type CommentLike = z.infer<typeof CommentLike>;
 export type Comment = z.infer<typeof Comment>;
 
 export const CommentPage = z

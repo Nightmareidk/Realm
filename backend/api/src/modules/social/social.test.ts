@@ -190,6 +190,15 @@ describe("likes, comments and activity", () => {
     const thread = (await call(noor.cookie, "GET", `/posts/${post.id}/comments`)).json().items;
     expect(thread.map((c: { body: string }) => c.body)).toEqual(["me", "nice"]);
 
+    // Comments take likes too, once per person.
+    await call(noor.cookie, "PUT", `/posts/${post.id}/comments/${top.id}/like`);
+    const again = await call(noor.cookie, "PUT", `/posts/${post.id}/comments/${top.id}/like`);
+    expect(again.json()).toEqual({ likeCount: 1, liked: true });
+    const seen = (await call(noor.cookie, "GET", `/posts/${post.id}/comments`)).json().items[0];
+    expect(seen).toMatchObject({ likeCount: 1, liked: true });
+    const gone = await call(noor.cookie, "DELETE", `/posts/${post.id}/comments/${top.id}/like`);
+    expect(gone.json()).toEqual({ likeCount: 0, liked: false });
+
     const activity = (await call(noor.cookie, "GET", "/users/@me/activity")).json();
     expect(activity.unread).toBe(2);
     expect(activity.items.map((a: { type: string }) => a.type).sort()).toEqual([

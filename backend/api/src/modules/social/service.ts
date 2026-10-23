@@ -506,7 +506,77 @@ export class SocialService {
       )
       .orderBy(comments.path)
       .limit(500);
-    return rows.map(({ c, author }) => toComment(c, author));
+    const mine =
+      viewerId && rows.length
+        ? await this.db
+            .select({ id: votes.targetId })
+            .from(votes)
+            .where(
+              and(
+                eq(votes.userId, viewerId),
+                eq(votes.targetType, "comment"),
+                inArray(
+                  votes.targetId,
+                  rows.map((r) => r.c.id),
+                ),
+              ),
+            )
+        : [];
+    const liked = new Set(mine.map((m) => m.id));
+    return rows.map(({ c, author }) => toComment(c, author, liked.has(c.id)));
+  }
+
+  /** Like or unlike a comment (it counts once per person). */
+  async likeComment(postId: bigint, commentId: bigint, userId: bigint, on: boolean) {
+    await this.visible(postId, userId);
+    const [c] = await this.db
+      .select({ id: comments.id, authorId: comments.authorId })
+      .from(comments)
+      .where(
+        and(
+          eq(comments.id, commentId),
+          eq(comments.postId, postId),
+          isNull(comments.deletedAt),
+          isNull(comments.removedAt),
+        ),
+      )
+      .limit(1);
+    if (!c) throw notFound("Comment");
+    if (on) {
+      const added = await this.db
+        .insert(votes)
+        .values({ userId, targetType: "comment", targetId: commentId, value: 1 })
+        .onConflictDoNothing()
+        .returning({ userId: votes.userId });
+      if (added.length) {
+        await this.db
+          .update(comments)
+          .set({ score: sql`${comments.score} + 1` })
+          .where(eq(comments.id, commentId));
+      }
+    } else {
+      const removed = await this.db
+        .delete(votes)
+        .where(
+          and(
+            eq(votes.userId, userId),
+            eq(votes.targetType, "comment"),
+            eq(votes.targetId, commentId),
+          ),
+        )
+        .returning({ userId: votes.userId });
+      if (removed.length) {
+        await this.db
+          .update(comments)
+          .set({ score: sql`greatest(${comments.score} - 1, 0)` })
+          .where(eq(comments.id, commentId));
+      }
+    }
+    const [now] = await this.db
+      .select({ score: comments.score })
+      .from(comments)
+      .where(eq(comments.id, commentId));
+    return { likeCount: now?.score ?? 0, liked: on };
   }
 
   async comment(postId: bigint, userId: bigint, body: CreateCommentBody): Promise<Comment> {
@@ -1109,6 +1179,7 @@ function deletedUser(id: bigint): UserSummary {
 function toComment(
   c: typeof comments.$inferSelect,
   author: Parameters<typeof toUserSummary>[0],
+  liked = false,
 ): Comment {
   return {
     id: c.id.toString(),
@@ -1119,5 +1190,7 @@ function toComment(
     depth: c.depth,
     createdAt: c.createdAt.toISOString(),
     hidden: c.removedAt !== null,
+    likeCount: Math.max(0, c.score),
+    liked,
   };
 }

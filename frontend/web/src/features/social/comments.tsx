@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowUp, Trash } from "@phosphor-icons/react";
+import { ArrowUp, Heart, Trash } from "@phosphor-icons/react";
 import type { Comment, CommentPage, Post } from "@realm/contracts";
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { useRealm } from "@/features/realtime/store";
 import { Avatar } from "@/features/spaces/person";
 import { ApiError, api } from "@/lib/api";
+import { cx } from "@/lib/cx";
 import { ago, useFetch, Verified } from "./shared";
 
 /**
@@ -40,6 +41,24 @@ export function Comments({ post, onCount }: { post: Post; onCount?: (n: number) 
       setError(err instanceof ApiError ? err.message : "Not sent. Try again.");
     } finally {
       setSending(false);
+    }
+  };
+
+  const like = async (c: Comment) => {
+    const on = !c.liked;
+    const put = (x: Partial<Comment>) =>
+      page.setData((d) =>
+        d ? { ...d, items: d.items.map((y) => (y.id === c.id ? { ...y, ...x } : y)) } : d,
+      );
+    put({ liked: on, likeCount: c.likeCount + (on ? 1 : -1) });
+    try {
+      put(
+        await api<{ likeCount: number; liked: boolean }>(`/posts/${post.id}/comments/${c.id}/like`, {
+          method: on ? "PUT" : "DELETE",
+        }),
+      );
+    } catch {
+      put({ liked: c.liked, likeCount: c.likeCount });
     }
   };
 
@@ -95,6 +114,11 @@ export function Comments({ post, onCount }: { post: Post; onCount?: (n: number) 
                     <button type="button" onClick={() => setReplyTo(c)} className="hover:text-fg">
                       Reply
                     </button>
+                    {c.likeCount > 0 && (
+                      <span>
+                        {c.likeCount} {c.likeCount === 1 ? "like" : "likes"}
+                      </span>
+                    )}
                     {(c.author.id === me?.id || post.author.id === me?.id) && (
                       <button
                         type="button"
@@ -107,6 +131,20 @@ export function Comments({ post, onCount }: { post: Post; onCount?: (n: number) 
                     )}
                   </p>
                 </div>
+                {!c.hidden && (
+                  <button
+                    type="button"
+                    aria-pressed={c.liked}
+                    onClick={() => void like(c)}
+                    className={cx(
+                      "mt-1 grid size-7 shrink-0 place-items-center rounded-full transition-transform active:scale-90",
+                      c.liked ? "text-[#ff6b8b]" : "text-fg-soft hover:text-fg",
+                    )}
+                  >
+                    <Heart aria-hidden="true" size={15} weight={c.liked ? "fill" : "regular"} />
+                    <span className="sr-only">{c.liked ? "Unlike the comment" : "Like the comment"}</span>
+                  </button>
+                )}
               </li>
             ))}
           </ul>

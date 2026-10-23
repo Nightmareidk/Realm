@@ -1,6 +1,7 @@
 import {
   ActivityPage,
   Comment,
+  CommentLike,
   CommentPage,
   CreateCommentBody,
   CreatePostBody,
@@ -116,6 +117,29 @@ export const postRoutes =
           .send(await social.comment(BigInt(req.params.postId), userId, req.body));
       },
     );
+
+    for (const method of ["put", "delete"] as const) {
+      app[method](
+        "/posts/:postId/comments/:commentId/like",
+        {
+          preHandler: requireAuth,
+          schema: {
+            params: PostParams.extend({ commentId: Snowflake }),
+            response: { 200: CommentLike },
+          },
+        },
+        async (req) => {
+          const { userId } = authOf(req);
+          await enforceLimit(deps, RateLimits.react, userId.toString());
+          return social.likeComment(
+            BigInt(req.params.postId),
+            BigInt(req.params.commentId),
+            userId,
+            method === "put",
+          );
+        },
+      );
+    }
 
     app.delete(
       "/posts/:postId/comments/:commentId",

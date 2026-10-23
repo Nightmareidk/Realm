@@ -156,6 +156,23 @@ export function CommentsSheet({
     });
   }
 
+  async function like(c: Comment) {
+    const on = !c.liked;
+    const put = (x: Partial<Comment>) =>
+      setItems((now) => now?.map((y) => (y.id === c.id ? { ...y, ...x } : y)) ?? now);
+    put({ liked: on, likeCount: c.likeCount + (on ? 1 : -1) });
+    try {
+      put(
+        await api<{ likeCount: number; liked: boolean }>(
+          `/posts/${post.id}/comments/${c.id}/like`,
+          { method: on ? "PUT" : "DELETE" },
+        ),
+      );
+    } catch {
+      put({ liked: c.liked, likeCount: c.likeCount });
+    }
+  }
+
   function reply(c: Comment) {
     setReplyTo(c);
     setText((now) =>
@@ -244,6 +261,11 @@ export function CommentsSheet({
                         >
                           <Text style={s.replyLink}>Reply</Text>
                         </Pressable>
+                        {item.likeCount > 0 ? (
+                          <Text style={s.replyLink}>
+                            {item.likeCount} {item.likeCount === 1 ? "like" : "likes"}
+                          </Text>
+                        ) : null}
                         {Platform.OS === "web" ? (
                           <Pressable
                             onPress={() => menu(item)}
@@ -256,6 +278,22 @@ export function CommentsSheet({
                         ) : null}
                       </View>
                     </Pressable>
+                    {item.hidden ? null : (
+                      <Pressable
+                        onPress={() => like(item)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: item.liked }}
+                        accessibilityLabel={item.liked ? "Unlike the comment" : "Like the comment"}
+                        hitSlop={8}
+                        style={s.likeBtn}
+                      >
+                        <Icon
+                          name={item.liked ? "HeartFill" : "Heart"}
+                          size={16}
+                          color={item.liked ? "#ff6b8b" : t.colors.textSoft}
+                        />
+                      </Pressable>
+                    )}
                   </Animated.View>
                 )}
                 ListEmptyComponent={
@@ -410,6 +448,7 @@ const make = (t: NativeTheme) =>
     hidden: { fontStyle: "italic", color: t.colors.textSoft },
     under: { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 5 },
     replyLink: { fontFamily: t.fonts.bold, fontSize: 12.5 * t.textScale, color: t.colors.textSoft },
+    likeBtn: { width: 32, alignItems: "center", paddingTop: 4 },
     empty: {
       fontFamily: t.fonts.body,
       fontSize: 15 * t.textScale,
