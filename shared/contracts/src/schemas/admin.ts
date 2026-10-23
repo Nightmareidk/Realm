@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { Snowflake } from "../ids";
 import { IsoDateTime } from "./common";
+import { Sound } from "./music";
 import { ReportReason } from "./safety";
-import { StaffRole, UserSummary, Username, VerifiedKind } from "./users";
+import { StaffRole, Username, UserSummary, VerifiedKind } from "./users";
 
 /**
  * Verification (the badge) and Realm's admin pages: the people who ask to be verified, the
@@ -14,9 +15,7 @@ import { StaffRole, UserSummary, Username, VerifiedKind } from "./users";
 export const VerificationStatus = z.enum(["pending", "approved", "rejected"]);
 export type VerificationStatus = z.infer<typeof VerificationStatus>;
 
-const HttpsLink = z
-  .url({ protocol: /^https$/, message: "Use full https:// links" })
-  .max(300);
+const HttpsLink = z.url({ protocol: /^https$/, message: "Use full https:// links" }).max(300);
 
 export const VerificationRequestBody = z
   .object({
@@ -192,3 +191,44 @@ export const StaffAction = z
 export type StaffAction = z.infer<typeof StaffAction>;
 
 export const StaffLog = z.object({ items: z.array(StaffAction) }).meta({ id: "StaffLog" });
+
+// ── Realm's own music library ─────────────────────────────────────────────────────
+
+/** Under what terms Realm may play a track admins add (shown as its credit). */
+export const TrackLicence = z.enum(["own", "licensed", "cc0", "cc-by", "cc-by-sa"]);
+export type TrackLicence = z.infer<typeof TrackLicence>;
+export const TRACK_LICENCE_LABEL: Record<TrackLicence, string> = {
+  own: "Realm's own",
+  licensed: "Licensed to Realm",
+  cc0: "CC0",
+  "cc-by": "CC BY",
+  "cc-by-sa": "CC BY-SA",
+};
+
+/**
+ * A track an admin adds for everyone: an uploaded MP3 or M4A (or an MP4, whose sound plays),
+ * with a cover picture, and the right to use it.
+ */
+export const AdminTrackBody = z.object({
+  mediaId: Snowflake,
+  coverMediaId: Snowflake.optional(),
+  title: z.string().trim().min(1).max(120),
+  artist: z.string().trim().min(1).max(120),
+  licence: TrackLicence,
+  /** Where the credit points (the artist's page), if anywhere. */
+  creditUrl: z
+    .url({ protocol: /^https$/ })
+    .max(300)
+    .optional(),
+});
+export type AdminTrackBody = z.infer<typeof AdminTrackBody>;
+
+export const AdminTrack = z
+  .object({
+    sound: Sound,
+    hidden: z.boolean(),
+    addedBy: z.string().nullable(),
+    createdAt: IsoDateTime,
+  })
+  .meta({ id: "AdminTrack" });
+export type AdminTrack = z.infer<typeof AdminTrack>;

@@ -25,11 +25,18 @@ export function sizeLabel(bytes: number) {
  */
 export async function uploadFile(
   file: Blob,
-  opts: { kind: MediaKind; filename?: string; durationMs?: number; signal?: AbortSignal },
+  opts: {
+    kind: MediaKind;
+    filename?: string;
+    durationMs?: number;
+    signal?: AbortSignal;
+    /** A song for Realm's own library (admins). */
+    purpose?: "track";
+  },
   onProgress?: (fraction: number) => void,
 ): Promise<MediaInfo> {
   const rule = MEDIA_RULES[opts.kind];
-  if (file.size > rule.maxBytes) {
+  if (!opts.purpose && file.size > rule.maxBytes) {
     throw new ApiError(
       413,
       "PAYLOAD_TOO_LARGE",
@@ -45,6 +52,7 @@ export async function uploadFile(
       sizeBytes: file.size,
       ...(opts.filename ? { filename: opts.filename } : {}),
       ...(opts.durationMs !== undefined ? { durationMs: Math.round(opts.durationMs) } : {}),
+      ...(opts.purpose ? { purpose: opts.purpose } : {}),
     },
     signal: opts.signal,
   });

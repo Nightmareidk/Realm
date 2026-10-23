@@ -1,6 +1,8 @@
 import {
   AdminOverview,
   AdminReportList,
+  AdminTrack,
+  AdminTrackBody,
   AdminUser,
   AdminUserList,
   AdminUserQuery,
@@ -25,6 +27,7 @@ import { notFound } from "../../lib/errors";
 import { authOf, requireAuth } from "../../plugins/context";
 import { enforceLimit } from "../../plugins/security";
 import { AdminService } from "./service";
+import { TracksService } from "./tracks";
 
 const Id = z.object({ id: Snowflake });
 const Reason = z.object({ reason: z.string().trim().min(3, "Say why, for the record").max(300) });
@@ -142,6 +145,40 @@ export const adminRoutes =
           req.body.approve,
           req.body.reason,
         );
+        return reply.status(204).send();
+      },
+    );
+
+    // Realm's own music library: songs admins add for everyone.
+    const tracks = new TracksService(deps);
+    app.get(
+      "/tracks",
+      {
+        preHandler: staff("admin"),
+        schema: { response: { 200: z.object({ items: z.array(AdminTrack) }) } },
+      },
+      async () => ({ items: await tracks.list() }),
+    );
+    app.post(
+      "/tracks",
+      {
+        preHandler: staff("admin"),
+        schema: { body: AdminTrackBody, response: { 201: AdminTrack } },
+      },
+      async (req, reply) => {
+        await limited(req);
+        return reply.status(201).send(await tracks.add(authOf(req).userId, req.body));
+      },
+    );
+    app.put(
+      "/tracks/:id/hidden",
+      {
+        preHandler: staff("admin"),
+        schema: { params: Id, body: z.object({ hidden: z.boolean() }) },
+      },
+      async (req, reply) => {
+        await limited(req);
+        await tracks.setHidden(authOf(req).userId, BigInt(req.params.id), req.body.hidden);
         return reply.status(204).send();
       },
     );

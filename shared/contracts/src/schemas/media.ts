@@ -38,8 +38,14 @@ export const CreateUploadBody = z.object({
     .min(0)
     .max(4 * 60 * 60 * 1000)
     .optional(),
+  /** A song for Realm's own music library (admins only): longer and bigger than a voice message. */
+  purpose: z.enum(["track"]).optional(),
 });
 export type CreateUploadBody = z.infer<typeof CreateUploadBody>;
+
+/** A library track admins upload: up to 40 MB (an MP3 at 320 kbps runs about 16 minutes). */
+export const TRACK_MAX_BYTES = 40 * 1024 * 1024;
+export const TRACK_MAX_MS = 20 * 60 * 1000;
 
 export const UploadTicket = z
   .object({

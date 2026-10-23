@@ -130,3 +130,60 @@ describe("admin", () => {
     expect(self.statusCode).toBe(403);
   });
 });
+
+describe("Realm's own music library", () => {
+  const MP3 = Buffer.concat([Buffer.from("ID3"), Buffer.alloc(400)]);
+  async function uploadSong(cookie: string, extra: Record<string, unknown> = {}) {
+    return call(cookie, "POST", "/media/uploads", {
+      kind: "audio",
+      mimeType: "audio/mpeg",
+      sizeBytes: MP3.length,
+      durationMs: 7 * 60 * 1000,
+      ...extra,
+    });
+  }
+
+  it("lets admins add full songs everyone can find and use, and take them out again", async () => {
+    const boss = await person();
+    const noor = await person();
+    await makeStaff(boss.id, "admin");
+
+    // Seven minutes is too long for a voice message, and only admins upload library tracks.
+    expect((await uploadSong(noor.cookie)).statusCode).toBe(400);
+    expect((await uploadSong(noor.cookie, { purpose: "track" })).statusCode).toBe(404);
+
+    const ticket = (await uploadSong(boss.cookie, { purpose: "track" })).json();
+    await t.app.inject({
+      method: "PUT",
+      url: ticket.uploadUrl.replace(/^\/api/, ""),
+      headers: { "content-type": "audio/mpeg" },
+      payload: MP3,
+    });
+    expect(
+      (await call(boss.cookie, "POST", `/media/${ticket.mediaId}/complete`, {})).statusCode,
+    ).toBe(200);
+
+    const added = await call(boss.cookie, "POST", "/admin/tracks", {
+      mediaId: ticket.mediaId,
+      title: "Realm Nights",
+      artist: "Realm House Band",
+      licence: "own",
+    });
+    expect(added.statusCode).toBe(201);
+    expect(added.json().sound).toMatchObject({ title: "Realm Nights", licence: "Realm's own" });
+    const id = added.json().sound.id as string;
+
+    // Anyone finds it first in search, and in Music's "New on Realm".
+    const found = (await call(noor.cookie, "GET", "/sounds?q=realm%20nights")).json().items;
+    expect(found[0]?.id).toBe(id);
+    const home = (await call(noor.cookie, "GET", "/music/home")).json();
+    expect(home.featured.map((s: { id: string }) => s.id)).toContain(id);
+    // Not someone else's: a moderator can't add tracks.
+    expect((await call(noor.cookie, "GET", "/admin/tracks")).statusCode).toBe(404);
+
+    // Taken out: gone from search.
+    await call(boss.cookie, "PUT", `/admin/tracks/${id}/hidden`, { hidden: true });
+    const after = (await call(noor.cookie, "GET", "/sounds?q=realm%20nights")).json().items;
+    expect(after.some((s: { id: string }) => s.id === id)).toBe(false);
+  });
+});

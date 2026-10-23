@@ -126,6 +126,8 @@ export const MusicHome = z
     liked: z.object({ count: z.number().int(), covers: z.array(z.string()) }),
     playlists: z.array(Playlist),
     popular: z.array(Sound),
+    /** Realm's own library: tracks admins added, newest first. */
+    featured: z.array(Sound),
   })
   .meta({ id: "MusicHome" });
 export type MusicHome = z.infer<typeof MusicHome>;

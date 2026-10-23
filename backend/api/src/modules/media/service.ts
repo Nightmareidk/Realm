@@ -4,6 +4,8 @@ import {
   MEDIA_RULES,
   type MediaInfo,
   Permission,
+  TRACK_MAX_BYTES,
+  TRACK_MAX_MS,
   type UploadTicket,
   VOICE_MESSAGE_MAX_MS,
 } from "@realm/contracts";
@@ -43,7 +45,24 @@ export class MediaService {
 
   async createUpload(userId: bigint, body: CreateUploadBody): Promise<UploadTicket> {
     const rule = MEDIA_RULES[body.kind];
-    if (body.sizeBytes > rule.maxBytes) {
+    // A song for Realm's own library: admins only, longer and bigger than a voice message.
+    const track = body.purpose === "track";
+    if (track) {
+      const [me] = await this.db
+        .select({ role: schema.users.staffRole })
+        .from(schema.users)
+        .where(eq(schema.users.id, userId))
+        .limit(1);
+      if (me?.role !== "admin") throw notFound("Upload");
+      if (body.kind !== "audio" && body.kind !== "video") {
+        throw invalid("Library tracks are songs: an MP3, M4A, or MP4.");
+      }
+      if (body.sizeBytes > TRACK_MAX_BYTES) {
+        throw new AppError(413, "PAYLOAD_TOO_LARGE", "Songs can be up to 40 MB.");
+      }
+      if ((body.durationMs ?? 0) > TRACK_MAX_MS) throw invalid("Songs can be up to 20 minutes.");
+    }
+    if (!track && body.sizeBytes > rule.maxBytes) {
       throw new AppError(
         413,
         "PAYLOAD_TOO_LARGE",
@@ -54,7 +73,7 @@ export class MediaService {
     if (rule.types.length > 0 && !(rule.types as readonly string[]).includes(declared)) {
       throw invalid("Realm can't take that kind of file here.");
     }
-    if (body.kind === "audio" && (body.durationMs ?? 0) > VOICE_MESSAGE_MAX_MS) {
+    if (!track && body.kind === "audio" && (body.durationMs ?? 0) > VOICE_MESSAGE_MAX_MS) {
       throw invalid("Voice messages can be up to five minutes.");
     }
 

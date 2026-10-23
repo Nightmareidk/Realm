@@ -14,14 +14,16 @@ import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from
 import { pill, textLink } from "@/components/pill";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
+import { Tracks } from "./tracks";
 
-type Tab = "overview" | "accounts" | "verification" | "reports" | "names" | "record";
+type Tab = "overview" | "accounts" | "verification" | "reports" | "names" | "music" | "record";
 const TABS: { id: Tab; label: string; admin?: boolean }[] = [
   { id: "overview", label: "Overview" },
   { id: "accounts", label: "Accounts" },
   { id: "reports", label: "Reports" },
   { id: "verification", label: "Verification", admin: true },
   { id: "names", label: "Kept-back names", admin: true },
+  { id: "music", label: "Music library", admin: true },
   { id: "record", label: "Staff record", admin: true },
 ];
 
@@ -98,6 +100,7 @@ export function AdminHome() {
         {tab === "reports" && <Reports onAsk={setAsk} onDone={setToast} />}
         {tab === "verification" && <Verification onAsk={setAsk} onDone={setToast} />}
         {tab === "names" && <Names onDone={setToast} />}
+        {tab === "music" && <Tracks onDone={setToast} />}
         {tab === "record" && <Record />}
       </div>
       {ask && <AskDialog ask={ask} onClose={() => setAsk(null)} onDone={setToast} />}

@@ -188,6 +188,7 @@ export function MusicHomeView() {
             </p>
           ) : (
             <>
+              <Shelf title="New on Realm" items={h?.featured ?? []} from="New on Realm" />
               <Shelf title="Played lately" items={h?.recent ?? []} from="Played lately" />
               <Shelf title="Popular on Realm" items={h?.popular ?? []} from="Popular on Realm" />
             </>

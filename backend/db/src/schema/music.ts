@@ -28,6 +28,10 @@ export const sounds = pgTable(
     licence: text(),
     sourceUrl: text(),
     uses: integer().notNull().default(0),
+    /** Realm's own library: the admin who added the track (null for Jamendo and creators). */
+    addedBy: id().references(() => users.id),
+    /** Taken out of the library by an admin: it no longer shows in search or lists. */
+    hiddenAt: tstz(),
     createdAt: createdAt(),
   },
   (t) => [

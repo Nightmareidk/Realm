@@ -152,6 +152,12 @@ export default function Music() {
             ))}
           </View>
 
+          {home.data.featured?.length ? (
+            <Section title="New on Realm">
+              <Shelf songs={home.data.featured} from="New on Realm" />
+            </Section>
+          ) : null}
+
           {home.data.recent.length ? (
             <Section title="Recently played">
               <Shelf songs={home.data.recent} from="Recently played" />

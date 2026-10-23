@@ -10,7 +10,7 @@ import type {
   StoryRing,
 } from "@realm/contracts";
 import { STORY_DEFAULT_MS, STORY_HOURS, STORY_MAX_MS } from "@realm/contracts";
-import { and, desc, eq, gt, ilike, inArray, isNull, schema, sql } from "@realm/db";
+import { and, desc, eq, gt, ilike, inArray, isNotNull, isNull, schema, sql } from "@realm/db";
 import type { Deps } from "../../deps";
 import { AppError, forbidden, notFound } from "../../lib/errors";
 import { mediaUrl } from "../../lib/serialize";
@@ -91,7 +91,7 @@ export class MusicService {
         title: r.title,
         artist: r.artist,
         coverUrl: r.coverUrl,
-        audioUrl: r.kind === "original" && r.mediaId ? mediaUrl(r.mediaId) : (r.audioUrl ?? ""),
+        audioUrl: r.mediaId ? mediaUrl(r.mediaId) : (r.audioUrl ?? ""),
         durationMs: r.durationMs,
         licence: r.licence,
         sourceUrl: r.sourceUrl,
@@ -226,19 +226,35 @@ export class MusicService {
       else ids = answer;
     }
 
+    // Realm's own library (tracks admins added) comes first when it matches.
+    const like = `%${query.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+    const matches = sql`(${sounds.title} ilike ${like} or ${sounds.artist} ilike ${like})`;
+    const own = await this.db
+      .select()
+      .from(sounds)
+      .where(and(isNotNull(sounds.addedBy), isNull(sounds.hiddenAt), matches))
+      .orderBy(desc(sounds.uses))
+      .limit(10);
+
     if (ids?.length) {
-      const rows = await this.db.select().from(sounds).where(inArray(sounds.id, ids));
+      const rows = await this.db
+        .select()
+        .from(sounds)
+        .where(and(inArray(sounds.id, ids), isNull(sounds.hiddenAt)));
+      const found = ids.flatMap((id) => rows.filter((r) => r.id === id));
       return {
-        items: await this.toSounds(ids.flatMap((id) => rows.filter((r) => r.id === id))),
+        items: await this.toSounds([
+          ...own,
+          ...found.filter((r) => !own.some((o) => o.id === r.id)),
+        ]),
         searching,
       };
     }
     // Openverse is away or still looking: search what Realm already knows.
-    const like = `%${query.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
     const rows = await this.db
       .select()
       .from(sounds)
-      .where(sql`${sounds.title} ilike ${like} or ${sounds.artist} ilike ${like}`)
+      .where(and(isNull(sounds.hiddenAt), matches))
       .orderBy(desc(sounds.uses))
       .limit(20);
     return { items: await this.toSounds(rows), searching };
@@ -249,13 +265,24 @@ export class MusicService {
     const rows = await this.db
       .select()
       .from(sounds)
-      .where(gt(sounds.uses, 0))
+      .where(and(gt(sounds.uses, 0), isNull(sounds.hiddenAt)))
       .orderBy(desc(sounds.uses))
       .limit(20);
     const used = await this.toSounds(rows);
     if (used.length >= 8) return used;
     const { items: fill } = await this.search("pop");
     return [...used, ...fill.filter((s) => !used.some((u) => u.id === s.id))].slice(0, 20);
+  }
+
+  /** Realm's own library, newest first (what admins added and haven't taken out). */
+  async featured(viewerId?: bigint): Promise<Sound[]> {
+    const rows = await this.db
+      .select()
+      .from(sounds)
+      .where(and(isNotNull(sounds.addedBy), isNull(sounds.hiddenAt)))
+      .orderBy(desc(sounds.createdAt))
+      .limit(24);
+    return this.toSounds(rows, viewerId);
   }
 
   /** The stored rows behind some sounds (to send them again, for a particular person). */

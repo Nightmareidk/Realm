@@ -59,6 +59,7 @@ export class MusicLibrary {
         popular.map((p) => BigInt(p.id)),
         userId,
       ),
+      featured: await this.music.featured(userId),
     };
   }
 
