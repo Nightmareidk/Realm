@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApi, usePosts } from "@/data";
 import { Icon } from "@/icon";
 import { useLiveEvent } from "@/live";
+import { feedPlay, feedStop } from "@/music/player";
 import { loadStories, useStories } from "@/music/stories";
 import { api, mediaSource } from "@/server";
 import { useSession } from "@/session";
@@ -44,6 +45,11 @@ export default function Home() {
   const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken<Post>[] }) => {
     const photo = viewableItems.find((v) => v.item?.kind === "image")?.item?.media[0];
     if (photo) setAmbient(photo.url);
+    // Like Instagram: the post on screen plays its song by itself.
+    const withSong = viewableItems.find((v) => v.item?.sound && v.item.kind !== "clip")?.item;
+    if (withSong?.sound)
+      feedPlay(withSong.sound, withSong.id, `${withSong.author.displayName}'s post`);
+    else feedStop();
   }).current;
 
   function create() {
@@ -136,8 +142,8 @@ export default function Home() {
         </View>
       ) : null}
       <FlashList
-        onViewableItemsChanged={lit ? onViewable : undefined}
-        viewabilityConfig={{ itemVisiblePercentThreshold: 40 }}
+        onViewableItemsChanged={onViewable}
+        viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
         data={feed.items}
         keyExtractor={(p) => p.id}
         renderItem={({ item }) => (

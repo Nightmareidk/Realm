@@ -3,12 +3,16 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../icon";
 import { mediaSource, resolveUrl } from "../server";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { pauseSound, progress, resumeSound, skip, stopSound, useNowPlaying } from "./player";
 
-/** Sounds the bar stands in for; Stories, Clips and the picker show their own. */
+/**
+ * Sounds the bar stands in for: a post's song you tapped, and songs from Music. Songs that play
+ * by themselves as you scroll (feed:), Stories, Clips and the picker show their own.
+ */
 const SHOWN = /^(post|bar):/;
 
 /**
@@ -17,8 +21,9 @@ const SHOWN = /^(post|bar):/;
  * "Use" to make something with it. In each look's own hand: a lit glass bar (Now Playing), a
  * printed strip (Wristband) or a plain line (Plain and clear).
  */
-export function NowBar() {
+export function NowBar({ floating = false }: { floating?: boolean } = {}) {
   const { t } = useTheme();
+  const insets = useSafeAreaInsets();
   const s = useStyles(make);
   const router = useRouter();
   const now = useNowPlaying();
@@ -42,29 +47,41 @@ export function NowBar() {
     <Animated.View
       entering={FadeInDown.duration(220).reduceMotion(ReduceMotion.System)}
       exiting={FadeOutDown.duration(160).reduceMotion(ReduceMotion.System)}
-      style={[s.bar, style === "ticket" && s.ticket, style === "thread" && s.thread]}
+      style={[
+        s.bar,
+        style === "ticket" && s.ticket,
+        style === "thread" && s.thread,
+        floating && [s.floating, { bottom: insets.bottom + 10 }],
+      ]}
       accessibilityLabel={`Now playing: ${sound.title} by ${line}`}
     >
-      <View style={s.coverBox}>
-        {cover ? (
-          <Image
-            source={cover.startsWith("/") ? mediaSource(cover) : { uri: resolveUrl(cover) }}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            recyclingKey={cover}
-          />
-        ) : (
-          <Icon name="MusicNotesFill" size={18} color={t.colors.textSoft} />
-        )}
-      </View>
-      <View style={s.fill}>
-        <Text style={[s.title, style === "ticket" && s.titleTicket]} numberOfLines={1}>
-          {sound.title}
-        </Text>
-        <Text style={s.line} numberOfLines={1}>
-          {line}
-        </Text>
-      </View>
+      <Pressable
+        onPress={() => router.push("/player")}
+        accessibilityRole="button"
+        accessibilityLabel={`Open the player: ${sound.title}`}
+        style={s.open}
+      >
+        <View style={s.coverBox}>
+          {cover ? (
+            <Image
+              source={cover.startsWith("/") ? mediaSource(cover) : { uri: resolveUrl(cover) }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              recyclingKey={cover}
+            />
+          ) : (
+            <Icon name="MusicNotesFill" size={18} color={t.colors.textSoft} />
+          )}
+        </View>
+        <View style={s.fill}>
+          <Text style={[s.title, style === "ticket" && s.titleTicket]} numberOfLines={1}>
+            {sound.title}
+          </Text>
+          <Text style={s.line} numberOfLines={1}>
+            {line}
+          </Text>
+        </View>
+      </Pressable>
       <Pressable
         onPress={() => {
           pauseSound();
@@ -129,6 +146,19 @@ export function NowBar() {
 const make = (t: NativeTheme) =>
   StyleSheet.create({
     fill: { flex: 1 },
+    floating: {
+      position: "absolute",
+      left: 10,
+      right: 10,
+      marginHorizontal: 0,
+      marginBottom: 0,
+      shadowColor: "#000000",
+      shadowOpacity: 0.4,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 10,
+    },
+    open: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 56 },
     pressed: { opacity: 0.7 },
     bar: {
       flexDirection: "row",

@@ -59,11 +59,30 @@ export class MusicService {
 
   // ── Sounds ─────────────────────────────────────────────────────────────────
 
-  private async toSounds(rows: SoundRow[]): Promise<Sound[]> {
+  async toSounds(rows: SoundRow[], viewerId?: bigint): Promise<Sound[]> {
     const creatorIds = [...new Set(rows.flatMap((r) => (r.creatorId ? [r.creatorId] : [])))];
     const creators = creatorIds.length
       ? await this.db.select(summaryColumns).from(users).where(inArray(users.id, creatorIds))
       : [];
+    const liked =
+      viewerId && rows.length
+        ? new Set(
+            (
+              await this.db
+                .select({ id: schema.soundLikes.soundId })
+                .from(schema.soundLikes)
+                .where(
+                  and(
+                    eq(schema.soundLikes.userId, viewerId),
+                    inArray(
+                      schema.soundLikes.soundId,
+                      rows.map((r) => r.id),
+                    ),
+                  ),
+                )
+            ).map((l) => l.id),
+          )
+        : null;
     return rows.map((r) => {
       const creator = creators.find((c) => c.id === r.creatorId);
       return {
@@ -78,6 +97,7 @@ export class MusicService {
         sourceUrl: r.sourceUrl,
         creator: creator ? toUserSummary(creator) : null,
         uses: r.uses,
+        ...(liked ? { liked: liked.has(r.id) } : {}),
       };
     });
   }
@@ -236,6 +256,14 @@ export class MusicService {
     if (used.length >= 8) return used;
     const { items: fill } = await this.search("pop");
     return [...used, ...fill.filter((s) => !used.some((u) => u.id === s.id))].slice(0, 20);
+  }
+
+  /** The stored rows behind some sounds (to send them again, for a particular person). */
+  async rowsOf(list: Sound[]): Promise<SoundRow[]> {
+    if (!list.length) return [];
+    const ids = list.map((x) => BigInt(x.id));
+    const rows = await this.db.select().from(sounds).where(inArray(sounds.id, ids));
+    return ids.flatMap((id) => rows.filter((r) => r.id === id));
   }
 
   async mine(userId: bigint): Promise<Sound[]> {

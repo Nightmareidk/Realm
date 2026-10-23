@@ -1,4 +1,5 @@
 import type { DiscoverSpace, SearchResults, SpaceDetail } from "@realm/contracts";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -116,6 +117,7 @@ function Results({ results, searching }: { results: SearchResults | null; search
 function Browse() {
   const { t } = useTheme();
   const s = useStyles(make);
+  const router = useRouter();
   const mine = useApi<{ spaces: SpaceDetail[] }>("/users/@me/communities");
   const discover = useApi<{ spaces: DiscoverSpace[] }>(
     "/discover/communities?sort=active&limit=12",
@@ -123,6 +125,27 @@ function Browse() {
   const others = discover.data?.spaces.filter((d) => !d.joined) ?? [];
   return (
     <>
+      <Pressable
+        onPress={() => router.push("/music")}
+        accessibilityRole="link"
+        accessibilityLabel="Music: play songs, Liked songs and your playlists"
+        style={({ pressed }) => [s.music, pressed && { opacity: 0.85 }]}
+      >
+        <LinearGradient
+          colors={[t.colors.accent, t.colors.lights[1] ?? t.colors.accent]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <Icon name="MusicNotesFill" size={30} color={t.colors.onAccent} />
+        <View style={s.musicText}>
+          <Text style={[s.musicTitle, { color: t.colors.onAccent }]}>Music</Text>
+          <Text style={[s.musicLine, { color: t.colors.onAccent }]}>
+            Play songs while you use Realm. Liked songs, playlists, moods.
+          </Text>
+        </View>
+        <Icon name="CaretRight" size={20} color={t.colors.onAccent} />
+      </Pressable>
       <SoundsRow />
       <Text style={s.heading}>Your Spaces</Text>
       {mine.data?.spaces.length ? (
@@ -237,6 +260,24 @@ const make = (t: NativeTheme) =>
       color: t.colors.text,
     },
     body: { paddingBottom: 40 },
+    music: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      marginHorizontal: 16,
+      marginTop: 14,
+      padding: 16,
+      borderRadius: t.radius.card,
+      overflow: "hidden",
+    },
+    musicText: { flex: 1 },
+    musicTitle: { fontFamily: t.fonts.displayBold, fontSize: 19 * t.textScale },
+    musicLine: {
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      marginTop: 2,
+      opacity: 0.9,
+    },
     heading: {
       fontFamily: t.fonts.bold,
       fontSize: 16 * t.textScale,

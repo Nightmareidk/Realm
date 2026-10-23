@@ -63,6 +63,10 @@ export default function RootLayout() {
                     }}
                   />
                   <Stack.Screen name="report" options={{ presentation: "modal" }} />
+                  <Stack.Screen
+                    name="player"
+                    options={{ presentation: "fullScreenModal", animation: "slide_from_bottom" }}
+                  />
                 </Stack>
               </SessionGate>
             </SheetProvider>

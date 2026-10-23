@@ -16,7 +16,7 @@ import { authRoutes, gatewayRoutes } from "./modules/auth/routes";
 import { conversationRoutes } from "./modules/dms/routes";
 import { ConversationsService } from "./modules/dms/service";
 import { mediaRoutes } from "./modules/media/routes";
-import { soundRoutes, storyRoutes } from "./modules/music/routes";
+import { musicRoutes, soundRoutes, storyRoutes } from "./modules/music/routes";
 import { MusicService } from "./modules/music/service";
 import { releaseRoutes } from "./modules/releases/routes";
 import { meSafetyRoutes, moderationRoutes, reportRoutes } from "./modules/safety/routes";
@@ -102,6 +102,7 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       await v1.register(themeRoutes(deps, new ThemeService(deps)), { prefix: "/themes" });
       const music = new MusicService(deps);
       await v1.register(soundRoutes(deps, music), { prefix: "/sounds" });
+      await v1.register(musicRoutes(deps, music), { prefix: "/music" });
       await v1.register(storyRoutes(deps, music), { prefix: "/stories" });
       // The API's map is for building Realm, not for strangers mapping it out: off in production.
       if (!deps.config.isProduction) {

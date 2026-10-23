@@ -96,7 +96,11 @@ try {
         detail: { staff: { after: role === "none" ? null : role } },
         reason: "Set from the server's emergency kit",
       });
-      say(role === "none" ? `@${user.username} is no longer staff.` : `@${user.username} is now ${role}.`);
+      say(
+        role === "none"
+          ? `@${user.username} is no longer staff.`
+          : `@${user.username} is now ${role}.`,
+      );
       break;
     }
     default:

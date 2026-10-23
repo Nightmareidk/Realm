@@ -1,6 +1,12 @@
 import {
   CreateSoundBody,
   CreateStoryBody,
+  MOODS,
+  type MoodId,
+  MusicHome,
+  Playlist,
+  PlaylistBody,
+  PlaylistDetail,
   Snowflake,
   Sound,
   SoundList,
@@ -15,6 +21,7 @@ import { z } from "zod";
 import type { Deps } from "../../deps";
 import { authOf, requireAuth } from "../../plugins/context";
 import { enforceLimit } from "../../plugins/security";
+import { MusicLibrary } from "./library";
 import type { MusicService } from "./service";
 
 const Id = z.object({ id: Snowflake });
@@ -101,4 +108,140 @@ export const storyRoutes =
       await music.remove(authOf(req).userId, BigInt(req.params.id));
       return reply.status(204).send();
     });
+  };
+
+/**
+ * `/music`: playing songs in Realm like a music app. Your home (recently played, Liked songs,
+ * your playlists, popular), liking songs, playlists, and moods to browse.
+ */
+export const musicRoutes =
+  (deps: Deps, music: MusicService): FastifyPluginAsyncZod =>
+  async (app) => {
+    const library = new MusicLibrary(deps, music);
+    const SoundId = z.object({ soundId: Snowflake });
+    const ListId = z.object({ id: Snowflake });
+    const Item = ListId.extend({ soundId: Snowflake });
+    const limited = async (userId: bigint) =>
+      enforceLimit(deps, Limits.dmChange, userId.toString());
+
+    app.get(
+      "/home",
+      { preHandler: requireAuth, schema: { response: { 200: MusicHome } } },
+      async (req) => library.home(authOf(req).userId),
+    );
+    app.get(
+      "/moods/:mood",
+      {
+        preHandler: requireAuth,
+        schema: {
+          params: z.object({ mood: z.enum(MOODS.map((m) => m.id) as [MoodId, ...MoodId[]]) }),
+          response: { 200: SoundList },
+        },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.soundSearch, userId.toString());
+        const mood = MOODS.find((m) => m.id === req.params.mood);
+        const found = await music.search(mood?.query);
+        return { ...found, items: await music.toSounds(await music.rowsOf(found.items), userId) };
+      },
+    );
+    app.get(
+      "/liked",
+      { preHandler: requireAuth, schema: { response: { 200: SoundList } } },
+      async (req) => ({ items: await library.liked(authOf(req).userId) }),
+    );
+    app.put(
+      "/liked/:soundId",
+      { preHandler: requireAuth, schema: { params: SoundId } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await limited(userId);
+        await library.like(userId, BigInt(req.params.soundId), true);
+        return reply.status(204).send();
+      },
+    );
+    app.delete(
+      "/liked/:soundId",
+      { preHandler: requireAuth, schema: { params: SoundId } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await limited(userId);
+        await library.like(userId, BigInt(req.params.soundId), false);
+        return reply.status(204).send();
+      },
+    );
+    app.post(
+      "/played/:soundId",
+      { preHandler: requireAuth, schema: { params: SoundId } },
+      async (req, reply) => {
+        await library.played(authOf(req).userId, BigInt(req.params.soundId));
+        return reply.status(204).send();
+      },
+    );
+
+    app.get(
+      "/playlists",
+      {
+        preHandler: requireAuth,
+        schema: { response: { 200: z.object({ items: z.array(Playlist) }) } },
+      },
+      async (req) => ({ items: await library.mine(authOf(req).userId) }),
+    );
+    app.post(
+      "/playlists",
+      { preHandler: requireAuth, schema: { body: PlaylistBody, response: { 201: Playlist } } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await limited(userId);
+        return reply.status(201).send(await library.create(userId, req.body));
+      },
+    );
+    app.get(
+      "/playlists/:id",
+      { preHandler: requireAuth, schema: { params: ListId, response: { 200: PlaylistDetail } } },
+      async (req) => library.detail(authOf(req).userId, BigInt(req.params.id)),
+    );
+    app.patch(
+      "/playlists/:id",
+      {
+        preHandler: requireAuth,
+        schema: { params: ListId, body: PlaylistBody.partial(), response: { 200: PlaylistDetail } },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await limited(userId);
+        return library.update(userId, BigInt(req.params.id), req.body);
+      },
+    );
+    app.delete(
+      "/playlists/:id",
+      { preHandler: requireAuth, schema: { params: ListId } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await limited(userId);
+        await library.remove(userId, BigInt(req.params.id));
+        return reply.status(204).send();
+      },
+    );
+    app.put(
+      "/playlists/:id/items/:soundId",
+      { preHandler: requireAuth, schema: { params: Item } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await limited(userId);
+        await library.add(userId, BigInt(req.params.id), BigInt(req.params.soundId));
+        return reply.status(204).send();
+      },
+    );
+    app.delete(
+      "/playlists/:id/items/:soundId",
+      { preHandler: requireAuth, schema: { params: Item } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await limited(userId);
+        await library.take(userId, BigInt(req.params.id), BigInt(req.params.soundId));
+        return reply.status(204).send();
+      },
+    );
   };

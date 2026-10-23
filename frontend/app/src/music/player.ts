@@ -1,7 +1,7 @@
 import type { Sound, SoundUse } from "@realm/contracts";
 import { createVideoPlayer, type VideoPlayer } from "expo-video";
 import { useSyncExternalStore } from "react";
-import { mediaSource, resolveUrl } from "../server";
+import { api, mediaSource, resolveUrl } from "../server";
 
 /**
  * One music player for the whole app: a sound plays its chosen part (looping inside it), and
@@ -24,6 +24,14 @@ export interface NowPlaying {
   queue: Sound[] | null;
   at: number;
 }
+
+/** Listening through a list: shuffle, and repeat off / the whole list / this song. */
+let shuffle = false;
+let repeat: "off" | "all" | "one" = "all";
+/** The list in the order it was given, so shuffle can be turned off again. */
+let given: Sound[] | null = null;
+/** Liked songs changed here, before the server's answer comes back. */
+const likedHere = new Map<string, boolean>();
 
 let player: VideoPlayer | null = null;
 let now: NowPlaying | null = null;
@@ -53,7 +61,9 @@ function guard(p: VideoPlayer, startMs: number, playMs: number) {
   timer = setInterval(() => {
     const at = p.currentTime * 1000;
     if (at >= startMs + playMs && now?.queue) {
-      skip(1);
+      if (repeat === "one") p.currentTime = startMs / 1000;
+      else if (repeat === "off" && now.at === now.queue.length - 1) pauseSound();
+      else skip(1);
       return;
     }
     if (at < startMs - 600 || at >= startMs + playMs) p.currentTime = startMs / 1000;
@@ -83,8 +93,18 @@ export async function playSound(
     p.muted = false;
     p.loop = false;
     p.currentTime = startMs / 1000;
+    // Keeps playing with the screen off or in another app, with lock-screen controls (on a
+    // build that allows background audio).
+    try {
+      p.staysActiveInBackground = true;
+      p.showNowPlayingNotification = true;
+    } catch {
+      // Not on this platform.
+    }
     p.play();
     guard(p, startMs, playMs);
+    // Played from the music library: it goes to Recently played.
+    if (queue) api(`/music/played/${s.id}`, { body: {} }).catch(() => {});
   } catch {
     if (mine === turn) {
       now = null;
@@ -94,7 +114,17 @@ export async function playSound(
 }
 
 /** Listen through a list of songs, whole, one after another, from `at`. */
-export function playList(list: Sound[], at: number, from: string) {
+export function playList(list: Sound[], at: number, from: string, keepOrder = false) {
+  if (!keepOrder) {
+    given = list;
+    if (shuffle) {
+      // The chosen song first, then the rest in a random order.
+      const first = list[at];
+      const rest = list.filter((_, i) => i !== at).sort(() => Math.random() - 0.5);
+      list = first ? [first, ...rest] : rest;
+      at = 0;
+    }
+  }
   const s = list[at];
   if (!s) return;
   return playSound(
@@ -111,8 +141,82 @@ export function playList(list: Sound[], at: number, from: string) {
 /** The next (1) or previous (-1) song in the list being played; round the end to the start. */
 export function skip(dir: 1 | -1) {
   if (!now?.queue?.length) return;
+  // Back, a few seconds into a song: start it again (as music apps do).
+  if (dir === -1 && player && player.currentTime > 4) {
+    player.currentTime = 0;
+    return;
+  }
   const n = now.queue.length;
-  playList(now.queue, (now.at + dir + n) % n, now.from ?? "");
+  playList(now.queue, (now.at + dir + n) % n, now.from ?? "", true);
+}
+
+/** Jump to a song in the list that's playing (Up next). */
+export function playAt(at: number) {
+  if (!now?.queue) return;
+  playList(now.queue, at, now.from ?? "", true);
+}
+
+/** Move to a point in the song (the player's line). */
+export function seek(ms: number) {
+  if (!player || !now) return;
+  const to = Math.max(now.startMs, Math.min(now.startMs + now.playMs - 500, ms));
+  player.currentTime = to / 1000;
+}
+
+/** Where it is and how long it is, in ms, for the full player. */
+export function position(): { at: number; length: number } {
+  if (!player || !now) return { at: 0, length: 0 };
+  try {
+    return { at: Math.max(0, player.currentTime * 1000 - now.startMs), length: now.playMs };
+  } catch {
+    return { at: 0, length: now.playMs };
+  }
+}
+
+export function setShuffle(on: boolean) {
+  shuffle = on;
+  if (!now?.queue || !given) return emit();
+  const playing = now.queue[now.at];
+  const list = on
+    ? [playing, ...now.queue.filter((_, i) => i !== now?.at).sort(() => Math.random() - 0.5)]
+    : given;
+  const at = Math.max(
+    0,
+    list.findIndex((x) => x?.id === playing?.id),
+  );
+  now = { ...now, queue: list.filter(Boolean) as Sound[], at };
+  emit();
+}
+
+export function cycleRepeat() {
+  repeat = repeat === "all" ? "one" : repeat === "one" ? "off" : "all";
+  emit();
+}
+
+export function useModes() {
+  return useSyncExternalStore(subscribe, () => `${shuffle}:${repeat}`).split(":") as [
+    "true" | "false",
+    "off" | "all" | "one",
+  ];
+}
+
+/** Like or unlike a song (Liked songs). */
+export async function like(s: Sound, on: boolean) {
+  likedHere.set(s.id, on);
+  emit();
+  try {
+    await api(`/music/liked/${s.id}`, { method: on ? "PUT" : "DELETE" });
+  } catch {
+    likedHere.set(s.id, !on);
+    emit();
+  }
+}
+
+/** Whether a song is liked, counting changes made here. */
+export function useLiked(s: Sound | undefined) {
+  return useSyncExternalStore(subscribe, () =>
+    s ? (likedHere.get(s.id) ?? s.liked ?? false) : false,
+  );
 }
 
 export function playUse(u: SoundUse, key: string, from: string | null = null) {
@@ -150,6 +254,36 @@ export function resumeSound() {
   guard(player, now.startMs, now.playMs);
   now = { ...now, paused: false };
   emit();
+}
+
+/** Songs on posts play by themselves as you scroll, until you mute them (one tap on a song). */
+let feedSound = true;
+
+/**
+ * A post with a song is on screen: play its part (unless you've muted feed songs, or you're
+ * listening to something you chose, which a scroll never interrupts).
+ */
+export function feedPlay(u: SoundUse, postId: string, from: string) {
+  if (!feedSound) return;
+  if (now && !now.key.startsWith("feed:") && !now.paused) return;
+  if (now?.key === `feed:${postId}`) return;
+  playUse(u, `feed:${postId}`, from);
+}
+
+/** No post with a song on screen: its song stops (yours, chosen from Music, carries on). */
+export function feedStop() {
+  if (now?.key.startsWith("feed:")) stopSound();
+}
+
+/** Tap a post's song: mute or unmute songs in the feed. */
+export function toggleFeedSound(u: SoundUse, postId: string, from: string) {
+  if (now?.key === `feed:${postId}` && !now.paused) {
+    feedSound = false;
+    stopSound();
+  } else {
+    feedSound = true;
+    playUse(u, `feed:${postId}`, from);
+  }
 }
 
 /** Play or stop, for a music chip. */

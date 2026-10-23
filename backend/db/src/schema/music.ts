@@ -76,3 +76,74 @@ export const storyViews = pgTable(
   },
   (t) => [primaryKey({ columns: [t.storyId, t.viewerId] })],
 );
+
+/** Songs someone liked (their Liked songs). */
+export const soundLikes = pgTable(
+  "sound_likes",
+  {
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    soundId: id()
+      .notNull()
+      .references(() => sounds.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.soundId] }),
+    index("sound_likes_user_idx").on(t.userId, t.createdAt.desc()),
+  ],
+);
+
+/** Playlists people make: their own (or shared publicly), in the order they choose. */
+export const playlists = pgTable(
+  "playlists",
+  {
+    id: id().primaryKey(),
+    ownerId: id()
+      .notNull()
+      .references(() => users.id),
+    name: text().notNull(),
+    description: text(),
+    isPublic: integer().notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: tstz().notNull().defaultNow(),
+  },
+  (t) => [index("playlists_owner_idx").on(t.ownerId, t.updatedAt.desc())],
+);
+
+export const playlistItems = pgTable(
+  "playlist_items",
+  {
+    playlistId: id()
+      .notNull()
+      .references(() => playlists.id, { onDelete: "cascade" }),
+    soundId: id()
+      .notNull()
+      .references(() => sounds.id),
+    position: integer().notNull(),
+    addedAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.playlistId, t.soundId] }),
+    index("playlist_items_order_idx").on(t.playlistId, t.position),
+  ],
+);
+
+/** What someone last played, for Recently played (one row per song, the latest time). */
+export const soundPlays = pgTable(
+  "sound_plays",
+  {
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    soundId: id()
+      .notNull()
+      .references(() => sounds.id),
+    playedAt: tstz().notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.soundId] }),
+    index("sound_plays_recent_idx").on(t.userId, t.playedAt.desc()),
+  ],
+);

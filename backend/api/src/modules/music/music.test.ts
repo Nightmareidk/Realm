@@ -276,3 +276,36 @@ describe("Stories", () => {
     expect((await call(noor.cookie, "GET", "/stories/feed")).json().rings).toHaveLength(0);
   });
 });
+
+describe("the music library", () => {
+  it("likes songs, makes playlists, keeps what you played, and hides others' private lists", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const [a, b] = (await call(noor.cookie, "GET", "/sounds?q=lofi")).json().items;
+    expect((await call(noor.cookie, "PUT", `/music/liked/${a.id}`)).statusCode).toBe(204);
+    expect((await call(noor.cookie, "GET", "/music/liked")).json().items[0]).toMatchObject({
+      id: a.id,
+      liked: true,
+    });
+
+    const list = (
+      await call(noor.cookie, "POST", "/music/playlists", { name: "late night" })
+    ).json();
+    await call(noor.cookie, "PUT", `/music/playlists/${list.id}/items/${b.id}`);
+    await call(noor.cookie, "PUT", `/music/playlists/${list.id}/items/${a.id}`);
+    const detail = (await call(noor.cookie, "GET", `/music/playlists/${list.id}`)).json();
+    expect(detail.items.map((i: { id: string }) => i.id)).toEqual([b.id, a.id]);
+    expect(detail).toMatchObject({ count: 2, mine: true, isPublic: false });
+    // Private: someone else can't see it, or change it.
+    expect((await call(kenji.cookie, "GET", `/music/playlists/${list.id}`)).statusCode).toBe(404);
+    expect(
+      (await call(kenji.cookie, "PUT", `/music/playlists/${list.id}/items/${a.id}`)).statusCode,
+    ).toBe(403);
+
+    await call(noor.cookie, "POST", `/music/played/${b.id}`);
+    const home = (await call(noor.cookie, "GET", "/music/home")).json();
+    expect(home.recent[0].id).toBe(b.id);
+    expect(home.liked.count).toBe(1);
+    expect(home.playlists[0]).toMatchObject({ name: "late night", count: 2 });
+  });
+});

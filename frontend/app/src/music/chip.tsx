@@ -14,7 +14,7 @@ import Animated, {
 import { Icon } from "../icon";
 import { mediaSource, resolveUrl } from "../server";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
-import { toggleSound, usePlaying } from "./player";
+import { toggleFeedSound, toggleSound, usePlaying } from "./player";
 
 /**
  * The music on a post, Story or Clip: tap to hear its part, tap again to stop. It's drawn in the
@@ -43,7 +43,9 @@ export function SoundChip({
   const { t } = useTheme();
   const s = useStyles(make);
   const now = usePlaying();
-  const on = autoPlaying ?? now === playKey;
+  // A post's song may be playing by itself as you scroll (feed:) or because you tapped it.
+  const feedKey = playKey.replace(/^post:/, "feed:");
+  const on = autoPlaying ?? (now === playKey || now === feedKey);
   const style = t.style.posts;
   const ink = over ? "#ffffff" : style === "glow" && on ? t.colors.onAccent : t.colors.text;
   const label = `${sound.title} · ${sound.artist}`;
@@ -100,7 +102,11 @@ export function SoundChip({
   if (autoPlaying !== undefined) return <View accessibilityLabel={`Music: ${label}`}>{body}</View>;
   return (
     <Pressable
-      onPress={() => toggleSound(sound, playKey, from)}
+      onPress={() =>
+        playKey.startsWith("post:")
+          ? toggleFeedSound(sound, playKey.slice(5), from ?? "a post")
+          : toggleSound(sound, playKey, from)
+      }
       accessibilityRole="button"
       accessibilityLabel={on ? `Stop the music: ${label}` : `Play the music: ${label}`}
       hitSlop={6}
@@ -112,7 +118,7 @@ export function SoundChip({
 }
 
 /** Three level bars that move while music plays (still, if the phone asks for less motion). */
-function Bars({ color }: { color: string }) {
+export function Bars({ color }: { color: string }) {
   return (
     <View style={bars.row}>
       {[0, 1, 2].map((i) => (

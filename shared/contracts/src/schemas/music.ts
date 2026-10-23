@@ -28,6 +28,8 @@ export const Sound = z
     /** Whoever made an original sound. */
     creator: UserSummary.nullable(),
     uses: z.number().int(),
+    /** In your Liked songs (sent where it's known who's asking). */
+    liked: z.boolean().optional(),
   })
   .meta({ id: "Sound" });
 export type Sound = z.infer<typeof Sound>;
@@ -67,6 +69,62 @@ export const SoundUse = Sound.extend({ startMs: z.number().int(), playMs: z.numb
   id: "SoundUse",
 });
 export type SoundUse = z.infer<typeof SoundUse>;
+
+// ── The music library (playing songs in Realm, like a music app) ──────────────────
+
+export const Playlist = z
+  .object({
+    id: Snowflake,
+    name: z.string(),
+    description: z.string().nullable(),
+    /** Up to four covers from its songs, for a mosaic. */
+    covers: z.array(z.string()),
+    count: z.number().int(),
+    isPublic: z.boolean(),
+    owner: UserSummary,
+    updatedAt: IsoDateTime,
+  })
+  .meta({ id: "Playlist" });
+export type Playlist = z.infer<typeof Playlist>;
+
+export const PlaylistDetail = Playlist.extend({ items: z.array(Sound), mine: z.boolean() }).meta({
+  id: "PlaylistDetail",
+});
+export type PlaylistDetail = z.infer<typeof PlaylistDetail>;
+
+export const PlaylistBody = z
+  .object({
+    name: z.string().trim().min(1, "Give it a name").max(60),
+    description: z.string().trim().max(200).nullable().optional(),
+    isPublic: z.boolean().optional(),
+  })
+  .meta({ id: "PlaylistBody" });
+export type PlaylistBody = z.infer<typeof PlaylistBody>;
+
+/** Moods and kinds of music to browse, each a search of the free library. */
+export const MOODS = [
+  { id: "chill", label: "Chill", query: "chill" },
+  { id: "lofi", label: "Lo-fi", query: "lofi" },
+  { id: "pop", label: "Pop", query: "pop" },
+  { id: "happy", label: "Happy", query: "happy" },
+  { id: "hiphop", label: "Hip-hop", query: "hip hop" },
+  { id: "electronic", label: "Electronic", query: "electronic" },
+  { id: "rock", label: "Rock", query: "rock" },
+  { id: "acoustic", label: "Acoustic", query: "acoustic" },
+  { id: "focus", label: "Focus", query: "ambient" },
+  { id: "workout", label: "Workout", query: "workout" },
+] as const;
+export type MoodId = (typeof MOODS)[number]["id"];
+
+export const MusicHome = z
+  .object({
+    recent: z.array(Sound),
+    liked: z.object({ count: z.number().int(), covers: z.array(z.string()) }),
+    playlists: z.array(Playlist),
+    popular: z.array(Sound),
+  })
+  .meta({ id: "MusicHome" });
+export type MusicHome = z.infer<typeof MusicHome>;
 
 // ── Stories ──────────────────────────────────────────────────────────────────────
 
