@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 import { alert } from "@/alert";
+import { Stage } from "@/create/stage";
 import { postsChanged, useApi } from "@/data";
 import { Icon } from "@/icon";
 import { leave } from "@/leave";
@@ -81,6 +82,10 @@ export default function Create() {
   const [status, setStatus] = useState<string | null>(null);
   const [music, setMusic] = useState<Picked | null>(null);
   const [choosing, setChoosing] = useState(false);
+  /** A Clip's second step: caption, sound sharing, who sees it. */
+  const [details, setDetails] = useState(false);
+  /** Which picked photo the big preview shows. */
+  const [selected, setSelected] = useState(0);
   const [shareSound, setShareSound] = useState(false);
   const [soundName, setSoundName] = useState("");
   /** A photo Story's length; follows the song's part until you choose one yourself. */
@@ -164,6 +169,7 @@ export default function Create() {
   function switchMode(m: Mode) {
     setMode(m);
     setPicked([]);
+    setDetails(false);
     // A song's part can be too long for the new kind: keep the song, shorten the part.
     if (music) setMusic({ ...music, durationMs: Math.min(music.durationMs, MUSIC_MAX[m]) });
   }
@@ -232,6 +238,51 @@ export default function Create() {
     }
   }
 
+  // A Story, or a Clip before its details: the full-screen editor.
+  const everyone = isPrivate ? flip : !flip;
+  const asset = picked[0];
+  const picker = (
+    <MusicPicker
+      visible={choosing}
+      maxMs={MUSIC_MAX[mode]}
+      onClose={() => setChoosing(false)}
+      onPick={(p) => {
+        setMusic(p);
+        setChoosing(false);
+      }}
+    />
+  );
+  if ((mode === "story" || (mode === "clip" && !details)) && picked.length === 1 && asset) {
+    return (
+      <>
+        <Stage
+          mode={mode}
+          asset={asset}
+          music={music}
+          caption={caption}
+          shownFor={shownFor}
+          everyone={everyone}
+          isPrivate={isPrivate}
+          status={status}
+          onCaption={setCaption}
+          onMusic={() => setChoosing(true)}
+          onClearMusic={() => {
+            stopSound();
+            setMusic(null);
+          }}
+          onLength={setStoryMs}
+          onAudience={(all) => setFlip(isPrivate ? all : !all)}
+          onDiscard={() => {
+            stopSound();
+            setPicked([]);
+          }}
+          onShare={mode === "story" ? share : () => setDetails(true)}
+        />
+        {picker}
+      </>
+    );
+  }
+
   return (
     <AppScreen>
       <TopBar
@@ -263,24 +314,56 @@ export default function Create() {
             ))}
           </View>
 
+          {mode === "post" && picked.length ? (
+            // The photos big, as they'll look in the feed (4:5), before the details.
+            <View style={s.big}>
+              <Image
+                source={{ uri: (picked[Math.min(selected, picked.length - 1)] ?? picked[0])?.uri }}
+                style={s.bigPhoto}
+                contentFit="cover"
+              />
+              {picked.length > 1 ? (
+                <Text style={s.bigCount}>
+                  {Math.min(selected, picked.length - 1) + 1}/{picked.length}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={s.picked}
           >
             {picked.map((a, i) => (
-              <View key={a.uri} style={s.thumb}>
-                {a.type === "video" ? (
-                  <View style={[s.thumbFill, s.video]}>
-                    <Icon name="PlayFill" size={26} color="#ffffff" />
-                  </View>
-                ) : (
-                  <Image source={{ uri: a.uri }} style={s.thumbFill} contentFit="cover" />
-                )}
+              <View
+                key={a.uri}
+                style={[
+                  s.thumb,
+                  mode === "post" && i === selected && { borderWidth: 2.5, borderColor: accent },
+                ]}
+              >
+                {/* Choosing the photo and removing it are side by side, never nested. */}
                 <Pressable
-                  onPress={() => setPicked(picked.filter((_, j) => j !== i))}
+                  onPress={() => setSelected(i)}
                   accessibilityRole="button"
-                  accessibilityLabel="Remove"
+                  accessibilityLabel={`Show photo ${i + 1}`}
+                  style={s.thumbFill}
+                >
+                  {a.type === "video" ? (
+                    <View style={[s.thumbFill, s.video]}>
+                      <Icon name="PlayFill" size={26} color="#ffffff" />
+                    </View>
+                  ) : (
+                    <Image source={{ uri: a.uri }} style={s.thumbFill} contentFit="cover" />
+                  )}
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setPicked(picked.filter((_, j) => j !== i));
+                    setSelected(0);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove photo ${i + 1}`}
                   style={s.remove}
                 >
                   <Icon name="X" size={16} color="#ffffff" />
@@ -624,6 +707,26 @@ const make = (t: NativeTheme) =>
     modeText: { fontFamily: t.fonts.bold, fontSize: 15 * t.textScale, color: t.colors.textSoft },
     modeTextOn: { color: t.colors.text },
     picked: { gap: 8, paddingBottom: 4 },
+    big: {
+      marginBottom: 12,
+      borderRadius: t.radius.media,
+      overflow: "hidden",
+      backgroundColor: t.colors.surfaceSunken,
+    },
+    bigPhoto: { width: "100%", aspectRatio: 4 / 5 },
+    bigCount: {
+      position: "absolute",
+      top: 10,
+      right: 10,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+      overflow: "hidden",
+      backgroundColor: "rgba(0,0,0,0.55)",
+      color: "#ffffff",
+      fontFamily: t.fonts.bold,
+      fontSize: 12.5 * t.textScale,
+    },
     thumb: {
       width: 120,
       height: 150,
