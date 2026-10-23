@@ -6,6 +6,8 @@ import {
   MusicNotes,
   Pause,
   Play,
+  SkipBack,
+  SkipForward,
   SpeakerHigh,
   SpeakerSlash,
 } from "@phosphor-icons/react";
@@ -22,7 +24,7 @@ import { clock, player, usePlayer } from "./player";
  * from this device, or a popular one, ready to play.
  */
 export function NowPlayingBar({ className }: { className?: string }) {
-  const { now, playing, positionMs, durationMs, volume } = usePlayer();
+  const { now, queue, playing, positionMs, durationMs, volume } = usePlayer();
   const lastVolume = useRef(0.8);
 
   // Only once, when the bar first appears.
@@ -85,6 +87,16 @@ export function NowPlayingBar({ className }: { className?: string }) {
             <ArrowCounterClockwise aria-hidden="true" size={19} />
             <span className="sr-only">Play from the start</span>
           </button>
+          {queue && (
+            <button
+              type="button"
+              onClick={() => player.step(-1)}
+              className="grid size-9 place-items-center rounded-full hover:text-fg"
+            >
+              <SkipBack aria-hidden="true" size={19} weight="fill" />
+              <span className="sr-only">Previous song</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => player.toggle()}
@@ -97,6 +109,16 @@ export function NowPlayingBar({ className }: { className?: string }) {
             )}
             <span className="sr-only">{playing ? "Pause" : "Play"}</span>
           </button>
+          {queue && (
+            <button
+              type="button"
+              onClick={() => player.step(1)}
+              className="grid size-9 place-items-center rounded-full hover:text-fg"
+            >
+              <SkipForward aria-hidden="true" size={19} weight="fill" />
+              <span className="sr-only">Next song</span>
+            </button>
+          )}
           <button
             type="button"
             aria-pressed={Boolean(s.liked)}

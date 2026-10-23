@@ -4,19 +4,21 @@ import {
   House,
   type Icon,
   MagnifyingGlass,
+  MusicNotes,
   PlayCircle,
 } from "@phosphor-icons/react";
 
 export type Destination = { href: string; label: string; icon: Icon };
 
 /**
- * Where you can go (Look B, the owner's pick 2026-10-22): Home, Search, Clips, Messages and
- * Activity, then Create. Your Spaces and chats sit in "Your places" below.
+ * Where you can go (Look B, the owner's pick 2026-10-22): Home, Search, Clips, Music, Messages
+ * and Activity, then Create. Your Spaces and chats sit in "Your places" below.
  */
 export const DESTINATIONS: Destination[] = [
   { href: "/home", label: "Home", icon: House },
   { href: "/explore", label: "Search", icon: MagnifyingGlass },
   { href: "/clips", label: "Clips", icon: PlayCircle },
+  { href: "/music", label: "Music", icon: MusicNotes },
   { href: "/messages", label: "Messages", icon: ChatCircle },
   { href: "/activity", label: "Activity", icon: Heart },
 ];

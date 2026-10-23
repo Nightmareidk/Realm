@@ -21,6 +21,8 @@ export interface Playing {
 
 interface State {
   now: Playing | null;
+  /** A list being played through (a playlist, Liked songs, a mood), and where in it. */
+  queue: { items: Sound[]; at: number; from: string } | null;
   playing: boolean;
   positionMs: number;
   durationMs: number;
@@ -29,7 +31,14 @@ interface State {
 
 const KEY = "realm:now-playing";
 const VOLUME = "realm:volume";
-const initial: State = { now: null, playing: false, positionMs: 0, durationMs: 0, volume: 0.8 };
+const initial: State = {
+  now: null,
+  queue: null,
+  playing: false,
+  positionMs: 0,
+  durationMs: 0,
+  volume: 0.8,
+};
 let state = initial;
 const listeners = new Set<() => void>();
 let audio: HTMLAudioElement | null = null;
@@ -55,7 +64,11 @@ function el() {
   });
   audio.addEventListener("play", () => set({ playing: true }));
   audio.addEventListener("pause", () => set({ playing: false }));
-  audio.addEventListener("ended", () => set({ playing: false }));
+  audio.addEventListener("ended", () => {
+    set({ playing: false });
+    // A list carries on to its next song.
+    if (state.queue && state.queue.at < state.queue.items.length - 1) player.step(1);
+  });
   return audio;
 }
 
@@ -70,6 +83,7 @@ export const player = {
   play(sound: Sound, opts: { from?: string | null; startMs?: number; key?: string } = {}) {
     const a = el();
     const key = opts.key ?? `sound:${sound.id}`;
+    if (!key.startsWith("list:") && state.queue) set({ queue: null });
     if (state.now?.sound.id === sound.id && a.src) {
       if (state.now.key !== key) set({ now: { ...state.now, key, from: opts.from ?? null } });
       void a.play().catch(() => set({ playing: false }));
@@ -81,6 +95,23 @@ export const player = {
     a.src = sound.audioUrl;
     a.currentTime = now.startMs / 1000;
     void a.play().catch(() => set({ playing: false }));
+  },
+  /** Plays a list from one of its songs; the next ones follow, and it goes to Recently played. */
+  playList(items: Sound[], at: number, from: string) {
+    const sound = items[at];
+    if (!sound) return;
+    set({ queue: { items, at, from } });
+    player.play(sound, { from, key: `list:${sound.id}` });
+    void api(`/music/played/${sound.id}`, { body: {} }).catch(() => {});
+  },
+  /** The next (1) or previous (-1) song in the list. */
+  step(by: 1 | -1) {
+    const q = state.queue;
+    if (!q) return;
+    // Back near the start of a song restarts it, like music apps.
+    if (by === -1 && state.positionMs > 3000) return player.seek(0);
+    const at = (q.at + by + q.items.length) % q.items.length;
+    player.playList(q.items, at, q.from);
   },
   /** Shows a song in the bar without playing it (the last one played, or a suggestion). */
   cue(sound: Sound, from: string | null = null) {

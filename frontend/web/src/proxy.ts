@@ -26,6 +26,7 @@ export const config = {
     "/explore/:path*",
     "/u/:path*",
     "/clips/:path*",
+    "/music/:path*",
     "/activity/:path*",
     "/settings/:path*",
     "/themes/store",
