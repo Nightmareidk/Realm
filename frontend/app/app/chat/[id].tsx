@@ -27,6 +27,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { alert } from "@/alert";
+import { chatAccent } from "@/chat/colour";
 import { bodyOf, MessageRow, QUICK_REACTIONS, timeOf } from "@/chat/message-row";
 import { PhotoSend } from "@/chat/photo-send";
 import { PhotoViewer } from "@/chat/photo-viewer";
@@ -1133,9 +1134,7 @@ function OutgoingRow({
 
 /** A conversation's own colour (Now Playing): one of Realm's four, picked from its id so it stays. */
 function chatColour(id: string) {
-  let h = 0;
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return themes[THEME_ORDER[h % THEME_ORDER.length] ?? "mint"];
+  return themes[chatAccent(id)];
 }
 
 const make = (t: NativeTheme) =>

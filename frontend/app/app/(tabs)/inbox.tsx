@@ -3,6 +3,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { chatAccent } from "@/chat/colour";
 import { Icon } from "@/icon";
 import { Friends } from "@/inbox/friends";
 import { SpacesList } from "@/inbox/spaces";
@@ -10,9 +11,10 @@ import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
 import { Avatar } from "@/social/avatar";
+import { GlowTop } from "@/social/glow-top";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
 import { ago } from "@/social/time";
-import { type NativeTheme, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, themes, useStyles, useTheme } from "@/theme";
 import {
   isMuted,
   isUnread,
@@ -152,8 +154,13 @@ export default function Inbox() {
     });
   }
 
+  // The newest chat's colour lights the top (Look B).
+  const newest = items[0];
+  const glowColour = newest ? themes[newest.colour ?? chatAccent(newest.id)].accent : null;
+
   return (
     <AppScreen>
+      <GlowTop colour={glowColour} />
       <View style={[s.head, { paddingTop: insets.top + 10 }]}>
         <View style={s.titleRow}>
           <Text style={s.title} accessibilityRole="header">

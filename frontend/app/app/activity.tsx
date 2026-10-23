@@ -10,6 +10,7 @@ import { Icon } from "@/icon";
 import type { IconName } from "@/icon-paths";
 import { ApiError, api, mediaSource } from "@/server";
 import { Avatar } from "@/social/avatar";
+import { GlowTop } from "@/social/glow-top";
 import { LIKED } from "@/social/post-card";
 import { AppScreen, Empty, Loading, Problem, TopBar } from "@/social/screen";
 import { ago } from "@/social/time";
@@ -95,8 +96,12 @@ export default function ActivityScreen() {
   const waiting = requests.data ?? [];
   const header = waiting.length ? <RequestsRow waiting={waiting} /> : null;
 
+  // The newest post someone reacted to lights the top (Look B); otherwise the theme's own light.
+  const lit = feed.data?.items.find((a) => a.post?.thumbUrl)?.post?.thumbUrl ?? null;
+
   return (
     <AppScreen>
+      <GlowTop picture={lit} />
       <TopBar title="Activity" />
       {feed.error && !feed.data ? (
         <Problem message={feed.error} onRetry={feed.reload} />
