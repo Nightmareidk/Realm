@@ -18,7 +18,7 @@ const TABS: Record<string, { label: string; icon: IconName; on: IconName }> = {
   home: { label: "Home", icon: "House", on: "HouseFill" },
   clips: { label: "Clips", icon: "PlayCircle", on: "PlayCircleFill" },
   explore: { label: "Search", icon: "MagnifyingGlass", on: "MagnifyingGlass" },
-  inbox: { label: "Inbox", icon: "ChatCircle", on: "ChatCircleFill" },
+  inbox: { label: "Messages", icon: "ChatCircle", on: "ChatCircleFill" },
 };
 
 /**
@@ -66,7 +66,7 @@ export function TabBar({ state, navigation }: BarProps) {
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
               accessibilityLabel={
-                route.name === "inbox" && unread ? `Inbox, ${unread} unread` : (tab?.label ?? "You")
+                route.name === "inbox" && unread ? `Messages, ${unread} unread` : (tab?.label ?? "You")
               }
               style={s.item}
             >

@@ -355,7 +355,13 @@ const make = (t: NativeTheme) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: t.colors.border,
     },
-    duoMedia: { flexGrow: 1, flexShrink: 1, flexBasis: 0, backgroundColor: "#000000", minHeight: 420 },
+    duoMedia: {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 0,
+      backgroundColor: "#000000",
+      minHeight: 420,
+    },
     // A fixed-width column beside the photo: never grows, never squeezed.
     duoSide: { width: 420, flexGrow: 0, flexShrink: 0, backgroundColor: t.colors.bg },
     arrow: {

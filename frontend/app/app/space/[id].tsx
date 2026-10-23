@@ -58,7 +58,21 @@ export default function SpaceScreen() {
   const voice = sp.channels.filter((c) => c.type === "voice");
   return (
     <AppScreen>
-      <TopBar title={sp.name} />
+      <TopBar
+        title={sp.name}
+        right={
+          <Pressable
+            onPress={() =>
+              router.push({ pathname: "/space/settings/[id]", params: { id: sp.slug } })
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Space settings: Glow, AutoMod, audit log, invites"
+            style={s.gear}
+          >
+            <Icon name="Gear" size={22} color={t.colors.text} />
+          </Pressable>
+        }
+      />
       <ScrollView contentContainerStyle={s.body}>
         <View style={s.head}>
           <SpaceBadge name={sp.name} accent={sp.accent} size={64} />
@@ -117,6 +131,7 @@ export default function SpaceScreen() {
 const make = (t: NativeTheme) =>
   StyleSheet.create({
     fill: { flex: 1 },
+    gear: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
     body: { padding: 16, paddingBottom: 40 },
     head: { flexDirection: "row", alignItems: "center", gap: 14 },
     name: { fontFamily: t.fonts.displayBold, fontSize: 24 * t.textScale, color: t.colors.text },

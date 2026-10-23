@@ -4,6 +4,8 @@ import { useCallback, useState } from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/icon";
+import { Friends } from "@/inbox/friends";
+import { SpacesList } from "@/inbox/spaces";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
@@ -54,6 +56,7 @@ export default function Inbox() {
   const state = useUnreadState();
   const sheet = useSheet();
   const [filter, setFilter] = useState<Filter>("all");
+  const [section, setSection] = useState<"chats" | "spaces" | "friends">("chats");
   const requestCount = useRequestCount();
   const [error, setError] = useState<string | null>(null);
 
@@ -154,7 +157,7 @@ export default function Inbox() {
       <View style={[s.head, { paddingTop: insets.top + 10 }]}>
         <View style={s.titleRow}>
           <Text style={s.title} accessibilityRole="header">
-            Inbox
+            Messages
           </Text>
           <Pressable
             onPress={() => router.push("/new-message")}
@@ -165,33 +168,66 @@ export default function Inbox() {
             <Icon name="NotePencil" size={25} color={t.colors.text} />
           </Pressable>
         </View>
-        <Text style={s.note}>Not end-to-end encrypted yet</Text>
-        <View style={s.chips} accessibilityRole="tablist">
-          {FILTERS.map((f) => {
-            const on = filter === f.id;
+        {/* Chats, your Spaces and your friends: where all the talking lives. */}
+        <View style={s.sections} accessibilityRole="tablist">
+          {(
+            [
+              ["chats", "Chats"],
+              ["spaces", "Spaces"],
+              ["friends", "Friends"],
+            ] as const
+          ).map(([id, label]) => {
+            const on = section === id;
             return (
               <Pressable
-                key={f.id}
-                onPress={() => setFilter(f.id)}
+                key={id}
+                onPress={() => setSection(id)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on }}
-                style={[
-                  s.chip,
-                  on && { backgroundColor: t.colors.text, borderColor: t.colors.text },
-                ]}
+                style={[s.section, on && { borderBottomColor: t.colors.text }]}
               >
-                <Text style={[s.chipText, on && { color: t.colors.bg }]}>{f.label}</Text>
-                {f.id === "requests" && requestCount ? (
-                  <View style={s.chipCount}>
-                    <Text style={s.chipCountText}>{requestCount > 9 ? "9+" : requestCount}</Text>
-                  </View>
-                ) : null}
+                <Text style={[s.sectionText, on && s.sectionTextOn]}>{label}</Text>
               </Pressable>
             );
           })}
         </View>
+        {section === "chats" ? (
+          <>
+            <Text style={s.note}>Not end-to-end encrypted yet</Text>
+            <View style={s.chips} accessibilityRole="tablist">
+              {FILTERS.map((f) => {
+                const on = filter === f.id;
+                return (
+                  <Pressable
+                    key={f.id}
+                    onPress={() => setFilter(f.id)}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: on }}
+                    style={[
+                      s.chip,
+                      on && { backgroundColor: t.colors.text, borderColor: t.colors.text },
+                    ]}
+                  >
+                    <Text style={[s.chipText, on && { color: t.colors.bg }]}>{f.label}</Text>
+                    {f.id === "requests" && requestCount ? (
+                      <View style={s.chipCount}>
+                        <Text style={s.chipCountText}>
+                          {requestCount > 9 ? "9+" : requestCount}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        ) : null}
       </View>
-      {error && !state.loaded ? (
+      {section === "spaces" ? (
+        <SpacesList />
+      ) : section === "friends" ? (
+        <Friends />
+      ) : error && !state.loaded ? (
         <Problem message={error} onRetry={reload} />
       ) : !state.loaded ? (
         <Loading />
@@ -379,6 +415,26 @@ const make = (t: NativeTheme) =>
       marginTop: 2,
     },
     chips: { flexDirection: "row", gap: 8, marginTop: 12 },
+    sections: {
+      flexDirection: "row",
+      gap: 4,
+      marginTop: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border,
+    },
+    section: {
+      paddingHorizontal: 14,
+      minHeight: 42,
+      justifyContent: "center",
+      borderBottomWidth: 2.5,
+      borderBottomColor: "transparent",
+    },
+    sectionText: {
+      fontFamily: t.fonts.bold,
+      fontSize: 15.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
+    sectionTextOn: { color: t.colors.text },
     chip: {
       flexDirection: "row",
       minHeight: 36,
