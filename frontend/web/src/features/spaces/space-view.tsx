@@ -1,10 +1,18 @@
 "use client";
 
-import { CaretLeft, Headphones, SpeakerHigh, UserPlus } from "@phosphor-icons/react";
+import {
+  CaretDown,
+  CaretLeft,
+  Headphones,
+  Lock,
+  SpeakerHigh,
+  Timer,
+  UserPlus,
+} from "@phosphor-icons/react";
 import type { Channel, SpaceDetail } from "@realm/contracts";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { pill, textLink } from "@/components/pill";
 import { useHerePanel } from "@/features/app/here-context";
 import { roomScope } from "@/features/chat/scope";
@@ -81,18 +89,23 @@ export function SpaceView({ slug, room: roomName }: { slug: string; room?: strin
   return (
     <div className="flex h-dvh min-h-0 flex-col md:h-auto md:flex-1">
       <SpaceHeader space={space} roomId={room?.id ?? null} />
-      {room && <LiveStrip space={space} here={room} />}
-      {room ? (
-        room.type === "voice" ? (
-          <VoiceRoom key={room.id} space={space} room={room} />
-        ) : (
-          <RoomChat key={room.id} space={space} room={room} />
-        )
-      ) : (
-        <p className="px-6 py-16 text-center text-fg-soft">
-          This Space has no rooms you can see yet.
-        </p>
-      )}
+      <div className="flex min-h-0 flex-1">
+        <RoomsColumn space={space} roomId={room?.id ?? null} />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {room && <LiveStrip space={space} here={room} />}
+          {room ? (
+            room.type === "voice" ? (
+              <VoiceRoom key={room.id} space={space} room={room} />
+            ) : (
+              <RoomChat key={room.id} space={space} room={room} />
+            )
+          ) : (
+            <p className="px-6 py-16 text-center text-fg-soft">
+              This Space has no rooms you can see yet.
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -173,7 +186,7 @@ function SpaceHeader({ space, roomId }: { space: SpaceDetail; roomId: string | n
       <nav
         ref={strip}
         aria-label={`Rooms in ${space.name}`}
-        className="order-last -mx-1 w-full min-w-0 overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_0.75rem,black_calc(100%-2rem),transparent)] [scrollbar-width:none]"
+        className="lg:hidden order-last -mx-1 w-full min-w-0 overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_0.75rem,black_calc(100%-2rem),transparent)] [scrollbar-width:none]"
       >
         <ul className="flex w-max items-center gap-1 px-1">
           {rooms.map((r) => {
@@ -296,4 +309,139 @@ function RoomChat({ space, room }: { space: SpaceDetail; room: Channel }) {
   const teen = useRealm((s) => s.me?.teen ?? false);
   const scope = useMemo(() => roomScope(space, room, members, teen), [space, room, members, teen]);
   return <Chat room={room} scope={scope} />;
+}
+
+/** A room only some roles can see: Everyone may not view it. */
+const isPrivate = (space: SpaceDetail, room: Channel) =>
+  room.overwrites.some(
+    (o) =>
+      o.targetType === "role" &&
+      o.targetId === space.id &&
+      (BigInt(o.deny) & Permission.VIEW_CHANNEL) === Permission.VIEW_CHANNEL,
+  );
+
+/**
+ * On computers, the Space's rooms down the side, the way its moderators grouped them: rooms with
+ * no group first, then each group (click its name to fold it). Voice rooms show who's in them.
+ */
+function RoomsColumn({ space, roomId }: { space: SpaceDetail; roomId: string | null }) {
+  const reads = useRealm((s) => s.reads);
+  const voice = useRealm((s) => s.voice);
+  const members = useRealm((s) => s.members[space.id]);
+  const [folded, setFolded] = useState<Set<string>>(new Set());
+  const groups = space.channels
+    .filter((c) => c.type === "category")
+    .sort((a, b) => a.position - b.position);
+  const known = new Set(groups.map((g) => g.id));
+  const rooms = spaceRooms(space).sort((a, b) => a.position - b.position);
+  const sections = [
+    {
+      group: null as Channel | null,
+      rooms: rooms.filter((r) => !r.parentId || !known.has(r.parentId)),
+    },
+    ...groups.map((g) => ({
+      group: g as Channel | null,
+      rooms: rooms.filter((r) => r.parentId === g.id),
+    })),
+  ];
+
+  const row = (r: Channel) => {
+    const active = r.id === roomId;
+    const unread = !active && r.type === "text" && roomUnread(reads, r);
+    const people = r.type === "voice" ? (voice[r.id] ?? []) : [];
+    return (
+      <li key={r.id}>
+        <Link
+          href={`/spaces/${space.slug}/${r.name}`}
+          aria-current={active ? "page" : undefined}
+          className={cx(
+            "flex h-9 items-center gap-2 rounded-[10px] px-2.5 text-[0.95rem] font-bold transition-colors duration-150",
+            active
+              ? "bg-fg/10 text-fg"
+              : unread
+                ? "text-fg hover:bg-fg/6"
+                : "text-fg-soft hover:bg-fg/6 hover:text-fg",
+          )}
+        >
+          {r.type === "voice" ? (
+            <SpeakerHigh aria-hidden="true" size={17} className="shrink-0 opacity-80" />
+          ) : (
+            <span aria-hidden="true" className="w-[17px] shrink-0 text-center opacity-80">
+              #
+            </span>
+          )}
+          <span className="min-w-0 flex-1 truncate">{r.name}</span>
+          {isPrivate(space, r) && (
+            <Lock aria-label="Private" size={13} className="shrink-0 opacity-70" />
+          )}
+          {r.slowmodeSeconds > 0 && (
+            <Timer aria-label="Slow mode" size={13} className="shrink-0 opacity-70" />
+          )}
+          {unread && (
+            <>
+              <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-fg" />
+              <span className="sr-only"> (new messages)</span>
+            </>
+          )}
+        </Link>
+        {people.length > 0 && (
+          <ul className="mb-1 ml-8 space-y-0.5">
+            {people.map((id) => {
+              const u = members?.find((m) => m.user.id === id)?.user;
+              return (
+                <li key={id} className="flex items-center gap-2 text-[0.85rem] text-fg-soft">
+                  {u ? (
+                    <Avatar user={u} size={20} />
+                  ) : (
+                    <span className="size-5 rounded-full bg-fg/10" />
+                  )}
+                  <span className="truncate">{u?.displayName ?? "Someone"}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </li>
+    );
+  };
+
+  return (
+    <nav
+      aria-label={`Rooms in ${space.name}`}
+      className="w-60 shrink-0 overflow-y-auto border-r border-line px-2.5 py-3 max-lg:hidden"
+    >
+      {sections.map((sec) => {
+        if (!sec.group && sec.rooms.length === 0) return null;
+        const id = sec.group?.id ?? "top";
+        const shut = folded.has(id);
+        return (
+          <div key={id} className={sec.group ? "mt-4" : undefined}>
+            {sec.group && (
+              <button
+                type="button"
+                aria-expanded={!shut}
+                onClick={() =>
+                  setFolded((f) => {
+                    const next = new Set(f);
+                    next.has(id) ? next.delete(id) : next.add(id);
+                    return next;
+                  })
+                }
+                className="mb-1 flex w-full items-center gap-1 px-1 text-[0.75rem] font-bold tracking-[0.08em] text-fg-soft uppercase hover:text-fg"
+              >
+                <CaretDown
+                  aria-hidden="true"
+                  size={11}
+                  weight="bold"
+                  className={cx("transition-transform duration-150", shut && "-rotate-90")}
+                />
+                <span className="truncate">{sec.group.name}</span>
+              </button>
+            )}
+            {!shut && <ul className="space-y-0.5">{sec.rooms.map(row)}</ul>}
+          </div>
+        );
+      })}
+    </nav>
+  );
 }
