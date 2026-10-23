@@ -1,6 +1,9 @@
 import {
   CreateSoundBody,
   CreateStoryBody,
+  Highlight,
+  HighlightBody,
+  HighlightDetail,
   MOODS,
   type MoodId,
   MusicHome,
@@ -13,6 +16,7 @@ import {
   SoundSearchQuery,
   Story,
   StoryFeed,
+  UpdateHighlightBody,
   Username,
 } from "@realm/contracts";
 import { Limits } from "@realm/server-core";
@@ -21,6 +25,7 @@ import { z } from "zod";
 import type { Deps } from "../../deps";
 import { authOf, requireAuth } from "../../plugins/context";
 import { enforceLimit } from "../../plugins/security";
+import { HighlightsService } from "./highlights";
 import { MusicLibrary } from "./library";
 import type { MusicService } from "./service";
 
@@ -96,6 +101,68 @@ export const storyRoutes =
       },
       async (req) => ({ items: await music.ofUser(req.params.username, authOf(req).userId) }),
     );
+    // Highlights: Stories kept on a profile.
+    const highlights = new HighlightsService(deps, music);
+    const HighlightId = z.object({ id: Snowflake });
+    app.get(
+      "/archive",
+      {
+        preHandler: requireAuth,
+        schema: { response: { 200: z.object({ items: z.array(Story) }) } },
+      },
+      async (req) => ({ items: await highlights.archive(authOf(req).userId) }),
+    );
+    app.get(
+      "/highlights/of/:username",
+      {
+        preHandler: requireAuth,
+        schema: {
+          params: z.object({ username: Username }),
+          response: { 200: z.object({ items: z.array(Highlight) }) },
+        },
+      },
+      async (req) => ({
+        items: await highlights.ofUser(req.params.username, authOf(req).userId),
+      }),
+    );
+    app.get(
+      "/highlights/:id",
+      {
+        preHandler: requireAuth,
+        schema: { params: HighlightId, response: { 200: HighlightDetail } },
+      },
+      async (req) => highlights.get(BigInt(req.params.id), authOf(req).userId),
+    );
+    app.post(
+      "/highlights",
+      { preHandler: requireAuth, schema: { body: HighlightBody, response: { 201: Highlight } } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.storyCreate, userId.toString());
+        return reply.status(201).send(await highlights.create(userId, req.body));
+      },
+    );
+    app.patch(
+      "/highlights/:id",
+      {
+        preHandler: requireAuth,
+        schema: { params: HighlightId, body: UpdateHighlightBody, response: { 200: Highlight } },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.storyCreate, userId.toString());
+        return highlights.update(userId, BigInt(req.params.id), req.body);
+      },
+    );
+    app.delete(
+      "/highlights/:id",
+      { preHandler: requireAuth, schema: { params: HighlightId } },
+      async (req, reply) => {
+        await highlights.remove(authOf(req).userId, BigInt(req.params.id));
+        return reply.status(204).send();
+      },
+    );
+
     app.post(
       "/:id/view",
       { preHandler: requireAuth, schema: { params: Id } },

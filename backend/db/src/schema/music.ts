@@ -147,3 +147,40 @@ export const soundPlays = pgTable(
     index("sound_plays_recent_idx").on(t.userId, t.playedAt.desc()),
   ],
 );
+
+/**
+ * Story highlights: Stories kept on a profile after their day is up, in named circles. Who can
+ * watch them follows the account (public, or followers for a private account).
+ */
+export const storyHighlights = pgTable(
+  "story_highlights",
+  {
+    id: id().primaryKey(),
+    ownerId: id()
+      .notNull()
+      .references(() => users.id),
+    title: text().notNull(),
+    /** The Story whose picture is the circle's cover (the first one when empty). */
+    coverStoryId: id(),
+    position: integer().notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("story_highlights_owner_idx").on(t.ownerId, t.position)],
+);
+
+export const storyHighlightItems = pgTable(
+  "story_highlight_items",
+  {
+    highlightId: id()
+      .notNull()
+      .references(() => storyHighlights.id, { onDelete: "cascade" }),
+    storyId: id()
+      .notNull()
+      .references(() => stories.id),
+    position: integer().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.highlightId, t.storyId] }),
+    index("story_highlight_items_story_idx").on(t.storyId),
+  ],
+);

@@ -186,6 +186,12 @@ export const SearchResults = z
   .meta({ id: "SearchResults" });
 export type SearchResults = z.infer<typeof SearchResults>;
 
+/** Someone you may know, and why they're suggested ("Follows you", "In Late Night Lobby"). */
+export const Suggestion = z
+  .object({ user: UserSummary, reason: z.string(), followsYou: z.boolean() })
+  .meta({ id: "Suggestion" });
+export type Suggestion = z.infer<typeof Suggestion>;
+
 export const ActivityType = z.enum([
   "follow",
   "follow_request",

@@ -277,6 +277,71 @@ describe("Stories", () => {
   });
 });
 
+describe("Story highlights", () => {
+  it("keeps Stories on a profile after their day, for whoever can see the profile", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const pic = await upload(noor.cookie, "image", await photo(), "image/png");
+    const story = (await call(noor.cookie, "POST", "/stories", { mediaId: pic })).json();
+    await t.deps.db
+      .update(schema.stories)
+      .set({ expiresAt: new Date(Date.now() - 1000) })
+      .where(eq(schema.stories.id, BigInt(story.id)));
+    expect((await call(noor.cookie, "GET", "/stories/archive")).json().items[0].id).toBe(story.id);
+
+    const made = await call(noor.cookie, "POST", "/stories/highlights", {
+      title: "Summer",
+      storyIds: [story.id],
+    });
+    expect(made.statusCode).toBe(201);
+    expect(made.json()).toMatchObject({ title: "Summer", count: 1 });
+    // Someone else's Story can't go in.
+    expect(
+      (
+        await call(kenji.cookie, "POST", "/stories/highlights", {
+          title: "Not mine",
+          storyIds: [story.id],
+        })
+      ).statusCode,
+    ).toBe(400);
+
+    const theirs = (
+      await call(kenji.cookie, "GET", `/stories/highlights/of/${noor.username}`)
+    ).json();
+    expect(theirs.items).toHaveLength(1);
+    const detail = (
+      await call(kenji.cookie, "GET", `/stories/highlights/${made.json().id}`)
+    ).json();
+    expect(detail.stories[0].id).toBe(story.id);
+    expect((await call(kenji.cookie, "GET", `/media/${pic}/raw`)).statusCode).not.toBe(404);
+
+    // Private account: strangers see nothing.
+    await call(noor.cookie, "PATCH", "/users/@me/settings", { profileVisibility: "private" });
+    expect(
+      (await call(kenji.cookie, "GET", `/stories/highlights/of/${noor.username}`)).json().items,
+    ).toEqual([]);
+    expect(
+      (await call(kenji.cookie, "PATCH", `/stories/highlights/${made.json().id}`, { title: "x" }))
+        .statusCode,
+    ).toBe(403);
+    expect(
+      (await call(noor.cookie, "DELETE", `/stories/highlights/${made.json().id}`)).statusCode,
+    ).toBe(204);
+  });
+
+  it("suggests people who follow you first", async () => {
+    const noor = await person();
+    const kenji = await person();
+    await call(kenji.cookie, "PUT", `/users/${noor.username}/follow`);
+    const items = (await call(noor.cookie, "GET", "/users/@me/suggestions")).json().items;
+    expect(items[0]).toMatchObject({
+      user: { id: kenji.id },
+      reason: "Follows you",
+      followsYou: true,
+    });
+  });
+});
+
 describe("the music library", () => {
   it("likes songs, makes playlists, keeps what you played, and hides others' private lists", async () => {
     const noor = await person();

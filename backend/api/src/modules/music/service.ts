@@ -412,7 +412,7 @@ export class MusicService {
     return viewerId ? followsActively(this.db, viewerId, row.authorId) : false;
   }
 
-  private async toStories(rows: StoryRow[], viewerId: bigint | null): Promise<Story[]> {
+  async toStories(rows: StoryRow[], viewerId: bigint | null): Promise<Story[]> {
     if (!rows.length) return [];
     const ids = rows.map((r) => r.id);
     const [authors, files, seen, counts, soundList] = await Promise.all([

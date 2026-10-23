@@ -11,6 +11,7 @@ import type {
   PostVisibility,
   Profile,
   SearchResults,
+  Suggestion,
   UpdateAccountBody,
   UpdatePostBody,
   UserSummary,
@@ -817,6 +818,101 @@ export class SocialService {
   }
 
   /* ── Search ────────────────────────────────────────────────────────────── */
+
+  /**
+   * People you may know: who follows you and you don't follow back, people the people you follow
+   * follow, and people in your Spaces. Never you, anyone you follow (or asked to), or anyone in a
+   * block with you.
+   */
+  async suggestions(viewerId: bigint, limit = 6): Promise<Suggestion[]> {
+    const mine = sql`(select ${follows.followeeId} from ${follows} where ${follows.followerId} = ${viewerId})`;
+    const allowed = (col: typeof users.id | typeof follows.followeeId) =>
+      and(
+        sql`${col} <> ${viewerId}`,
+        sql`${col} not in ${mine}`,
+        sql`${col} not in ${blockedWith(viewerId)}`,
+      );
+    const picked = new Map<string, Suggestion>();
+    const add = (u: UserSummary, reason: string, followsYou: boolean) => {
+      if (!picked.has(u.id) && picked.size < limit)
+        picked.set(u.id, { user: u, reason, followsYou });
+    };
+
+    const back = await this.db
+      .select(summaryColumns)
+      .from(follows)
+      .innerJoin(users, eq(users.id, follows.followerId))
+      .where(
+        and(
+          eq(follows.followeeId, viewerId),
+          eq(follows.status, "active"),
+          eq(users.status, "active"),
+          allowed(users.id),
+        ),
+      )
+      .orderBy(desc(follows.createdAt))
+      .limit(limit);
+    for (const u of back) add(toUserSummary(u), "Follows you", true);
+
+    if (picked.size < limit) {
+      const viaFollows = await this.db
+        .select({
+          id: follows.followeeId,
+          n: sql<number>`count(*)::int`,
+          via: sql<string>`min(${follows.followerId})::text`,
+        })
+        .from(follows)
+        .where(
+          and(
+            sql`${follows.followerId} in ${mine}`,
+            eq(follows.status, "active"),
+            allowed(follows.followeeId),
+          ),
+        )
+        .groupBy(follows.followeeId)
+        .orderBy(desc(sql`count(*)`))
+        .limit(limit);
+      const ids = [...viaFollows.map((r) => r.id), ...viaFollows.map((r) => BigInt(r.via))];
+      const people = ids.length
+        ? await this.db
+            .select(summaryColumns)
+            .from(users)
+            .where(and(inArray(users.id, ids), eq(users.status, "active")))
+        : [];
+      const byId = new Map(people.map((u) => [u.id.toString(), u]));
+      for (const r of viaFollows) {
+        const u = byId.get(r.id.toString());
+        const via = byId.get(r.via);
+        if (!u) continue;
+        const name = via?.username ?? "people you follow";
+        add(
+          toUserSummary(u),
+          r.n > 1 ? `Followed by ${name} + ${r.n - 1}` : `Followed by ${name}`,
+          false,
+        );
+      }
+    }
+
+    if (picked.size < limit) {
+      const spaceMates = await this.db
+        .select({ user: summaryColumns, space: communities.name })
+        .from(communityMembers)
+        .innerJoin(users, eq(users.id, communityMembers.userId))
+        .innerJoin(communities, eq(communities.id, communityMembers.communityId))
+        .where(
+          and(
+            sql`${communityMembers.communityId} in (select ${communityMembers.communityId} from ${communityMembers} where ${communityMembers.userId} = ${viewerId})`,
+            isNull(communities.deletedAt),
+            eq(users.status, "active"),
+            allowed(users.id),
+          ),
+        )
+        .orderBy(desc(communityMembers.joinedAt))
+        .limit(limit * 3);
+      for (const r of spaceMates) add(toUserSummary(r.user), `In ${r.space}`, false);
+    }
+    return [...picked.values()];
+  }
 
   async search(query: string, viewerId: bigint | null): Promise<SearchResults> {
     const q = query.trim().toLowerCase().replace(/^@/, "");

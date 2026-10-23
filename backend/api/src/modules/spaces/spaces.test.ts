@@ -35,7 +35,7 @@ async function person(overrides: Partial<Record<string, string>> = {}) {
   return { cookie, id: res.json().user.id as string, name: account.displayName };
 }
 
-type Method = "GET" | "POST" | "PATCH" | "DELETE";
+type Method = "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
 async function call(cookie: string | undefined, method: Method, url: string, payload?: unknown) {
   return t.app.inject({
     method,

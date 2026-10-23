@@ -13,6 +13,7 @@ import { AppError, notFound } from "../../lib/errors";
 import { MESSAGE_HIDDEN, toMediaInfo } from "../../lib/serialize-spaces";
 import { acceptAs, imageSize, sniff } from "../../lib/sniff";
 import { ensureRoom, noteStorage } from "../../lib/storage-guard";
+import { HighlightsService } from "../music/highlights";
 import { MusicService } from "../music/service";
 import { seenThroughPost } from "../social/access";
 import { roomAccess } from "../spaces/access";
@@ -202,7 +203,10 @@ export class MediaService {
     // A theme's pictures: anyone once it's in the store, else its creator and whoever has it.
     if (await new ThemeService(this.deps).assetVisible(row.id, viewerId)) return true;
     // Stories (for those who may watch them) and creators' own sounds (for everyone).
-    if (await new MusicService(this.deps).mediaVisible(row.id, viewerId)) return true;
+    const music = new MusicService(this.deps);
+    if (await music.mediaVisible(row.id, viewerId)) return true;
+    // A Story kept as a highlight outlives its day.
+    if (await new HighlightsService(this.deps, music).mediaVisible(row.id, viewerId)) return true;
     if (!viewerId) return false;
     const uses = await this.db
       .select({

@@ -58,7 +58,11 @@ export type CreateSoundBody = z.infer<typeof CreateSoundBody>;
 export const SoundPick = z
   .object({
     soundId: Snowflake,
-    startMs: z.number().int().min(0).max(30 * 60 * 1000),
+    startMs: z
+      .number()
+      .int()
+      .min(0)
+      .max(30 * 60 * 1000),
     durationMs: z.number().int().min(5000).max(60_000),
   })
   .meta({ id: "SoundPick" });
@@ -181,3 +185,38 @@ export const CreateStoryBody = z
   })
   .meta({ id: "CreateStoryBody" });
 export type CreateStoryBody = z.infer<typeof CreateStoryBody>;
+
+// ── Story highlights ──────────────────────────────────────────────────────────────
+
+/** Most highlights on a profile, and most Stories in one. */
+export const HIGHLIGHT_LIMIT = 100;
+export const HIGHLIGHT_STORIES = 100;
+
+/** A named circle of kept Stories on a profile. */
+export const Highlight = z
+  .object({
+    id: Snowflake,
+    title: z.string(),
+    /** The picture on its circle. */
+    cover: MediaRef.nullable(),
+    count: z.number().int(),
+    createdAt: IsoDateTime,
+  })
+  .meta({ id: "Highlight" });
+export type Highlight = z.infer<typeof Highlight>;
+
+export const HighlightDetail = Highlight.extend({ stories: z.array(Story) }).meta({
+  id: "HighlightDetail",
+});
+export type HighlightDetail = z.infer<typeof HighlightDetail>;
+
+export const HighlightBody = z.object({
+  title: z.string().trim().min(1).max(30),
+  /** Your own Stories, in the order they play. */
+  storyIds: z.array(Snowflake).min(1).max(HIGHLIGHT_STORIES),
+  coverStoryId: Snowflake.optional(),
+});
+export type HighlightBody = z.infer<typeof HighlightBody>;
+
+export const UpdateHighlightBody = HighlightBody.partial();
+export type UpdateHighlightBody = z.infer<typeof UpdateHighlightBody>;

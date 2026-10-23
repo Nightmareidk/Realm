@@ -11,6 +11,7 @@ import {
   Profile,
   SearchResults,
   Snowflake,
+  Suggestion,
   UpdateAccountBody,
   UpdatePostBody,
   UserList,
@@ -194,6 +195,15 @@ export const socialUserRoutes =
           req.query.before ? BigInt(req.query.before) : null,
           req.query.limit,
         ),
+    );
+
+    app.get(
+      "/@me/suggestions",
+      {
+        preHandler: requireAuth,
+        schema: { response: { 200: z.object({ items: z.array(Suggestion) }) } },
+      },
+      async (req) => ({ items: await social.suggestions(authOf(req).userId) }),
     );
 
     app.get(
