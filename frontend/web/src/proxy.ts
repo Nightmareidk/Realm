@@ -25,6 +25,7 @@ export const config = {
     "/feed/:path*",
     "/explore/:path*",
     "/u/:path*",
+    "/friends",
     "/p/:path*",
     "/clips/:path*",
     "/music/:path*",

@@ -3,6 +3,7 @@
 import {
   ChatCircleDots,
   CirclesThree,
+  FilmStrip,
   GearSix,
   ImageSquare,
   Plus,
@@ -324,6 +325,17 @@ export function CreateMenu({ variant = "icon" }: { variant?: "icon" | "pill" | "
           >
             <CirclesThree aria-hidden="true" size={20} />
             New Story
+          </button>
+          <button
+            type="button"
+            className={row}
+            onClick={() => {
+              close();
+              openComposer({ mode: "clip" });
+            }}
+          >
+            <FilmStrip aria-hidden="true" size={20} />
+            New Clip
           </button>
           <button
             type="button"

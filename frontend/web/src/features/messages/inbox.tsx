@@ -1,6 +1,6 @@
 "use client";
 
-import { BellSlash, MagnifyingGlass, NotePencil, PushPin } from "@phosphor-icons/react";
+import { BellSlash, MagnifyingGlass, NotePencil, PushPin, UsersThree } from "@phosphor-icons/react";
 import type { Conversation, PresenceStatus } from "@realm/contracts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -68,6 +68,14 @@ export function Inbox({ activeId, onNew }: { activeId: string | null; onNew: () 
         <h1 className="flex-1 font-display text-[1.75rem] leading-[1.1] font-bold tracking-[-0.025em] text-fg md:text-[1.9rem]">
           Messages
         </h1>
+        <Link
+          href="/friends"
+          title="Friends"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-fg/8 px-3.5 text-[0.88rem] font-bold text-fg hover:bg-fg/12"
+        >
+          <UsersThree aria-hidden="true" size={17} />
+          Friends
+        </Link>
         <button
           type="button"
           onClick={onNew}

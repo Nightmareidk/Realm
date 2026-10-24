@@ -8,7 +8,7 @@ import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
 import { kindOf, uploadFile } from "@/lib/upload";
 
-type Mode = "post" | "story";
+type Mode = "post" | "story" | "clip";
 interface Open {
   mode: Mode;
   sound?: Sound;
@@ -32,6 +32,55 @@ export function onMade(fn: (x: { post?: Post; story?: Story }) => void) {
   return () => {
     made.delete(fn);
   };
+}
+
+/** What each kind asks for and says. */
+const WORDS: Record<
+  Mode,
+  { label: string; pick: string; wrong: string; choose: string; accept: string; share: string }
+> = {
+  post: {
+    label: "Post",
+    pick: "Pick a photo first.",
+    wrong: "Posts take photos.",
+    choose: "Choose a photo",
+    accept: "image/*",
+    share: "Share the post",
+  },
+  story: {
+    label: "Story",
+    pick: "Pick a photo or video first.",
+    wrong: "Stories take a photo or a video.",
+    choose: "Choose a photo or a video",
+    accept: "image/*,video/*",
+    share: "Share to your Story",
+  },
+  clip: {
+    label: "Clip",
+    pick: "Pick a video first.",
+    wrong: "A Clip is a video.",
+    choose: "Choose a video",
+    accept: "video/mp4,video/webm,video/quicktime",
+    share: "Share the Clip",
+  },
+};
+
+/** How long a video is, read in the browser before it uploads. */
+function videoLength(file: File): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement("video");
+    v.preload = "metadata";
+    v.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      resolve(Number.isFinite(v.duration) ? Math.round(v.duration * 1000) : undefined);
+    };
+    v.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(undefined);
+    };
+    v.src = url;
+  });
 }
 
 /** The part of a song that plays: 30 seconds on a post, the Story's length on a Story. */
@@ -115,21 +164,30 @@ export function Composer() {
 
   const share = async (e: FormEvent) => {
     e.preventDefault();
-    if (!file)
-      return setError(mode === "post" ? "Pick a photo first." : "Pick a photo or video first.");
+    if (!file) return setError(WORDS[mode].pick);
     const kind = kindOf(file);
-    if (kind !== "image" && !(mode === "story" && kind === "video")) {
-      return setError(mode === "post" ? "Posts take photos." : "Stories take a photo or a video.");
-    }
+    const fits =
+      mode === "post"
+        ? kind === "image"
+        : mode === "clip"
+          ? kind === "video"
+          : kind === "image" || kind === "video";
+    if (!fits) return setError(WORDS[mode].wrong);
     setError("");
     setProgress(0);
     try {
-      const media = await uploadFile(file, { kind, filename: file.name }, setProgress);
+      // Videos say how long they are, so the player shows it before loading.
+      const durationMs = kind === "video" ? await videoLength(file) : undefined;
+      const media = await uploadFile(
+        file,
+        { kind, filename: file.name, ...(durationMs ? { durationMs } : {}) },
+        setProgress,
+      );
       const pick = sound ? { soundId: sound.id, startMs: 0, durationMs: PART_MS } : undefined;
-      if (mode === "post") {
+      if (mode === "post" || mode === "clip") {
         const post = await api<Post>("/posts", {
           body: {
-            kind: "image",
+            kind: mode === "clip" ? "clip" : "image",
             mediaIds: [media.id],
             ...(caption.trim() ? { caption: caption.trim() } : {}),
             ...(pick ? { sound: pick } : {}),
@@ -159,13 +217,13 @@ export function Composer() {
       ref={ref}
       onClose={close}
       onClick={(e) => e.target === ref.current && close()}
-      aria-label={mode === "post" ? "New post" : "New Story"}
+      aria-label={`New ${WORDS[mode].label}`}
       className="m-auto max-h-[92vh] w-[min(56rem,calc(100vw-1.5rem))] overflow-hidden rounded-[22px] bg-surface p-0 text-fg backdrop:bg-[rgb(5_5_7/0.8)]"
     >
       <form onSubmit={share} className="flex max-h-[92vh] flex-col">
         <header className="flex items-center gap-3 border-b border-line px-4 py-3">
           <div className="flex gap-1.5">
-            {(["post", "story"] as Mode[]).map((m) => (
+            {(["post", "story", "clip"] as Mode[]).map((m) => (
               <button
                 key={m}
                 type="button"
@@ -176,7 +234,7 @@ export function Composer() {
                   mode === m ? "bg-fg text-base" : "bg-fg/8 text-fg-soft hover:text-fg",
                 )}
               >
-                {m === "post" ? "Post" : "Story"}
+                {WORDS[m].label}
               </button>
             ))}
           </div>
@@ -193,12 +251,12 @@ export function Composer() {
           <label
             className={cx(
               "relative grid min-h-[22rem] flex-1 cursor-pointer place-items-center overflow-hidden bg-[#050507]",
-              mode === "story" ? "aspect-[9/16] max-h-[70vh]" : "aspect-[4/5] max-h-[70vh]",
+              mode === "post" ? "aspect-[4/5] max-h-[70vh]" : "aspect-[9/16] max-h-[70vh]",
             )}
           >
             <input
               type="file"
-              accept={mode === "post" ? "image/*" : "image/*,video/*"}
+              accept={WORDS[mode].accept}
               className="sr-only"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
@@ -223,9 +281,7 @@ export function Composer() {
             ) : (
               <span className="flex flex-col items-center gap-3 text-center text-fg-soft">
                 <ImageSquare aria-hidden="true" size={46} />
-                <span className="font-bold text-fg">
-                  {mode === "post" ? "Choose a photo" : "Choose a photo or a video"}
-                </span>
+                <span className="font-bold text-fg">{WORDS[mode].choose}</span>
                 <span className="text-[0.9rem]">It shows here, big, before you share it.</span>
               </span>
             )}
@@ -249,14 +305,16 @@ export function Composer() {
           <div className="flex w-[22rem] shrink-0 flex-col gap-3 overflow-y-auto p-4 max-md:w-full">
             <label className="block">
               <span className="mb-1.5 block font-bold">
-                {mode === "post" ? "Caption" : "Words on it"}
+                {mode === "story" ? "Words on it" : "Caption"}
               </span>
               <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                maxLength={mode === "post" ? 2200 : 200}
+                maxLength={mode === "story" ? 200 : 2200}
                 rows={3}
-                placeholder={mode === "post" ? "Say something about it…" : "A few words (optional)"}
+                placeholder={
+                  mode === "story" ? "A few words (optional)" : "Say something about it…"
+                }
                 className="w-full resize-none rounded-input border-[1.5px] border-line-strong bg-base/70 px-3.5 py-2.5 text-fg outline-none placeholder:text-fg-muted focus-visible:border-accent"
               />
             </label>
@@ -323,9 +381,7 @@ export function Composer() {
                 ? progress < 1
                   ? `Uploading ${Math.round(progress * 100)}%`
                   : "Sharing…"
-                : mode === "post"
-                  ? "Share the post"
-                  : "Share to your Story"}
+                : WORDS[mode].share}
             </button>
           </div>
         </div>

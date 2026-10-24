@@ -177,6 +177,18 @@ export const postRoutes =
     );
 
     app.get(
+      "/explore",
+      {
+        preHandler: requireAuth,
+        schema: {
+          querystring: z.object({ page: z.coerce.number().int().min(0).max(9).default(0) }),
+          response: { 200: PostPage },
+        },
+      },
+      async (req) => social.explore(authOf(req).userId, req.query.page),
+    );
+
+    app.get(
       "/clips",
       { schema: { querystring: Cursor, response: { 200: PostPage } } },
       async (req) =>

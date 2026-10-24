@@ -334,6 +334,52 @@ export class SocialService {
     return this.page(rows, limit, viewerId);
   }
 
+  /**
+   * Explore (a grid of what's good right now): popular public posts and Clips from the last month,
+   * from public adult accounts you don't already follow. Never yours, never anyone in a block with
+   * you, never a teen's (their posts stay off discovery, as the big apps do).
+   */
+  async explore(viewerId: bigint, page: number): Promise<PostPage> {
+    const size = 30;
+    const rows = await this.db
+      .select({ post: posts })
+      .from(posts)
+      .innerJoin(users, eq(users.id, posts.authorId))
+      .leftJoin(userSettings, eq(userSettings.userId, posts.authorId))
+      .where(
+        and(
+          inArray(posts.kind, ["image", "clip"]),
+          eq(posts.visibility, "public"),
+          isNull(posts.deletedAt),
+          isNull(posts.removedAt),
+          isNull(posts.communityId),
+          eq(users.status, "active"),
+          sql`${posts.createdAt} > now() - interval '30 days'`,
+          sql`${posts.authorId} <> ${viewerId}`,
+          sql`${posts.authorId} not in ${blockedWith(viewerId)}`,
+          sql`${posts.authorId} not in (select ${follows.followeeId} from ${follows} where ${follows.followerId} = ${viewerId})`,
+          // Public accounts (an adult with no settings saved yet is public too).
+          or(
+            eq(users.accountKind, "business"),
+            sql`coalesce(${userSettings.profileVisibility}, 'public') = 'public'`,
+          ),
+          sql`(${users.birthDate} is null or ${users.birthDate} <= now() - interval '18 years')`,
+        ),
+      )
+      // Likes and comments, cooling with age (a day-old post needs more to stay up).
+      .orderBy(
+        sql`(${posts.score} * 2 + ${posts.commentCount} * 3 + 1) / power(extract(epoch from now() - ${posts.createdAt}) / 3600 + 2, 1.2) desc`,
+        desc(posts.id),
+      )
+      .limit(size + 1)
+      .offset(page * size);
+    const items = await this.hydrate(
+      rows.slice(0, size).map((r) => r.post),
+      viewerId,
+    );
+    return { items, nextCursor: rows.length > size && page < 9 ? String(page + 1) : null };
+  }
+
   /** One person's posts or Clips, as much of them as this viewer may see. */
   async byAuthor(
     authorId: bigint,

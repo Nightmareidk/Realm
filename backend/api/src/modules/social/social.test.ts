@@ -349,6 +349,34 @@ describe("blocks and spam", () => {
 });
 
 describe("profiles like the big apps", () => {
+  it("fills Explore with public posts from people you don't follow, never private or your own", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const quiet = await person();
+    const shot = async (who: { cookie: string }) =>
+      (
+        await call(who.cookie, "POST", "/posts", {
+          kind: "image",
+          mediaIds: [await photo(who.cookie)],
+        })
+      ).json().id as string;
+    const open = await shot(noor);
+    await call(quiet.cookie, "PATCH", "/users/@me/settings", { profileVisibility: "private" });
+    const hidden = await shot(quiet);
+    const own = await shot(kenji);
+    const ids = (await call(kenji.cookie, "GET", "/explore"))
+      .json()
+      .items.map((p: { id: string }) => p.id);
+    expect(ids).toContain(open);
+    expect(ids).not.toContain(hidden);
+    expect(ids).not.toContain(own);
+    // Once Kenji follows Noor, her posts are in his feed instead.
+    await call(kenji.cookie, "PUT", `/users/${noor.username}/follow`);
+    const after = (await call(kenji.cookie, "GET", "/explore")).json().items;
+    expect(after.some((p: { id: string }) => p.id === open)).toBe(false);
+    expect((await call(undefined, "GET", "/explore")).statusCode).toBe(401);
+  });
+
   it("pins up to three posts to the top, and shows who you know that follows someone", async () => {
     const noor = await person();
     const kenji = await person();
