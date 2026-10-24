@@ -66,7 +66,9 @@ export function TabBar({ state, navigation }: BarProps) {
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
               accessibilityLabel={
-                route.name === "inbox" && unread ? `Messages, ${unread} unread` : (tab?.label ?? "You")
+                route.name === "inbox" && unread
+                  ? `Messages, ${unread} unread`
+                  : (tab?.label ?? "You")
               }
               style={s.item}
             >
