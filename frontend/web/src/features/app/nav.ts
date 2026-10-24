@@ -37,6 +37,7 @@ export const SETTINGS: {
       { href: "/settings/account", label: "Account" },
       { href: "/settings/profile", label: "Profile" },
       { href: "/settings/privacy", label: "Privacy and safety" },
+      { href: "/settings/verification", label: "Verification" },
     ],
   },
   {

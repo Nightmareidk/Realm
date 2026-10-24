@@ -11,6 +11,7 @@ import {
   PencilSimple,
   ShieldCheck,
   SignOut,
+  Sparkle,
   SpeakerHigh,
   Trash,
   UserPlus,
@@ -189,6 +190,17 @@ export function SpaceMenu({ space }: { space: SpaceDetail }) {
               </div>
             )}
             <div className="mt-1.5 border-t border-line pt-1.5">
+              <button
+                type="button"
+                className={row}
+                onClick={() => {
+                  close();
+                  openManage(space.id, "glow");
+                }}
+              >
+                <Sparkle aria-hidden="true" size={20} />
+                Glow and Sparks
+              </button>
               <button
                 type="button"
                 className={row}

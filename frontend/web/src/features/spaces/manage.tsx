@@ -33,6 +33,7 @@ import { Permission, spaceCan } from "./permissions";
 import { Avatar } from "./person";
 import { hex, RolesTab, rankIn, topDown } from "./roles-tab";
 import { spaceLight } from "./space-badge";
+import { AutoModTab, GlowTab, RoomsTab } from "./space-extras";
 
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 const TIMEOUT_LABEL: Record<number, string> = {
@@ -72,6 +73,7 @@ export function ManageSpaceDialog() {
   if (!target || !space) return null;
   const tabs: { id: ManageTab; label: string; show: boolean }[] = [
     { id: "settings", label: "Settings", show: spaceCan(space, Permission.MANAGE_COMMUNITY) },
+    { id: "rooms", label: "Rooms", show: spaceCan(space, Permission.MANAGE_CHANNELS) },
     {
       id: "members",
       label: "Members",
@@ -83,7 +85,9 @@ export function ManageSpaceDialog() {
     },
     { id: "roles", label: "Roles", show: spaceCan(space, Permission.MANAGE_ROLES) },
     { id: "reports", label: "Reports", show: spaceCan(space, Permission.MODERATE_REPORTS) },
+    { id: "automod", label: "AutoMod", show: spaceCan(space, Permission.MANAGE_COMMUNITY) },
     { id: "activity", label: "Activity", show: spaceCan(space, Permission.VIEW_AUDIT_LOG) },
+    { id: "glow", label: "Glow", show: true },
   ];
   const visible = tabs.filter((t) => t.show);
   const tab = visible.some((t) => t.id === target.tab) ? target.tab : visible[0]?.id;
@@ -152,6 +156,9 @@ export function ManageSpaceDialog() {
         {tab === "settings" && <SettingsTab space={space} />}
         {tab === "members" && <MembersTab space={space} />}
         {tab === "roles" && <RolesTab space={space} />}
+        {tab === "rooms" && <RoomsTab space={space} />}
+        {tab === "automod" && <AutoModTab space={space} />}
+        {tab === "glow" && <GlowTab space={space} />}
         {tab === "reports" && <ReportsTab space={space} />}
         {tab === "activity" && <ActivityTab space={space} />}
       </div>
@@ -911,6 +918,8 @@ const SENTENCE: Record<string, string> = {
   "role.update": "changed a role",
   "role.delete": "deleted a role",
   "role.reorder": "reordered the roles",
+  "automod.update": "changed AutoMod",
+  "spark.give": "gave a Spark",
 };
 
 function ActivityTab({ space }: { space: SpaceDetail }) {
