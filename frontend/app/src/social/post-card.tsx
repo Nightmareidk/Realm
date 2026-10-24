@@ -1,9 +1,10 @@
 import type { MediaRef, Post } from "@realm/contracts";
+import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { memo, useState } from "react";
-import { FlatList, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   ReduceMotion,
@@ -15,6 +16,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
+import { postLink } from "../chat/post-link";
 import { postsChanged } from "../data";
 import { Icon } from "../icon";
 import { useContentWidth } from "../layout";
@@ -206,11 +208,9 @@ export const PostCard = memo(function PostCard({
         <IconButton name="ChatCircle" label="Comments" onPress={comments} />
         <IconButton
           name="PaperPlaneTilt"
-          label="Share"
+          label="Send"
           onPress={() =>
-            Share.share({
-              message: `${post.author.displayName} on Realm${post.caption ? `: ${post.caption}` : ""}`,
-            })
+            router.push({ pathname: "/send", params: { link: postLink(post.id), what: "post" } })
           }
         />
         <View style={s.grow} />
@@ -403,9 +403,15 @@ function PostMenu({
     });
 
   const showMenu = () => {
+    const copy = {
+      label: "Copy link",
+      icon: "Link" as const,
+      onPress: () => Clipboard.setStringAsync(postLink(post.id)),
+    };
     if (!mine) {
       sheet({
         actions: [
+          copy,
           {
             label: "Report post",
             icon: "Flag",
@@ -429,6 +435,22 @@ function PostMenu({
     sheet({
       title: "Your post",
       actions: [
+        {
+          label: post.pinned ? "Unpin from your profile" : "Pin to your profile",
+          icon: "PushPin",
+          onPress: async () => {
+            try {
+              onChange(
+                await api<Post>(`/posts/${post.id}/pin`, {
+                  method: post.pinned ? "DELETE" : "PUT",
+                }),
+              );
+            } catch (err) {
+              failed(err);
+            }
+          },
+        },
+        copy,
         {
           label: next === "public" ? "Show to everyone" : "Only my followers",
           icon: next === "public" ? "Globe" : "Lock",

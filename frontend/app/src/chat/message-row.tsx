@@ -15,6 +15,7 @@ import { Icon } from "../icon";
 import { mediaSource } from "../server";
 import { Avatar } from "../social/avatar";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
+import { linkedPostId, PostLinkCard } from "./post-link";
 
 /** The same quick six as the website; double-tap sends the first. */
 export const QUICK_REACTIONS = ["❤️", "😂", "👍", "😮", "😢", "🔥"] as const;
@@ -171,6 +172,7 @@ function Bubble({
   const images = m.hidden ? [] : m.attachments.filter((a) => a.kind === "image");
   const files = m.hidden ? [] : m.attachments.filter((a) => a.kind !== "image");
   const text = m.hidden ? "Hidden after reports" : m.content;
+  const shared = m.hidden ? null : linkedPostId(m.content);
   const ink = mine ? onAccent : t.colors.text;
   const soft = mine ? onAccent : t.colors.textSoft;
 
@@ -295,7 +297,10 @@ function Bubble({
             <Icon name="ArrowBendUpLeft" size={18} color={t.colors.textSoft} />
           </Animated.View>
           <GestureDetector gesture={gestures}>
-            <Animated.View style={moved}>{bubble}</Animated.View>
+            <Animated.View style={moved}>
+              {shared ? <PostLinkCard id={shared} /> : null}
+              {bubble}
+            </Animated.View>
           </GestureDetector>
         </View>
         {m.reactions.length ? (

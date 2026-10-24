@@ -1,10 +1,10 @@
-import type { HighlightDetail, Story, StoryRing } from "@realm/contracts";
+import type { Channel, HighlightDetail, Story, StoryRing, StoryViewer } from "@realm/contracts";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, {
   cancelAnimation,
   Easing,
@@ -232,6 +232,51 @@ function Viewer({
     if (held) resume();
   }
 
+  const [reply, setReply] = useState("");
+  const [note, setNote] = useState<string | null>(null);
+
+  /** A reply or a reaction goes to your chat with them, saying it was about their Story. */
+  async function sendReply(text: string) {
+    if (!text.trim()) return;
+    try {
+      const dm = await api<Channel>("/users/@me/channels", {
+        body: { recipientIds: [ring.author.id] },
+      });
+      await api(`/channels/${dm.id}/messages`, {
+        body: { content: `Replied to your Story: ${text.trim()}` },
+      });
+      setReply("");
+      setNote("Sent");
+    } catch (err) {
+      setNote(err instanceof ApiError ? err.message : "Not sent");
+    }
+    setTimeout(() => setNote(null), 1800);
+    resume();
+  }
+
+  /** Who watched your Story, newest first. */
+  async function showViewers() {
+    pause();
+    try {
+      const list = await api<{ items: StoryViewer[] }>(`/stories/${story.id}/viewers`);
+      sheet({
+        title: list.items.length ? "Watched by" : "Nobody's watched it yet",
+        onCancel: resume,
+        cancelLabel: "Close",
+        actions: list.items.slice(0, 40).map((v) => ({
+          label: `${v.user.displayName} · ${ago(v.viewedAt)}`,
+          icon: "Eye" as const,
+          onPress: () => {
+            onClose();
+            router.push({ pathname: "/user/[username]", params: { username: v.user.username } });
+          },
+        })),
+      });
+    } catch {
+      resume();
+    }
+  }
+
   function remove() {
     pause();
     sheet({
@@ -366,12 +411,17 @@ function Viewer({
         ) : null}
         {mine ? (
           <View style={s.mineRow}>
-            <View style={s.views}>
+            <Pressable
+              onPress={showViewers}
+              accessibilityRole="button"
+              accessibilityLabel={`${story.views ?? 0} views. See who watched`}
+              style={s.views}
+            >
               <Icon name="Eye" size={20} color="#ffffff" />
               <Text style={s.viewsText}>
                 {story.views === 1 ? "1 view" : `${story.views ?? 0} views`}
               </Text>
-            </View>
+            </Pressable>
             <Pressable
               onPress={remove}
               accessibilityRole="button"
@@ -382,11 +432,57 @@ function Viewer({
               <Icon name="Trash" size={22} color="#ffffff" />
             </Pressable>
           </View>
-        ) : null}
+        ) : (
+          <View style={s.replyArea}>
+            {reply ? null : (
+              <View style={s.quick}>
+                {QUICK.map((q) => (
+                  <Pressable
+                    key={q}
+                    onPress={() => sendReply(q)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`React ${q}`}
+                    style={s.quickBtn}
+                  >
+                    <Text style={s.quickText}>{q}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+            <View style={s.replyBar}>
+              <TextInput
+                value={reply}
+                onChangeText={setReply}
+                onFocus={pause}
+                onBlur={() => !reply && resume()}
+                placeholder={note ?? `Reply to ${ring.author.displayName.split(" ")[0]}…`}
+                placeholderTextColor="rgba(255,255,255,0.8)"
+                maxLength={500}
+                returnKeyType="send"
+                onSubmitEditing={() => sendReply(reply)}
+                style={s.replyInput}
+                accessibilityLabel={`Reply to ${ring.author.displayName}`}
+              />
+              {reply ? (
+                <Pressable
+                  onPress={() => sendReply(reply)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send reply"
+                  style={s.replySend}
+                >
+                  <Text style={s.replySendText}>Send</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+        )}
       </View>
     </View>
   );
 }
+
+/** Quick reactions to someone's Story (they arrive in your chat with them). */
+const QUICK = ["❤️", "😂", "😮", "😢", "👏", "🔥"];
 
 const styles = StyleSheet.create({ black: { flex: 1, backgroundColor: "#000" } });
 
@@ -435,6 +531,44 @@ const make = (t: NativeTheme) =>
       fontSize: 12.5 * t.textScale,
       color: "rgba(255,255,255,0.8)",
     },
+    replyArea: { gap: 10 },
+    quick: { flexDirection: "row", justifyContent: "center", gap: 8 },
+    quickBtn: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(9,9,12,0.45)",
+    },
+    quickText: { fontSize: 20 },
+    replyBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      minHeight: 48,
+      paddingLeft: 16,
+      paddingRight: 5,
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.45)",
+      backgroundColor: "rgba(9,9,12,0.35)",
+    },
+    replyInput: {
+      flex: 1,
+      fontFamily: t.fonts.body,
+      fontSize: 15.5 * t.textScale,
+      color: "#ffffff",
+      paddingVertical: 10,
+    },
+    replySend: {
+      paddingHorizontal: 16,
+      height: 38,
+      borderRadius: 19,
+      justifyContent: "center",
+      backgroundColor: "#ffffff",
+    },
+    replySendText: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: "#0b0b0e" },
     mineRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     views: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44 },
     viewsText: { fontFamily: t.fonts.bold, fontSize: 15 * t.textScale, color: "#ffffff" },

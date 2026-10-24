@@ -253,6 +253,26 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
             </View>
           ) : null}
         </View>
+        {profile.followedBy.count > 0 ? (
+          <View style={s.mutuals}>
+            <View style={s.faces}>
+              {profile.followedBy.users.map((f, i) => (
+                <View key={f.id} style={[s.face, i > 0 && { marginLeft: -8 }]}>
+                  <Avatar user={f} size={22} />
+                </View>
+              ))}
+            </View>
+            <Text style={s.mutualsText} numberOfLines={2}>
+              Followed by{" "}
+              <Text style={s.mutualsName}>
+                {profile.followedBy.users.map((f) => f.username).join(", ")}
+              </Text>
+              {profile.followedBy.count > profile.followedBy.users.length
+                ? ` and ${compact(profile.followedBy.count - profile.followedBy.users.length)} more`
+                : ""}
+            </Text>
+          </View>
+        ) : null}
         {profile.accountKind === "business" && profile.category ? (
           <View style={s.category}>
             <Icon name="Briefcase" size={14} color={t.colors.textSoft} />
@@ -521,6 +541,11 @@ function Tile({ post }: { post: Post }) {
           {post.caption}
         </Text>
       ) : null}
+      {post.pinned ? (
+        <View style={[s.tileMark, s.tilePin]}>
+          <Icon name="PushPin" size={14} color="#ffffff" />
+        </View>
+      ) : null}
       {post.kind === "clip" ? (
         <View style={s.tileMark}>
           <Icon name="PlayFill" size={16} color="#ffffff" />
@@ -564,6 +589,17 @@ const make = (t: NativeTheme) =>
       borderRadius: 999,
       backgroundColor: t.colors.surfaceRaised,
     },
+    mutuals: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
+    faces: { flexDirection: "row" },
+    face: { borderRadius: 13, borderWidth: 2, borderColor: t.colors.bg },
+    mutualsText: {
+      flex: 1,
+      fontFamily: t.fonts.body,
+      fontSize: 13.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
+    mutualsName: { fontFamily: t.fonts.bold, color: t.colors.text },
+    tilePin: { left: 6, right: undefined },
     followsYouText: { fontFamily: t.fonts.bold, fontSize: 12 * t.textScale, color: t.colors.text },
     name: {
       fontFamily: t.fonts.displayBold,
