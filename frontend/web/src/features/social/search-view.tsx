@@ -271,7 +271,7 @@ export function SearchView() {
 
   return (
     <div className="mx-auto w-full max-w-[58.5rem] px-8 pb-12 max-md:px-3">
-      <div className="sticky top-0 z-10 -mx-2 bg-[linear-gradient(var(--r-surface)_70%,transparent)] px-2 pt-1 pb-4">
+      <div className="pt-1 pb-5">
         <div className="flex h-12 items-center gap-2.5 rounded-full bg-[rgb(9_9_12/0.55)] px-4 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)] focus-within:shadow-[inset_0_0_0_1.5px_var(--r-accent)]">
           <MagnifyingGlass aria-hidden="true" size={19} className="text-fg-soft" />
           <input
