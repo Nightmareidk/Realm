@@ -11,6 +11,8 @@ import {
 } from "fastify-type-provider-zod";
 import type { Deps } from "./deps";
 import { jobHandlers } from "./jobs";
+import { accountRoutes } from "./modules/account/routes";
+import { AccountService } from "./modules/account/service";
 import { adminRoutes, verificationRoutes } from "./modules/admin/routes";
 import { authRoutes, gatewayRoutes } from "./modules/auth/routes";
 import { conversationRoutes } from "./modules/dms/routes";
@@ -22,6 +24,8 @@ import { MusicService } from "./modules/music/service";
 import { releaseRoutes } from "./modules/releases/routes";
 import { meSafetyRoutes, moderationRoutes, reportRoutes } from "./modules/safety/routes";
 import { SafetyService } from "./modules/safety/service";
+import { CircleService } from "./modules/social/circle";
+import { circleUserRoutes, noteRoutes } from "./modules/social/circle-routes";
 import { postRoutes, socialUserRoutes } from "./modules/social/routes";
 import { SocialService } from "./modules/social/service";
 import {
@@ -80,6 +84,7 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       await v1.register(authRoutes(deps), { prefix: "/auth" });
       await v1.register(gatewayRoutes(deps), { prefix: "/gateway" });
       await v1.register(userRoutes(deps), { prefix: "/users" });
+      await v1.register(accountRoutes(deps, new AccountService(deps)), { prefix: "/users" });
       await v1.register(verificationRoutes(deps), { prefix: "/users" });
       await v1.register(friendRoutes(deps), { prefix: "/users" });
       await v1.register(adminRoutes(deps), { prefix: "/admin" });
@@ -101,6 +106,9 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       const social = new SocialService(deps);
       await v1.register(postRoutes(deps, social));
       await v1.register(socialUserRoutes(deps, social), { prefix: "/users" });
+      const circle = new CircleService(deps, social);
+      await v1.register(circleUserRoutes(deps, circle, social), { prefix: "/users" });
+      await v1.register(noteRoutes(deps, circle, social));
       await v1.register(themeRoutes(deps, new ThemeService(deps)), { prefix: "/themes" });
       const music = new MusicService(deps);
       await v1.register(soundRoutes(deps, music), { prefix: "/sounds" });

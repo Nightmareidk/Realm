@@ -65,6 +65,8 @@ export const CreateRoomBody = z.object({
   /** The group it goes in. */
   parentId: Snowflake.optional(),
   privacy: RoomPrivacy.optional(),
+  /** Announcements: only moderators post, everyone reads and reacts. */
+  announce: z.boolean().optional(),
 });
 export type CreateRoomBody = z.infer<typeof CreateRoomBody>;
 
@@ -77,6 +79,7 @@ export const UpdateRoomBody = z
     slowmodeSeconds: z.literal(SLOWMODE_CHOICES),
     isNsfw: z.boolean(),
     privacy: RoomPrivacy,
+    announce: z.boolean(),
   })
   .partial();
 export type UpdateRoomBody = z.infer<typeof UpdateRoomBody>;

@@ -210,6 +210,14 @@ export class MessagesService {
       }
       throw missingPermission("send messages");
     }
+    // Announcement rooms: everyone reads, only the people who look after messages post.
+    if (channel.announce && !has(permissions, Permission.MANAGE_MESSAGES)) {
+      throw new AppError(
+        403,
+        "MISSING_PERMISSION",
+        "Only moderators post in announcement rooms. You can still react.",
+      );
+    }
     const [author] = await this.db
       .select({
         id: users.id,

@@ -48,6 +48,10 @@ export const Limits = {
    */
   loginFailuresAll: { bucket: "auth:login:fail:all", limit: 100, windowSeconds: 600 },
   verify: { bucket: "auth:verify:user", limit: 10, windowSeconds: 900 },
+  /** Password (and code) checks before deleting, taking a break or changing two-step sign-in. */
+  accountConfirm: { bucket: "account:confirm:user", limit: 10, windowSeconds: 900 },
+  /** A copy of your data is heavy to build: a few a day. */
+  dataExport: { bucket: "account:export:user", limit: 3, windowSeconds: 86400 },
   resend: { bucket: "auth:resend:user", limit: 3, windowSeconds: 900 },
   forgotIp: { bucket: "auth:forgot:ip", limit: 5, windowSeconds: 3600 },
   forgotEmail: { bucket: "auth:forgot:email", limit: 3, windowSeconds: 3600 },

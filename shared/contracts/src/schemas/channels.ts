@@ -40,6 +40,8 @@ export const Channel = z
     position: z.number().int(),
     isNsfw: z.boolean(),
     slowmodeSeconds: z.number().int(),
+    /** An announcement room: everyone reads; only people who can manage messages post. */
+    announce: z.boolean(),
     lastMessageId: Snowflake.nullable(),
     overwrites: z.array(PermissionOverwrite),
     /** DMs and group DMs only. */

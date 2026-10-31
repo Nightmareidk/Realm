@@ -137,13 +137,20 @@ export class HighlightsService {
   private async ownStories(userId: bigint, ids: string[]) {
     const wanted = [...new Set(ids)].map(BigInt);
     const rows = await this.db
-      .select({ id: stories.id })
+      .select({ id: stories.id, visibility: stories.visibility })
       .from(stories)
       .where(
         and(inArray(stories.id, wanted), eq(stories.authorId, userId), isNull(stories.deletedAt)),
       );
     if (rows.length !== wanted.length) {
       throw badRequest("VALIDATION_FAILED", "Pick from your own Stories.");
+    }
+    // Close Friends Stories stay with Close Friends: Highlights are shown to everyone.
+    if (rows.some((r) => r.visibility === "close_friends")) {
+      throw badRequest(
+        "VALIDATION_FAILED",
+        "Close Friends Stories can't go in a Highlight, because everyone can see Highlights.",
+      );
     }
     return wanted;
   }

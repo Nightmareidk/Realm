@@ -39,6 +39,7 @@ export function toSelfUser(u: UserRow): SelfUser {
     emailVerified: u.emailVerifiedAt !== null,
     teen: isMinor(u.birthDate),
     ...(u.staffRole ? { staff: u.staffRole } : {}),
+    twoStep: u.mfaSecret !== null,
   };
 }
 

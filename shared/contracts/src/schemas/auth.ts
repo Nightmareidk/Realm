@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Snowflake } from "../ids";
 import { Limits } from "../limits";
+import { SecondStepCode } from "./account";
 import { IsoDateTime, Platform } from "./common";
 import { DisplayName, SelfUser, ThemeAccent, Username } from "./users";
 
@@ -73,6 +74,8 @@ export const LoginBody = z
     /** Email address or username. */
     login: z.string().trim().min(1).max(254),
     password: z.string().min(1).max(Limits.password.max),
+    /** With two-step sign-in on: the app's code or a backup code (asked for after MFA_REQUIRED). */
+    code: SecondStepCode.optional(),
   })
   .meta({ id: "LoginBody" });
 export type LoginBody = z.infer<typeof LoginBody>;
@@ -100,6 +103,8 @@ export const AuthResult = z
     user: SelfUser,
     session: SessionInfo,
     token: z.string().optional(),
+    /** Signing in brought the account back from a break, or stopped its deletion. */
+    welcomeBack: z.enum(["deactivated", "deletion_cancelled"]).optional(),
   })
   .meta({ id: "AuthResult" });
 export type AuthResult = z.infer<typeof AuthResult>;

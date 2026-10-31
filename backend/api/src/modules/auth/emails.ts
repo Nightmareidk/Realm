@@ -75,3 +75,34 @@ export function passwordChangedEmail(opts: { to: string }): Mail {
     ].join("\n"),
   };
 }
+
+/** The account will be deleted: when, and how to stop it. */
+export function deletionScheduledEmail(opts: { to: string; when: Date }): Mail {
+  return {
+    to: opts.to,
+    subject: "Your Realm account will be deleted",
+    text: [
+      `Your Realm account is hidden now and will be deleted for good on ${opts.when.toUTCString()}.`,
+      "",
+      "Changed your mind? Just sign in before then and everything comes back as it was.",
+      "If you didn't ask for this, sign in now and change your password.",
+    ].join("\n"),
+  };
+}
+
+/** Two-step sign-in was turned on or off. */
+export function twoStepChangedEmail(opts: { to: string; on: boolean }): Mail {
+  return {
+    to: opts.to,
+    subject: opts.on
+      ? "Two-step sign-in is on for your Realm account"
+      : "Two-step sign-in was turned off on your Realm account",
+    text: [
+      opts.on
+        ? "From now on, signing in to Realm also asks for a code from your authenticator app. Keep your backup codes somewhere safe."
+        : "Signing in to Realm now asks for your password only.",
+      "",
+      "If this wasn't you, reset your password straight away and check your signed-in devices.",
+    ].join("\n"),
+  };
+}

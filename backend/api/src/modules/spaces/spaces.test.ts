@@ -445,3 +445,49 @@ describe("teen defaults", () => {
     expect(theirs.profileVisibility).toBe("public");
   });
 });
+
+describe("announcement rooms", () => {
+  it("lets everyone read but only moderators post, and can be switched on later", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const space = await newSpace(noor.cookie);
+    const invite = (await call(noor.cookie, "POST", `/communities/${space.id}/invites`, {})).json();
+    await call(kenji.cookie, "POST", `/invites/${invite.code}`);
+
+    const made = await call(noor.cookie, "POST", `/communities/${space.id}/channels`, {
+      name: "news",
+      announce: true,
+    });
+    expect(made.statusCode).toBe(201);
+    expect(made.json().announce).toBe(true);
+    const news = made.json().id;
+
+    const member = await call(kenji.cookie, "POST", `/channels/${news}/messages`, {
+      content: "can I post here?",
+    });
+    expect(member.statusCode).toBe(403);
+    expect(member.json().error.message).toMatch(/announcement/);
+    const owner = await call(noor.cookie, "POST", `/channels/${news}/messages`, {
+      content: "Tournament on Friday",
+    });
+    expect(owner.statusCode).toBe(201);
+    expect((await call(kenji.cookie, "GET", `/channels/${news}/messages`)).statusCode).toBe(200);
+
+    // The ordinary room becomes an announcement room, and back.
+    const general = space.channels[0].id;
+    await call(noor.cookie, "PATCH", `/channels/${general}`, { announce: true });
+    expect(
+      (await call(kenji.cookie, "POST", `/channels/${general}/messages`, { content: "hi" }))
+        .statusCode,
+    ).toBe(403);
+    await call(noor.cookie, "PATCH", `/channels/${general}`, { announce: false });
+    expect(
+      (await call(kenji.cookie, "POST", `/channels/${general}/messages`, { content: "hi" }))
+        .statusCode,
+    ).toBe(201);
+    // A member can't flip it themselves.
+    expect(
+      (await call(kenji.cookie, "PATCH", `/channels/${general}`, { announce: true })).statusCode,
+    ).toBe(403);
+  });
+});

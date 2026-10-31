@@ -17,6 +17,15 @@ export const Limits = {
   roomsPerSpace: 50,
   /** Posts pinned to the top of a profile. */
   pinnedPosts: 3,
+  /** People tagged in one post (Instagram allows 20). */
+  postTags: 20,
+  /** @mentions in one caption or comment that send a notification. */
+  mentionsNotified: 10,
+  /** Notes: a line of up to 60 characters, for a day. */
+  note: { max: 60 },
+  collections: 100,
+  collectionName: { max: 40 },
+  closeFriends: 500,
   /** A teen's presence shows only in Spaces up to this size. */
   teenPresenceSpaceSize: 200,
   channelTopic: { max: 1024 },

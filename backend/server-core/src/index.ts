@@ -12,4 +12,5 @@ export * from "./push";
 export * from "./queue";
 export * from "./rate-limit";
 export * from "./snowflake";
+export * from "./totp";
 export * from "./user-agent";

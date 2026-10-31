@@ -7,6 +7,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   smallint,
   text,
   uniqueIndex,
@@ -56,6 +57,13 @@ export const users = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
     deletedAt: tstz(),
+    /** Asked to be deleted: hidden now, gone for good at this time unless they sign in first. */
+    deletionScheduledAt: tstz(),
+    /** Two-step sign-in: the app's secret (sealed with REALM_SECRET), and when it was turned on. */
+    mfaSecret: text(),
+    mfaEnabledAt: tstz(),
+    /** The last 30-second step a code was used for, so the same code can't be used twice. */
+    mfaLastStep: integer(),
   },
   (t) => [
     uniqueIndex("users_username_key").on(sql`lower(${t.username})`),
@@ -178,7 +186,26 @@ export const securityEventType = pgEnum("security_event_type", [
   "email_verified",
   "email_changed",
   "session_revoked",
+  "mfa_enabled",
+  "mfa_disabled",
+  "mfa_backup_used",
+  "deactivated",
+  "deletion_requested",
+  "reactivated",
 ]);
+
+/** Single-use backup codes for two-step sign-in, for when the phone is lost. Only hashes are kept. */
+export const mfaBackupCodes = pgTable(
+  "mfa_backup_codes",
+  {
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    codeHash: text().notNull(),
+    usedAt: tstz(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.codeHash] })],
+);
 
 export const securityEvents = pgTable(
   "security_events",

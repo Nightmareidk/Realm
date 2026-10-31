@@ -56,7 +56,8 @@ export async function isMember(db: Db, userId: bigint, communityId: bigint) {
 export async function canSeePost(db: Db, post: PostRow, viewerId: bigint | null) {
   if (post.deletedAt) return false;
   if (viewerId === post.authorId) return true;
-  if (post.removedAt) return false;
+  // Archived: back in its author's Archive, out of sight for everyone else.
+  if (post.removedAt || post.archivedAt) return false;
   if (viewerId && (await blockedEitherWay(db, viewerId, post.authorId))) return false;
   if (post.communityId && viewerId && (await isMember(db, viewerId, post.communityId))) {
     return true;

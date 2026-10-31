@@ -93,6 +93,7 @@ export function toChannel(c: ChannelRow, overwrites: readonly OverwriteRow[] = [
     position: c.position,
     isNsfw: c.isNsfw,
     slowmodeSeconds: c.slowmodeSeconds,
+    announce: c.announce,
     lastMessageId: c.lastMessageId?.toString() ?? null,
     overwrites: overwrites
       .filter((o) => o.channelId === c.id)

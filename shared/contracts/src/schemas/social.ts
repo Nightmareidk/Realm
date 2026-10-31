@@ -54,6 +54,13 @@ export const Post = z
     editedAt: IsoDateTime.nullable(),
     /** Pinned to the top of its author's profile. */
     pinned: z.boolean(),
+    /** People tagged in it. */
+    tags: z.array(UserSummary),
+    /** The author hid the like count: others see 0 here and "Liked by others". */
+    hideLikes: z.boolean(),
+    commentsOff: z.boolean(),
+    /** Archived: only its author sees it (in their Archive). */
+    archived: z.boolean(),
     /**
      * Taken down after reports, or by a Space's moderators. Only its author still sees it, so
      * they know why it went quiet.
@@ -80,6 +87,10 @@ export const CreatePostBody = z
     visibility: PostVisibility.optional(),
     /** Music: a sound from the library or a creator's own, and which part plays. */
     sound: SoundPick.optional(),
+    /** People to tag, by username (they're told, and it shows on their Tagged tab). */
+    tags: z.array(z.string().trim().min(1).max(64)).max(Limits.postTags).optional(),
+    hideLikes: z.boolean().optional(),
+    commentsOff: z.boolean().optional(),
   })
   .meta({ id: "CreatePostBody" });
 export type CreatePostBody = z.infer<typeof CreatePostBody>;
@@ -88,6 +99,10 @@ export const UpdatePostBody = z
   .object({
     caption: z.string().trim().max(Limits.caption.max).nullable(),
     visibility: PostVisibility,
+    tags: z.array(z.string().trim().min(1).max(64)).max(Limits.postTags),
+    hideLikes: z.boolean(),
+    commentsOff: z.boolean(),
+    archived: z.boolean(),
   })
   .partial()
   .meta({ id: "UpdatePostBody" });
@@ -152,6 +167,10 @@ export const Profile = z
     followedBy: z.object({ users: z.array(UserSummary), count: z.number().int() }),
     /** False for a private account you don't follow: only posts they marked public show. */
     canSeeAll: z.boolean(),
+    /** On your Close Friends list. */
+    closeFriend: z.boolean(),
+    /** What you've muted of theirs (their posts and/or Stories stop showing in your feed). */
+    muted: z.object({ posts: z.boolean(), stories: z.boolean() }),
   })
   .meta({ id: "Profile" });
 export type Profile = z.infer<typeof Profile>;
@@ -210,6 +229,8 @@ export const ActivityType = z.enum([
   "post_like",
   "post_comment",
   "comment_reply",
+  /** Mentioned you in a caption or comment, or tagged you in a post (see `via`). */
+  "mention",
 ]);
 
 /** One line in your notifications (the heart on Home). */
@@ -223,6 +244,8 @@ export const Activity = z
     text: z.string().nullable(),
     /** A follow notice that's really "they accepted your request". */
     accepted: z.boolean(),
+    /** For a mention: in a caption, a comment, or a tag on the photo. */
+    via: z.enum(["caption", "comment", "tag"]).nullable(),
     /** Where you stand with the person now (for Follow back / Following on the row). */
     youFollow: FollowState,
     read: z.boolean(),
@@ -235,3 +258,70 @@ export const ActivityPage = z
   .object({ items: z.array(Activity), nextCursor: Snowflake.nullable(), unread: z.number().int() })
   .meta({ id: "ActivityPage" });
 export type ActivityPage = z.infer<typeof ActivityPage>;
+
+/** Mute: their posts and/or Stories stop showing in your feed. They're never told. */
+export const MuteAccountBody = z
+  .object({ posts: z.boolean(), stories: z.boolean() })
+  .meta({ id: "MuteAccountBody" });
+export type MuteAccountBody = z.infer<typeof MuteAccountBody>;
+
+/** A folder of saved posts. */
+export const Collection = z
+  .object({
+    id: Snowflake,
+    name: z.string(),
+    count: z.number().int(),
+    /** The newest posts' first photos, for the cover (up to four). */
+    covers: z.array(z.string()),
+    createdAt: IsoDateTime,
+  })
+  .meta({ id: "Collection" });
+export type Collection = z.infer<typeof Collection>;
+
+export const CollectionName = z.string().trim().min(1).max(Limits.collectionName.max);
+export const CollectionBody = z.object({ name: CollectionName }).meta({ id: "CollectionBody" });
+export type CollectionBody = z.infer<typeof CollectionBody>;
+
+/**
+ * Notes: one short line (with a song, if you like) above your picture in Messages, for a day.
+ * People who follow each other see each other's; "close_friends" keeps it to that list.
+ */
+export const NoteAudience = z.enum(["followers", "close_friends"]);
+export type NoteAudience = z.infer<typeof NoteAudience>;
+
+export const Note = z
+  .object({
+    author: UserSummary,
+    text: z.string(),
+    sound: z
+      .object({
+        id: Snowflake,
+        title: z.string(),
+        artist: z.string(),
+        coverUrl: z.string().nullable(),
+        audioUrl: z.string().nullable(),
+        startMs: z.number().int(),
+      })
+      .nullable(),
+    audience: NoteAudience,
+    createdAt: IsoDateTime,
+    expiresAt: IsoDateTime,
+  })
+  .meta({ id: "Note" });
+export type Note = z.infer<typeof Note>;
+
+export const NoteBody = z
+  .object({
+    text: z.string().trim().max(Limits.note.max),
+    soundId: Snowflake.optional(),
+    soundStartMs: z.number().int().min(0).optional(),
+    audience: NoteAudience.default("followers"),
+  })
+  .refine((b) => b.text.length > 0 || b.soundId, { message: "Write something or pick a song." })
+  .meta({ id: "NoteBody" });
+export type NoteBody = z.infer<typeof NoteBody>;
+
+export const NoteList = z
+  .object({ mine: Note.nullable(), items: z.array(Note) })
+  .meta({ id: "NoteList" });
+export type NoteList = z.infer<typeof NoteList>;

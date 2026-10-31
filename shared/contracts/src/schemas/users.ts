@@ -66,6 +66,8 @@ export const SelfUser = PublicUser.extend({
   teen: z.boolean(),
   /** Realm staff only: what they may do in the admin pages. */
   staff: StaffRole.optional(),
+  /** Two-step sign-in is on. */
+  twoStep: z.boolean(),
 }).meta({ id: "SelfUser" });
 export type SelfUser = z.infer<typeof SelfUser>;
 

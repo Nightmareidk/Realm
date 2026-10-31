@@ -156,13 +156,21 @@ export const Story = z
     seen: z.boolean(),
     /** How many people watched it (only its author sees this). */
     views: z.number().int().nullable(),
+    /** Shared to Close Friends only (a green ring). */
+    closeFriends: z.boolean(),
   })
   .meta({ id: "Story" });
 export type Story = z.infer<typeof Story>;
 
 /** One person's Stories, oldest first, and whether any are new to you. */
 export const StoryRing = z
-  .object({ author: UserSummary, stories: z.array(Story), unseen: z.boolean() })
+  .object({
+    author: UserSummary,
+    stories: z.array(Story),
+    unseen: z.boolean(),
+    /** An unseen Close Friends Story is in it: the ring is green. */
+    closeFriends: z.boolean(),
+  })
   .meta({ id: "StoryRing" });
 export type StoryRing = z.infer<typeof StoryRing>;
 
@@ -183,7 +191,7 @@ export const CreateStoryBody = z
     /** How long a photo shows: 5 seconds to a minute (10 if left out, or its song's part). */
     durationMs: z.number().int().min(STORY_MIN_MS).max(STORY_MAX_MS).optional(),
     /** Left out: your followers if your account is private, else everyone. */
-    visibility: z.enum(["public", "followers"]).optional(),
+    visibility: z.enum(["public", "followers", "close_friends"]).optional(),
   })
   .meta({ id: "CreateStoryBody" });
 export type CreateStoryBody = z.infer<typeof CreateStoryBody>;

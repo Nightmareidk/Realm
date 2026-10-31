@@ -2,6 +2,7 @@ import { loadConfig } from "@realm/server-core";
 import { buildApp } from "./app";
 import { createDeps } from "./deps";
 import { attachGateway, type Gateway } from "./gateway/gateway";
+import { AccountService } from "./modules/account/service";
 
 const config = loadConfig();
 const deps = await createDeps(config);
@@ -50,6 +51,13 @@ process.on("uncaughtException", (err) => {
   app.log.fatal({ err }, "uncaught exception");
   void shutdown("uncaughtException", 1);
 });
+
+// Accounts whose 30 days to change their mind are up get deleted: now, then every hour.
+const account = new AccountService(deps);
+const sweep = () =>
+  account.sweepDeletions().catch((err) => app.log.error({ err }, "deletion sweep failed"));
+void sweep();
+setInterval(sweep, 60 * 60 * 1000).unref();
 
 try {
   const host = config.REALM_API_HOST ?? (config.isProduction ? "0.0.0.0" : "127.0.0.1");

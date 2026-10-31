@@ -42,6 +42,9 @@ const {
   notifications,
   relationships,
   messageAttachments,
+  postTags,
+  closeFriends,
+  accountMutes,
 } = schema;
 
 type PostRow = typeof posts.$inferSelect;
@@ -53,7 +56,25 @@ const ACTIVITY_TYPES = [
   "post_like",
   "post_comment",
   "comment_reply",
+  "mention",
 ] as const;
+
+/** @names in a caption or comment (Realm usernames: letters, numbers, _ and .). */
+const MENTION = /(?:^|[^\w@])@([a-z0-9_.]{1,30})/gi;
+export function mentionsIn(text: string): string[] {
+  const found = new Set<string>();
+  for (const m of text.matchAll(MENTION)) {
+    const name = m[1]?.toLowerCase().replace(/\.+$/, "");
+    if (name) found.add(name);
+  }
+  return [...found];
+}
+
+/** Their posts or Stories muted by this viewer. */
+const mutedBy = (viewerId: bigint, what: "posts" | "stories") => sql`(
+  select ${accountMutes.targetId} from ${accountMutes}
+    where ${accountMutes.userId} = ${viewerId} and ${what === "posts" ? accountMutes.posts : accountMutes.stories} = true
+)`;
 
 const toDbVisibility = (v: PostVisibility) => (v === "space" ? "community" : v);
 const fromDbVisibility = (v: PostRow["visibility"]): PostVisibility =>
@@ -109,6 +130,7 @@ export class SocialService {
 
     if (body.sound && body.kind === "text") throw invalid("Music goes on photos and Clips.");
     const sound = await new MusicService(this.deps).pick(body.sound);
+    const tagged = body.tags?.length ? await this.taggable(authorId, body.tags) : [];
     const id = this.deps.ids.next();
     await this.db.insert(posts).values({
       id,
@@ -117,6 +139,8 @@ export class SocialService {
       kind: body.kind,
       body: caption,
       visibility: toDbVisibility(visibility),
+      hideLikes: body.hideLikes ?? false,
+      commentsOff: body.commentsOff ?? false,
       ...(sound ?? {}),
     });
     if (files.length) {
@@ -125,6 +149,8 @@ export class SocialService {
         .values(files.map((f, position) => ({ postId: id, position, mediaId: f.id })));
     }
     const [row] = await this.db.select().from(posts).where(eq(posts.id, id));
+    if (tagged.length) await this.setTags(row as PostRow, tagged);
+    if (caption) await this.mention(row as PostRow, authorId, caption, "caption");
     return (await this.hydrate([row as PostRow], authorId))[0] as Post;
   }
 
@@ -183,15 +209,157 @@ export class SocialService {
       throw invalid("It isn't shared to a Space, so it can't be Space-only.");
     }
     const captionChanged = body.caption !== undefined && (body.caption || null) !== row.body;
+    if (captionChanged && body.caption) await this.guard(userId, body.caption);
+    const tagged = body.tags ? await this.taggable(userId, body.tags) : null;
     await this.db
       .update(posts)
       .set({
         body: body.caption === undefined ? undefined : body.caption || null,
         visibility: body.visibility ? toDbVisibility(body.visibility) : undefined,
         editedAt: captionChanged ? new Date() : undefined,
+        hideLikes: body.hideLikes,
+        commentsOff: body.commentsOff,
+        archivedAt:
+          body.archived === undefined
+            ? undefined
+            : body.archived
+              ? (row.archivedAt ?? new Date())
+              : null,
+        // An archived post leaves the top of the profile too.
+        pinnedAt: body.archived ? null : undefined,
       })
       .where(eq(posts.id, id));
+    if (tagged) await this.setTags(row, tagged);
+    if (captionChanged && body.caption) await this.mention(row, userId, body.caption, "caption");
     return this.get(id, userId);
+  }
+
+  /** Usernames to tag: real, active accounts not in a block with the author. */
+  private async taggable(authorId: bigint, names: string[]) {
+    const wanted = [...new Set(names.map((n) => n.replace(/^@/, "").toLowerCase()))];
+    if (wanted.length > Limits.postTags) {
+      throw invalid(`You can tag up to ${Limits.postTags} people.`);
+    }
+    if (wanted.length === 0) return [];
+    const rows = await this.db
+      .select({ id: users.id, username: users.username })
+      .from(users)
+      .where(
+        and(
+          inArray(sql`lower(${users.username})`, wanted),
+          eq(users.status, "active"),
+          sql`${users.id} not in ${blockedWith(authorId)}`,
+        ),
+      );
+    const missing = wanted.filter((w) => !rows.some((r) => r.username.toLowerCase() === w));
+    if (missing.length) throw invalid(`We couldn't find @${missing[0]} to tag.`);
+    return rows.map((r) => r.id);
+  }
+
+  /** Replaces a post's tags; people newly tagged are told (if they can see the post). */
+  private async setTags(post: PostRow, ids: bigint[]) {
+    const before = await this.db
+      .select({ id: postTags.userId })
+      .from(postTags)
+      .where(eq(postTags.postId, post.id));
+    await this.db.delete(postTags).where(eq(postTags.postId, post.id));
+    if (ids.length) {
+      await this.db.insert(postTags).values(ids.map((userId) => ({ postId: post.id, userId })));
+    }
+    for (const userId of ids) {
+      if (userId === post.authorId || before.some((b) => b.id === userId)) continue;
+      if (!(await canSeePost(this.db, post, userId))) continue;
+      await this.notify(
+        userId,
+        "mention",
+        post.authorId,
+        "post",
+        post.id,
+        { via: "tag" },
+        `tag:${post.id}`,
+      );
+    }
+  }
+
+  /**
+   * @mentions in a caption or comment: up to ten people are told, if they can see the post and
+   * aren't in a block with the writer.
+   */
+  private async mention(post: PostRow, writerId: bigint, text: string, via: "caption" | "comment") {
+    const names = mentionsIn(text).slice(0, Limits.mentionsNotified);
+    if (!names.length) return;
+    const people = await this.db
+      .select({ id: users.id })
+      .from(users)
+      .where(
+        and(
+          inArray(sql`lower(${users.username})`, names),
+          eq(users.status, "active"),
+          sql`${users.id} not in ${blockedWith(writerId)}`,
+        ),
+      );
+    for (const { id } of people) {
+      if (id === writerId || !(await canSeePost(this.db, post, id))) continue;
+      await this.notify(id, "mention", writerId, "post", post.id, {
+        via,
+        text: text.slice(0, 120),
+      });
+    }
+  }
+
+  /** Take yourself off a post someone tagged you in. */
+  async untag(postId: bigint, userId: bigint): Promise<void> {
+    await this.db
+      .delete(postTags)
+      .where(and(eq(postTags.postId, postId), eq(postTags.userId, userId)));
+  }
+
+  /** Posts someone is tagged in, as far as this viewer may see them. */
+  async tagged(
+    userId: bigint,
+    viewerId: bigint | null,
+    before: bigint | null,
+    limit: number,
+  ): Promise<PostPage> {
+    if (viewerId && viewerId !== userId && (await blockedEitherWay(this.db, viewerId, userId))) {
+      return { items: [], nextCursor: null };
+    }
+    const rows = await this.db
+      .select({ post: posts })
+      .from(postTags)
+      .innerJoin(posts, eq(posts.id, postTags.postId))
+      .where(
+        and(
+          eq(postTags.userId, userId),
+          isNull(posts.deletedAt),
+          isNull(posts.removedAt),
+          isNull(posts.archivedAt),
+          before ? lt(posts.id, before) : undefined,
+        ),
+      )
+      .orderBy(desc(posts.id))
+      .limit(limit * 2 + 1);
+    const visible: PostRow[] = [];
+    for (const { post } of rows) if (await canSeePost(this.db, post, viewerId)) visible.push(post);
+    return this.page(visible, limit, viewerId);
+  }
+
+  /** Your archived posts, newest first. */
+  async archived(userId: bigint, before: bigint | null, limit: number): Promise<PostPage> {
+    const rows = await this.db
+      .select()
+      .from(posts)
+      .where(
+        and(
+          eq(posts.authorId, userId),
+          isNotNull(posts.archivedAt),
+          isNull(posts.deletedAt),
+          before ? lt(posts.id, before) : undefined,
+        ),
+      )
+      .orderBy(desc(posts.id))
+      .limit(limit + 1);
+    return this.page(rows, limit, userId);
   }
 
   async remove(id: bigint, userId: bigint): Promise<void> {
@@ -287,8 +455,10 @@ export class SocialService {
         and(
           isNull(posts.deletedAt),
           isNull(posts.removedAt),
+          isNull(posts.archivedAt),
           before ? lt(posts.id, before) : undefined,
           sql`${posts.authorId} not in ${blockedWith(viewerId)}`,
+          sql`${posts.authorId} not in ${mutedBy(viewerId, "posts")}`,
           or(
             eq(posts.authorId, viewerId),
             and(
@@ -314,6 +484,8 @@ export class SocialService {
           eq(posts.kind, "clip"),
           isNull(posts.deletedAt),
           isNull(posts.removedAt),
+          isNull(posts.archivedAt),
+          viewerId ? sql`${posts.authorId} not in ${mutedBy(viewerId, "posts")}` : undefined,
           before ? lt(posts.id, before) : undefined,
           viewerId ? sql`${posts.authorId} not in ${blockedWith(viewerId)}` : undefined,
           viewerId
@@ -352,7 +524,9 @@ export class SocialService {
           eq(posts.visibility, "public"),
           isNull(posts.deletedAt),
           isNull(posts.removedAt),
+          isNull(posts.archivedAt),
           isNull(posts.communityId),
+          sql`${posts.authorId} not in ${mutedBy(viewerId, "posts")}`,
           eq(users.status, "active"),
           sql`${posts.createdAt} > now() - interval '30 days'`,
           sql`${posts.authorId} <> ${viewerId}`,
@@ -414,6 +588,7 @@ export class SocialService {
         and(
           eq(posts.authorId, authorId),
           isNull(posts.deletedAt),
+          isNull(posts.archivedAt),
           // You still see your own posts once taken down, marked, so you know why.
           self ? undefined : isNull(posts.removedAt),
           kind ? eq(posts.kind, kind) : inArray(posts.kind, ["image", "text"]),
@@ -525,6 +700,11 @@ export class SocialService {
         : Promise.resolve([]),
     ]);
     const soundList = await new MusicService(this.deps).uses(rows);
+    const tagRows = await this.db
+      .select({ postId: postTags.postId, user: summaryColumns })
+      .from(postTags)
+      .innerJoin(users, eq(users.id, postTags.userId))
+      .where(and(inArray(postTags.postId, ids), eq(users.status, "active")));
     const likedSet = new Set(liked.map((l) => l.id.toString()));
     const savedSet = new Set(saved.map((s) => s.id.toString()));
     return rows.map((r, i) => {
@@ -546,7 +726,8 @@ export class SocialService {
             }
           : null,
         visibility: fromDbVisibility(r.visibility),
-        likeCount: r.score,
+        // A hidden like count is the author's alone.
+        likeCount: r.hideLikes && viewerId !== r.authorId ? 0 : r.score,
         commentCount: r.commentCount,
         liked: likedSet.has(r.id.toString()),
         saved: savedSet.has(r.id.toString()),
@@ -554,6 +735,10 @@ export class SocialService {
         editedAt: r.editedAt?.toISOString() ?? null,
         pinned: r.pinnedAt !== null,
         hidden: r.removedAt !== null,
+        tags: tagRows.filter((x) => x.postId === r.id).map((x) => toUserSummary(x.user)),
+        hideLikes: r.hideLikes,
+        commentsOff: r.commentsOff,
+        archived: r.archivedAt !== null,
       } satisfies Post;
     });
   }
@@ -654,7 +839,9 @@ export class SocialService {
 
   async comment(postId: bigint, userId: bigint, body: CreateCommentBody): Promise<Comment> {
     const post = await this.visible(postId, userId);
-    if (post.lockedAt) throw forbidden("Comments are turned off on this post.");
+    if (post.lockedAt || post.commentsOff) {
+      throw new AppError(403, "COMMENTS_OFF", "Comments are turned off on this post.");
+    }
     let parent: typeof comments.$inferSelect | undefined;
     if (body.parentId) {
       [parent] = await this.db
@@ -698,6 +885,7 @@ export class SocialService {
       .where(eq(comments.id, id));
     if (!row) throw notFound("Comment");
     const made = toComment(row.c, row.author);
+    await this.mention(post, userId, body.body, "comment");
     await this.deps.bus.publish(`post:${postId}`, { type: "COMMENT_CREATE", data: made });
     await this.postNews(postId);
     return made;
@@ -896,15 +1084,33 @@ export class SocialService {
       throw notFound("User");
     }
     const isSelf = viewerId === user.id;
-    const [privateAccount, follow, followsYou, counts, followedBy] = await Promise.all([
-      isPrivateAccount(this.db, user.id),
-      viewerId && !isSelf ? this.followState(viewerId, user.id) : Promise.resolve("none" as const),
-      viewerId && !isSelf ? followsActively(this.db, user.id, viewerId) : Promise.resolve(false),
-      this.counts(user.id),
-      viewerId && !isSelf
-        ? this.mutuals(viewerId, user.id)
-        : Promise.resolve({ users: [], count: 0 }),
-    ]);
+    const [privateAccount, follow, followsYou, counts, followedBy, close, mute] = await Promise.all(
+      [
+        isPrivateAccount(this.db, user.id),
+        viewerId && !isSelf
+          ? this.followState(viewerId, user.id)
+          : Promise.resolve("none" as const),
+        viewerId && !isSelf ? followsActively(this.db, user.id, viewerId) : Promise.resolve(false),
+        this.counts(user.id),
+        viewerId && !isSelf
+          ? this.mutuals(viewerId, user.id)
+          : Promise.resolve({ users: [], count: 0 }),
+        viewerId && !isSelf
+          ? this.db
+              .select({ id: closeFriends.friendId })
+              .from(closeFriends)
+              .where(and(eq(closeFriends.userId, viewerId), eq(closeFriends.friendId, user.id)))
+              .limit(1)
+          : Promise.resolve([]),
+        viewerId && !isSelf
+          ? this.db
+              .select({ posts: accountMutes.posts, stories: accountMutes.stories })
+              .from(accountMutes)
+              .where(and(eq(accountMutes.userId, viewerId), eq(accountMutes.targetId, user.id)))
+              .limit(1)
+          : Promise.resolve([]),
+      ],
+    );
     return {
       user: toPublicUser(user),
       accountKind: user.accountKind,
@@ -917,6 +1123,8 @@ export class SocialService {
       followsYou,
       followedBy,
       canSeeAll: isSelf || !privateAccount || follow === "following",
+      closeFriend: close.length > 0,
+      muted: { posts: mute[0]?.posts ?? false, stories: mute[0]?.stories ?? false },
     };
   }
 
@@ -1205,6 +1413,10 @@ export class SocialService {
               : null,
           text: typeof n.data.text === "string" ? n.data.text : null,
           accepted: n.data.accepted === true,
+          via:
+            n.data.via === "caption" || n.data.via === "comment" || n.data.via === "tag"
+              ? n.data.via
+              : null,
           youFollow: standing(actor?.id ?? undefined),
           read: n.readAt !== null,
           createdAt: n.createdAt.toISOString(),

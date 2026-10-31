@@ -60,6 +60,12 @@ export const posts = pgTable(
     deletedAt: tstz(),
     /** Pinned to the top of its author's profile (up to three). */
     pinnedAt: tstz(),
+    /** Only the author sees the like count. */
+    hideLikes: boolean().notNull().default(false),
+    /** Nobody can comment. */
+    commentsOff: boolean().notNull().default(false),
+    /** Archived: only its author sees it, and it can come back to the profile any time. */
+    archivedAt: tstz(),
   },
   (t) => [
     index("posts_community_hot_idx").on(t.communityId, t.hotRank.desc()),
@@ -128,6 +134,52 @@ export const votes = pgTable(
     createdAt: createdAt(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.targetType, t.targetId] })],
+);
+
+/** People tagged in a post (shown on the photo and on their Tagged tab). */
+export const postTags = pgTable(
+  "post_tags",
+  {
+    postId: id()
+      .notNull()
+      .references(() => posts.id),
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.postId, t.userId] }),
+    index("post_tags_user_idx").on(t.userId, t.createdAt.desc()),
+  ],
+);
+
+/** Saved posts sorted into named folders (a post can be in several). */
+export const collections = pgTable(
+  "collections",
+  {
+    id: id().primaryKey(),
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    name: text().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("collections_user_idx").on(t.userId, t.createdAt.desc())],
+);
+
+export const collectionItems = pgTable(
+  "collection_items",
+  {
+    collectionId: id()
+      .notNull()
+      .references(() => collections.id),
+    postId: id()
+      .notNull()
+      .references(() => posts.id),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.collectionId, t.postId] })],
 );
 
 export const saves = pgTable(

@@ -2,6 +2,7 @@ export * from "./errors";
 export * from "./ids";
 export * from "./limits";
 export * from "./permissions";
+export * from "./schemas/account";
 export * from "./schemas/admin";
 export * from "./schemas/auth";
 export * from "./schemas/channels";

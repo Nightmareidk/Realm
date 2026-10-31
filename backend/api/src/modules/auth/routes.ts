@@ -99,7 +99,9 @@ export const authRoutes =
     function issue(
       req: FastifyRequest,
       reply: FastifyReply,
-      r: Awaited<ReturnType<AuthService["login"]>>,
+      r: Awaited<ReturnType<AuthService["register"]>> & {
+        welcomeBack?: "deactivated" | "deletion_cancelled";
+      },
     ): AuthResult {
       if (!req.client.isNative) {
         reply.setCookie(SESSION_COOKIE, r.token, sessionCookieOptions(deps));
@@ -108,6 +110,7 @@ export const authRoutes =
         user: toSelfUser(r.user),
         session: toSessionInfo(r.session, r.session.id),
         ...(req.client.isNative ? { token: r.token } : {}),
+        ...(r.welcomeBack ? { welcomeBack: r.welcomeBack } : {}),
       };
     }
 

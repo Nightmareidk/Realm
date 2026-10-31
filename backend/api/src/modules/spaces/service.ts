@@ -764,6 +764,7 @@ export class SpacesService {
         parentId,
         name,
         topic: group ? null : body.topic || null,
+        announce: !group && body.type !== "voice" && body.announce === true,
         position: (count?.last ?? -1) + 1,
       })
       .returning();
@@ -782,6 +783,9 @@ export class SpacesService {
     const name = body.name === undefined ? undefined : this.roomName(channel.type, body.name);
     if (name && !group && (await this.roomNameTaken(spaceId, name, channel.id))) {
       throw conflict("ROOM_NAME_TAKEN", `There's already a #${name} here.`);
+    }
+    if (body.announce && channel.type !== "text") {
+      throw badRequest("BAD_REQUEST", "Only chat rooms can be announcement rooms.");
     }
     if (body.slowmodeSeconds && channel.type !== "text") {
       throw badRequest("BAD_REQUEST", "Slow mode is for chat rooms.");
@@ -803,6 +807,7 @@ export class SpacesService {
         parentId,
         slowmodeSeconds: body.slowmodeSeconds,
         isNsfw: body.isNsfw,
+        announce: group ? undefined : body.announce,
         updatedAt: new Date(),
       })
       .where(eq(channels.id, channel.id))

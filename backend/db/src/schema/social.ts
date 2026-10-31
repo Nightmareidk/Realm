@@ -1,4 +1,4 @@
-import { index, pgEnum, pgTable, primaryKey } from "drizzle-orm/pg-core";
+import { boolean, index, pgEnum, pgTable, primaryKey } from "drizzle-orm/pg-core";
 import { createdAt, id, tstz } from "./_columns";
 import { users } from "./users";
 
@@ -47,6 +47,44 @@ export const follows = pgTable(
     primaryKey({ columns: [t.followerId, t.followeeId] }),
     index("follows_followee_idx").on(t.followeeId, t.createdAt.desc()),
   ],
+);
+
+/** Close Friends: who sees the Stories and Notes shared "to Close Friends only". */
+export const closeFriends = pgTable(
+  "close_friends",
+  {
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    friendId: id()
+      .notNull()
+      .references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.friendId] }),
+    index("close_friends_friend_idx").on(t.friendId),
+  ],
+);
+
+/**
+ * Muted accounts: their posts and/or Stories stop showing in your feed. They aren't told, and
+ * you still follow them.
+ */
+export const accountMutes = pgTable(
+  "account_mutes",
+  {
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    targetId: id()
+      .notNull()
+      .references(() => users.id),
+    posts: boolean().notNull().default(true),
+    stories: boolean().notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.targetId] })],
 );
 
 export const muteTarget = pgEnum("mute_target", ["user", "community", "channel"]);

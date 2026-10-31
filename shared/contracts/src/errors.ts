@@ -34,6 +34,8 @@ export const ErrorCode = z.enum([
   "TOKEN_SUPERSEDED",
   "SESSION_EXPIRED",
   "ACCOUNT_SUSPENDED",
+  /** The password was right; now the code from the authenticator app (or a backup code). */
+  "MFA_REQUIRED",
   // social
   "BLOCKED",
   "DM_NOT_ALLOWED",
@@ -45,6 +47,7 @@ export const ErrorCode = z.enum([
   "ALREADY_MEMBER",
   "BANNED_FROM_COMMUNITY",
   "SLOWMODE",
+  "COMMENTS_OFF",
   "CLIENT_OUTDATED",
   // spaces
   "INVITE_EXPIRED",

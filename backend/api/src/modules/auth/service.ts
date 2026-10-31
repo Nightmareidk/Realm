@@ -24,6 +24,7 @@ import { AppError, badRequest, conflict, rateLimited } from "../../lib/errors";
 import { RESERVED_MESSAGE, whyReserved } from "../../lib/handles";
 import { alertOwnerOnce } from "../../lib/owner-alerts";
 import { type ClientContext, createSession, revokeAllSessions } from "../../lib/sessions";
+import { AccountService } from "../account/service";
 import {
   newSignInEmail,
   passwordChangedEmail,
@@ -55,7 +56,11 @@ function violates(err: unknown, constraint: RegExp): boolean {
 }
 
 export class AuthService {
-  constructor(private readonly deps: Deps) {}
+  private readonly account: AccountService;
+
+  constructor(private readonly deps: Deps) {
+    this.account = new AccountService(deps);
+  }
 
   private link(path: string, token: string) {
     const url = new URL(path, this.deps.config.REALM_WEB_ORIGIN);
@@ -200,15 +205,36 @@ export class AuthService {
     if (user.status === "suspended") {
       throw new AppError(403, "ACCOUNT_SUSPENDED", "This account is suspended");
     }
-    if (user.status !== "active") {
+    if (user.status !== "active" && user.status !== "deactivated") {
       throw new AppError(401, "INVALID_CREDENTIALS", "Wrong username/email or password");
     }
+
+    // Two-step sign-in: the password was right, now the app's code (or a backup code). Wrong
+    // codes count against the same per-account limit as wrong passwords.
+    if (user.mfaSecret) {
+      if (!body.code) {
+        throw new AppError(401, "MFA_REQUIRED", "Enter the code from your authenticator app.");
+      }
+      if (!(await this.account.checkSecondStep(user, body.code, client.ip))) {
+        await this.logEvent(user.id, "login_failed", client);
+        throw new AppError(401, "INVALID_CODE", "That code isn't right. Try the newest one.");
+      }
+    }
+
+    // Back from a break, or within the 30 days after asking to delete: it all comes back.
+    const welcomeBack =
+      user.status === "deactivated" ? await this.account.welcomeBack(user, client.ip) : undefined;
 
     await this.deps.limiter.reset(Limits.loginAccount, login);
     const { session, token } = await createSession(this.deps, this.deps.db, user.id, client);
     await this.logEvent(user.id, "login", client, session.id);
     await this.tellIfNewDevice(user, session);
-    return { user, session, token };
+    return {
+      user: welcomeBack ? { ...user, status: "active" as const, deletionScheduledAt: null } : user,
+      session,
+      token,
+      welcomeBack,
+    };
   }
 
   /**

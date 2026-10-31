@@ -18,8 +18,9 @@ import { mediaUrl } from "../../lib/serialize";
 import { summaryColumns, toMediaRef, toUserSummary } from "../../lib/serialize-spaces";
 import { guardMessage } from "../../lib/spam";
 import { followsActively, isPrivateAccount } from "../social/access";
+import { blockedEitherWay } from "../spaces/access";
 
-const { sounds, stories, storyViews, media, users, follows } = schema;
+const { sounds, stories, storyViews, media, users, follows, closeFriends, accountMutes } = schema;
 type SoundRow = typeof sounds.$inferSelect;
 type StoryRow = typeof stories.$inferSelect;
 
@@ -431,10 +432,22 @@ export class MusicService {
     return (await this.toStories([row as StoryRow], userId))[0] as Story;
   }
 
-  /** Whether someone may watch a Story: its author, everyone for public ones, followers otherwise. */
+  /**
+   * Whether someone may watch a Story: its author; for Close Friends ones, only people on that
+   * list; everyone for public ones; followers otherwise.
+   */
   private async canSee(row: StoryRow, viewerId: bigint | null) {
     if (row.deletedAt || row.expiresAt < new Date()) return false;
     if (viewerId === row.authorId) return true;
+    if (row.visibility === "close_friends") {
+      if (!viewerId) return false;
+      const [on] = await this.db
+        .select({ id: closeFriends.friendId })
+        .from(closeFriends)
+        .where(and(eq(closeFriends.userId, row.authorId), eq(closeFriends.friendId, viewerId)))
+        .limit(1);
+      return Boolean(on) && !(await blockedEitherWay(this.db, viewerId, row.authorId));
+    }
     if (row.visibility === "public" && !(await isPrivateAccount(this.db, row.authorId)))
       return true;
     return viewerId ? followsActively(this.db, viewerId, row.authorId) : false;
@@ -488,6 +501,7 @@ export class MusicService {
           expiresAt: r.expiresAt.toISOString(),
           seen: mine || seenSet.has(String(r.id)),
           views: mine ? Number(counts.find((c) => c.storyId === r.id)?.n ?? 0) : null,
+          closeFriends: r.visibility === "close_friends",
         },
       ];
     });
@@ -499,7 +513,15 @@ export class MusicService {
       .select({ id: follows.followeeId })
       .from(follows)
       .where(and(eq(follows.followerId, viewerId), eq(follows.status, "active")));
-    const authorIds = [viewerId, ...followed.map((f) => f.id)];
+    // Muting someone's Stories takes them out of the row (they aren't told).
+    const muted = await this.db
+      .select({ id: accountMutes.targetId })
+      .from(accountMutes)
+      .where(and(eq(accountMutes.userId, viewerId), eq(accountMutes.stories, true)));
+    const authorIds = [
+      viewerId,
+      ...followed.map((f) => f.id).filter((id) => !muted.some((m) => m.id === id)),
+    ];
     const rows = await this.db
       .select()
       .from(stories)
@@ -519,11 +541,12 @@ export class MusicService {
     for (const s of all) {
       let ring = rings.find((x) => x.author.id === s.author.id);
       if (!ring) {
-        ring = { author: s.author, stories: [], unseen: false };
+        ring = { author: s.author, stories: [], unseen: false, closeFriends: false };
         rings.push(ring);
       }
       ring.stories.push(s);
       if (!s.seen) ring.unseen = true;
+      if (!s.seen && s.closeFriends) ring.closeFriends = true;
     }
     const me = String(viewerId);
     rings.sort((a, b) => {

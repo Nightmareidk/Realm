@@ -1,4 +1,12 @@
-import { index, integer, pgEnum, pgTable, primaryKey, text, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 import { createdAt, id, tstz } from "./_columns";
 import { media } from "./media";
 import { users } from "./users";
@@ -41,7 +49,29 @@ export const sounds = pgTable(
   ],
 );
 
-export const storyVisibility = pgEnum("story_visibility", ["public", "followers"]);
+export const storyVisibility = pgEnum("story_visibility", ["public", "followers", "close_friends"]);
+
+export const noteAudience = pgEnum("note_audience", ["followers", "close_friends"]);
+
+/**
+ * Notes: a short thought (and maybe a song) above your picture in Messages, for a day. One at a
+ * time; a new one replaces the old.
+ */
+export const notes = pgTable(
+  "notes",
+  {
+    userId: id()
+      .primaryKey()
+      .references(() => users.id),
+    text: text().notNull(),
+    soundId: id().references(() => sounds.id),
+    soundStartMs: integer(),
+    audience: noteAudience().notNull().default("followers"),
+    createdAt: createdAt(),
+    expiresAt: tstz().notNull(),
+  },
+  (t) => [index("notes_expires_idx").on(t.expiresAt)],
+);
 
 export const stories = pgTable(
   "stories",

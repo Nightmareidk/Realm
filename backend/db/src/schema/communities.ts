@@ -146,6 +146,8 @@ export const channels = pgTable(
     position: integer().notNull().default(0),
     isNsfw: boolean().notNull().default(false),
     slowmodeSeconds: integer().notNull().default(0),
+    /** An announcement room: everyone reads, only people who can manage messages post. */
+    announce: boolean().notNull().default(false),
     ownerId: id(),
     iconMediaId: id(),
     encryption: encryption().notNull().default("none"),
