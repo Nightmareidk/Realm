@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { chatAccent } from "@/chat/colour";
 import { Icon } from "@/icon";
 import { Friends } from "@/inbox/friends";
+import { NotesRow } from "@/inbox/notes";
 import { SpacesList } from "@/inbox/spaces";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
@@ -253,7 +254,9 @@ export default function Inbox() {
             />
           )}
           ListHeaderComponent={
-            filter === "requests" && items.length ? (
+            filter === "all" ? (
+              <NotesRow />
+            ) : filter === "requests" && items.length ? (
               <Text style={s.requestsNote}>
                 Messages from people you don't follow. They won't know you've seen them until you
                 accept. Photos and files arrive once you do.

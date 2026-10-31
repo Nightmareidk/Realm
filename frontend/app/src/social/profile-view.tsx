@@ -1,12 +1,12 @@
-import type { Channel, FollowState, Post, Profile } from "@realm/contracts";
+import type { Channel, Collection, FollowState, Post, Profile } from "@realm/contracts";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { type ReactNode, useCallback, useState } from "react";
-import { Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { alert } from "../alert";
-import { useApi, usePosts } from "../data";
+import { postsChanged, useApi, usePosts } from "../data";
 import { Icon } from "../icon";
 import { useContentWidth } from "../layout";
 import { useLiveEvent } from "../live";
@@ -17,12 +17,21 @@ import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Pill } from "../ui";
 import { Avatar, fillFor } from "./avatar";
 import { Highlights } from "./highlights";
+import { MentionText } from "./mention-text";
 import { useSafety } from "./safety";
 import { Empty, Loading, Problem } from "./screen";
 import { compact } from "./time";
 import { Verified } from "./verified";
 
-type Tab = "posts" | "clips" | "saved";
+type Tab = "posts" | "clips" | "tagged" | "saved" | "archive";
+
+const TAB_LABEL: Record<Tab, string> = {
+  posts: "Posts",
+  clips: "Clips",
+  tagged: "Tagged",
+  saved: "Saved",
+  archive: "Archive",
+};
 
 /**
  * A profile (yours on the You tab, anyone's from a name): banner, picture, name, counts, follow
@@ -35,10 +44,21 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
   const router = useRouter();
   const { data: profile, setData, error, reload } = useApi<Profile>(`/users/${username}/profile`);
   const [tab, setTab] = useState<Tab>("posts");
+  // Saved: everything, or one collection.
+  const [folder, setFolder] = useState<string | null>(null);
+  const folders = useApi<{ items: Collection[] }>(
+    profile?.isSelf && tab === "saved" ? "/users/@me/collections" : null,
+  );
   const path =
     tab === "saved"
-      ? "/users/@me/saved"
-      : `/users/${username}/posts${tab === "clips" ? "?kind=clip" : ""}`;
+      ? folder
+        ? `/users/@me/collections/${folder}/posts`
+        : "/users/@me/saved"
+      : tab === "archive"
+        ? "/users/@me/archive"
+        : tab === "tagged"
+          ? `/users/${username}/tagged`
+          : `/users/${username}/posts${tab === "clips" ? "?kind=clip" : ""}`;
   const list = usePosts(profile ? path : null);
   // Their Stories right now, for the ring on their picture.
   const rings = useStories();
@@ -110,9 +130,42 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
       avatarUrl: them.avatarUrl,
       accentColor: them.accentColor,
     };
+    const mute = async (m: { posts: boolean; stories: boolean }) => {
+      try {
+        await api(`/users/${them.username}/mute`, { method: "PUT", body: m });
+        reload();
+        postsChanged();
+      } catch (err) {
+        alert("Not changed", err instanceof ApiError ? err.message : "Try again.");
+      }
+    };
     sheet({
       title: them.displayName,
       actions: [
+        {
+          label: profile.closeFriend ? "Remove from Close Friends" : "Add to Close Friends",
+          icon: profile.closeFriend ? ("StarFill" as const) : ("Star" as const),
+          onPress: async () => {
+            try {
+              await api(`/users/@me/close-friends/${them.username}`, {
+                method: profile.closeFriend ? "DELETE" : "PUT",
+              });
+              reload();
+            } catch (err) {
+              alert("Not changed", err instanceof ApiError ? err.message : "Try again.");
+            }
+          },
+        },
+        {
+          label: profile.muted.posts ? "Unmute posts" : "Mute posts",
+          icon: "SpeakerSimpleSlash" as const,
+          onPress: () => void mute({ posts: !profile.muted.posts, stories: profile.muted.stories }),
+        },
+        {
+          label: profile.muted.stories ? "Unmute Stories" : "Mute Stories",
+          icon: "SpeakerSimpleSlash" as const,
+          onPress: () => void mute({ posts: profile.muted.posts, stories: !profile.muted.stories }),
+        },
         ...(profile.followsYou
           ? [
               {
@@ -167,7 +220,9 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
     });
   }
 
-  const tabs: Tab[] = profile.isSelf ? ["posts", "clips", "saved"] : ["posts", "clips"];
+  const tabs: Tab[] = profile.isSelf
+    ? ["posts", "clips", "tagged", "saved", "archive"]
+    : ["posts", "clips", "tagged"];
 
   const header = (
     <View>
@@ -279,7 +334,11 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
             <Text style={s.categoryText}>{profile.category}</Text>
           </View>
         ) : null}
-        {profile.user.bio ? <Text style={s.bio}>{profile.user.bio}</Text> : null}
+        {profile.user.bio ? (
+          <Text style={s.bio}>
+            <MentionText text={profile.user.bio} />
+          </Text>
+        ) : null}
         {profile.websiteUrl && /^https?:\/\//i.test(profile.websiteUrl) ? (
           <Pressable
             accessibilityRole="link"
@@ -393,7 +452,10 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
         {tabs.map((t) => (
           <Pressable
             key={t}
-            onPress={() => setTab(t)}
+            onPress={() => {
+              setTab(t);
+              setFolder(null);
+            }}
             accessibilityRole="tab"
             accessibilityState={{ selected: tab === t }}
             style={[s.tab, tab === t && s.tabOn]}
@@ -406,17 +468,45 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
                     : "GridFour"
                   : t === "clips"
                     ? "PlayFill"
-                    : tab === t
-                      ? "BookmarkSimpleFill"
-                      : "BookmarkSimple"
+                    : t === "tagged"
+                      ? "UserSquare"
+                      : t === "archive"
+                        ? "Archive"
+                        : tab === t
+                          ? "BookmarkSimpleFill"
+                          : "BookmarkSimple"
               }
               size={24}
               color={tab === t ? theme.colors.text : theme.colors.textSoft}
-              label={t === "posts" ? "Posts" : t === "clips" ? "Clips" : "Saved"}
+              label={TAB_LABEL[t]}
             />
           </Pressable>
         ))}
       </View>
+      {tab === "saved" && (folders.data?.items.length ?? 0) > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.folders}
+        >
+          {[{ id: null as string | null, name: "All saved" }, ...(folders.data?.items ?? [])].map(
+            (c) => {
+              const on = folder === c.id;
+              return (
+                <Pressable
+                  key={c.id ?? "all"}
+                  onPress={() => setFolder(c.id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  style={[s.folder, on && { backgroundColor: theme.colors.text }]}
+                >
+                  <Text style={[s.folderText, on && { color: theme.colors.bg }]}>{c.name}</Text>
+                </Pressable>
+              );
+            },
+          )}
+        </ScrollView>
+      ) : null}
     </View>
   );
 
@@ -434,17 +524,27 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
           <Empty
             title={
               tab === "saved"
-                ? "Nothing saved yet"
-                : tab === "clips"
-                  ? "No Clips yet"
-                  : "No posts yet"
+                ? folder
+                  ? "This collection is empty"
+                  : "Nothing saved yet"
+                : tab === "archive"
+                  ? "Nothing archived"
+                  : tab === "tagged"
+                    ? "No tagged posts"
+                    : tab === "clips"
+                      ? "No Clips yet"
+                      : "No posts yet"
             }
             line={
               tab === "saved"
-                ? "Tap the bookmark on a post to keep it here. Only you can see what you save."
-                : profile.isSelf
-                  ? "Share your first one with the + on Home."
-                  : undefined
+                ? "Tap the bookmark on a post to keep it here. Sort them into collections from a post's menu."
+                : tab === "archive"
+                  ? "Archive a post from its menu to take it off your profile without deleting it."
+                  : tab === "tagged"
+                    ? "Posts people tag them in show up here."
+                    : profile.isSelf
+                      ? "Share your first one with the + on Home."
+                      : undefined
             }
           />
         )
@@ -681,6 +781,15 @@ const make = (t: NativeTheme) =>
       color: t.colors.textSoft,
       marginTop: 2,
     },
+    folders: { gap: 8, paddingHorizontal: 12, paddingVertical: 10 },
+    folder: {
+      height: 34,
+      paddingHorizontal: 14,
+      borderRadius: 17,
+      justifyContent: "center",
+      backgroundColor: t.colors.surfaceRaised,
+    },
+    folderText: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: t.colors.text },
     tabs: {
       flexDirection: "row",
       marginTop: 14,

@@ -45,6 +45,7 @@ export function Stage({
   onAudience,
   onDiscard,
   onShare,
+  onShareClose,
 }: {
   mode: "story" | "clip";
   asset: ImagePicker.ImagePickerAsset;
@@ -62,6 +63,8 @@ export function Stage({
   onAudience: (everyone: boolean) => void;
   onDiscard: () => void;
   onShare: () => void;
+  /** A Story: share it to Close Friends only (a green ring), Instagram's second button. */
+  onShareClose?: () => void;
 }) {
   const { accent, onAccent } = useTheme();
   const s = useStyles(make);
@@ -250,6 +253,17 @@ export function Stage({
             </View>
             <Icon name="CaretDown" size={14} color="#ffffff" />
           </Pressable>
+          {onShareClose ? (
+            <Pressable
+              onPress={onShareClose}
+              disabled={Boolean(status)}
+              accessibilityRole="button"
+              accessibilityLabel="Share to Close Friends"
+              style={[s.close, status && s.busy]}
+            >
+              <Icon name="StarFill" size={20} color="#04150a" />
+            </Pressable>
+          ) : null}
           <Pressable
             onPress={onShare}
             disabled={Boolean(status)}
@@ -403,4 +417,12 @@ const make = (t: NativeTheme) =>
       borderRadius: 26,
     },
     shareText: { fontFamily: t.fonts.bold, fontSize: 16 * t.textScale },
+    close: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#22c55e",
+    },
   });

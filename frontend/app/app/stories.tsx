@@ -56,6 +56,7 @@ export default function Stories() {
                   author: first.author,
                   stories: d.stories.map((st) => ({ ...st, seen: true })),
                   unseen: false,
+                  closeFriends: false,
                 },
               ]
             : [],

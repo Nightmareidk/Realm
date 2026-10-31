@@ -49,6 +49,7 @@ export default function RoomEditor() {
   const [topic, setTopic] = useState("");
   const [parentId, setParentId] = useState<string | null>(params.parent ?? null);
   const [slow, setSlow] = useState<(typeof SLOWMODE_CHOICES)[number]>(0);
+  const [announce, setAnnounce] = useState(false);
   const [closed, setClosed] = useState(false);
   const [roleIds, setRoleIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -64,6 +65,7 @@ export default function RoomEditor() {
         ? (existing.slowmodeSeconds as (typeof SLOWMODE_CHOICES)[number])
         : 0,
     );
+    setAnnounce(existing.announce);
     const p = privacyOf(space.data, existing);
     setClosed(p.private);
     setRoleIds(p.roleIds);
@@ -122,6 +124,7 @@ export default function RoomEditor() {
             type: kind,
             ...(group ? {} : { topic: topic.trim() || undefined, parentId: parentId ?? undefined }),
             ...(privacy?.private ? { privacy } : {}),
+            ...(kind === "text" && announce ? { announce: true } : {}),
           },
         });
       } else if (existing) {
@@ -139,7 +142,7 @@ export default function RoomEditor() {
               : {
                   topic: topic.trim() || null,
                   parentId,
-                  ...(kind === "text" ? { slowmodeSeconds: slow } : {}),
+                  ...(kind === "text" ? { slowmodeSeconds: slow, announce } : {}),
                   ...(privacyChanged ? { privacy } : {}),
                 }),
           },
@@ -238,6 +241,20 @@ export default function RoomEditor() {
               </>
             ) : null}
 
+            {kind === "text" ? (
+              <View style={s.announceRow}>
+                <View style={s.announceText}>
+                  <Text style={s.label}>Announcement room</Text>
+                  <Text style={s.hint}>Only moderators post. Everyone reads and reacts.</Text>
+                </View>
+                <Switch
+                  value={announce}
+                  onValueChange={setAnnounce}
+                  accessibilityLabel="Announcement room"
+                />
+              </View>
+            ) : null}
+
             {kind === "text" && !fresh ? (
               <>
                 <Text style={s.label}>Slow mode</Text>
@@ -329,6 +346,8 @@ export default function RoomEditor() {
 
 const make = (t: NativeTheme) =>
   StyleSheet.create({
+    announceRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    announceText: { flex: 1 },
     fill: { flex: 1, minWidth: 0 },
     pad: { padding: 16, gap: 10, paddingBottom: 120 },
     preview: {

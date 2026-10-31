@@ -245,12 +245,13 @@ function StoriesRow() {
           key={r.author.id}
           onPress={() => watch(r.author.id)}
           accessibilityRole="button"
-          accessibilityLabel={`${r.author.displayName}'s Story${r.unseen ? ", new" : ""}`}
+          accessibilityLabel={`${r.author.displayName}'s Story${r.unseen ? ", new" : ""}${r.closeFriends ? ", Close Friends" : ""}`}
           style={s.person}
         >
           <Face
             user={r.author}
             state={r.unseen ? "new" : "seen"}
+            close={r.closeFriends}
             cover={r.stories.findLast((st) => st.sound?.coverUrl)?.sound?.coverUrl ?? null}
           />
           {named ? (
@@ -291,17 +292,23 @@ function Face({
   user,
   state,
   cover = null,
+  close = false,
 }: {
   user: UserSummary;
   state: "new" | "seen" | "none";
+  /** A new Close Friends Story: green, in every look. */
+  close?: boolean;
   /** The song on their newest Story, shown on the ring (Now Playing). */
   cover?: string | null;
 }) {
   const { t } = useTheme();
   const s = useStyles(make);
-  const colour = user.accentColor
-    ? `#${user.accentColor.toString(16).padStart(6, "0")}`
-    : fillFor(user.id);
+  const green = close && state === "new";
+  const colour = green
+    ? "#22c55e"
+    : user.accentColor
+      ? `#${user.accentColor.toString(16).padStart(6, "0")}`
+      : fillFor(user.id);
   if (t.style.stories === "bands") {
     return (
       <View style={[s.band, state === "new" && s.bandNew, state === "none" && s.bandNone]}>
@@ -321,7 +328,13 @@ function Face({
   }
   if (t.style.stories === "thin") {
     return (
-      <View style={[s.thin, state === "new" ? s.thinNew : state === "seen" ? s.thinSeen : null]}>
+      <View
+        style={[
+          s.thin,
+          state === "new" ? s.thinNew : state === "seen" ? s.thinSeen : null,
+          green && { borderColor: "#22c55e" },
+        ]}
+      >
         <Avatar user={user} size={60} />
       </View>
     );
@@ -340,7 +353,11 @@ function Face({
     return (
       <View>
         <LinearGradient
-          colors={[colour, t.colors.lights[1], t.colors.accent]}
+          colors={
+            green
+              ? ["#16a34a", "#4ade80", "#22c55e"]
+              : [colour, t.colors.lights[1], t.colors.accent]
+          }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={s.ring}

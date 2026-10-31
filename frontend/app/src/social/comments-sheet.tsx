@@ -25,6 +25,7 @@ import { useSession } from "../session";
 import { useSheet } from "../sheet";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Avatar } from "./avatar";
+import { MentionText } from "./mention-text";
 import { useSafety } from "./safety";
 import { ago } from "./time";
 import { Verified } from "./verified";
@@ -251,7 +252,11 @@ export function CommentsSheet({
                         ) : null}
                       </View>
                       <Text style={[s.body, item.hidden && s.hidden]}>
-                        {item.hidden ? "Hidden after reports. Only you can see it." : item.body}
+                        {item.hidden ? (
+                          "Hidden after reports. Only you can see it."
+                        ) : (
+                          <MentionText text={item.body} />
+                        )}
                       </Text>
                       <View style={s.under}>
                         <Pressable
@@ -306,77 +311,88 @@ export function CommentsSheet({
               />
             )}
 
-            <View style={[s.compose, { paddingBottom: insets.bottom + 8 }]}>
-              <View style={s.quick}>
-                {QUICK.map((e) => (
-                  <Pressable
-                    key={e}
-                    onPress={() => {
-                      setText((now) => now + e);
-                      input.current?.focus();
+            {post.commentsOff ? (
+              <Text
+                style={[
+                  s.emptyLine,
+                  { textAlign: "center", padding: 16, paddingBottom: insets.bottom + 16 },
+                ]}
+              >
+                Comments are turned off for this post.
+              </Text>
+            ) : (
+              <View style={[s.compose, { paddingBottom: insets.bottom + 8 }]}>
+                <View style={s.quick}>
+                  {QUICK.map((e) => (
+                    <Pressable
+                      key={e}
+                      onPress={() => {
+                        setText((now) => now + e);
+                        input.current?.focus();
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Add ${e}`}
+                      hitSlop={4}
+                    >
+                      <Text style={s.quickEmoji}>{e}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                {replyTo ? (
+                  <View style={s.replying}>
+                    <Text style={s.replyingText} numberOfLines={1}>
+                      Replying to {replyTo.author.username}
+                    </Text>
+                    <Pressable
+                      onPress={() => {
+                        setReplyTo(null);
+                        setText((now) => now.replace(`@${replyTo.author.username} `, ""));
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Cancel reply"
+                      hitSlop={8}
+                    >
+                      <Icon name="X" size={16} color={t.colors.textSoft} />
+                    </Pressable>
+                  </View>
+                ) : null}
+                <View style={s.inputRow}>
+                  {me ? <Avatar user={me} size={34} /> : null}
+                  <TextInput
+                    ref={input}
+                    value={text}
+                    onChangeText={setText}
+                    placeholder={`Add a comment for ${post.author.username}…`}
+                    placeholderTextColor={t.colors.textMuted}
+                    selectionColor={accent}
+                    cursorColor={accent}
+                    maxLength={2200}
+                    multiline
+                    numberOfLines={1}
+                    style={[s.input, Platform.OS === "web" && ({ outlineStyle: "none" } as object)]}
+                    accessibilityLabel="Add a comment"
+                    onKeyPress={(e) => {
+                      const k = e.nativeEvent as { key: string; shiftKey?: boolean };
+                      if (Platform.OS === "web" && k.key === "Enter" && !k.shiftKey) {
+                        e.preventDefault();
+                        send();
+                      }
                     }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Add ${e}`}
-                    hitSlop={4}
-                  >
-                    <Text style={s.quickEmoji}>{e}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              {replyTo ? (
-                <View style={s.replying}>
-                  <Text style={s.replyingText} numberOfLines={1}>
-                    Replying to {replyTo.author.username}
-                  </Text>
+                  />
                   <Pressable
-                    onPress={() => {
-                      setReplyTo(null);
-                      setText((now) => now.replace(`@${replyTo.author.username} `, ""));
-                    }}
+                    onPress={send}
+                    disabled={!text.trim() || sending}
                     accessibilityRole="button"
-                    accessibilityLabel="Cancel reply"
-                    hitSlop={8}
+                    accessibilityLabel="Post comment"
+                    hitSlop={6}
                   >
-                    <Icon name="X" size={16} color={t.colors.textSoft} />
+                    <Text style={[s.post, { color: accent }, (!text.trim() || sending) && s.off]}>
+                      {sending ? "Posting" : "Post"}
+                    </Text>
                   </Pressable>
                 </View>
-              ) : null}
-              <View style={s.inputRow}>
-                {me ? <Avatar user={me} size={34} /> : null}
-                <TextInput
-                  ref={input}
-                  value={text}
-                  onChangeText={setText}
-                  placeholder={`Add a comment for ${post.author.username}…`}
-                  placeholderTextColor={t.colors.textMuted}
-                  selectionColor={accent}
-                  cursorColor={accent}
-                  maxLength={2200}
-                  multiline
-                  numberOfLines={1}
-                  style={[s.input, Platform.OS === "web" && ({ outlineStyle: "none" } as object)]}
-                  accessibilityLabel="Add a comment"
-                  onKeyPress={(e) => {
-                    const k = e.nativeEvent as { key: string; shiftKey?: boolean };
-                    if (Platform.OS === "web" && k.key === "Enter" && !k.shiftKey) {
-                      e.preventDefault();
-                      send();
-                    }
-                  }}
-                />
-                <Pressable
-                  onPress={send}
-                  disabled={!text.trim() || sending}
-                  accessibilityRole="button"
-                  accessibilityLabel="Post comment"
-                  hitSlop={6}
-                >
-                  <Text style={[s.post, { color: accent }, (!text.trim() || sending) && s.off]}>
-                    {sending ? "Posting" : "Post"}
-                  </Text>
-                </Pressable>
               </View>
-            </View>
+            )}
           </KeyboardAvoidingView>
         </Animated.View>
       </View>

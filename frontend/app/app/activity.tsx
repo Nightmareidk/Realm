@@ -195,6 +195,7 @@ const BADGE: Partial<Record<Activity["type"], { icon: IconName; bg: string }>> =
   post_comment: { icon: "ChatCircleFill", bg: "#5b8cff" },
   comment_reply: { icon: "ChatCircleFill", bg: "#5b8cff" },
   follow: { icon: "UserPlus", bg: "#8a63ff" },
+  mention: { icon: "UserCircleFill", bg: "#22b3a6" },
 };
 
 function sentence(l: Line) {
@@ -210,6 +211,12 @@ function sentence(l: Line) {
       return a.text ? `commented: ${a.text}` : "commented on your post.";
     case "comment_reply":
       return a.text ? `replied: ${a.text}` : "replied to your comment.";
+    case "mention":
+      return a.via === "tag"
+        ? "tagged you in a post."
+        : a.via === "comment"
+          ? `mentioned you in a comment: ${a.text ?? ""}`
+          : `mentioned you in a post: ${a.text ?? ""}`;
   }
 }
 
@@ -278,7 +285,9 @@ function Row({
           <Text style={s.name}>{names(line)} </Text>
           {sentence(line)} <Text style={s.when}>{ago(item.createdAt)}</Text>
         </Text>
-        {item.type === "post_comment" || item.type === "comment_reply" ? (
+        {item.type === "post_comment" ||
+        item.type === "comment_reply" ||
+        (item.type === "mention" && item.via === "comment") ? (
           <Pressable onPress={openPost} accessibilityRole="button" hitSlop={6}>
             <Text style={s.reply}>Reply</Text>
           </Pressable>

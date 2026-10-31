@@ -198,7 +198,13 @@ export default function SpaceScreen() {
     }
     router.push({
       pathname: "/chat/[id]",
-      params: { id: c.id, title: `#${c.name}`, kind: "room" },
+      params: {
+        id: c.id,
+        title: `#${c.name}`,
+        kind: "room",
+        // Announcements: everyone reads, people who look after messages post.
+        ...(c.announce && !power.can(Permission.MANAGE_MESSAGES) ? { readOnly: "1" } : {}),
+      },
     });
   }
 
@@ -216,7 +222,7 @@ export default function SpaceScreen() {
         >
           <View style={s.roomIcon}>
             <Icon
-              name={c.type === "voice" ? "SpeakerHigh" : "Hash"}
+              name={c.type === "voice" ? "SpeakerHigh" : c.announce ? "Megaphone" : "Hash"}
               size={19}
               color={t.colors.textSoft}
             />

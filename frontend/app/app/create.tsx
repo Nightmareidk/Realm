@@ -88,6 +88,10 @@ export default function Create() {
   const [selected, setSelected] = useState(0);
   const [shareSound, setShareSound] = useState(false);
   const [soundName, setSoundName] = useState("");
+  // Instagram's "advanced settings", in plain sight: tags, hidden likes, comments.
+  const [tags, setTags] = useState("");
+  const [hideLikes, setHideLikes] = useState(false);
+  const [commentsOff, setCommentsOff] = useState(false);
   /** A photo Story's length; follows the song's part until you choose one yourself. */
   const [storyMs, setStoryMs] = useState<number | null>(null);
   const shownFor = storyMs ?? music?.durationMs ?? STORY_DEFAULT_MS;
@@ -174,7 +178,7 @@ export default function Create() {
     if (music) setMusic({ ...music, durationMs: Math.min(music.durationMs, MUSIC_MAX[m]) });
   }
 
-  async function share() {
+  async function share(closeOnly = false) {
     if (!ready) return;
     try {
       const ids: string[] = [];
@@ -204,7 +208,15 @@ export default function Create() {
             sound,
             durationMs: shownFor,
             // A private account's Stories go to its followers unless this one is made public.
-            visibility: isPrivate ? (flip ? "public" : "followers") : flip ? "followers" : "public",
+            visibility: closeOnly
+              ? "close_friends"
+              : isPrivate
+                ? flip
+                  ? "public"
+                  : "followers"
+                : flip
+                  ? "followers"
+                  : "public",
           },
         });
         loadStories();
@@ -219,6 +231,9 @@ export default function Create() {
           ...(sound ? { sound } : {}),
           ...(spaceId ? { spaceId } : {}),
           visibility,
+          ...(tagList(tags).length ? { tags: tagList(tags) } : {}),
+          ...(hideLikes ? { hideLikes } : {}),
+          ...(commentsOff ? { commentsOff } : {}),
         },
       });
       // The Clip's own sound, shared for others to use. The Clip is already up if this fails.
@@ -276,7 +291,8 @@ export default function Create() {
             stopSound();
             setPicked([]);
           }}
-          onShare={mode === "story" ? share : () => setDetails(true)}
+          onShare={mode === "story" ? () => void share() : () => setDetails(true)}
+          onShareClose={mode === "story" ? () => void share(true) : undefined}
         />
         {picker}
       </>
@@ -293,7 +309,7 @@ export default function Create() {
             label="Share"
             pending={Boolean(status)}
             pendingLabel={status ?? "Sharing"}
-            onPress={share}
+            onPress={() => void share()}
             style={!ready && !status ? s.off : undefined}
           />
         }
@@ -598,6 +614,46 @@ export default function Create() {
               accessibilityLabel={isPrivate ? "Show publicly" : "Only my followers"}
             />
           </View>
+          {mode !== "story" ? (
+            <>
+              <Text style={s.label}>Tag people</Text>
+              <TextInput
+                value={tags}
+                onChangeText={setTags}
+                placeholder="@username, @another"
+                placeholderTextColor={t.colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                selectionColor={accent}
+                style={s.tagInput}
+                accessibilityLabel="People to tag, by username"
+              />
+              {(
+                [
+                  [
+                    hideLikes,
+                    setHideLikes,
+                    "Hide like count",
+                    "Only you see how many likes it has.",
+                  ],
+                  [commentsOff, setCommentsOff, "Turn off comments", "Nobody can comment on it."],
+                ] as const
+              ).map(([on, setOn, title, line]) => (
+                <View key={title} style={s.toggle}>
+                  <View style={s.fill}>
+                    <Text style={s.toggleTitle}>{title}</Text>
+                    <Text style={s.toggleLine}>{line}</Text>
+                  </View>
+                  <Switch
+                    value={on}
+                    onValueChange={setOn}
+                    trackColor={{ true: accent }}
+                    accessibilityLabel={title}
+                  />
+                </View>
+              ))}
+            </>
+          ) : null}
           {spaceId && mode !== "story" ? (
             <View style={s.toggle}>
               <View style={s.fill}>
@@ -629,10 +685,31 @@ export default function Create() {
   );
 }
 
+/** "@noor, kenji" → ["noor", "kenji"]: real-looking usernames only, at most 20. */
+function tagList(text: string) {
+  return [
+    ...new Set(
+      text
+        .split(/[\s,]+/)
+        .map((x) => x.replace(/^@/, "").toLowerCase())
+        .filter((x) => /^[a-z0-9_.]{1,30}$/.test(x)),
+    ),
+  ].slice(0, 20);
+}
+
 const make = (t: NativeTheme) =>
   StyleSheet.create({
     fill: { flex: 1 },
     off: { opacity: 0.45 },
+    tagInput: {
+      minHeight: 46,
+      paddingHorizontal: 14,
+      borderRadius: 14,
+      backgroundColor: t.colors.surfaceRaised,
+      fontFamily: t.fonts.body,
+      fontSize: 16 * t.textScale,
+      color: t.colors.text,
+    },
     pressed: { opacity: 0.75 },
     lengths: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     length: {

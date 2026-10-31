@@ -92,7 +92,13 @@ type Row = { kind: "message"; m: Message } | { kind: "outgoing"; o: Outgoing };
 export default function Chat() {
   const { t } = useTheme();
   const s = useStyles(make);
-  const { id, title, kind } = useLocalSearchParams<{ id: string; title?: string; kind?: string }>();
+  const { id, title, kind, readOnly } = useLocalSearchParams<{
+    id: string;
+    title?: string;
+    kind?: string;
+    /** An announcement room you can read but not post in. */
+    readOnly?: string;
+  }>();
   const insets = useSafeAreaInsets();
   const { session } = useSession();
   const meId = session.status === "signedIn" ? session.user.id : null;
@@ -713,6 +719,10 @@ export default function Chat() {
               else router.replace("/inbox");
             }}
           />
+        ) : readOnly === "1" ? (
+          <Text style={[s.awaiting, { padding: 16, paddingBottom: insets.bottom + 16 }]}>
+            This is an announcement room: moderators post here, and everyone can read and react.
+          </Text>
         ) : (
           <View style={[s.composer, { paddingBottom: insets.bottom + 8 }]}>
             {conv?.awaiting ? (

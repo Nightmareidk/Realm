@@ -1,4 +1,5 @@
 import type { Profile, UserSettings } from "@realm/contracts";
+import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
@@ -6,7 +7,7 @@ import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
 import type { IconName } from "@/icon-paths";
-import { ApiError, api } from "@/server";
+import { ApiError, api, webOrigin } from "@/server";
 import { useSession } from "@/session";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
@@ -212,10 +213,47 @@ export default function Settings() {
           onPress={() => router.push("/devices")}
         />
         <NavRow
+          icon="ShieldCheck"
+          title="Two-step sign-in"
+          line={me?.twoStep ? "On" : "A code from an app, as well as your password"}
+          onPress={() => router.push("/two-step")}
+        />
+        <NavRow
           icon="Prohibit"
           title="Blocked accounts"
           line="People who can't see you or message you"
           onPress={() => router.push("/blocked")}
+        />
+
+        <Text style={s.heading}>Your people</Text>
+        <NavRow
+          icon="Star"
+          title="Close Friends"
+          line="Who sees the Stories and Notes you share to them"
+          onPress={() => router.push("/close-friends")}
+        />
+        <NavRow
+          icon="SpeakerSimpleSlash"
+          title="Muted accounts"
+          line="Their posts or Stories stay out of your feed"
+          onPress={() => router.push("/muted")}
+        />
+
+        <Text style={s.heading}>Your account</Text>
+        <NavRow
+          icon="DownloadSimple"
+          title="Download your information"
+          line="A copy of everything, as one file, on the website"
+          onPress={() => {
+            const web = webOrigin();
+            if (web) void Linking.openURL(`${web}/settings/account#your-information`);
+          }}
+        />
+        <NavRow
+          icon="DoorOpen"
+          title="Take a break or delete your account"
+          line="Hide it for a while, or delete it after 30 days"
+          onPress={() => router.push("/leave-realm")}
         />
 
         <View style={s.signOut}>

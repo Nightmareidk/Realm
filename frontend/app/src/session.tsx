@@ -49,7 +49,12 @@ type Session =
 
 interface SessionApi {
   session: Session;
-  signIn(login: string, password: string): Promise<void>;
+  /** With two-step sign-in on, the second try carries the app's code. */
+  signIn(
+    login: string,
+    password: string,
+    code?: string,
+  ): Promise<AuthResult["welcomeBack"] | undefined>;
   register(body: RegisterBody): Promise<void>;
   signOut(): Promise<void>;
   /** Load your account again after changing it (name, picture). */
@@ -129,8 +134,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SessionApi>(
     () => ({
       session,
-      async signIn(login, password) {
-        await start(await api<AuthResult>("/auth/login", { body: { login, password } }));
+      async signIn(login, password, code) {
+        const result = await api<AuthResult>("/auth/login", {
+          body: { login, password, ...(code ? { code } : {}) },
+        });
+        await start(result);
+        return result.welcomeBack;
       },
       async register(body) {
         await start(await api<AuthResult>("/auth/register", { body }));

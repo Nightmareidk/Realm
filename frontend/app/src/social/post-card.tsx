@@ -27,6 +27,7 @@ import { useSheet } from "../sheet";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Avatar } from "./avatar";
 import { CommentsSheet } from "./comments-sheet";
+import { MentionText } from "./mention-text";
 import { useSafety } from "./safety";
 import { ago, agoLong, compact } from "./time";
 import { Verified } from "./verified";
@@ -64,6 +65,10 @@ export const PostCard = memo(function PostCard({
   const router = useRouter();
   const width = useContentWidth(680);
   const [expanded, setExpanded] = useState(standalone);
+  const { session } = useSession();
+  const meId = session.status === "signedIn" ? session.user.id : null;
+  // A hidden like count is the author's alone.
+  const showLikes = !post.hideLikes || post.author.id === meId;
 
   async function setLike(on: boolean) {
     if (post.liked === on) return;
@@ -159,7 +164,7 @@ export const PostCard = memo(function PostCard({
       ) : null}
       {kind === "thread" && post.caption && post.kind !== "text" ? (
         <Text style={[s.caption, s.threadIndent]} numberOfLines={expanded ? undefined : 4}>
-          {post.caption}
+          <MentionText text={post.caption} />
         </Text>
       ) : null}
       {noMedia && post.kind === "image" ? (
@@ -205,7 +210,9 @@ export const PostCard = memo(function PostCard({
           label={post.liked ? "Unlike" : "Like"}
           onPress={() => setLike(!post.liked)}
         />
-        <IconButton name="ChatCircle" label="Comments" onPress={comments} />
+        {post.commentsOff ? null : (
+          <IconButton name="ChatCircle" label="Comments" onPress={comments} />
+        )}
         <IconButton
           name="PaperPlaneTilt"
           label="Send"
@@ -221,20 +228,28 @@ export const PostCard = memo(function PostCard({
         />
       </View>
 
-      {post.likeCount > 0 ? (
+      {showLikes && post.likeCount > 0 ? (
         <Text style={s.likes}>
           {compact(post.likeCount)} {post.likeCount === 1 ? "like" : "likes"}
+        </Text>
+      ) : !showLikes && post.liked ? (
+        <Text style={s.likes}>Liked by you and others</Text>
+      ) : null}
+      {post.tags.length ? (
+        <Text style={[s.caption, s.soft]} numberOfLines={2}>
+          <Icon name="UserCircleFill" size={14} color={t.colors.textSoft} /> with{" "}
+          <MentionText text={post.tags.map((u) => `@${u.username}`).join(", ")} />
         </Text>
       ) : null}
       {post.caption && post.kind !== "text" && kind !== "thread" ? (
         <Pressable onPress={() => setExpanded(true)} disabled={expanded}>
           <Text style={s.caption} numberOfLines={expanded ? undefined : 2}>
             <Text style={s.captionName}>{post.author.displayName} </Text>
-            {post.caption}
+            <MentionText text={post.caption} />
           </Text>
         </Pressable>
       ) : null}
-      {!standalone && post.commentCount > 0 ? (
+      {!standalone && post.commentCount > 0 && !post.commentsOff ? (
         <Pressable onPress={comments} accessibilityRole="link" style={s.commentsLink}>
           <Text style={s.soft}>
             View{" "}
@@ -391,10 +406,29 @@ function PostMenu({
   const { t } = useTheme();
   const s = useStyles(make);
   const { session } = useSession();
+  const router = useRouter();
   const sheet = useSheet();
   const safety = useSafety();
   if (session.status !== "signedIn") return null;
   const mine = session.user.id === post.author.id;
+  const meId = session.user.id;
+  const toCollection = {
+    label: "Save to a collection",
+    icon: "FolderSimple" as const,
+    onPress: () => router.push({ pathname: "/save-to", params: { post: post.id } }),
+  };
+  /** The author's switches: hide the like count, turn comments off, archive. */
+  const set = async (body: { hideLikes?: boolean; commentsOff?: boolean; archived?: boolean }) => {
+    try {
+      const p = await api<Post>(`/posts/${post.id}`, { method: "PATCH", body });
+      if (body.archived) {
+        onRemoved?.(post.id);
+        postsChanged();
+      } else onChange(p);
+    } catch (err) {
+      failed(err);
+    }
+  };
   const failed = (err: unknown) =>
     sheet({
       title: "That didn't work",
@@ -409,9 +443,27 @@ function PostMenu({
       onPress: () => Clipboard.setStringAsync(postLink(post.id)),
     };
     if (!mine) {
+      const tagged = post.tags.some((u) => u.id === meId);
       sheet({
         actions: [
           copy,
+          toCollection,
+          ...(tagged
+            ? [
+                {
+                  label: "Remove me from this post",
+                  icon: "UserMinus" as const,
+                  onPress: async () => {
+                    try {
+                      await api(`/posts/${post.id}/tags/@me`, { method: "DELETE" });
+                      onChange({ ...post, tags: post.tags.filter((u) => u.id !== meId) });
+                    } catch (err) {
+                      failed(err);
+                    }
+                  },
+                },
+              ]
+            : []),
           {
             label: "Report post",
             icon: "Flag",
@@ -451,6 +503,22 @@ function PostMenu({
           },
         },
         copy,
+        toCollection,
+        {
+          label: post.hideLikes ? "Show like count" : "Hide like count",
+          icon: "EyeSlash",
+          onPress: () => void set({ hideLikes: !post.hideLikes }),
+        },
+        {
+          label: post.commentsOff ? "Turn on comments" : "Turn off comments",
+          icon: "ChatCircleSlash",
+          onPress: () => void set({ commentsOff: !post.commentsOff }),
+        },
+        {
+          label: "Archive",
+          icon: "Archive",
+          onPress: () => void set({ archived: true }),
+        },
         {
           label: next === "public" ? "Show to everyone" : "Only my followers",
           icon: next === "public" ? "Globe" : "Lock",
