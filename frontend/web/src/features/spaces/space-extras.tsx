@@ -6,6 +6,7 @@ import {
   CheckCircle,
   Hash,
   Lock,
+  Megaphone,
   Plus,
   Sparkle,
   SpeakerHigh,
@@ -300,6 +301,7 @@ function RoomEditor({
   const [topic, setTopic] = useState(room.topic ?? "");
   const [parentId, setParentId] = useState<string | null>(room.parentId);
   const [slow, setSlow] = useState<number>(room.slowmodeSeconds);
+  const [announce, setAnnounce] = useState(room.announce);
   const [closed, setClosed] = useState(before.private);
   const [roleIds, setRoleIds] = useState<string[]>(before.roleIds);
   const [error, setError] = useState("");
@@ -327,7 +329,7 @@ function RoomEditor({
             : {
                 topic: topic.trim() || null,
                 parentId,
-                ...(room.type === "text" ? { slowmodeSeconds: slow } : {}),
+                ...(room.type === "text" ? { slowmodeSeconds: slow, announce } : {}),
                 ...(changedPrivacy
                   ? { privacy: { private: closed, roleIds: closed ? roleIds : [] } }
                   : {}),
@@ -376,6 +378,22 @@ function RoomEditor({
                   </option>
                 ))}
               </select>
+            </label>
+          )}
+          {room.type === "text" && (
+            <label className="flex items-start gap-2.5 text-fg">
+              <input
+                type="checkbox"
+                checked={announce}
+                onChange={(e) => setAnnounce(e.target.checked)}
+                className="mt-1 size-4 accent-[var(--r-accent)]"
+              />
+              <span>
+                <span className="block font-bold">Announcement room</span>
+                <span className="block text-[0.85rem] text-fg-soft">
+                  Only moderators post. Everyone reads and reacts.
+                </span>
+              </span>
             </label>
           )}
           {room.type === "text" && (
@@ -536,7 +554,9 @@ export function RoomsTab({ space }: { space: SpaceDetail }) {
         <div className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-fg/[0.04]">
           {c.type === "voice" ? (
             <SpeakerHigh aria-hidden="true" size={17} className="text-fg-soft" />
-          ) : c.type === "category" ? null : (
+          ) : c.type === "category" ? null : c.announce ? (
+            <Megaphone aria-hidden="true" size={17} className="text-fg-soft" />
+          ) : (
             <Hash aria-hidden="true" size={17} className="text-fg-soft" />
           )}
           <span
@@ -550,6 +570,7 @@ export function RoomsTab({ space }: { space: SpaceDetail }) {
             {c.name}
           </span>
           {closed && <Lock aria-label="Private" size={14} className="text-fg-soft" />}
+          {c.announce && <span className="text-[0.78rem] text-fg-soft">Announcements</span>}
           {c.slowmodeSeconds > 0 && (
             <span className="text-[0.78rem] text-fg-soft">Slow {slowWords(c.slowmodeSeconds)}</span>
           )}

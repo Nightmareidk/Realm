@@ -1,18 +1,23 @@
 "use client";
 
 import {
+  Archive,
   BookmarkSimple,
   CaretLeft,
   CaretRight,
   ChatCircle,
+  ChatCircleSlash,
   DotsThree,
+  EyeSlash,
   Flag,
+  FolderSimple,
   Heart,
   Link as LinkIcon,
   PaperPlaneTilt,
   PencilSimple,
   PushPin,
   Trash,
+  UserMinus,
 } from "@phosphor-icons/react";
 import type { Post } from "@realm/contracts";
 import Link from "next/link";
@@ -22,6 +27,7 @@ import { openReport, useRealm } from "@/features/realtime/store";
 import { Avatar } from "@/features/spaces/person";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
+import { CollectionPicker, MentionText, TagsOnPhoto } from "./post-extras";
 import { SendSheet } from "./send-sheet";
 import { ago, compact, SongChip, Verified } from "./shared";
 
@@ -34,7 +40,7 @@ export async function toggle(post: Post, what: "like" | "save", onChange: (p: Po
   const on = what === "like" ? !post.liked : !post.saved;
   const next =
     what === "like"
-      ? { ...post, liked: on, likeCount: post.likeCount + (on ? 1 : -1) }
+      ? { ...post, liked: on, likeCount: Math.max(0, post.likeCount + (on ? 1 : -1)) }
       : { ...post, saved: on };
   onChange(next);
   try {
@@ -147,7 +153,7 @@ function Caption({ post }: { post: Post }) {
         <Link href={`/u/${post.author.username}`} className="font-bold text-fg">
           {post.author.username}
         </Link>{" "}
-        {post.caption}
+        <MentionText text={post.caption} />
       </p>
       {long && !open && (
         <button
@@ -229,11 +235,15 @@ export function PostCard({
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [burst, setBurst] = useState(0);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const first = post.media[0];
   const glow = first && first.kind === "image" ? first.url : null;
   const mine = post.author.id === me;
+  const taggedMe = !mine && post.tags.some((u) => u.id === me);
+  // A hidden like count is the author's alone.
+  const showLikes = mine || !post.hideLikes;
 
   const say = (text: string) => {
     setNote(text);
@@ -264,6 +274,32 @@ export function PostCard({
       say(post.pinned ? "Unpinned from your profile" : "Pinned to your profile");
     } catch (err) {
       say(err instanceof ApiError ? err.message : "That didn't work. Try again.");
+    }
+  };
+  /** The author's switches: archive, hide the like count, turn comments off. */
+  const set = async (
+    body: { archived?: boolean; hideLikes?: boolean; commentsOff?: boolean },
+    done: string,
+  ) => {
+    try {
+      const p = await api<Post>(`/posts/${post.id}`, { method: "PATCH", body });
+      if (body.archived) {
+        onRemoved?.();
+        return;
+      }
+      onChange(p);
+      say(done);
+    } catch (err) {
+      say(err instanceof ApiError ? err.message : "That didn't work. Try again.");
+    }
+  };
+  const untag = async () => {
+    try {
+      await api(`/posts/${post.id}/tags/@me`, { method: "DELETE" });
+      onChange({ ...post, tags: post.tags.filter((u) => u.id !== me) });
+      say("You're no longer tagged");
+    } catch {
+      say("That didn't work. Try again.");
     }
   };
   // One click opens the post; two quick ones like it, with a heart.
@@ -346,7 +382,70 @@ export function PostCard({
                     <PencilSimple aria-hidden="true" size={19} />
                     Edit caption
                   </button>
+                  <button
+                    type="button"
+                    className={row}
+                    onClick={() => {
+                      close();
+                      void set(
+                        { hideLikes: !post.hideLikes },
+                        post.hideLikes ? "Like count shown" : "Like count hidden from others",
+                      );
+                    }}
+                  >
+                    <EyeSlash aria-hidden="true" size={19} />
+                    {post.hideLikes ? "Show like count" : "Hide like count"}
+                  </button>
+                  <button
+                    type="button"
+                    className={row}
+                    onClick={() => {
+                      close();
+                      void set(
+                        { commentsOff: !post.commentsOff },
+                        post.commentsOff ? "Comments are on" : "Comments are off",
+                      );
+                    }}
+                  >
+                    <ChatCircleSlash aria-hidden="true" size={19} />
+                    {post.commentsOff ? "Turn on comments" : "Turn off comments"}
+                  </button>
+                  <button
+                    type="button"
+                    className={row}
+                    onClick={() => {
+                      close();
+                      void set({ archived: true }, "Archived");
+                    }}
+                  >
+                    <Archive aria-hidden="true" size={19} />
+                    Archive
+                  </button>
                 </>
+              )}
+              <button
+                type="button"
+                className={row}
+                onClick={() => {
+                  close();
+                  setPicking(true);
+                }}
+              >
+                <FolderSimple aria-hidden="true" size={19} />
+                Save to a collection
+              </button>
+              {taggedMe && (
+                <button
+                  type="button"
+                  className={row}
+                  onClick={() => {
+                    close();
+                    void untag();
+                  }}
+                >
+                  <UserMinus aria-hidden="true" size={19} />
+                  Remove me from this post
+                </button>
               )}
               <button
                 type="button"
@@ -418,6 +517,7 @@ export function PostCard({
             <Heart size={110} weight="fill" />
           </span>
         )}
+        <TagsOnPhoto tags={post.tags} />
         {post.sound && (
           <SongChip
             sound={post.sound}
@@ -441,14 +541,18 @@ export function PostCard({
             weight={post.liked ? "fill" : "regular"}
             className={post.liked ? "text-[#ff6b8b]" : undefined}
           />
-          <span className="text-[0.88rem] tabular-nums">{compact(post.likeCount)}</span>
+          {showLikes && (
+            <span className="text-[0.88rem] tabular-nums">{compact(post.likeCount)}</span>
+          )}
           <span className="sr-only">{post.liked ? "Liked" : "Like"}</span>
         </button>
-        <button type="button" onClick={onOpen} className="flex items-center gap-1.5 font-bold">
-          <ChatCircle aria-hidden="true" size={26} />
-          <span className="text-[0.88rem] tabular-nums">{compact(post.commentCount)}</span>
-          <span className="sr-only">Comments</span>
-        </button>
+        {!post.commentsOff && (
+          <button type="button" onClick={onOpen} className="flex items-center gap-1.5 font-bold">
+            <ChatCircle aria-hidden="true" size={26} />
+            <span className="text-[0.88rem] tabular-nums">{compact(post.commentCount)}</span>
+            <span className="sr-only">Comments</span>
+          </button>
+        )}
         <button type="button" onClick={() => setSending(true)}>
           <PaperPlaneTilt aria-hidden="true" size={26} />
           <span className="sr-only">Send</span>
@@ -480,7 +584,10 @@ export function PostCard({
       ) : (
         <Caption post={post} />
       )}
-      {post.commentCount > 0 && (
+      {post.hideLikes && !mine && post.liked && (
+        <p className="px-1.5 pt-1 text-[0.88rem] text-fg-soft">Liked by you and others</p>
+      )}
+      {post.commentCount > 0 && !post.commentsOff && (
         <button
           type="button"
           onClick={onOpen}
@@ -489,6 +596,15 @@ export function PostCard({
           View all {compact(post.commentCount)} comments
         </button>
       )}
+      <CollectionPicker
+        postId={post.id}
+        open={picking}
+        onClose={() => setPicking(false)}
+        onSaved={(name) => {
+          onChange({ ...post, saved: true });
+          say(`Saved to ${name}`);
+        }}
+      />
       <SendSheet
         open={sending}
         link={postLink(post.id)}

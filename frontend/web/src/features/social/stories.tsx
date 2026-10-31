@@ -15,10 +15,13 @@ import { ago, Verified } from "./shared";
 export function Ring({
   unseen,
   size,
+  close = false,
   children,
 }: {
   unseen: boolean;
   size: number;
+  /** A Close Friends Story: the ring is green, as everyone knows it from Instagram. */
+  close?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -27,9 +30,12 @@ export function Ring({
       style={{
         width: size,
         height: size,
-        background: unseen
-          ? "conic-gradient(from 200deg, var(--r-light-1), var(--r-accent), var(--r-light-2), var(--r-light-1))"
-          : "var(--r-surface-raised)",
+        background:
+          unseen && close
+            ? "conic-gradient(from 200deg, #16a34a, #4ade80, #22c55e, #16a34a)"
+            : unseen
+              ? "conic-gradient(from 200deg, var(--r-light-1), var(--r-accent), var(--r-light-2), var(--r-light-1))"
+              : "var(--r-surface-raised)",
       }}
     >
       <span className="grid size-full place-items-center rounded-full shadow-[0_0_0_3px_var(--r-surface)]">
@@ -89,7 +95,7 @@ export function StoryRings({
         return (
           <li key={r.author.id} className="w-[72px] shrink-0 text-center">
             <button type="button" onClick={() => onOpen(i)} className="relative mx-auto block">
-              <Ring unseen={r.unseen} size={72}>
+              <Ring unseen={r.unseen} close={r.closeFriends} size={72}>
                 <Avatar user={r.author} size={64} />
               </Ring>
               {song?.coverUrl && (
@@ -105,6 +111,7 @@ export function StoryRings({
               )}
               <span className="sr-only">
                 {r.author.displayName}'s Story{r.unseen ? ", new" : ""}
+                {r.closeFriends ? ", Close Friends" : ""}
               </span>
             </button>
             <span className="mt-1.5 block truncate text-[0.75rem] text-fg-soft">

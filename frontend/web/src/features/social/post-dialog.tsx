@@ -4,9 +4,11 @@ import { BookmarkSimple, Heart, X } from "@phosphor-icons/react";
 import type { Post } from "@realm/contracts";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { useRealm } from "@/features/realtime/store";
 import { Avatar } from "@/features/spaces/person";
 import { Comments } from "./comments";
 import { PostMedia, toggle } from "./post-card";
+import { MentionText, TagsOnPhoto } from "./post-extras";
 import { ago, compact, SongChip, Verified } from "./shared";
 
 /**
@@ -23,6 +25,7 @@ export function PostDialog({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const me = useRealm((s) => s.me?.id);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -43,6 +46,7 @@ export function PostDialog({
         <div className="flex h-[min(92vh,52rem)] max-md:flex-col">
           <div className="relative flex min-h-0 flex-1 items-center justify-center bg-[#050507] max-md:max-h-[50%]">
             <PostMedia post={post} rounded="rounded-none" fit="contain" className="size-full" />
+            <TagsOnPhoto tags={post.tags} />
             {post.sound && (
               <SongChip
                 sound={post.sound}
@@ -79,7 +83,7 @@ export function PostDialog({
             </header>
             {post.caption && (
               <p className="border-b border-line px-4 py-3 text-[0.95rem] text-fg">
-                <b>{post.author.username}</b> {post.caption}
+                <b>{post.author.username}</b> <MentionText text={post.caption} />
               </p>
             )}
             <Comments post={post} onCount={(n) => onChange({ ...post, commentCount: n })} />
@@ -96,7 +100,13 @@ export function PostDialog({
                   weight={post.liked ? "fill" : "regular"}
                   className={post.liked ? "text-[#ff6b8b]" : undefined}
                 />
-                <span className="text-[0.88rem] tabular-nums">{compact(post.likeCount)} likes</span>
+                <span className="text-[0.88rem] tabular-nums">
+                  {post.hideLikes && post.author.id !== me
+                    ? post.liked
+                      ? "Liked by you and others"
+                      : "Like"
+                    : `${compact(post.likeCount)} likes`}
+                </span>
               </button>
               <button
                 type="button"

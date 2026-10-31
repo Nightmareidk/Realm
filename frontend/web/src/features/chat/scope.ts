@@ -47,7 +47,10 @@ export function roomScope(
     meId: space.self.user.id,
     names: new Map((members ?? []).map((m) => [m.user.id, m.nickname ?? m.user.displayName])),
     label: `#${room.name}`,
-    canSend: roomCan(space, room, Permission.SEND_MESSAGES),
+    // Announcement rooms: everyone reads; only people who look after messages post.
+    canSend:
+      roomCan(space, room, Permission.SEND_MESSAGES) &&
+      (!room.announce || roomCan(space, room, Permission.MANAGE_MESSAGES)),
     canManage: roomCan(space, room, Permission.MANAGE_MESSAGES),
     canAttach: roomCan(space, room, Permission.ATTACH_FILES),
     // Under 18: places only in smaller Spaces (their own crowd).
@@ -58,7 +61,9 @@ export function roomScope(
     cantSend:
       timedOut && space.self.timeoutUntil
         ? `You're timed out in ${space.name} until ${timeFormat.format(new Date(space.self.timeoutUntil))}. You can still read.`
-        : "You can read this room, but not post in it.",
+        : room.announce
+          ? "This is an announcement room: moderators post here, and everyone can read and react."
+          : "You can read this room, but not post in it.",
   };
 }
 

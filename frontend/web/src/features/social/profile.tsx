@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  Archive,
   BookmarkSimple,
   ChatCircle,
   Check,
+  DotsThree,
   GridFour,
   Heart,
   LinkSimple,
@@ -13,11 +15,15 @@ import {
   PlayCircle,
   Plus,
   PushPin,
+  SpeakerSimpleSlash,
+  Star,
   Trash,
+  UserSquare,
   X,
 } from "@phosphor-icons/react";
 import type {
   Channel,
+  Collection,
   FollowState,
   Highlight,
   HighlightDetail,
@@ -31,16 +37,18 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useAmbient } from "@/features/app/ambient";
+import { Popover, row } from "@/features/app/menus";
 import { Avatar } from "@/features/spaces/person";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
 import { onMade, openComposer } from "./composer";
 import { PostDialog } from "./post-dialog";
+import { MentionText } from "./post-extras";
 import { SendSheet } from "./send-sheet";
 import { compact, useFetch, Verified } from "./shared";
 import { Ring, StoryViewer } from "./stories";
 
-type Tab = "posts" | "clips" | "saved";
+type Tab = "posts" | "clips" | "tagged" | "saved" | "archive";
 
 /** A small dialog shell in Look B. */
 function Sheet({
@@ -256,11 +264,23 @@ export function ProfileView({ username }: { username: string }) {
   const profile = useFetch<Profile>(`/users/${encodeURIComponent(username)}/profile`);
   const p = profile.data;
   const [tab, setTab] = useState<Tab>("posts");
+  // Saved: everything, or one collection.
+  const [folder, setFolder] = useState<string | null>(null);
+  const folders = useFetch<{ items: Collection[] }>(
+    p?.isSelf && tab === "saved" ? "/users/@me/collections" : null,
+  );
+  const who = encodeURIComponent(username);
   const posts = useFetch<PostPage>(
     p?.canSeeAll || p?.isSelf
       ? tab === "saved"
-        ? "/users/@me/saved"
-        : `/users/${encodeURIComponent(username)}/posts?kind=${tab === "clips" ? "clip" : "image"}`
+        ? folder
+          ? `/users/@me/collections/${folder}/posts`
+          : "/users/@me/saved"
+        : tab === "archive"
+          ? "/users/@me/archive"
+          : tab === "tagged"
+            ? `/users/${who}/tagged`
+            : `/users/${who}/posts?kind=${tab === "clips" ? "clip" : "image"}`
       : null,
   );
   const highlights = useFetch<{ items: Highlight[] }>(
@@ -380,6 +400,26 @@ export function ProfileView({ username }: { username: string }) {
     );
   };
   const canList = p.isSelf || p.canSeeAll;
+  const setClose = async (on: boolean) => {
+    try {
+      await api(`/users/@me/close-friends/${u.username}`, { method: on ? "PUT" : "DELETE" });
+      setNote(on ? "Added to your Close Friends" : "Taken off your Close Friends");
+      void profile.reload();
+    } catch (err) {
+      setNote(err instanceof ApiError ? err.message : "That didn't work. Try again.");
+    }
+  };
+  const mute = async (m: { posts: boolean; stories: boolean }) => {
+    try {
+      await api(`/users/${u.username}/mute`, { method: "PUT", body: m });
+      setNote(
+        m.posts || m.stories ? "Muted. They won't know, and you can unmute any time." : "Unmuted",
+      );
+      void profile.reload();
+    } catch (err) {
+      setNote(err instanceof ApiError ? err.message : "That didn't work. Try again.");
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-[58.5rem] px-8 pb-12 max-md:px-4">
@@ -475,7 +515,7 @@ export function ProfileView({ username }: { username: string }) {
           )}
           {u.bio && (
             <p className="mt-3 max-w-[34rem] whitespace-pre-line text-[0.98rem] leading-relaxed text-fg">
-              {u.bio}
+              <MentionText text={u.bio} />
             </p>
           )}
           {p.websiteUrl && /^https?:\/\//i.test(p.websiteUrl) && (
@@ -544,6 +584,55 @@ export function ProfileView({ username }: { username: string }) {
                 >
                   Message
                 </button>
+                <Popover
+                  label={`More for ${u.displayName}`}
+                  buttonClass="grid size-10 place-items-center rounded-full bg-fg/10 text-fg hover:bg-fg/15 aria-expanded:bg-fg/15"
+                  panelClass="w-[16rem]"
+                  button={<DotsThree aria-hidden="true" size={22} weight="bold" />}
+                >
+                  {(close) => (
+                    <div>
+                      <button
+                        type="button"
+                        className={row}
+                        onClick={() => {
+                          close();
+                          void setClose(!p.closeFriend);
+                        }}
+                      >
+                        <Star
+                          aria-hidden="true"
+                          size={19}
+                          weight={p.closeFriend ? "fill" : "regular"}
+                          className={p.closeFriend ? "text-[#22c55e]" : undefined}
+                        />
+                        {p.closeFriend ? "Remove from Close Friends" : "Add to Close Friends"}
+                      </button>
+                      <button
+                        type="button"
+                        className={row}
+                        onClick={() => {
+                          close();
+                          void mute({ posts: !p.muted.posts, stories: p.muted.stories });
+                        }}
+                      >
+                        <SpeakerSimpleSlash aria-hidden="true" size={19} />
+                        {p.muted.posts ? "Unmute posts" : "Mute posts"}
+                      </button>
+                      <button
+                        type="button"
+                        className={row}
+                        onClick={() => {
+                          close();
+                          void mute({ posts: p.muted.posts, stories: !p.muted.stories });
+                        }}
+                      >
+                        <SpeakerSimpleSlash aria-hidden="true" size={19} />
+                        {p.muted.stories ? "Unmute Stories" : "Mute Stories"}
+                      </button>
+                    </div>
+                  )}
+                </Popover>
               </>
             )}
           </div>
@@ -619,7 +708,13 @@ export function ProfileView({ username }: { username: string }) {
           [
             ["posts", "Posts", GridFour],
             ["clips", "Clips", PlayCircle],
-            ...(p.isSelf ? [["saved", "Saved", BookmarkSimple] as const] : []),
+            ["tagged", "Tagged", UserSquare],
+            ...(p.isSelf
+              ? ([
+                  ["saved", "Saved", BookmarkSimple],
+                  ["archive", "Archive", Archive],
+                ] as const)
+              : []),
           ] as const
         ).map(([k, label, Icon]) => (
           <button
@@ -627,7 +722,10 @@ export function ProfileView({ username }: { username: string }) {
             type="button"
             role="tab"
             aria-selected={tab === k}
-            onClick={() => setTab(k)}
+            onClick={() => {
+              setTab(k);
+              setFolder(null);
+            }}
             className={cx(
               "inline-flex h-10 items-center gap-2 rounded-full px-4 text-[0.92rem] font-bold transition-colors",
               tab === k ? "bg-fg text-base" : "text-fg-soft hover:bg-fg/6 hover:text-fg",
@@ -638,6 +736,31 @@ export function ProfileView({ username }: { username: string }) {
           </button>
         ))}
       </div>
+      {tab === "saved" && (folders.data?.items.length ?? 0) > 0 && (
+        <ul
+          className="mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"
+          aria-label="Collections"
+        >
+          {[{ id: null, name: "All saved", count: null }, ...(folders.data?.items ?? [])].map(
+            (c) => (
+              <li key={c.id ?? "all"}>
+                <button
+                  type="button"
+                  aria-pressed={folder === c.id}
+                  onClick={() => setFolder(c.id)}
+                  className={cx(
+                    "h-9 shrink-0 rounded-full px-4 text-[0.9rem] font-bold whitespace-nowrap",
+                    folder === c.id ? "bg-fg text-base" : "bg-fg/8 text-fg-soft hover:text-fg",
+                  )}
+                >
+                  {c.name}
+                  {c.count !== null && <span className="ml-1.5 opacity-70">{c.count}</span>}
+                </button>
+              </li>
+            ),
+          )}
+        </ul>
+      )}
       {!canList ? (
         <div className="py-14 text-center">
           <LockSimple aria-hidden="true" size={36} className="mx-auto text-fg-soft" />
@@ -654,17 +777,29 @@ export function ProfileView({ username }: { username: string }) {
         <div className="py-14 text-center">
           <p className="font-display text-[1.3rem] font-extrabold text-fg">
             {tab === "saved"
-              ? "Nothing saved yet"
-              : tab === "clips"
-                ? "No Clips yet"
-                : "No posts yet"}
+              ? folder
+                ? "This collection is empty"
+                : "Nothing saved yet"
+              : tab === "archive"
+                ? "Nothing archived"
+                : tab === "tagged"
+                  ? "No tagged posts"
+                  : tab === "clips"
+                    ? "No Clips yet"
+                    : "No posts yet"}
           </p>
           <p className="mt-1 text-fg-soft">
             {tab === "saved"
-              ? "Tap the bookmark on any post to keep it here, just for you."
-              : p.isSelf
-                ? "Share your first one; your song plays when people open it."
-                : "When they share something, it shows up here."}
+              ? "Tap the bookmark on any post to keep it here, just for you. Sort them into collections from a post's menu."
+              : tab === "archive"
+                ? "Archive a post from its menu to take it off your profile without deleting it. Only you see it here."
+                : tab === "tagged"
+                  ? p.isSelf
+                    ? "When people tag you in their posts, they show up here."
+                    : "Posts they're tagged in show up here."
+                  : p.isSelf
+                    ? "Share your first one; your song plays when people open it."
+                    : "When they share something, it shows up here."}
           </p>
         </div>
       ) : (
@@ -709,10 +844,12 @@ export function ProfileView({ username }: { username: string }) {
                     {post.sound && <MusicNotes aria-hidden="true" size={18} weight="bold" />}
                   </span>
                   <span className="absolute inset-0 flex items-center justify-center gap-5 bg-[rgb(9_9_12/0.45)] font-bold text-fg opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                    <span className="flex items-center gap-1.5">
-                      <Heart aria-hidden="true" size={20} weight="fill" />
-                      {compact(post.likeCount)}
-                    </span>
+                    {(!post.hideLikes || (post.author.id === u.id && p.isSelf)) && (
+                      <span className="flex items-center gap-1.5">
+                        <Heart aria-hidden="true" size={20} weight="fill" />
+                        {compact(post.likeCount)}
+                      </span>
+                    )}
                     <span className="flex items-center gap-1.5">
                       <ChatCircle aria-hidden="true" size={20} weight="fill" />
                       {compact(post.commentCount)}
@@ -732,6 +869,11 @@ export function ProfileView({ username }: { username: string }) {
         post={open}
         onChange={(x) => {
           setOpen(x);
+          // Archived (or back from the Archive): it leaves this list.
+          if ((tab === "archive") !== x.archived) {
+            setList((l) => l.filter((y) => y.id !== x.id));
+            return;
+          }
           setList((l) => l.map((y) => (y.id === x.id ? x : y)));
         }}
         onClose={() => {

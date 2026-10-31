@@ -14,7 +14,15 @@ const SAYS: Record<Activity["type"], string> = {
   post_like: "liked your post.",
   post_comment: "commented:",
   comment_reply: "replied to your comment:",
+  mention: "mentioned you:",
 };
+
+/** Mentions say where they happened. */
+const MENTION_SAYS = {
+  caption: "mentioned you in a post:",
+  comment: "mentioned you in a comment:",
+  tag: "tagged you in a post.",
+} as const;
 
 /** When something happened, grouped the way people think about it. */
 function bucket(iso: string) {
@@ -77,7 +85,7 @@ export function ActivityView() {
         <div className="rounded-[22px] bg-fg/[0.04] px-6 py-12 text-center">
           <p className="font-display text-[1.3rem] font-extrabold text-fg">Nothing yet</p>
           <p className="mt-1 text-fg-soft">
-            When people follow you, like or comment, it shows up here.
+            When people follow you, like, comment or mention you, it shows up here.
           </p>
         </div>
       ) : (
@@ -90,7 +98,9 @@ export function ActivityView() {
                 const said =
                   a.type === "follow" && a.accepted
                     ? "accepted your follow request."
-                    : SAYS[a.type];
+                    : a.type === "mention" && a.via
+                      ? MENTION_SAYS[a.via]
+                      : SAYS[a.type];
                 return (
                   <li
                     key={a.id}
@@ -138,12 +148,18 @@ export function ActivityView() {
                         </button>
                       </span>
                     ) : a.post?.thumbUrl ? (
-                      // biome-ignore lint/performance/noImgElement: the post's own thumbnail.
-                      <img
-                        src={a.post.thumbUrl}
-                        alt=""
-                        className="size-12 shrink-0 rounded-lg object-cover"
-                      />
+                      <Link
+                        href={`/p/${a.post.id}`}
+                        className="shrink-0"
+                        aria-label="Open the post"
+                      >
+                        {/* biome-ignore lint/performance/noImgElement: the post's own thumbnail. */}
+                        <img
+                          src={a.post.thumbUrl}
+                          alt=""
+                          className="size-12 rounded-lg object-cover"
+                        />
+                      </Link>
                     ) : (a.type === "follow" || a.type === "follow_request") && a.actor ? (
                       <button
                         type="button"

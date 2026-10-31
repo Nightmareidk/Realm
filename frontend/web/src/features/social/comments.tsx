@@ -8,6 +8,7 @@ import { useRealm } from "@/features/realtime/store";
 import { Avatar } from "@/features/spaces/person";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
+import { MentionText } from "./post-extras";
 import { ago, useFetch, Verified } from "./shared";
 
 /**
@@ -87,7 +88,9 @@ export function Comments({ post, onCount }: { post: Post; onCount?: (n: number) 
           <div className="grid h-full place-items-center py-10 text-center">
             <div>
               <p className="font-display text-[1.3rem] font-extrabold text-fg">No comments yet</p>
-              <p className="mt-1 text-fg-soft">Start the conversation.</p>
+              <p className="mt-1 text-fg-soft">
+                {post.commentsOff ? "Comments are turned off." : "Start the conversation."}
+              </p>
             </div>
           </div>
         ) : (
@@ -110,7 +113,11 @@ export function Comments({ post, onCount }: { post: Post; onCount?: (n: number) 
                       {c.author.username}
                       <Verified kind={c.author.verified} size={13} />
                     </Link>{" "}
-                    {c.hidden ? <em className="text-fg-soft">Hidden after reports</em> : c.body}
+                    {c.hidden ? (
+                      <em className="text-fg-soft">Hidden after reports</em>
+                    ) : (
+                      <MentionText text={c.body} />
+                    )}
                   </p>
                   <p className="mt-1 flex gap-3 text-[0.8rem] font-bold text-fg-soft">
                     <span>{ago(c.createdAt)}</span>
@@ -155,46 +162,52 @@ export function Comments({ post, onCount }: { post: Post; onCount?: (n: number) 
           </ul>
         )}
       </div>
-      <form onSubmit={send} className="border-t border-line px-3 py-3">
-        {replyTo && (
-          <p className="mb-2 flex items-center justify-between px-1 text-[0.85rem] text-fg-soft">
-            Replying to @{replyTo.author.username}
+      {post.commentsOff ? (
+        <p className="border-t border-line px-4 py-4 text-center text-[0.9rem] text-fg-soft">
+          Comments are turned off for this post.
+        </p>
+      ) : (
+        <form onSubmit={send} className="border-t border-line px-3 py-3">
+          {replyTo && (
+            <p className="mb-2 flex items-center justify-between px-1 text-[0.85rem] text-fg-soft">
+              Replying to @{replyTo.author.username}
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                className="font-bold hover:text-fg"
+              >
+                Cancel
+              </button>
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="mb-2 px-1 text-[0.88rem] text-danger">
+              {error}
+            </p>
+          )}
+          <div className="flex items-center gap-2 rounded-full bg-surface-raised py-1 pr-1 pl-4">
+            <label htmlFor={`c-${post.id}`} className="sr-only">
+              Add a comment
+            </label>
+            <input
+              id={`c-${post.id}`}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              maxLength={2200}
+              placeholder={replyTo ? `Reply to ${replyTo.author.displayName}…` : "Add a comment…"}
+              className="h-10 min-w-0 flex-1 bg-transparent text-fg outline-none placeholder:text-fg-muted"
+            />
             <button
-              type="button"
-              onClick={() => setReplyTo(null)}
-              className="font-bold hover:text-fg"
+              type="submit"
+              aria-disabled={!text.trim() || sending || undefined}
+              className="grid size-9 place-items-center rounded-full bg-accent text-on-accent aria-disabled:opacity-40"
             >
-              Cancel
+              <ArrowUp aria-hidden="true" size={17} weight="bold" />
+              <span className="sr-only">Post the comment</span>
             </button>
-          </p>
-        )}
-        {error && (
-          <p role="alert" className="mb-2 px-1 text-[0.88rem] text-danger">
-            {error}
-          </p>
-        )}
-        <div className="flex items-center gap-2 rounded-full bg-surface-raised py-1 pr-1 pl-4">
-          <label htmlFor={`c-${post.id}`} className="sr-only">
-            Add a comment
-          </label>
-          <input
-            id={`c-${post.id}`}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            maxLength={2200}
-            placeholder={replyTo ? `Reply to ${replyTo.author.displayName}…` : "Add a comment…"}
-            className="h-10 min-w-0 flex-1 bg-transparent text-fg outline-none placeholder:text-fg-muted"
-          />
-          <button
-            type="submit"
-            aria-disabled={!text.trim() || sending || undefined}
-            className="grid size-9 place-items-center rounded-full bg-accent text-on-accent aria-disabled:opacity-40"
-          >
-            <ArrowUp aria-hidden="true" size={17} weight="bold" />
-            <span className="sr-only">Post the comment</span>
-          </button>
-        </div>
-      </form>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

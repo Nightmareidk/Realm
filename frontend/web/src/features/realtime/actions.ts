@@ -295,8 +295,14 @@ export async function deleteSpace(spaceId: string) {
   setState((s) => ({ ...s, spaces: s.spaces.filter((x) => x.id !== spaceId) }));
 }
 
-export async function createRoom(spaceId: string, name: string, type: "text" | "voice" = "text") {
-  const room = await api<Channel>(`/communities/${spaceId}/channels`, { body: { name, type } });
+export async function createRoom(
+  spaceId: string,
+  name: string,
+  type: "text" | "voice" | "announce" = "text",
+) {
+  const room = await api<Channel>(`/communities/${spaceId}/channels`, {
+    body: type === "announce" ? { name, type: "text", announce: true } : { name, type },
+  });
   setState((s) => ({
     ...s,
     spaces: s.spaces.map((sp) =>

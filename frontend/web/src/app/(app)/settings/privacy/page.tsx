@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CirclePanel } from "@/features/settings/circle-panel";
 import { SafetyPanel } from "@/features/settings/safety-panel";
 import { SettingsPlace } from "@/features/settings/settings-place";
 import { getViewer } from "@/lib/viewer";
@@ -14,6 +15,9 @@ export default async function PrivacyPage() {
       lead="Who reaches you, and what happens when something's wrong."
     >
       <SafetyPanel viewer={viewer} />
+      <div className="mt-9 max-w-[44rem] space-y-9">
+        <CirclePanel />
+      </div>
     </SettingsPlace>
   );
 }

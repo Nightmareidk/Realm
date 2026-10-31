@@ -8,6 +8,7 @@ import {
   Flag,
   GearSix,
   Hash,
+  Megaphone,
   PencilSimple,
   ShieldCheck,
   SignOut,
@@ -290,7 +291,7 @@ export function SpaceMenu({ space }: { space: SpaceDetail }) {
 function NewRoomForm({ space, onDone }: { space: SpaceDetail; onDone: () => void }) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [type, setType] = useState<"text" | "voice">("text");
+  const [type, setType] = useState<"text" | "voice" | "announce">("text");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -336,6 +337,7 @@ function NewRoomForm({ space, onDone }: { space: SpaceDetail; onDone: () => void
             [
               { id: "text", label: "Chat", icon: Hash },
               { id: "voice", label: "Voice", icon: SpeakerHigh },
+              { id: "announce", label: "Announcements", icon: Megaphone },
             ] as const
           ).map((k) => {
             const on = type === k.id;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageSquare, MagnifyingGlass, MusicNotes, X } from "@phosphor-icons/react";
+import { ImageSquare, MagnifyingGlass, MusicNotes, Star, X } from "@phosphor-icons/react";
 import type { Post, Sound, SoundList, Story } from "@realm/contracts";
 import { type FormEvent, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { player } from "@/features/music/player";
@@ -106,6 +106,12 @@ export function Composer() {
   const [found, setFound] = useState<Sound[]>([]);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState("");
+  // Instagram's "advanced settings", right here: tags, hidden likes, comments, Close Friends.
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagDraft, setTagDraft] = useState("");
+  const [hideLikes, setHideLikes] = useState(false);
+  const [commentsOff, setCommentsOff] = useState(false);
+  const [closeOnly, setCloseOnly] = useState(false);
 
   useEffect(() => {
     const d = ref.current;
@@ -156,6 +162,18 @@ export function Composer() {
     setQuery("");
     setProgress(null);
     setError("");
+    setTags([]);
+    setTagDraft("");
+    setHideLikes(false);
+    setCommentsOff(false);
+    setCloseOnly(false);
+  };
+  const addTag = () => {
+    const name = tagDraft.trim().replace(/^@/, "").toLowerCase();
+    if (name && /^[a-z0-9_.]{1,30}$/.test(name) && !tags.includes(name) && tags.length < 20) {
+      setTags([...tags, name]);
+    }
+    setTagDraft("");
   };
   const close = () => {
     openComposer(null);
@@ -191,6 +209,9 @@ export function Composer() {
             mediaIds: [media.id],
             ...(caption.trim() ? { caption: caption.trim() } : {}),
             ...(pick ? { sound: pick } : {}),
+            ...(tags.length ? { tags } : {}),
+            ...(hideLikes ? { hideLikes } : {}),
+            ...(commentsOff ? { commentsOff } : {}),
           },
         });
         for (const fn of made) fn({ post });
@@ -200,6 +221,7 @@ export function Composer() {
             mediaId: media.id,
             ...(caption.trim() ? { caption: caption.trim().slice(0, 200) } : {}),
             ...(pick ? { sound: { ...pick, durationMs: 15_000 } } : {}),
+            ...(closeOnly ? { visibility: "close_friends" } : {}),
           },
         });
         for (const fn of made) fn({ story });
@@ -367,6 +389,106 @@ export function Composer() {
                 ))}
               </ul>
             </div>
+            {mode === "story" ? (
+              <fieldset>
+                <legend className="mb-1.5 font-bold">Who sees it</legend>
+                <div className="flex gap-1.5">
+                  {[
+                    [false, "Your followers"],
+                    [true, "Close Friends"],
+                  ].map(([on, label]) => (
+                    <button
+                      key={String(on)}
+                      type="button"
+                      aria-pressed={closeOnly === on}
+                      onClick={() => setCloseOnly(on as boolean)}
+                      className={cx(
+                        "flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[0.9rem] font-bold",
+                        closeOnly === on
+                          ? on
+                            ? "bg-[#22c55e] text-[#04150a]"
+                            : "bg-fg text-base"
+                          : "bg-fg/8 text-fg-soft hover:text-fg",
+                      )}
+                    >
+                      {on ? <Star aria-hidden="true" size={15} weight="fill" /> : null}
+                      {label as string}
+                    </button>
+                  ))}
+                </div>
+                {closeOnly && (
+                  <p className="mt-1.5 text-[0.85rem] text-fg-soft">
+                    Only people on your Close Friends list see it, with a green ring.
+                  </p>
+                )}
+              </fieldset>
+            ) : (
+              <>
+                <div>
+                  <p className="mb-1.5 font-bold">Tag people</p>
+                  {tags.length > 0 && (
+                    <ul className="mb-2 flex flex-wrap gap-1.5">
+                      {tags.map((t) => (
+                        <li key={t}>
+                          <button
+                            type="button"
+                            onClick={() => setTags(tags.filter((x) => x !== t))}
+                            className="flex h-8 items-center gap-1 rounded-full bg-fg/8 pr-2 pl-3 text-[0.88rem] font-bold text-fg hover:bg-fg/12"
+                          >
+                            @{t}
+                            <X aria-hidden="true" size={13} />
+                            <span className="sr-only">Remove the tag</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <input
+                    value={tagDraft}
+                    onChange={(e) => setTagDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === "," || e.key === " ") {
+                        e.preventDefault();
+                        addTag();
+                      }
+                    }}
+                    onBlur={addTag}
+                    placeholder="@username, then Enter"
+                    aria-label="Tag someone by username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    className="h-10 w-full rounded-full bg-surface-raised px-4 text-fg outline-none placeholder:text-fg-muted focus-visible:ring-2 focus-visible:ring-accent"
+                  />
+                </div>
+                <div className="space-y-1">
+                  {[
+                    [
+                      hideLikes,
+                      setHideLikes,
+                      "Hide like count",
+                      "Only you see how many likes it has.",
+                    ],
+                    [commentsOff, setCommentsOff, "Turn off comments", "Nobody can comment on it."],
+                  ].map(([on, setOn, label, hint]) => (
+                    <label
+                      key={label as string}
+                      className="flex cursor-pointer items-center gap-3 rounded-xl px-1 py-1.5"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-bold">{label as string}</span>
+                        <span className="block text-[0.82rem] text-fg-soft">{hint as string}</span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={on as boolean}
+                        onChange={(e) => (setOn as (v: boolean) => void)(e.target.checked)}
+                        className="size-5 accent-[var(--r-accent)]"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
             {error && (
               <p role="alert" className="text-[0.92rem] text-danger">
                 {error}

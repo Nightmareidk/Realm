@@ -15,6 +15,7 @@ import {
 } from "@/features/realtime/store";
 import { Avatar } from "@/features/spaces/person";
 import { cx } from "@/lib/cx";
+import { NotesRow } from "./notes";
 import { ConversationAvatar, previewLine, shortWhen } from "./parts";
 
 type Filter = "all" | "unread" | "groups" | "requests";
@@ -86,6 +87,8 @@ export function Inbox({ activeId, onNew }: { activeId: string | null; onNew: () 
           <span className="sr-only">New message</span>
         </button>
       </div>
+
+      {filter === "all" && !query && <NotesRow />}
 
       <div className="px-4 md:px-5">
         <div className="relative">

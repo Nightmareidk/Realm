@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { textLink } from "@/components/pill";
 import { ChangePasswordForm, SignOutButton } from "@/features/settings/account-forms";
+import { DownloadData, LeaveRealm } from "@/features/settings/account-leave";
 import { SettingsPlace, SettingsSection } from "@/features/settings/settings-place";
+import { TwoStepPanel } from "@/features/settings/two-step";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Account settings" };
@@ -67,8 +69,25 @@ export default async function AccountSettingsPage() {
       <SettingsSection id="password" title="Password">
         <ChangePasswordForm />
       </SettingsSection>
+      <SettingsSection
+        id="two-step"
+        title="Two-step sign-in"
+        lead="A code from an app on your phone, as well as your password."
+      >
+        <TwoStepPanel />
+      </SettingsSection>
+      <SettingsSection
+        id="your-information"
+        title="Your information"
+        lead="A copy of your profile, posts, comments, Stories, saves and messages, as one file."
+      >
+        <DownloadData />
+      </SettingsSection>
       <SettingsSection id="sign-out" title="Sign out" lead="Sign out of Realm on this device.">
         <SignOutButton />
+      </SettingsSection>
+      <SettingsSection id="leave" title="Take a break or leave">
+        <LeaveRealm twoStep={viewer.twoStep} />
       </SettingsSection>
     </SettingsPlace>
   );

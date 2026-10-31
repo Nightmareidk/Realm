@@ -5,6 +5,7 @@ import {
   CaretLeft,
   Headphones,
   Lock,
+  Megaphone,
   SpeakerHigh,
   Timer,
   UserPlus,
@@ -209,6 +210,8 @@ function SpaceHeader({ space, roomId }: { space: SpaceDetail; roomId: string | n
                 >
                   {r.type === "voice" ? (
                     <SpeakerHigh aria-hidden="true" size={16} className="text-fg-soft" />
+                  ) : r.announce ? (
+                    <Megaphone aria-label="Announcements" size={16} className="text-fg-soft" />
                   ) : (
                     <span aria-hidden="true" className="text-fg-soft">
                       #
@@ -365,6 +368,8 @@ function RoomsColumn({ space, roomId }: { space: SpaceDetail; roomId: string | n
         >
           {r.type === "voice" ? (
             <SpeakerHigh aria-hidden="true" size={17} className="shrink-0 opacity-80" />
+          ) : r.announce ? (
+            <Megaphone aria-label="Announcements" size={17} className="shrink-0 opacity-80" />
           ) : (
             <span aria-hidden="true" className="w-[17px] shrink-0 text-center opacity-80">
               #
