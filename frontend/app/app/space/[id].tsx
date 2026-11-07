@@ -1,4 +1,5 @@
 import { type Channel, Permission, type SpaceDetail } from "@realm/contracts";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
@@ -83,13 +84,24 @@ export default function SpaceScreen() {
     router.push({ pathname: "/space/room", params: { space: sp.slug, ...params } });
 
   async function invite() {
+    let code: string;
     try {
-      const inv = await api<{ code: string }>(`/communities/${sp.id}/invites`, { body: {} });
-      await Share.share({
-        message: `Join ${sp.name} on Realm: https://tomyrealm.com/invite/${inv.code}`,
-      });
+      code = (await api<{ code: string }>(`/communities/${sp.id}/invites`, { body: {} })).code;
     } catch (err) {
       alert("No invite made", err instanceof ApiError ? err.message : "Try again.");
+      return;
+    }
+    const link = `https://tomyrealm.com/invite/${code}`;
+    try {
+      await Share.share({ message: `Join ${sp.name} on Realm: ${link}` });
+    } catch {
+      // No share sheet here (a browser without one): the invite exists, so copy it instead.
+      await Clipboard.setStringAsync(link).catch(() => {});
+      alert(
+        "Invite made",
+        `Your invite code is ${code}. The link is copied:
+${link}`,
+      );
     }
   }
 

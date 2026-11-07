@@ -55,6 +55,12 @@ interface SessionApi {
     password: string,
     code?: string,
   ): Promise<AuthResult["welcomeBack"] | undefined>;
+  /** Sign in with the one-time code emailed by /auth/login/code/send, instead of a password. */
+  signInWithCode(
+    login: string,
+    emailCode: string,
+    code?: string,
+  ): Promise<AuthResult["welcomeBack"] | undefined>;
   register(body: RegisterBody): Promise<void>;
   signOut(): Promise<void>;
   /** Load your account again after changing it (name, picture). */
@@ -137,6 +143,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       async signIn(login, password, code) {
         const result = await api<AuthResult>("/auth/login", {
           body: { login, password, ...(code ? { code } : {}) },
+        });
+        await start(result);
+        return result.welcomeBack;
+      },
+      async signInWithCode(login, emailCode, code) {
+        const result = await api<AuthResult>("/auth/login/code", {
+          body: { login, emailCode, ...(code ? { code } : {}) },
         });
         await start(result);
         return result.welcomeBack;
