@@ -1,6 +1,6 @@
 import { eq, schema } from "@realm/db";
 import { hotp, unseal } from "@realm/server-core";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   browser,
   createTestApp,
@@ -206,9 +206,47 @@ describe("taking a break and deleting the account", () => {
     const cookie = sessionCookie(back) ?? "";
     await call(cookie, "POST", "/users/@me/delete", { password: aras.password });
 
+    // A photo they uploaded, with a smaller copy: both files go with the account.
+    const photoId = BigInt(aras.id) + 7n;
+    await t.deps.db.insert(schema.media).values({
+      id: photoId,
+      ownerId: BigInt(aras.id),
+      kind: "image",
+      status: "ready",
+      storageKey: `test/${photoId}.jpg`,
+      mimeType: "image/jpeg",
+      sizeBytes: 3,
+      variants: {
+        thumb: {
+          key: `test/${photoId}-thumb.webp`,
+          width: 1,
+          height: 1,
+          mimeType: "image/webp",
+          sizeBytes: 1,
+        },
+      },
+    });
+    const removed: string[] = [];
+    const del = vi.spyOn(t.deps.storage, "delete").mockImplementation(async (key) => {
+      removed.push(key);
+    });
+
     const account = new AccountService(t.deps);
     expect(await account.sweepDeletions(new Date())).toBe(0);
     expect(await account.sweepDeletions(new Date(Date.now() + 31 * 86_400_000))).toBe(1);
+    del.mockRestore();
+    expect(removed.sort()).toEqual([`test/${photoId}-thumb.webp`, `test/${photoId}.jpg`]);
+    const [photo] = await t.deps.db
+      .select({ status: schema.media.status })
+      .from(schema.media)
+      .where(eq(schema.media.id, photoId));
+    expect(photo?.status).toBe("failed");
+    const signIns = await t.deps.db
+      .select({ ip: schema.sessions.ipCreated, ua: schema.sessions.userAgent })
+      .from(schema.sessions)
+      .where(eq(schema.sessions.userId, BigInt(aras.id)));
+    expect(signIns.length).toBeGreaterThan(0);
+    expect(signIns.every((s) => s.ip === null && s.ua === null)).toBe(true);
 
     const [row] = await t.deps.db
       .select()
@@ -217,6 +255,7 @@ describe("taking a break and deleting the account", () => {
     expect(row?.status).toBe("deleted");
     expect(row?.username).toBe(`deleted_${aras.id}`);
     expect(row?.email).not.toContain("@example");
+    expect(row?.birthDate).toBe("1900-01-01");
     expect((await login(aras)).statusCode).toBe(401);
     const gone = await call(undefined, "GET", `/posts/${post.json().id}`);
     expect(gone.statusCode).toBe(404);

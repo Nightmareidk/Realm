@@ -67,5 +67,6 @@ export function toUserSettings(s: SettingsRow): UserSettings {
     friendRequestPolicy: s.friendRequestPolicy,
     showPresence: s.showPresence,
     showReadReceipts: s.showReadReceipts,
+    shareListening: s.shareListening,
   };
 }

@@ -1,8 +1,9 @@
 import { Image, type ImageSource } from "expo-image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -18,6 +19,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../icon";
+import { EdgeArrow, useFinePointer } from "../scroll-row";
 import { type NativeTheme, useStyles } from "../theme";
 
 /**
@@ -58,6 +60,30 @@ export function PhotoViewer({
 
   const bar = useAnimatedStyle(() => ({ width: `${left.value * 100}%` }));
 
+  // With a mouse nothing can be swiped: arrows on screen, and the arrow keys and Escape work.
+  const fine = useFinePointer();
+  const list = useRef<FlatList<ImageSource>>(null);
+  const count = photos?.length ?? 0;
+  const show = (i: number) => {
+    const to = Math.max(0, Math.min(count - 1, i));
+    list.current?.scrollToOffset({ offset: to * width, animated: true });
+    setIndex(to);
+  };
+  const showRef = useRef(show);
+  showRef.current = show;
+  const indexRef = useRef(index);
+  indexRef.current = index;
+  useEffect(() => {
+    if (Platform.OS !== "web" || !photos) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") showRef.current(indexRef.current - 1);
+      else if (e.key === "ArrowRight") showRef.current(indexRef.current + 1);
+      else if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [photos, onClose]);
+
   return (
     <Modal
       visible={photos !== null}
@@ -69,6 +95,7 @@ export function PhotoViewer({
       <View style={s.root}>
         {photos ? (
           <FlatList
+            ref={list}
             data={photos}
             horizontal
             pagingEnabled
@@ -86,6 +113,12 @@ export function PhotoViewer({
               />
             )}
           />
+        ) : null}
+        {fine && index > 0 ? (
+          <EdgeArrow side="left" onPress={() => show(index - 1)} label="Previous photo" />
+        ) : null}
+        {fine && index < count - 1 ? (
+          <EdgeArrow side="right" onPress={() => show(index + 1)} label="Next photo" />
         ) : null}
         <View style={[s.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
           {seconds ? (

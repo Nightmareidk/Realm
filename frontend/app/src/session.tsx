@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { Platform } from "react-native";
+import { startE2ee, stopE2ee } from "./e2ee";
 import { live } from "./live";
 import { api, setSessionToken, whenSessionEnds } from "./server";
 import { choiceFrom, useTheme } from "./theme";
@@ -120,10 +121,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!meId) {
       resetUnread();
+      stopE2ee();
       return;
     }
     live.start();
     refreshUnread(meId).catch(() => {});
+    // Encrypted chats, when this server offers them: set this device up and fetch what's waiting.
+    startE2ee(meId);
     return () => live.stop();
   }, [meId]);
 

@@ -7,8 +7,9 @@ export default defineConfig({
   target: "node24",
   sourcemap: true,
   clean: true,
-  // Bundle our workspace packages (they ship TypeScript source); keep npm deps external.
+  // Bundle our workspace packages (they ship TypeScript source). Every outside package stays
+  // external, including the ones the workspace packages use (so native ones like argon2 load
+  // from node_modules): each must be listed in this package's dependencies to be found.
   noExternal: [/^@realm\//],
-  // The embedded development database never ships.
-  external: ["@electric-sql/pglite"],
+  external: [/^(?!@realm\/)[^./]/],
 });

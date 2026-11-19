@@ -7,16 +7,19 @@ import {
   CreatePostBody,
   FollowRequest,
   FollowResult,
+  Hashtag,
   Post,
   PostPage,
   Profile,
   SearchResults,
   Snowflake,
   Suggestion,
+  TrendingTags,
   UpdateAccountBody,
   UpdatePostBody,
   UserList,
   Username,
+  VotePollBody,
 } from "@realm/contracts";
 import { schema, sql } from "@realm/db";
 import { Limits as RateLimits } from "@realm/server-core";
@@ -77,6 +80,7 @@ export const postRoutes =
     for (const [path, act] of [
       ["like", (id: bigint, user: bigint, on: boolean) => social.like(id, user, on)],
       ["save", (id: bigint, user: bigint, on: boolean) => social.save(id, user, on)],
+      ["repost", (id: bigint, user: bigint, on: boolean) => social.repost(id, user, on)],
     ] as const) {
       for (const on of [true, false]) {
         app.route({
@@ -115,6 +119,19 @@ export const postRoutes =
         return reply
           .status(201)
           .send(await social.comment(BigInt(req.params.postId), userId, req.body));
+      },
+    );
+
+    app.put(
+      "/posts/:postId/poll/vote",
+      {
+        preHandler: requireAuth,
+        schema: { params: PostParams, body: VotePollBody, response: { 200: Post } },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, RateLimits.react, userId.toString());
+        return social.votePoll(BigInt(req.params.postId), userId, req.body.choice);
       },
     );
 
@@ -170,6 +187,31 @@ export const postRoutes =
       { preHandler: requireAuth, schema: { querystring: Cursor, response: { 200: PostPage } } },
       async (req) =>
         social.home(
+          authOf(req).userId,
+          req.query.before ? BigInt(req.query.before) : null,
+          req.query.limit,
+        ),
+    );
+
+    // #tags: what's trending this week, and the posts under one tag.
+    app.get(
+      "/tags/trending",
+      { preHandler: requireAuth, schema: { response: { 200: TrendingTags } } },
+      async () => ({ tags: await social.trendingTags() }),
+    );
+    app.get(
+      "/tags/:tag/posts",
+      {
+        preHandler: requireAuth,
+        schema: {
+          params: z.object({ tag: Hashtag }),
+          querystring: Cursor,
+          response: { 200: PostPage },
+        },
+      },
+      async (req) =>
+        social.taggedWith(
+          req.params.tag,
           authOf(req).userId,
           req.query.before ? BigInt(req.query.before) : null,
           req.query.limit,

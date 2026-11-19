@@ -2,9 +2,10 @@ import type { Sound } from "@realm/contracts";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useApi } from "../data";
 import { Icon } from "../icon";
+import { HList } from "../scroll-row";
 import { mediaSource, resolveUrl } from "../server";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { pauseSound, playList, resumeSound, useNowPlaying } from "./player";
@@ -24,9 +25,8 @@ export function SoundsRow() {
       <Text style={s.heading} accessibilityRole="header">
         Sounds people use
       </Text>
-      <FlatList
+      <HList
         data={items}
-        horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(x) => x.id}
         contentContainerStyle={s.row}

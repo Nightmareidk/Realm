@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 import Animated, { interpolate, type SharedValue, useAnimatedStyle } from "react-native-reanimated";
 import { Icon } from "../icon";
 import { Relit } from "../relit";
-import { fonts, roles, type ThemeId, themes } from "../theme";
+import { fonts, PALETTES, roles, type ThemePalette } from "../theme";
 
 /** The card is drawn at this size and scaled to fit the screen, like a printed card. */
 export const CARD = { w: 292, h: 432 } as const;
@@ -22,8 +22,9 @@ const SPACES = [
   { initials: "MC", colour: "#b9f27c" },
 ];
 
-function lights(id: ThemeId) {
-  const [l1, l2, l3] = themes[id].lights;
+/** The colour set's own bright colours, so the card shows what the app will look like. */
+function lights(id: ThemePalette) {
+  const [l1, l2, l3] = PALETTES[id].swatch;
   return [l1, l2, l3] as const;
 }
 

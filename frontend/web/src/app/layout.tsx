@@ -5,15 +5,20 @@ import {
   Bebas_Neue,
   Bricolage_Grotesque,
   Comfortaa,
+  Figtree,
   Fredoka,
   Funnel_Display,
+  Gabarito,
   Lexend,
   Nunito,
+  Onest,
   Orbitron,
   Pacifico,
   Permanent_Marker,
   Press_Start_2P,
+  Rethink_Sans,
   Righteous,
+  Unbounded,
 } from "next/font/google";
 import { SITE } from "@/lib/site";
 import "./globals.css";
@@ -48,6 +53,21 @@ const atkinson = Atkinson_Hyperlegible_Next({
   // next/font has no metrics for this family, so it can't size-adjust a fallback; say so explicitly.
   adjustFontFallback: false,
   fallback: ["system-ui", "sans-serif"],
+});
+
+/**
+ * Afterglow's fonts (Realm's default colour set since 2026-11): Gabarito for titles, Rethink Sans
+ * for reading. Loaded up front like Funnel and Atkinson, so the first paint is already in them.
+ */
+const gabarito = Gabarito({
+  subsets: ["latin"],
+  variable: "--font-gabarito",
+  display: "swap",
+});
+const rethink = Rethink_Sans({
+  subsets: ["latin"],
+  variable: "--font-rethink",
+  display: "swap",
 });
 
 /**
@@ -126,7 +146,30 @@ const nunito = Nunito({
   display: "swap",
   preload: false,
 });
+const figtree = Figtree({
+  subsets: ["latin"],
+  variable: "--font-figtree",
+  display: "swap",
+  preload: false,
+});
+const unbounded = Unbounded({
+  subsets: ["latin"],
+  variable: "--font-unbounded",
+  display: "swap",
+  preload: false,
+});
+const onest = Onest({
+  subsets: ["latin"],
+  variable: "--font-onest",
+  display: "swap",
+  preload: false,
+});
 const themeFonts = [
+  gabarito,
+  rethink,
+  figtree,
+  unbounded,
+  onest,
   bangers,
   fredoka,
   pacifico,

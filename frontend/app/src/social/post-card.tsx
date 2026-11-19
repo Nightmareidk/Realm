@@ -3,7 +3,7 @@ import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -21,19 +21,25 @@ import { postsChanged } from "../data";
 import { Icon } from "../icon";
 import { useContentWidth } from "../layout";
 import { SoundChip } from "../music/chip";
+import { EdgeArrow, useFinePointer } from "../scroll-row";
 import { ApiError, api, mediaSource } from "../server";
 import { useSession } from "../session";
 import { useSheet } from "../sheet";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Avatar } from "./avatar";
+import { CapsuleNote, SealedCapsule, useCapsuleOpening } from "./capsule";
 import { CommentsSheet } from "./comments-sheet";
 import { MentionText } from "./mention-text";
+import { PollCard } from "./poll";
+import { QuotedCard } from "./quoted";
 import { useSafety } from "./safety";
 import { ago, agoLong, compact } from "./time";
 import { Verified } from "./verified";
 
 /** The like colour: a warm pink, the one hue that means "loved" across social apps. */
 export const LIKED = "#ff5f7a";
+/** The repost colour: the green people know from sharing on other apps. */
+export const REPOSTED = "#2fbf71";
 
 /** Photos and Clips are framed between 4:5 (portrait) and 1.91:1 (landscape), as people expect. */
 export function frameRatio(m: MediaRef | undefined) {
@@ -66,9 +72,15 @@ export const PostCard = memo(function PostCard({
   const width = useContentWidth(680);
   const [expanded, setExpanded] = useState(standalone);
   const { session } = useSession();
+  const sheet = useSheet();
   const meId = session.status === "signedIn" ? session.user.id : null;
   // A hidden like count is the author's alone.
   const showLikes = !post.hideLikes || post.author.id === meId;
+  // A time capsule that hasn't opened: nobody likes, comments or shares it yet, and only its
+  // author sees what's inside.
+  const sealed = Boolean(post.capsule?.sealed);
+  const sealedForMe = sealed && post.author.id !== meId;
+  useCapsuleOpening(post, onChange);
 
   async function setLike(on: boolean) {
     if (post.liked === on) return;
@@ -91,6 +103,49 @@ export const PostCard = memo(function PostCard({
     }
   }
 
+  // Repost: share someone else's public post with your followers. Never your own, never a
+  // Space post or a followers-only one (the server checks this too).
+  const canRepost =
+    meId !== null &&
+    post.author.id !== meId &&
+    post.visibility === "public" &&
+    !post.space &&
+    !sealed;
+  async function setRepost(on: boolean) {
+    if (post.reposted === on) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onChange({
+      ...post,
+      reposted: on,
+      repostCount: Math.max(0, post.repostCount + (on ? 1 : -1)),
+    });
+    try {
+      onChange({
+        ...(await api<Post>(`/posts/${post.id}/repost`, { method: on ? "PUT" : "DELETE" })),
+        repostedBy: post.repostedBy,
+      });
+    } catch {
+      onChange(post);
+    }
+  }
+  const by = post.repostedBy;
+  // Repost as it is, or quote it with your own words on top (your own posts can be quoted too).
+  const canQuote = meId !== null && post.visibility === "public" && !post.space && !sealed;
+  const quote = () => router.push({ pathname: "/create", params: { quote: post.id } });
+  const shareOn = () =>
+    canRepost
+      ? sheet({
+          actions: [
+            {
+              label: post.reposted ? "Undo repost" : "Repost",
+              icon: "Repeat",
+              onPress: () => void setRepost(!post.reposted),
+            },
+            { label: "Quote", icon: "Quotes", onPress: quote },
+          ],
+        })
+      : quote();
+
   const open = () => router.push({ pathname: "/post/[id]", params: { id: post.id } });
   // Comments come up from the bottom over the post, as on Instagram.
   const [commenting, setCommenting] = useState(false);
@@ -98,29 +153,64 @@ export const PostCard = memo(function PostCard({
   const profile = () =>
     router.push({ pathname: "/user/[username]", params: { username: post.author.username } });
 
-  const kind = t.style.posts;
-  const media =
-    post.kind === "text" ? (
-      <Pressable onPress={standalone ? undefined : open} style={s.textPost}>
-        <Text style={s.textBody}>{post.caption}</Text>
-      </Pressable>
-    ) : post.kind === "clip" ? (
-      <ClipTile post={post} onPress={open} />
-    ) : (
-      <Photos
-        media={post.media}
-        onDoubleTap={() => setLike(true)}
-        width={kind === "thread" ? width - 72 : width - 24}
-        radius={kind === "ticket" ? 0 : t.radius.media}
-      />
-    );
+  // Posts with only words read as a conversation in every look (the owner, 2026-11-19), so they
+  // are clearly apart from photos: name and @handle on one line, smaller text, counts by the icons.
+  const wordsOnly = post.kind === "text" && !sealedForMe;
+  const kind = wordsOnly ? "thread" : t.style.posts;
+  const media = sealedForMe ? (
+    <SealedCapsule
+      post={post}
+      onRemind={setSave}
+      width={kind === "thread" ? width - 72 : width - 24}
+    />
+  ) : post.kind === "text" ? (
+    <Pressable onPress={standalone ? undefined : open} style={s.textPost}>
+      <Text style={s.textBody}>
+        <MentionText text={post.caption ?? ""} />
+      </Text>
+    </Pressable>
+  ) : post.kind === "clip" ? (
+    <ClipTile post={post} onPress={open} />
+  ) : (
+    <Photos
+      media={post.media}
+      onDoubleTap={() => setLike(true)}
+      width={kind === "thread" ? width - 72 : width - 24}
+      radius={kind === "ticket" ? 0 : t.radius.media}
+    />
+  );
   const glowSource = post.kind === "image" ? post.media[0] : undefined;
   const soundOnPhoto = kind === "glow" && post.kind === "image";
   const from = `${post.author.displayName}'s post`;
+  const reposts = post.repostCount ?? 0;
+  const counts = [
+    showLikes && post.likeCount > 0
+      ? `${compact(post.likeCount)} ${post.likeCount === 1 ? "like" : "likes"}`
+      : !showLikes && post.liked
+        ? "Liked by you and others"
+        : "",
+    reposts > 0 ? `${compact(reposts)} ${reposts === 1 ? "repost" : "reposts"}` : "",
+  ]
+    .filter(Boolean)
+    .join("  ·  ");
 
   return (
     <View style={[s.card, kind === "ticket" && s.ticket, kind === "thread" && s.thread]}>
-      <View style={s.head}>
+      {by ? (
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: "/user/[username]", params: { username: by.username } })
+          }
+          accessibilityRole="link"
+          style={s.reposted}
+        >
+          <Icon name="Repeat" size={15} color={t.colors.textSoft} />
+          <Text style={s.repostedText} numberOfLines={1}>
+            {by.id === meId ? "You" : by.displayName} reposted
+          </Text>
+        </Pressable>
+      ) : null}
+      <View style={[s.head, wordsOnly && s.headWords]}>
         <Pressable
           onPress={profile}
           style={s.who}
@@ -130,20 +220,30 @@ export const PostCard = memo(function PostCard({
           <Avatar user={post.author} size={36} />
           <View style={s.whoText}>
             <View style={s.nameRow}>
-              <Text style={s.name} numberOfLines={1}>
+              <Text style={[s.name, wordsOnly && s.nameWords]} numberOfLines={1}>
                 {post.author.displayName}
               </Text>
               <Verified kind={post.author.verified} size={15} />
-            </View>
-            <Text style={s.meta} numberOfLines={1}>
-              {post.space ? (
-                <>
-                  in <Text style={s.metaStrong}>{post.space.name}</Text> ·{" "}
-                </>
+              {wordsOnly ? (
+                <Text style={s.handle} numberOfLines={1}>
+                  @{post.author.username} · {ago(post.createdAt)}
+                </Text>
               ) : null}
-              {ago(post.createdAt)}
-              {post.visibility === "followers" ? " · Followers" : ""}
-            </Text>
+            </View>
+            {wordsOnly && !post.space && post.visibility !== "followers" ? null : (
+              <Text style={s.meta} numberOfLines={1}>
+                {post.space ? (
+                  <>
+                    in <Text style={s.metaStrong}>{post.space.name}</Text>
+                    {wordsOnly ? "" : " · "}
+                  </>
+                ) : null}
+                {wordsOnly ? "" : ago(post.createdAt)}
+                {post.visibility === "followers"
+                  ? `${wordsOnly && !post.space ? "" : " · "}Followers`
+                  : ""}
+              </Text>
+            )}
           </View>
         </Pressable>
         <PostMenu post={post} onChange={onChange} onRemoved={onRemoved} />
@@ -156,6 +256,7 @@ export const PostCard = memo(function PostCard({
           </Text>
         </View>
       ) : null}
+      <CapsuleNote post={post} mine={post.author.id === meId} />
 
       {post.sound && post.kind !== "clip" && !soundOnPhoto ? (
         <View style={[s.sound, kind === "thread" && s.threadIndent]}>
@@ -178,6 +279,7 @@ export const PostCard = memo(function PostCard({
           {kind === "glow" && glowSource && t.style.glow > 0 ? (
             // The photo lights the room: a soft, blurred copy of itself behind it.
             <Image
+              transition={150}
               source={mediaSource(glowSource.url)}
               style={[s.glow, { opacity: 0.25 + t.style.glow * 0.45 }]}
               blurRadius={36}
@@ -195,7 +297,17 @@ export const PostCard = memo(function PostCard({
           ) : null}
         </View>
       )}
-      {kind === "ticket" && !noMedia ? (
+      {post.poll ? (
+        <View style={kind === "thread" && s.threadIndent}>
+          <PollCard post={post} onChange={onChange} />
+        </View>
+      ) : null}
+      {post.quoted ? (
+        <View style={kind === "thread" && s.threadIndent}>
+          <QuotedCard quoted={post.quoted} />
+        </View>
+      ) : null}
+      {kind === "ticket" && !noMedia && !sealedForMe ? (
         <View style={s.tear} accessible={false}>
           <View style={[s.notch, s.notchLeft]} />
           <View style={s.tearLine} />
@@ -204,16 +316,39 @@ export const PostCard = memo(function PostCard({
       ) : null}
 
       <View style={[s.actions, kind === "thread" && s.threadIndentActions]}>
-        <IconButton
-          name={post.liked ? "HeartFill" : "Heart"}
-          color={post.liked ? LIKED : t.colors.text}
-          label={post.liked ? "Unlike" : "Like"}
-          onPress={() => setLike(!post.liked)}
-        />
-        {post.commentsOff ? null : (
-          <IconButton name="ChatCircle" label="Comments" onPress={comments} />
+        {sealed ? null : (
+          <IconButton
+            name={post.liked ? "HeartFill" : "Heart"}
+            color={post.liked ? t.colors.like : t.colors.text}
+            label={post.liked ? "Unlike" : "Like"}
+            onPress={() => setLike(!post.liked)}
+            small={wordsOnly}
+            count={wordsOnly && showLikes && post.likeCount > 0 ? compact(post.likeCount) : ""}
+          />
         )}
+        {post.commentsOff || sealed ? null : (
+          <IconButton
+            name="ChatCircle"
+            label="Comments"
+            onPress={comments}
+            small={wordsOnly}
+            count={wordsOnly && post.commentCount > 0 ? compact(post.commentCount) : ""}
+          />
+        )}
+        {canQuote ? (
+          <IconButton
+            small={wordsOnly}
+            count={wordsOnly && reposts > 0 ? compact(reposts) : ""}
+            name="Repeat"
+            color={post.reposted ? REPOSTED : t.colors.text}
+            label={
+              canRepost ? (post.reposted ? "Reposted. Undo or quote" : "Repost or quote") : "Quote"
+            }
+            onPress={shareOn}
+          />
+        ) : null}
         <IconButton
+          small={wordsOnly}
           name="PaperPlaneTilt"
           label="Send"
           onPress={() =>
@@ -221,20 +356,17 @@ export const PostCard = memo(function PostCard({
           }
         />
         <View style={s.grow} />
-        <IconButton
-          name={post.saved ? "BookmarkSimpleFill" : "BookmarkSimple"}
-          label={post.saved ? "Remove from saved" : "Save"}
-          onPress={() => setSave(!post.saved)}
-        />
+        {sealedForMe ? null : (
+          <IconButton
+            small={wordsOnly}
+            name={post.saved ? "BookmarkSimpleFill" : "BookmarkSimple"}
+            label={post.saved ? "Remove from saved" : "Save"}
+            onPress={() => setSave(!post.saved)}
+          />
+        )}
       </View>
 
-      {showLikes && post.likeCount > 0 ? (
-        <Text style={s.likes}>
-          {compact(post.likeCount)} {post.likeCount === 1 ? "like" : "likes"}
-        </Text>
-      ) : !showLikes && post.liked ? (
-        <Text style={s.likes}>Liked by you and others</Text>
-      ) : null}
+      {counts && !wordsOnly ? <Text style={s.likes}>{counts}</Text> : null}
       {post.tags.length ? (
         <Text style={[s.caption, s.soft]} numberOfLines={2}>
           <Icon name="UserCircleFill" size={14} color={t.colors.textSoft} /> with{" "}
@@ -249,7 +381,7 @@ export const PostCard = memo(function PostCard({
           </Text>
         </Pressable>
       ) : null}
-      {!standalone && post.commentCount > 0 && !post.commentsOff ? (
+      {!standalone && !wordsOnly && post.commentCount > 0 && !post.commentsOff ? (
         <Pressable onPress={comments} accessibilityRole="link" style={s.commentsLink}>
           <Text style={s.soft}>
             View{" "}
@@ -274,23 +406,35 @@ function IconButton({
   label,
   onPress,
   color,
+  small,
+  count,
 }: {
   name: Parameters<typeof Icon>[0]["name"];
   label: string;
   onPress: () => void;
   color?: string;
+  /** Posts with only words: smaller icons with their count beside them. */
+  small?: boolean;
+  count?: string;
 }) {
   const { t } = useTheme();
   const s = useStyles(make);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={count ? `${label}, ${count}` : label}
       onPress={onPress}
       hitSlop={4}
-      style={({ pressed }) => [s.iconBtn, pressed && { transform: [{ scale: 0.9 }] }]}
+      style={({ pressed }) => [
+        s.iconBtn,
+        small && s.iconBtnSmall,
+        pressed && { transform: [{ scale: 0.9 }] },
+      ]}
     >
-      <Icon name={name} size={27} color={color ?? t.colors.text} />
+      <Icon name={name} size={small ? 21 : 27} color={color ?? t.colors.text} />
+      {count ? (
+        <Text style={[s.count, color && color !== t.colors.text ? { color } : null]}>{count}</Text>
+      ) : null}
     </Pressable>
   );
 }
@@ -311,6 +455,14 @@ function Photos({
   const s = useStyles(make);
   const height = width / frameRatio(media[0]);
   const [index, setIndex] = useState(0);
+  // With a mouse nothing can be swiped, so arrows step through the photos.
+  const fine = useFinePointer();
+  const list = useRef<FlatList<MediaRef>>(null);
+  const show = (i: number) => {
+    const to = Math.max(0, Math.min(media.length - 1, i));
+    list.current?.scrollToOffset({ offset: to * width, animated: true });
+    setIndex(to);
+  };
   const burst = useSharedValue(0);
   const heart = useAnimatedStyle(() => ({
     opacity: burst.value > 0 ? 1 : 0,
@@ -337,6 +489,7 @@ function Photos({
         accessibilityLabel={`${media.length === 1 ? "Photo" : `${media.length} photos`}. Double tap to like.`}
       >
         <FlatList
+          ref={list}
           data={media}
           horizontal
           pagingEnabled
@@ -356,6 +509,12 @@ function Photos({
         <Animated.View style={[s.burst, heart]} pointerEvents="none">
           <Icon name="HeartFill" size={96} color="#ffffff" />
         </Animated.View>
+        {fine && index > 0 ? (
+          <EdgeArrow side="left" onPress={() => show(index - 1)} label="Previous photo" />
+        ) : null}
+        {fine && index < media.length - 1 ? (
+          <EdgeArrow side="right" onPress={() => show(index + 1)} label="Next photo" />
+        ) : null}
         {media.length > 1 ? (
           <View style={s.dots} pointerEvents="none">
             {media.map((m, i) => (
@@ -637,6 +796,21 @@ const make = (t: NativeTheme) =>
       lineHeight: 20 * t.textScale,
       color: t.colors.text,
     },
+    reposted: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      alignSelf: "flex-start",
+      minHeight: 32,
+      paddingLeft: 22,
+      paddingRight: 12,
+      paddingTop: 6,
+    },
+    repostedText: {
+      fontFamily: t.fonts.bold,
+      fontSize: 13 * t.textScale,
+      color: t.colors.textSoft,
+    },
     head: {
       flexDirection: "row",
       alignItems: "center",
@@ -654,15 +828,34 @@ const make = (t: NativeTheme) =>
       marginTop: 1,
     },
     metaStrong: { fontFamily: t.fonts.bold, color: t.colors.text },
-    textPost: { paddingHorizontal: 16, paddingVertical: 10 },
+    // Posts with only words: the text sits under the name, beside the picture's column.
+    textPost: { paddingBottom: 2 },
     textBody: {
       fontFamily: t.fonts.body,
-      fontSize: 20 * t.textScale,
-      lineHeight: 29 * t.textScale,
+      fontSize: 16 * t.textScale,
+      lineHeight: 23 * t.textScale,
       color: t.colors.text,
+    },
+    headWords: { paddingBottom: 0 },
+    nameWords: { flexShrink: 1 },
+    handle: {
+      flexShrink: 1,
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      color: t.colors.textSoft,
+      marginLeft: 2,
     },
     actions: { flexDirection: "row", alignItems: "center", paddingHorizontal: 4, paddingTop: 4 },
     iconBtn: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
+    iconBtnSmall: {
+      width: undefined,
+      minWidth: 48,
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      gap: 5,
+      paddingHorizontal: 8,
+    },
+    count: { fontFamily: t.fonts.body, fontSize: 13 * t.textScale, color: t.colors.textSoft },
     grow: { flex: 1 },
     likes: {
       fontFamily: t.fonts.bold,

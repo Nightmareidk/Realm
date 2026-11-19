@@ -6,6 +6,7 @@ import {
   type MessagePage,
   type OpenedPhoto,
 } from "@realm/contracts";
+import { E2eeNotice, E2eeRequestError, newMessageId } from "@realm/e2ee";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { Image, type ImageSource } from "expo-image";
@@ -31,6 +32,7 @@ import { chatAccent } from "@/chat/colour";
 import { bodyOf, MessageRow, QUICK_REACTIONS, timeOf } from "@/chat/message-row";
 import { PhotoSend } from "@/chat/photo-send";
 import { PhotoViewer } from "@/chat/photo-viewer";
+import { asMessage, e2ee, syncE2ee, useE2eeStatus } from "@/e2ee";
 import { Icon } from "@/icon";
 import { leave } from "@/leave";
 import { live, useLiveEvent, useLiveStatus } from "@/live";
@@ -46,6 +48,22 @@ import { Verified } from "@/social/verified";
 import { type NativeTheme, THEME_ORDER, themes, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 import { markRead, olderId, refreshUnread } from "@/unread";
+
+/** What to tell someone when something didn't work: the reason if there is one in plain words. */
+const said = (err: unknown, otherwise: string) =>
+  err instanceof ApiError || err instanceof E2eeRequestError || err instanceof E2eeNotice
+    ? err.message
+    : otherwise;
+
+/** Why an encrypted chat can't be used on this device right now, in plain words. */
+const SECURE_WAIT: Record<string, string> = {
+  starting: "Getting this device ready for encrypted chats…",
+  none: "This chat is end-to-end encrypted. It opens once you're back online.",
+  off: "Encrypted chats are switched off on this server.",
+  "needs-approval":
+    "This chat is end-to-end encrypted. Confirm this device from your first one to read it here.",
+  unavailable: "This chat is end-to-end encrypted, and this device can't open it.",
+};
 
 /** A short id for an outgoing message, so its echo can be matched. */
 const nonce = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -92,17 +110,34 @@ type Row = { kind: "message"; m: Message } | { kind: "outgoing"; o: Outgoing };
 export default function Chat() {
   const { t } = useTheme();
   const s = useStyles(make);
-  const { id, title, kind, readOnly } = useLocalSearchParams<{
+  const {
+    id,
+    title,
+    kind,
+    readOnly,
+    secure: secureParam,
+  } = useLocalSearchParams<{
     id: string;
     title?: string;
     kind?: string;
     /** An announcement room you can read but not post in. */
     readOnly?: string;
+    /** "1": an end-to-end encrypted chat. Its messages live on this device, not on the server. */
+    secure?: string;
   }>();
   const insets = useSafeAreaInsets();
   const { session } = useSession();
-  const meId = session.status === "signedIn" ? session.user.id : null;
-  const isDm = kind === "dm" || kind === "group_dm";
+  const me = session.status === "signedIn" ? session.user : null;
+  const meId = me?.id ?? null;
+  // Opened from a link that didn't say (a notification, an old link): it's a conversation unless
+  // it says it's a Space room, and the conversation's own type settles it once it has loaded.
+  const knownDm = kind === "dm" || kind === "group_dm";
+  /** This conversation as the list sees it: a request to you, or yours waiting to be accepted. */
+  const [conv, setConv] = useState<Conversation | null>(null);
+  const isDm = knownDm || conv?.type === "dm" || conv?.type === "group_dm";
+  const secure = secureParam === "1";
+  const secureStatus = useE2eeStatus();
+  const secureReady = secureStatus === "ready";
   const theme = useTheme();
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [outgoing, setOutgoing] = useState<Outgoing[]>([]);
@@ -115,18 +150,22 @@ export default function Chat() {
   /** How far the others in a conversation have read, by person. */
   const [seenBy, setSeenBy] = useState<Record<string, string>>({});
   const [problem, setProblem] = useState<string | null>(null);
-  /** This conversation as the list sees it: a request to you, or yours waiting to be accepted. */
-  const [conv, setConv] = useState<Conversation | null>(null);
-  // Now Playing gives every conversation its own colour (the one someone in it picked, or one
-  // from its id); other looks use yours.
+  // Now Playing gives a conversation its own colour when someone in it picked one. Without a pick,
+  // the older colours give each chat one from its id; the newer colour sets (Afterglow and the
+  // rest) keep yours, with its fade on your bubbles. Other looks use yours.
+  const olderColours =
+    theme.choice.kind === "theme" || (THEME_ORDER as string[]).includes(theme.paletteId);
   const own =
     t.style.chatColours && isDm && id
       ? conv?.colour
         ? themes[conv.colour]
-        : chatColour(id)
+        : olderColours
+          ? chatColour(id)
+          : null
       : null;
   const accent = own?.accent ?? theme.accent;
   const onAccent = own?.onAccent ?? theme.onAccent;
+  const accent2 = !own && t.colors.gradient ? t.colors.accent2 : undefined;
   const [inputHeight, setInputHeight] = useState(INPUT_MIN);
   /** Photos picked, waiting in the big preview. */
   const [preview, setPreview] = useState<Photo[] | null>(null);
@@ -145,6 +184,50 @@ export default function Chat() {
   const safety = useSafety();
 
   const load = useCallback(async () => {
+    if (secure) {
+      // An encrypted chat is read from this device's sealed store: the server has no copy.
+      // (Depending on `secureReady` fills the chat in the moment this device finishes setting up.)
+      const client = secureReady ? e2ee.client : null;
+      if (!client) {
+        if (focused.current) setMessages((m) => m ?? []);
+        return;
+      }
+      const chat = await client.chat(id).catch(() => null);
+      if (!focused.current) return;
+      const all = chat?.messages ?? [];
+      const people = new Map((conv?.recipients ?? []).map((r) => [r.id, r]));
+      if (me) people.set(me.id, me);
+      setMessages(
+        chat
+          ? all
+              .filter((m) => !m.deleted && !m.status)
+              .map((m) => asMessage(m, chat, people, meId))
+              .reverse()
+          : [],
+      );
+      // Yours that are on their way, or didn't go: kept across restarts, so they can be retried.
+      setOutgoing(
+        all
+          .filter((m) => m.status)
+          .map((m) => ({
+            nonce: m.id,
+            content: m.text,
+            replyTo: null,
+            photos: [],
+            state: m.status === "failed" ? ("failed" as const) : ("sending" as const),
+          })),
+      );
+      setSeenBy(
+        Object.fromEntries(
+          Object.entries(chat?.seen ?? {}).flatMap(([userId, messageId]) => {
+            const seq = all.find((m) => m.id === messageId)?.seq;
+            return userId !== meId && seq ? [[userId, String(seq)]] : [];
+          }),
+        ),
+      );
+      setProblem(null);
+      return;
+    }
     try {
       const page = await api<MessagePage>(`/channels/${id}/messages?limit=50`);
       if (focused.current) setMessages(page.messages);
@@ -154,18 +237,48 @@ export default function Chat() {
       setMessages((m) => m ?? []);
       setProblem(err instanceof ApiError ? err.message : "Couldn't load this chat.");
     }
-  }, [id]);
+  }, [id, secure, secureReady, conv?.recipients, meId, me]);
+
+  // In an encrypted DM: whether the other person's security code changed and hasn't been
+  // accepted yet. Checked on opening the chat, on coming back to it, and when it happens.
+  const them = conv?.type === "dm" ? (conv.recipients.find((r) => r.id !== meId) ?? null) : null;
+  const themId = them?.id ?? null;
+  const [codeChanged, setCodeChanged] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!secure || !secureReady || !themId) return;
+      const check = () => {
+        e2ee.client
+          ?.keyChanged(themId)
+          .then(setCodeChanged)
+          .catch(() => {});
+      };
+      check();
+      return e2ee.onKeyChange((userId) => {
+        if (userId === themId) check();
+      });
+    }, [secure, secureReady, themId]),
+  );
+
+  // An encrypted chat changed on this device (a message arrived, or one of yours went out).
+  useEffect(() => {
+    if (!secure) return;
+    return e2ee.onChat((channelId) => {
+      if (channelId === id) load();
+    });
+  }, [secure, id, load]);
 
   // In a conversation: where the others have read up to ("Seen"), and whether it's a request.
   const loadConv = useCallback(() => {
-    if (!isDm) return;
+    if (kind && !knownDm) return;
     api<Conversation>(`/users/@me/channels/${id}`)
       .then((c) => {
         setConv(c);
-        setSeenBy(Object.fromEntries(c.seen.map((x) => [x.userId, x.messageId])));
+        // In an encrypted chat "Seen" travels inside the chat; the server doesn't know it.
+        if (!secure) setSeenBy(Object.fromEntries(c.seen.map((x) => [x.userId, x.messageId])));
       })
       .catch(() => {});
-  }, [id, isDm]);
+  }, [id, kind, knownDm, secure]);
   useEffect(loadConv, [loadConv]);
   // Accepted (by them, or by you elsewhere): it's an ordinary chat now.
   useLiveEvent("CHANNEL_UPDATE", (c) => {
@@ -177,12 +290,15 @@ export default function Chat() {
     useCallback(() => {
       focused.current = true;
       load();
-      const t = status === "live" ? null : setInterval(load, FALLBACK_MS);
+      // Encrypted: fetching what's waiting is what brings new messages in (then `load` runs).
+      if (secure) syncE2ee();
+      const check = secure ? () => void syncE2ee() : load;
+      const t = status === "live" ? null : setInterval(check, FALLBACK_MS);
       return () => {
         focused.current = false;
         if (t) clearInterval(t);
       };
-    }, [load, status]),
+    }, [load, status, secure]),
   );
 
   /** Put a message in its place: newest first, its outgoing copy taken away. */
@@ -263,11 +379,26 @@ export default function Chat() {
 
   // Reading the newest message marks the chat read (here, in the Inbox, and for "Seen").
   const newest = messages?.[0]?.id;
+  /** In an encrypted chat: the sender's own id for the newest message, and who sent it. */
+  const newestSecureId = messages?.[0]?.nonce ?? null;
+  const newestAuthor = messages?.[0]?.author.id ?? null;
+  /** A message request to you (true), an ordinary chat (false), or not loaded yet (null). */
+  const isRequest = conv ? conv.request : null;
   useEffect(() => {
     if (!newest || !focused.current) return;
     markRead(id, newest);
+    if (secure) {
+      // "Seen" goes to them inside the chat. It stays on this device instead while this is a
+      // message request (they aren't told until you accept), or with read receipts off. Until
+      // the conversation has loaded it isn't known which, so nothing is said yet.
+      if (isRequest !== null && newestSecureId && newestAuthor !== meId) {
+        const tell = e2ee.shareSeen && !isRequest;
+        e2ee.client?.markSeen(id, newestSecureId, tell).catch(() => {});
+      }
+      return;
+    }
     api(`/channels/${id}/ack`, { body: { messageId: newest } }).catch(() => {});
-  }, [id, newest]);
+  }, [id, newest, secure, newestSecureId, newestAuthor, meId, isRequest]);
 
   /** Send (or send again) one outgoing message: photos first, then the message itself. */
   const deliver = useCallback(
@@ -276,6 +407,23 @@ export default function Chat() {
         ...all.filter((x) => x.nonce !== o.nonce),
         { ...o, state: "sending", error: undefined },
       ]);
+      if (secure) {
+        try {
+          const client = e2ee.client;
+          if (!client) throw new E2eeNotice("not-ready", SECURE_WAIT[secureStatus] ?? "");
+          // The same id on a retry, so they never see it twice.
+          await client.sendText(id, o.content, o.replyTo?.nonce ?? undefined, o.nonce);
+        } catch (err) {
+          setOutgoing((all) =>
+            all.map((x) =>
+              x.nonce === o.nonce
+                ? { ...x, state: "failed", error: said(err, "Something went wrong.") }
+                : x,
+            ),
+          );
+        }
+        return;
+      }
       try {
         const attachmentIds: string[] = [];
         for (const p of o.photos) {
@@ -309,7 +457,7 @@ export default function Chat() {
         );
       }
     },
-    [id, upsert],
+    [id, upsert, secure, secureStatus],
   );
 
   async function send() {
@@ -318,18 +466,23 @@ export default function Chat() {
       if (!content || saving) return;
       setSaving(true);
       try {
-        upsert(
-          await api<Message>(`/channels/${id}/messages/${editing.id}`, {
-            method: "PATCH",
-            body: { content },
-          }),
-        );
+        if (secure) {
+          if (!e2ee.client || !editing.nonce) throw new E2eeNotice("not-ready", "Try again.");
+          await e2ee.client.edit(id, editing.nonce, content);
+        } else {
+          upsert(
+            await api<Message>(`/channels/${id}/messages/${editing.id}`, {
+              method: "PATCH",
+              body: { content },
+            }),
+          );
+        }
         setEditing(null);
         setText("");
       } catch (err) {
         sheet({
           title: "Not changed",
-          line: err instanceof ApiError ? err.message : "Try again.",
+          line: said(err, "Try again."),
           actions: [],
         });
       } finally {
@@ -340,7 +493,7 @@ export default function Chat() {
     if (!content && photos.length === 0) return;
     Haptics.selectionAsync();
     const o: Outgoing = {
-      nonce: nonce(),
+      nonce: secure ? newMessageId() : nonce(),
       content,
       replyTo,
       photos,
@@ -425,19 +578,24 @@ export default function Chat() {
       const on = !m.reactions.some((r) => r.emoji === emoji && r.me);
       adjust(m.id, emoji, on, true);
       try {
-        await api(`/channels/${id}/messages/${m.id}/reactions/${encodeURIComponent(emoji)}/@me`, {
-          method: on ? "PUT" : "DELETE",
-        });
+        if (secure) {
+          if (!e2ee.client || !m.nonce) throw new E2eeNotice("not-ready", "Try again.");
+          await e2ee.client.react(id, m.nonce, emoji, !on);
+        } else {
+          await api(`/channels/${id}/messages/${m.id}/reactions/${encodeURIComponent(emoji)}/@me`, {
+            method: on ? "PUT" : "DELETE",
+          });
+        }
       } catch (err) {
         adjust(m.id, emoji, !on, true);
         sheet({
           title: "Reaction not added",
-          line: err instanceof ApiError ? err.message : "Try again.",
+          line: said(err, "Try again."),
           actions: [],
         });
       }
     },
-    [adjust, id, sheet],
+    [adjust, id, sheet, secure],
   );
 
   const reply = useCallback((m: Message) => {
@@ -518,7 +676,7 @@ export default function Chat() {
                 },
               ]
             : []),
-          ...(isDm
+          ...(isDm && !secure
             ? [
                 {
                   label: "Delete for you",
@@ -558,12 +716,21 @@ export default function Chat() {
                           danger: true,
                           onPress: async () => {
                             try {
-                              await api(`/channels/${id}/messages/${m.id}`, { method: "DELETE" });
+                              if (secure) {
+                                if (!e2ee.client || !m.nonce) {
+                                  throw new E2eeNotice("not-ready", "Try again.");
+                                }
+                                await e2ee.client.remove(id, m.nonce);
+                              } else {
+                                await api(`/channels/${id}/messages/${m.id}`, {
+                                  method: "DELETE",
+                                });
+                              }
                               setMessages((list) => list?.filter((x) => x.id !== m.id) ?? list);
                             } catch (err) {
                               sheet({
                                 title: "Not deleted",
-                                line: err instanceof ApiError ? err.message : "Try again.",
+                                line: said(err, "Try again."),
                                 actions: [],
                               });
                             }
@@ -573,20 +740,29 @@ export default function Chat() {
                     }),
                 },
               ]
-            : [
-                {
-                  label: "Report message",
-                  icon: "Flag" as const,
-                  danger: true,
-                  onPress: () => safety.report("message", m.id, m.author),
-                },
-                {
-                  label: `Block @${m.author.username}`,
-                  icon: "Prohibit" as const,
-                  danger: true,
-                  onPress: () => safety.block(m.author),
-                },
-              ]),
+            : mine
+              ? []
+              : [
+                  {
+                    label: "Report message",
+                    icon: "Flag" as const,
+                    danger: true,
+                    onPress: () =>
+                      safety.report(
+                        "message",
+                        m.id,
+                        m.author,
+                        // Encrypted: the report carries this one message and the proof it's theirs.
+                        secure && m.nonce ? { channelId: id, messageId: m.nonce } : undefined,
+                      ),
+                  },
+                  {
+                    label: `Block @${m.author.username}`,
+                    icon: "Prohibit" as const,
+                    danger: true,
+                    onPress: () => safety.block(m.author),
+                  },
+                ]),
         ],
       });
     },
@@ -605,6 +781,7 @@ export default function Chat() {
       unsendable,
       load,
       isDm,
+      secure,
     ],
   );
 
@@ -654,14 +831,48 @@ export default function Chat() {
       ) : (
         <TopBar title={title ?? "Chat"} />
       )}
-      {isDm ? (
+      {isDm && secure && secureReady ? (
+        // Said only when it's true: an encrypted chat, opened by this device with its own keys.
+        <Pressable
+          onPress={() => {
+            if (them) {
+              router.push({
+                pathname: "/chat/safety",
+                params: { userId: them.id, name: them.displayName },
+              });
+            }
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={
+            codeChanged ? `${them?.displayName}'s security code changed` : "End-to-end encrypted"
+          }
+          accessibilityHint="Opens the security code for this chat"
+          style={({ pressed }) => [s.notice, pressed && s.dim]}
+        >
+          {codeChanged ? (
+            // Their key is not the one this device knows: nothing new from them is trusted
+            // until you've checked the code and accepted it.
+            <View style={[s.noticeLock, { borderColor: t.colors.danger }]}>
+              <Icon name="WarningCircle" size={14} color={t.colors.danger} />
+              <Text style={[s.noticeLockText, { color: t.colors.text }]}>
+                Security code changed. Check it
+              </Text>
+            </View>
+          ) : (
+            <View style={s.noticeLock}>
+              <Icon name="Lock" size={13} color={t.colors.textSoft} />
+              <Text style={s.noticeLockText}>End-to-end encrypted</Text>
+            </View>
+          )}
+        </Pressable>
+      ) : isDm && !secure ? (
         <View style={s.notice}>
           <Text style={s.noticeText}>Not end-to-end encrypted yet</Text>
         </View>
       ) : null}
       <KeyboardAvoidingView behavior="padding" style={s.fill}>
         {!messages ? (
-          <Loading />
+          <Loading shape="chat" />
         ) : (
           <FlatList
             inverted
@@ -685,6 +896,7 @@ export default function Chat() {
                   showName={kind !== "dm" && !sameRun}
                   status={m.id === statusId ? delivery : null}
                   accent={accent}
+                  accent2={accent2}
                   onAccent={onAccent}
                   onReply={reply}
                   onReact={react}
@@ -719,6 +931,10 @@ export default function Chat() {
               else router.replace("/inbox");
             }}
           />
+        ) : secure && !secureReady ? (
+          <Text style={[s.awaiting, { padding: 16, paddingBottom: insets.bottom + 16 }]}>
+            {SECURE_WAIT[secureStatus]}
+          </Text>
         ) : readOnly === "1" ? (
           <Text style={[s.awaiting, { padding: 16, paddingBottom: insets.bottom + 16 }]}>
             This is an announcement room: moderators post here, and everyone can read and react.
@@ -780,7 +996,7 @@ export default function Chat() {
               </View>
             ) : null}
             <View style={s.row}>
-              {!editing && !conv?.awaiting ? (
+              {!editing && !conv?.awaiting && !secure ? (
                 <Pressable
                   onPress={pickPhotos}
                   disabled={photos.length >= MAX_PHOTOS}
@@ -796,7 +1012,8 @@ export default function Chat() {
                 value={text}
                 onChangeText={(v) => {
                   setText(v);
-                  if (v.trim() && !editing) live.typing(id);
+                  // "Typing…" isn't sent in an encrypted chat: it would tell the server when.
+                  if (v.trim() && !editing && !secure) live.typing(id);
                 }}
                 placeholder={editing ? "Edit message" : `Message ${title ?? ""}`.trim()}
                 placeholderTextColor={t.colors.textMuted}
@@ -1151,6 +1368,22 @@ const make = (t: NativeTheme) =>
   StyleSheet.create({
     fill: { flex: 1 },
     notice: { alignItems: "center", paddingVertical: 6 },
+    noticeLock: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      minHeight: 28,
+      paddingHorizontal: 11,
+      borderRadius: 999,
+      backgroundColor: "rgba(11,11,14,0.65)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(255,255,255,0.14)",
+    },
+    noticeLockText: {
+      fontFamily: t.fonts.bold,
+      fontSize: 12.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
     noticeText: {
       fontFamily: t.fonts.bold,
       fontSize: 12.5 * t.textScale,

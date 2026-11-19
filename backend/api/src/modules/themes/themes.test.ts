@@ -139,19 +139,54 @@ describe("the theme store", () => {
     });
   });
 
-  it("starts everyone on Now Playing and switches between Realm's looks", async () => {
+  it("starts everyone on Now Playing in Afterglow and switches looks, colours and fonts", async () => {
     const mei = await person();
     expect((await call(mei.cookie, "GET", "/themes/active")).json().active).toEqual({
       kind: "look",
       look: "now-playing",
-      accent: "mint",
+      palette: "afterglow",
+      font: "match",
     });
     const set = await call(mei.cookie, "PUT", "/themes/active", {
       kind: "look",
       look: "wristband",
-      accent: "orchid",
+      palette: "cobalt-volt",
+      font: "classic",
     });
-    expect(set.json().active).toEqual({ kind: "look", look: "wristband", accent: "orchid" });
+    expect(set.json().active).toEqual({
+      kind: "look",
+      look: "wristband",
+      palette: "cobalt-volt",
+      font: "classic",
+    });
+    // Leaving the font out means "match the colours".
+    const plain = await call(mei.cookie, "PUT", "/themes/active", {
+      kind: "look",
+      look: "plain",
+      palette: "orchid",
+    });
+    expect(plain.json().active).toEqual({
+      kind: "look",
+      look: "plain",
+      palette: "orchid",
+      font: "match",
+    });
+  });
+
+  it("refuses colour sets and fonts it doesn't have", async () => {
+    const mei = await person();
+    for (const body of [
+      { kind: "look", look: "now-playing", palette: "neon<script>" },
+      { kind: "look", look: "now-playing", palette: "afterglow", font: "comic-sans" },
+      { kind: "look", look: "now-playing", palette: { $ne: null } },
+      { kind: "look", look: "now-playing" },
+    ]) {
+      const res = await call(mei.cookie, "PUT", "/themes/active", body);
+      expect(res.statusCode, JSON.stringify(body)).toBe(400);
+    }
+    expect((await call(mei.cookie, "GET", "/themes/active")).json().active.palette).toBe(
+      "afterglow",
+    );
   });
 
   it("asks for a confirmed email before sharing", async () => {

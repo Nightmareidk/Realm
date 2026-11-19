@@ -141,6 +141,62 @@
       "when": 1793408960901,
       "tag": "0019_instagram_gaps",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794531191066,
+      "tag": "0020_e2ee_devices",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794604169521,
+      "tag": "0021_e2ee_chats",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1794768746189,
+      "tag": "0022_user_songs",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794770425056,
+      "tag": "0023_post_hashtags",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794770927277,
+      "tag": "0024_reposts",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794787892413,
+      "tag": "0025_polls_quotes_listening",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795030785820,
+      "tag": "0026_time_capsules",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1795104488254,
+      "tag": "0027_theme_palettes",
+      "breakpoints": true
     }
   ]
 }

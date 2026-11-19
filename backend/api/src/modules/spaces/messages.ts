@@ -196,6 +196,10 @@ export class MessagesService {
     if (channel.type !== "text" && channel.type !== "dm" && channel.type !== "group_dm") {
       throw badRequest("BAD_REQUEST", "You can't chat in this room.");
     }
+    // An encrypted chat never takes readable text: only ciphertext, through /e2ee (docs/E2EE.md).
+    if (channel.encryption !== "none") {
+      throw badRequest("ENCRYPTED_CHAT", "This chat is end-to-end encrypted. Update the app.");
+    }
     if (!has(permissions, Permission.SEND_MESSAGES)) {
       if (channel.type === "dm") {
         throw new AppError(403, "BLOCKED", "You can't send messages in this conversation.");

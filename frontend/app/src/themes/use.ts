@@ -16,7 +16,7 @@ export function useApplyTheme() {
       choose(next);
       const body: ActiveTheme =
         next.kind === "look"
-          ? { kind: "look", look: next.look, accent: next.accent }
+          ? { kind: "look", look: next.look, palette: next.palette, font: next.font }
           : { kind: "theme", themeId: next.themeId };
       try {
         const mine = await api<MyTheme>("/themes/active", { method: "PUT", body });

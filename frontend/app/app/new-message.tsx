@@ -1,4 +1,4 @@
-import type { Channel, SearchResults, UserSummary } from "@realm/contracts";
+import type { SearchResults, UserSummary } from "@realm/contracts";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { dmParams, openDmWith } from "@/e2ee/open-dm";
 import { Icon } from "@/icon";
 import { ApiError, api } from "@/server";
 import { useSession } from "@/session";
@@ -68,10 +69,9 @@ export default function NewMessage() {
     setOpening(u.id);
     setProblem(null);
     try {
-      const dm = await api<Channel>("/users/@me/channels", { body: { recipientIds: [u.id] } });
       router.replace({
         pathname: "/chat/[id]",
-        params: { id: dm.id, title: u.displayName, kind: "dm" },
+        params: dmParams(await openDmWith(u.id), u.displayName),
       });
     } catch (err) {
       setProblem(err instanceof ApiError ? err.message : "Couldn't start that chat. Try again.");

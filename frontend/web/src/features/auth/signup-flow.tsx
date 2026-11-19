@@ -7,11 +7,22 @@ import {
   Email,
   Limits,
   Password,
+  resolveTheme,
+  type ThemePalette,
   Username,
   type UsernameAvailability,
 } from "@realm/contracts";
+import { cssVars, INTRO_PALETTES, lookTheme, PALETTES } from "@realm/design-tokens";
 import Link from "next/link";
-import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   FieldError,
   FormNotice,
@@ -25,8 +36,6 @@ import {
 import { pill, textLink } from "@/components/pill";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
-import { THEME_ORDER, THEMES, type ThemeId } from "../home/themes";
-import { applyAccent, currentAccent } from "./accent";
 import { waitFor } from "./wait";
 
 /*
@@ -95,6 +104,41 @@ function StepTitle({ children, big = false }: { children: ReactNode; big?: boole
   );
 }
 
+/** Where a picked colour set waits on this device until the account has it. */
+const PALETTE_KEY = "realm:palette";
+
+/** A colour set as Realm's default look draws it. */
+const paletteTheme = (p: ThemePalette) => resolveTheme(lookTheme("now-playing", p));
+
+/** The values that carry a colour set's colour (not its background or fonts). */
+const COLOUR_KEYS = [
+  "--r-accent",
+  "--r-on-accent",
+  "--r-accent-2",
+  "--r-light-1",
+  "--r-light-2",
+  "--r-light-3",
+  "--r-glow",
+  "--r-like",
+  "--r-btn-bg",
+  "--r-btn-ink",
+  "--r-btn-ring",
+  "--r-btn-glow",
+];
+
+/**
+ * A colour set's colours for one part of the page: what you press, the focus ring and the light.
+ * `whole` also brings its background, panels, text and fonts (for the profile preview).
+ */
+function paletteVars(p: ThemePalette, whole = false): CSSProperties {
+  const all = cssVars(paletteTheme(p)) as Record<string, string>;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(all)) if (whole || COLOUR_KEYS.includes(k)) out[k] = v;
+  out["--r-focus"] = all["--r-accent"] as string;
+  out["--r-selection"] = `color-mix(in srgb, ${all["--r-accent"]} 34%, transparent)`;
+  return out as CSSProperties;
+}
+
 /** Joining through an invite: what to say, the Space's card, and how to join once signed up. */
 export interface InviteJoin {
   heading: string;
@@ -105,22 +149,39 @@ export interface InviteJoin {
 
 export function SignupFlow({ next, invite }: { next: string; invite?: InviteJoin }) {
   const [step, setStep] = useState<Step>(invite ? "birthday" : "colour");
-  const [accent, setAccent] = useState<ThemeId>("mint");
+  const [palette, setPalette] = useState<ThemePalette>("afterglow");
   const [birthDate, setBirthDate] = useState("");
   const [preview, setPreview] = useState({ name: "", username: "" });
 
-  useEffect(() => setAccent(currentAccent()), []);
+  // A pick made earlier on this device (only one of the four offered here counts).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PALETTE_KEY);
+      const found = INTRO_PALETTES.find((p) => p === saved);
+      if (found) setPalette(found);
+    } catch {
+      // No storage (private mode): start in Afterglow.
+    }
+  }, []);
 
-  const pick = (id: ThemeId) => {
-    setAccent(id);
-    applyAccent(id);
+  const pick = (id: ThemePalette) => {
+    setPalette(id);
+    try {
+      localStorage.setItem(PALETTE_KEY, id);
+    } catch {
+      // No storage: the pick still counts for this sign-up.
+    }
   };
+  const colours = useMemo(() => paletteVars(palette), [palette]);
 
   return (
-    <div className="mx-auto grid w-full max-w-[90rem] grid-cols-[minmax(0,1fr)] gap-12 px-4 pt-6 pb-16 md:px-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-center lg:gap-16 lg:pt-10 xl:px-28">
+    <div
+      style={colours}
+      className="mx-auto grid w-full max-w-[90rem] grid-cols-[minmax(0,1fr)] gap-12 px-4 pt-6 pb-16 md:px-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-center lg:gap-16 lg:pt-10 xl:px-28"
+    >
       <div className="max-w-[38rem]">
         {step === "colour" && (
-          <ColourStep accent={accent} onPick={pick} onNext={() => setStep("birthday")} />
+          <ColourStep palette={palette} onPick={pick} onNext={() => setStep("birthday")} />
         )}
         {step === "birthday" && (
           <BirthdayStep
@@ -141,7 +202,7 @@ export function SignupFlow({ next, invite }: { next: string; invite?: InviteJoin
             next={next}
             stepLabel={invite ? "Step 2 of 2" : "Step 3 of 3"}
             onRegistered={invite?.join}
-            accent={accent}
+            palette={palette}
             birthDate={birthDate}
             onBack={() => setStep("birthday")}
             onHeld={() => setStep("held")}
@@ -153,7 +214,7 @@ export function SignupFlow({ next, invite }: { next: string; invite?: InviteJoin
       {invite
         ? step !== "held" && <div className="lg:order-first">{invite.card}</div>
         : step !== "held" && (
-            <ProfilePreview accent={accent} name={preview.name} username={preview.username} />
+            <ProfilePreview palette={palette} name={preview.name} username={preview.username} />
           )}
     </div>
   );
@@ -162,12 +223,12 @@ export function SignupFlow({ next, invite }: { next: string; invite?: InviteJoin
 /* ── Step 1: Pick your colour ─────────────────────────────────────────────── */
 
 function ColourStep({
-  accent,
+  palette,
   onPick,
   onNext,
 }: {
-  accent: ThemeId;
-  onPick: (id: ThemeId) => void;
+  palette: ThemePalette;
+  onPick: (id: ThemePalette) => void;
   onNext: () => void;
 }) {
   return (
@@ -178,16 +239,18 @@ function ColourStep({
         onNext();
       }}
     >
-      <StepTitle big>Pick your colour.</StepTitle>
+      <StepTitle big>Pick your colours.</StepTitle>
       <p className="mt-5 max-w-[32ch] text-[1.15rem] leading-relaxed text-fg-soft">
-        It's how Realm looks for you, and how your profile looks to friends. Change it any time.
+        It's how Realm looks for you. Change it any time, and pick a font too, in Settings.
       </p>
       <fieldset className="mt-8">
-        <legend className="sr-only">Your colour</legend>
+        <legend className="sr-only">Your colours</legend>
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {THEME_ORDER.map((id) => {
-            const t = THEMES[id];
-            const on = id === accent;
+          {INTRO_PALETTES.map((id) => {
+            const p = PALETTES[id];
+            const [s1, s2, s3] = p.swatch;
+            const ground = paletteTheme(id).colors.ground;
+            const on = id === palette;
             return (
               <label
                 key={id}
@@ -199,12 +262,12 @@ function ColourStep({
                     : "shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)]",
                 )}
                 style={{
-                  background: `radial-gradient(100% 120% at 0% 100%, ${t.light[0]}, transparent 70%), radial-gradient(90% 110% at 100% 0%, ${t.light[1]}, transparent 70%), ${t.light[2]}`,
+                  background: `radial-gradient(100% 120% at 0% 100%, ${s1}, transparent 70%), radial-gradient(90% 110% at 100% 0%, ${s2}, transparent 70%), radial-gradient(80% 90% at 100% 100%, ${s3}, transparent 70%), ${ground}`,
                 }}
               >
                 <input
                   type="radio"
-                  name="accent"
+                  name="palette"
                   value={id}
                   checked={on}
                   onChange={() => onPick(id)}
@@ -216,7 +279,7 @@ function ColourStep({
                   </span>
                 )}
                 <span className="rounded-full bg-base/75 px-2.5 py-1 text-[1rem] leading-none text-fg">
-                  {t.name}
+                  {p.name}
                 </span>
               </label>
             );
@@ -426,7 +489,7 @@ function AccountStep({
   next,
   stepLabel,
   onRegistered,
-  accent,
+  palette,
   birthDate,
   onBack,
   onHeld,
@@ -435,7 +498,7 @@ function AccountStep({
   next: string;
   stepLabel: string;
   onRegistered?: () => Promise<string>;
-  accent: ThemeId;
+  palette: ThemePalette;
   birthDate: string;
   onBack: () => void;
   onHeld: () => void;
@@ -515,7 +578,7 @@ function AccountStep({
           email: f.email.trim(),
           password: f.password,
           birthDate,
-          accent,
+          palette,
         },
       });
       // From an invite: join the Space now (if that fails, its page explains why).
@@ -666,17 +729,18 @@ function HeldStep() {
 /* ── The preview beside every step ────────────────────────────────────────── */
 
 function ProfilePreview({
-  accent,
+  palette,
   name,
   username,
 }: {
-  accent: ThemeId;
+  palette: ThemePalette;
   name: string;
   username: string;
 }) {
   const shown = name.trim() || "You";
+  const look = useMemo(() => paletteVars(palette, true), [palette]);
   return (
-    <div aria-hidden="true" className="hidden lg:block">
+    <div aria-hidden="true" className="hidden lg:block" style={look}>
       <div className="rounded-[1.75rem] bg-surface p-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08),0_60px_120px_-50px_var(--r-shadow)]">
         <div
           className="h-40 rounded-[1.25rem]"
@@ -694,7 +758,7 @@ function ProfilePreview({
               {shown}
             </span>
             <span className="block truncate text-[0.92rem] text-fg-soft">
-              {username ? `@${username}` : `your profile, in ${THEMES[accent].name}`}
+              {username ? `@${username}` : `your profile, in ${PALETTES[palette].name}`}
             </span>
           </span>
         </div>

@@ -1,5 +1,6 @@
 export * from "./communities";
 export * from "./content";
+export * from "./e2ee";
 export * from "./identity";
 export * from "./media";
 export * from "./messages";

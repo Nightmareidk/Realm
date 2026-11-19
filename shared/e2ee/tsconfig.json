@@ -1,0 +1,5 @@
+{
+  "extends": "@realm/tsconfig/library.json",
+  "include": ["src"],
+  "exclude": ["src/spike"]
+}

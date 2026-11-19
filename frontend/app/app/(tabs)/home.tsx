@@ -4,14 +4,16 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApi, usePosts } from "@/data";
 import { Icon } from "@/icon";
 import { useWide } from "@/layout";
 import { live, useLiveEvent } from "@/live";
+import { FriendsListening } from "@/music/friends";
 import { feedPlay, feedStop } from "@/music/player";
 import { loadStories, useStories } from "@/music/stories";
+import { HScroll } from "@/scroll-row";
 import { api, mediaSource } from "@/server";
 import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
@@ -129,6 +131,7 @@ export default function Home() {
         </Pressable>
       ) : null}
       <StoriesRow />
+      <FriendsListening quiet />
     </>
   );
 
@@ -163,7 +166,7 @@ export default function Home() {
         ListHeaderComponent={header}
         ListEmptyComponent={
           feed.loading ? (
-            <Loading />
+            <Loading shape="feed" />
           ) : feed.error ? (
             <Problem message={feed.error} onRetry={feed.refresh} />
           ) : (
@@ -211,8 +214,7 @@ function StoriesRow() {
   const add = () => router.push({ pathname: "/create", params: { mode: "story" } });
   const named = t.style.stories !== "bands";
   return (
-    <ScrollView
-      horizontal
+    <HScroll
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={s.people}
       style={s.peopleRow}
@@ -279,7 +281,7 @@ function StoriesRow() {
           ) : null}
         </Pressable>
       ))}
-    </ScrollView>
+    </HScroll>
   );
 }
 
@@ -308,7 +310,7 @@ function Face({
     ? "#22c55e"
     : user.accentColor
       ? `#${user.accentColor.toString(16).padStart(6, "0")}`
-      : fillFor(user.id);
+      : fillFor(user.id, t);
   if (t.style.stories === "bands") {
     return (
       <View style={[s.band, state === "new" && s.bandNew, state === "none" && s.bandNone]}>
@@ -342,6 +344,7 @@ function Face({
   const disc = cover ? (
     <View style={s.disc}>
       <Image
+        transition={150}
         source={cover.startsWith("/") ? mediaSource(cover) : { uri: cover }}
         style={s.discImage}
         contentFit="cover"
@@ -356,7 +359,10 @@ function Face({
           colors={
             green
               ? ["#16a34a", "#4ade80", "#22c55e"]
-              : [colour, t.colors.lights[1], t.colors.accent]
+              : t.colors.gradient
+                ? // A colour set with a fade (Afterglow, Sunset Pop): their colour into it.
+                  [colour, t.colors.accent, t.colors.accent2]
+                : [colour, t.colors.lights[1], t.colors.accent]
           }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}

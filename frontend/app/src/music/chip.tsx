@@ -80,6 +80,7 @@ export function SoundChip({
       >
         {sound.coverUrl ? (
           <Image
+            transition={150}
             source={
               sound.coverUrl.startsWith("/")
                 ? mediaSource(sound.coverUrl)

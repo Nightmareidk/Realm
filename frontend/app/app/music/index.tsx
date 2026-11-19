@@ -1,13 +1,25 @@
 import { MOODS, type MusicHome, type Sound, type SoundList } from "@realm/contracts";
 import { useRouter } from "expo-router";
 import { type ReactNode, useEffect, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
+import { FriendsListening } from "@/music/friends";
 import { NowBar } from "@/music/now-bar";
 import { playList, useNowPlaying } from "@/music/player";
 import { CoverArt, SongRow, songMenu } from "@/music/ui";
+import { HList } from "@/scroll-row";
 import { api } from "@/server";
+import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
 import { AppScreen, Loading, Problem, TopBar } from "@/social/screen";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
@@ -61,7 +73,27 @@ export default function Music() {
     };
   }, [query]);
 
-  const more = (sound: Sound) => songMenu(sheet, router, sound, { liked: sound.liked ?? false });
+  const { session } = useSession();
+  const me = session.status === "signedIn" ? session.user : null;
+  const more = (sound: Sound) =>
+    songMenu(sheet, router, sound, {
+      liked: sound.liked ?? false,
+      meId: me?.id ?? null,
+      changed: home.reload,
+    });
+  /** The + at the top: make a playlist, or share a song of your own. */
+  const add = () =>
+    sheet({
+      title: "Add to Music",
+      actions: [
+        {
+          label: "Share a song you made",
+          icon: "MusicNotesFill",
+          onPress: () => router.push("/music/upload"),
+        },
+        { label: "New playlist", icon: "Plus", onPress: () => router.push("/music/new") },
+      ],
+    });
 
   return (
     <AppScreen>
@@ -69,9 +101,9 @@ export default function Music() {
         title="Music"
         right={
           <Pressable
-            onPress={() => router.push("/music/new")}
+            onPress={add}
             accessibilityRole="button"
-            accessibilityLabel="New playlist"
+            accessibilityLabel="Share a song or make a playlist"
             style={s.headBtn}
           >
             <Icon name="Plus" size={24} color={t.colors.text} />
@@ -126,7 +158,18 @@ export default function Music() {
       ) : !home.data ? (
         <Loading />
       ) : (
-        <ScrollView contentContainerStyle={s.listPad}>
+        <ScrollView
+          contentContainerStyle={s.listPad}
+          refreshControl={
+            <RefreshControl
+              refreshing={home.loading}
+              onRefresh={home.reload}
+              tintColor={t.colors.textSoft}
+              colors={[accent]}
+              progressBackgroundColor={t.colors.surfaceRaised}
+            />
+          }
+        >
           {/* Your library: Liked songs and playlists, as tiles */}
           <View style={s.grid}>
             <Tile
@@ -139,7 +182,34 @@ export default function Music() {
               }
               onPress={() => router.push("/music/liked")}
             />
-            {home.data.playlists.slice(0, 5).map((p) => (
+            {me ? (
+              <Tile
+                title="Your music"
+                line="Songs you shared"
+                art={
+                  <View style={[s.likedArt, { backgroundColor: t.colors.surfaceRaised }]}>
+                    <Icon name="MusicNotesFill" size={22} color={t.colors.text} />
+                  </View>
+                }
+                onPress={() =>
+                  router.push({
+                    pathname: "/music/by/[username]",
+                    params: { username: me.username },
+                  })
+                }
+              />
+            ) : null}
+            <Tile
+              title="Your week"
+              line="What you played"
+              art={
+                <View style={[s.likedArt, { backgroundColor: t.colors.surfaceRaised }]}>
+                  <Icon name="CalendarDots" size={22} color={t.colors.text} />
+                </View>
+              }
+              onPress={() => router.push("/music/recap")}
+            />
+            {home.data.playlists.slice(0, 4).map((p) => (
               <Tile
                 key={p.id}
                 title={p.name}
@@ -152,9 +222,19 @@ export default function Music() {
             ))}
           </View>
 
+          <View style={s.section}>
+            <FriendsListening />
+          </View>
+
           {home.data.featured?.length ? (
             <Section title="New on Realm">
               <Shelf songs={home.data.featured} from="New on Realm" />
+            </Section>
+          ) : null}
+
+          {home.data.fresh?.length ? (
+            <Section title="Shared by people on Realm">
+              <Shelf songs={home.data.fresh} from="Shared by people on Realm" />
             </Section>
           ) : null}
 
@@ -202,8 +282,9 @@ export default function Music() {
             </Section>
           ) : null}
           <Text style={s.small}>
-            Free music from Jamendo under Creative Commons, and sounds people on Realm made. Each
-            song keeps its artist's credit.
+            Free music from Jamendo under Creative Commons, and songs people on Realm made and
+            shared themselves. Each song keeps its artist's credit. See a song that isn't the
+            uploader's to share? Report it from its menu.
           </Text>
         </ScrollView>
       )}
@@ -261,9 +342,8 @@ function Shelf({ songs, from }: { songs: Sound[]; from: string }) {
   const s = useStyles(make);
   const now = useNowPlaying();
   return (
-    <FlatList
+    <HList
       data={songs}
-      horizontal
       showsHorizontalScrollIndicator={false}
       keyExtractor={(x) => x.id}
       contentContainerStyle={s.shelf}

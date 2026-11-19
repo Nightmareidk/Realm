@@ -1,10 +1,11 @@
 import type { Highlight } from "@realm/contracts";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { alert } from "../alert";
 import { useApi } from "../data";
 import { Icon } from "../icon";
+import { HScroll } from "../scroll-row";
 import { api, mediaSource } from "../server";
 import { useSheet } from "../sheet";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
@@ -50,8 +51,7 @@ export function Highlights({ username, mine }: { username: string; mine: boolean
   }
 
   return (
-    <ScrollView
-      horizontal
+    <HScroll
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={s.row}
       accessibilityLabel="Highlights"
@@ -81,7 +81,12 @@ export function Highlights({ username, mine }: { username: string; mine: boolean
         >
           <View style={s.circle}>
             {h.cover ? (
-              <Image source={mediaSource(h.cover.url)} style={s.cover} contentFit="cover" />
+              <Image
+                transition={150}
+                source={mediaSource(h.cover.url)}
+                style={s.cover}
+                contentFit="cover"
+              />
             ) : (
               <View style={[s.cover, { backgroundColor: t.colors.surface }]} />
             )}
@@ -91,7 +96,7 @@ export function Highlights({ username, mine }: { username: string; mine: boolean
           </Text>
         </Pressable>
       ))}
-    </ScrollView>
+    </HScroll>
   );
 }
 

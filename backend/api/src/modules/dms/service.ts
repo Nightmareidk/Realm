@@ -339,7 +339,15 @@ export class ConversationsService {
   }
 
   /** Open a DM with one person (the existing one, if there is one) or start a group. */
-  async open(userId: bigint, body: OpenDmBody): Promise<Conversation> {
+  /**
+   * `encryption` "mls" opens (or finds) the end-to-end encrypted DM with that person, which is a
+   * separate conversation from any older unencrypted one (docs/E2EE.md §18).
+   */
+  async open(
+    userId: bigint,
+    body: OpenDmBody,
+    encryption: "none" | "mls" = "none",
+  ): Promise<Conversation> {
     const others = [...new Set(body.recipientIds)].map(BigInt).filter((id) => id !== userId);
     if (others.length === 0) throw badRequest("BAD_REQUEST", "Pick someone to message.");
     if (others.length + 1 > Limits.groupDmRecipients.max) {
@@ -384,6 +392,7 @@ export class ConversationsService {
           and(
             eq(channelRecipients.userId, userId),
             eq(channels.type, "dm"),
+            eq(channels.encryption, encryption),
             isNull(channels.deletedAt),
           ),
         )
@@ -407,6 +416,7 @@ export class ConversationsService {
         type: group ? "group_dm" : "dm",
         ownerId: group ? userId : null,
         name: group ? (body.name ?? null) : null,
+        encryption,
       });
       await tx.insert(channelRecipients).values(
         everyone.map((u) => ({

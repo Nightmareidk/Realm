@@ -12,6 +12,7 @@ import {
   type UpdateMemberBody,
 } from "@realm/contracts";
 import { and, desc, eq, gt, inArray, isNotNull, isNull, lt, or, schema, sql } from "@realm/db";
+import { layoutFromText } from "@realm/server-core";
 import type { Deps } from "../../deps";
 import { badRequest, conflict, forbidden, notFound } from "../../lib/errors";
 import {
@@ -216,12 +217,11 @@ export class SafetyService {
       // stays in the database, never in the email.
       const to = this.deps.config.REALM_SAFETY_EMAIL;
       if (to) {
+        const subject = "Realm: a report needs you";
+        const text = `A ${body.targetType} was reported for sexual content involving a minor.\n\nReport ${reportId}. It has been hidden. Review it in the database (reports table) and report it to the authorities where the law requires.\n`;
+        const why = "You get these because this address is set as Realm's safety inbox.";
         await this.deps.mailer
-          .send({
-            to,
-            subject: "Realm: a report needs you",
-            text: `A ${body.targetType} was reported for sexual content involving a minor.\n\nReport ${reportId}. It has been hidden. Review it in the database (reports table) and report it to the authorities where the law requires.\n`,
-          })
+          .send({ to, subject, text, layout: layoutFromText(subject, text, why) })
           .catch((err) => this.deps.logger.error({ err, reportId }, "safety: alert email failed"));
       }
     }

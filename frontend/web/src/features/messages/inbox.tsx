@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { pill } from "@/components/pill";
+import { ScrollRow } from "@/components/scroll-row";
 import { openConversation } from "@/features/realtime/actions";
 import {
   conversationTitle,
@@ -144,7 +145,10 @@ export function Inbox({ activeId, onNew }: { activeId: string | null; onNew: () 
           <h2 id="inbox-around" className="sr-only">
             Around now
           </h2>
-          <ul className="flex gap-3 overflow-x-auto px-4 pb-1 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] [scrollbar-width:none] md:px-5">
+          <ScrollRow
+            className="flex gap-3 overflow-x-auto px-4 pb-1 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] [scrollbar-width:none] md:px-5"
+            arrowTop="28px"
+          >
             {around.map(({ r, c }) => (
               <li key={r.id} className="w-[3.75rem] shrink-0 text-center">
                 <Link
@@ -160,7 +164,7 @@ export function Inbox({ activeId, onNew }: { activeId: string | null; onNew: () 
                 </Link>
               </li>
             ))}
-          </ul>
+          </ScrollRow>
         </section>
       )}
 

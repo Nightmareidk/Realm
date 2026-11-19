@@ -2,6 +2,7 @@ import {
   type ActiveTheme,
   ageInYears,
   checkTheme,
+  DEFAULT_PALETTE,
   fixTheme,
   Limits,
   type MyTheme,
@@ -11,10 +12,13 @@ import {
   resolveTheme,
   type SaveThemeBody,
   THEME_STORE,
+  ThemeAccent,
   type ThemeCheck,
   type ThemeDetail,
   ThemeFile,
+  ThemeFontPair,
   type ThemePage,
+  ThemePalette,
   type ThemeReview,
   type ThemeStoreQuery,
   type ThemeSummary,
@@ -66,6 +70,17 @@ const mediaRef = (ref: string) => (ref.startsWith("media:") ? BigInt(ref.slice(6
  * you're using. The file format and its checks live in @realm/contracts (themes/), shared with
  * the studio, so the server and the editor always agree on what passes.
  */
+/**
+ * The colour set someone uses: what they picked, else the older colour they chose before colour
+ * sets came in (Mint was everyone's default then, so it isn't counted as a choice), else Afterglow.
+ */
+function paletteOf(s: { palette: string | null; accent: string } | undefined): ThemePalette {
+  const picked = ThemePalette.safeParse(s?.palette).data;
+  if (picked) return picked;
+  if (s && s.accent !== "mint") return ThemePalette.safeParse(s.accent).data ?? DEFAULT_PALETTE;
+  return DEFAULT_PALETTE;
+}
+
 export class ThemeService {
   constructor(private readonly deps: Deps) {}
 
@@ -725,6 +740,8 @@ export class ThemeService {
       .select({
         look: userSettings.look,
         accent: userSettings.accent,
+        palette: userSettings.palette,
+        font: userSettings.font,
         themeId: userSettings.themeId,
       })
       .from(userSettings)
@@ -733,7 +750,8 @@ export class ThemeService {
     const look = {
       kind: "look" as const,
       look: s?.look ?? "now-playing",
-      accent: s?.accent ?? "mint",
+      palette: paletteOf(s),
+      font: ThemeFontPair.safeParse(s?.font).data ?? "match",
     };
     if (!s?.themeId || !(await this.inLibrary(userId, s.themeId)))
       return { active: look, file: null };
@@ -747,13 +765,19 @@ export class ThemeService {
 
   async setActive(userId: bigint, body: ActiveTheme): Promise<MyTheme> {
     if (body.kind === "look") {
+      // The four older colours are also the profile colour, as before colour sets came in.
+      const accent = ThemeAccent.safeParse(body.palette).data;
+      const set = {
+        look: body.look,
+        palette: body.palette,
+        font: body.font,
+        themeId: null,
+        ...(accent ? { accent } : {}),
+      };
       await this.db
         .insert(userSettings)
-        .values({ userId, look: body.look, accent: body.accent, themeId: null })
-        .onConflictDoUpdate({
-          target: userSettings.userId,
-          set: { look: body.look, accent: body.accent, themeId: null },
-        });
+        .values({ userId, ...set })
+        .onConflictDoUpdate({ target: userSettings.userId, set });
     } else {
       const themeId = BigInt(body.themeId);
       if (!(await this.inLibrary(userId, themeId))) throw notOwned();

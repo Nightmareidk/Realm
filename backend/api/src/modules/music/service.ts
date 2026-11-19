@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type {
   CreateSoundBody,
   CreateStoryBody,
+  ReportSongBody,
   Sound,
   SoundPick,
   SoundUse,
@@ -9,9 +10,10 @@ import type {
   StoryFeed,
   StoryRing,
   StoryViewer,
+  UploadSongBody,
 } from "@realm/contracts";
 import { STORY_DEFAULT_MS, STORY_HOURS, STORY_MAX_MS } from "@realm/contracts";
-import { and, desc, eq, gt, ilike, inArray, isNotNull, isNull, schema, sql } from "@realm/db";
+import { and, desc, eq, gt, ilike, inArray, isNotNull, isNull, or, schema, sql } from "@realm/db";
 import type { Deps } from "../../deps";
 import { AppError, forbidden, notFound } from "../../lib/errors";
 import { mediaUrl } from "../../lib/serialize";
@@ -25,6 +27,8 @@ type SoundRow = typeof sounds.$inferSelect;
 type StoryRow = typeof stories.$inferSelect;
 
 const invalid = (message: string) => new AppError(400, "BAD_REQUEST", message);
+/** This many different people reporting a song takes it down until someone has looked. */
+const SONG_REPORTS_TO_HIDE = 3;
 
 /** Library tracks only ever stream from Jamendo, and covers from Openverse or Jamendo. */
 const AUDIO_HOST = /^https:\/\/([a-z0-9-]+\.)*jamendo\.com\//i;
@@ -92,7 +96,7 @@ export class MusicService {
         kind: r.kind,
         title: r.title,
         artist: r.artist,
-        coverUrl: r.coverUrl,
+        coverUrl: r.coverMediaId ? mediaUrl(r.coverMediaId) : r.coverUrl,
         audioUrl: r.mediaId ? mediaUrl(r.mediaId) : (r.audioUrl ?? ""),
         durationMs: r.durationMs,
         licence: r.licence,
@@ -228,13 +232,20 @@ export class MusicService {
       else ids = answer;
     }
 
-    // Realm's own library (tracks admins added) comes first when it matches.
+    // Music that lives on Realm comes first when it matches: tracks admins added, and the
+    // songs people uploaded themselves.
     const like = `%${query.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
     const matches = sql`(${sounds.title} ilike ${like} or ${sounds.artist} ilike ${like})`;
     const own = await this.db
       .select()
       .from(sounds)
-      .where(and(isNotNull(sounds.addedBy), isNull(sounds.hiddenAt), matches))
+      .where(
+        and(
+          or(isNotNull(sounds.addedBy), isNotNull(sounds.rightsConfirmedAt)),
+          isNull(sounds.hiddenAt),
+          matches,
+        ),
+      )
       .orderBy(desc(sounds.uses))
       .limit(10);
 
@@ -349,6 +360,157 @@ export class MusicService {
       durationMs,
     });
     return this.get(id);
+  }
+
+  /**
+   * Share a whole song of your own: the file, its name, who it's by and a cover. You have to say
+   * it's yours to share (kept on record with the time), and it can be reported and taken down.
+   */
+  async uploadSong(userId: bigint, body: UploadSongBody): Promise<Sound> {
+    const wanted = [
+      BigInt(body.mediaId),
+      ...(body.coverMediaId ? [BigInt(body.coverMediaId)] : []),
+    ];
+    const files = await this.db.select().from(media).where(inArray(media.id, wanted));
+    const file = files.find((f) => f.id === BigInt(body.mediaId));
+    if (!file || file.ownerId !== userId || file.status !== "ready") {
+      throw invalid("Upload the song first, and wait for it to finish.");
+    }
+    if (file.kind !== "audio") throw invalid("A song has to be an audio file.");
+    const durationMs = file.durationMs ?? 0;
+    if (durationMs > 0 && durationMs < 3000) throw invalid("Songs need to be at least 3 seconds.");
+    const cover = body.coverMediaId
+      ? files.find((f) => f.id === BigInt(body.coverMediaId as string))
+      : undefined;
+    if (body.coverMediaId && (!cover || cover.ownerId !== userId || cover.status !== "ready")) {
+      throw invalid("Upload the cover first, and wait for it to finish.");
+    }
+    if (cover && cover.kind !== "image") throw invalid("The cover has to be a picture.");
+
+    const [author] = await this.db
+      .select({
+        id: users.id,
+        createdAt: users.createdAt,
+        emailVerifiedAt: users.emailVerifiedAt,
+        name: users.displayName,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (!author) throw notFound("User");
+    const artist = body.artist ?? author.name;
+    await guardMessage(this.deps, author, `${body.title} ${artist}`);
+    const id = this.deps.ids.next();
+    await this.db.insert(sounds).values({
+      id,
+      kind: "original",
+      title: body.title,
+      artist,
+      creatorId: userId,
+      mediaId: file.id,
+      coverMediaId: cover?.id ?? null,
+      durationMs,
+      rightsConfirmedAt: new Date(),
+    });
+    return this.get(id);
+  }
+
+  /** The songs a person has shared, newest first. Not shown between people who blocked. */
+  async byCreator(username: string, viewerId: bigint): Promise<Sound[]> {
+    const [them] = await this.db
+      .select({ id: users.id })
+      .from(users)
+      .where(
+        and(sql`lower(${users.username}) = ${username.toLowerCase()}`, isNull(users.deletedAt)),
+      )
+      .limit(1);
+    if (!them || (await blockedEitherWay(this.db, viewerId, them.id))) throw notFound("User");
+    const rows = await this.db
+      .select()
+      .from(sounds)
+      .where(
+        and(
+          eq(sounds.creatorId, them.id),
+          isNotNull(sounds.rightsConfirmedAt),
+          isNull(sounds.hiddenAt),
+        ),
+      )
+      .orderBy(desc(sounds.createdAt))
+      .limit(100);
+    return this.toSounds(rows, viewerId);
+  }
+
+  /** The newest songs people uploaded themselves, for the music home. */
+  async fresh(viewerId: bigint): Promise<Sound[]> {
+    const rows = await this.db
+      .select()
+      .from(sounds)
+      .where(and(isNotNull(sounds.rightsConfirmedAt), isNull(sounds.hiddenAt)))
+      .orderBy(desc(sounds.createdAt))
+      .limit(12);
+    return this.toSounds(rows, viewerId);
+  }
+
+  /** Take a song down: its uploader, or Realm's admins. It leaves search, lists and profiles. */
+  async removeSong(userId: bigint, id: bigint): Promise<void> {
+    const [row] = await this.db.select().from(sounds).where(eq(sounds.id, id)).limit(1);
+    if (row?.kind !== "original") throw notFound("Sound");
+    if (row.creatorId !== userId) {
+      const [me] = await this.db
+        .select({ role: users.staffRole })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      if (me?.role !== "admin") throw notFound("Sound");
+    }
+    if (!row.hiddenAt) {
+      await this.db.update(sounds).set({ hiddenAt: new Date() }).where(eq(sounds.id, id));
+    }
+  }
+
+  /**
+   * Report someone's song (not theirs to share, or harmful). It goes to Realm's own reports, and
+   * a song three different people report comes down by itself until someone has looked.
+   */
+  async reportSong(userId: bigint, id: bigint, body: ReportSongBody): Promise<void> {
+    const [row] = await this.db
+      .select()
+      .from(sounds)
+      .where(and(eq(sounds.id, id), isNull(sounds.hiddenAt)))
+      .limit(1);
+    if (row?.kind !== "original" || !row.creatorId) throw notFound("Sound");
+    if (row.creatorId === userId) throw invalid("That's your own song.");
+    const why =
+      body.why === "not_theirs"
+        ? "Not theirs to share (copyright)"
+        : body.why === "harmful"
+          ? "Harmful or offensive"
+          : "Something else";
+    await this.db
+      .insert(schema.reports)
+      .values({
+        id: this.deps.ids.next(),
+        reporterId: userId,
+        targetType: "user",
+        targetId: row.creatorId,
+        communityId: null,
+        reason: body.why === "not_theirs" ? "impersonation" : "other",
+        details: `Song "${row.title}" by ${row.artist}. ${why}.${body.details ? ` ${body.details}` : ""}`,
+        evidence: {
+          soundId: row.id.toString(),
+          title: row.title,
+          artist: row.artist,
+          why: body.why,
+        },
+      })
+      .onConflictDoNothing();
+    const [seen] = await this.db
+      .select({ n: sql<number>`count(distinct ${schema.reports.reporterId})::int` })
+      .from(schema.reports)
+      .where(sql`${schema.reports.evidence}->>'soundId' = ${row.id.toString()}`);
+    if ((seen?.n ?? 0) >= SONG_REPORTS_TO_HIDE) {
+      await this.db.update(sounds).set({ hiddenAt: new Date() }).where(eq(sounds.id, id));
+    }
   }
 
   /** Check a sound pick and count one more use. */

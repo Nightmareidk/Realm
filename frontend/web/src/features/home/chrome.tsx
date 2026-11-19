@@ -117,6 +117,7 @@ export function HomeFooter() {
             [
               ["Privacy", "/privacy"],
               ["Terms", "/terms"],
+              ["Delete your account", "/delete-account"],
               ["How we protect you", "/#privacy"],
             ],
           ],

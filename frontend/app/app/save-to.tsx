@@ -102,7 +102,13 @@ export default function SaveTo() {
             >
               <View style={s.cover}>
                 {item.covers.slice(0, 4).map((u) => (
-                  <Image key={u} source={mediaSource(u)} style={s.coverImg} contentFit="cover" />
+                  <Image
+                    transition={150}
+                    key={u}
+                    source={mediaSource(u)}
+                    style={s.coverImg}
+                    contentFit="cover"
+                  />
                 ))}
               </View>
               <Text style={s.name} numberOfLines={1}>

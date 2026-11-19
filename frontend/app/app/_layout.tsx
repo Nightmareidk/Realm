@@ -1,7 +1,13 @@
+// Must run first: the phone needs native WebCrypto before any encryption code loads.
+import "@/native-crypto";
 import { AtkinsonHyperlegibleNext_400Regular } from "@expo-google-fonts/atkinson-hyperlegible-next/400Regular";
 import { AtkinsonHyperlegibleNext_700Bold } from "@expo-google-fonts/atkinson-hyperlegible-next/700Bold";
 import { FunnelDisplay_700Bold } from "@expo-google-fonts/funnel-display/700Bold";
 import { FunnelDisplay_800ExtraBold } from "@expo-google-fonts/funnel-display/800ExtraBold";
+import { Gabarito_700Bold } from "@expo-google-fonts/gabarito/700Bold";
+import { Gabarito_800ExtraBold } from "@expo-google-fonts/gabarito/800ExtraBold";
+import { RethinkSans_400Regular } from "@expo-google-fonts/rethink-sans/400Regular";
+import { RethinkSans_700Bold } from "@expo-google-fonts/rethink-sans/700Bold";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -31,6 +37,11 @@ export default function RootLayout() {
     FunnelDisplay_700Bold,
     AtkinsonHyperlegibleNext_400Regular,
     AtkinsonHyperlegibleNext_700Bold,
+    // Afterglow's fonts, the default, so the app opens in them without a flash.
+    Gabarito_800ExtraBold,
+    Gabarito_700Bold,
+    RethinkSans_400Regular,
+    RethinkSans_700Bold,
   });
   const ready = loaded || Boolean(failed);
 
@@ -81,6 +92,8 @@ export default function RootLayout() {
 
 /** The screens anyone can open, signed in or not. */
 const OPEN = new Set(["index", "sign-in", "sign-up", "forgot", "+not-found"]);
+// Developer builds only: the layout checks under /dev open without signing in.
+if (__DEV__) OPEN.add("dev");
 
 /**
  * Nothing loads until we know who's signed in, so no screen asks the API as nobody. And when the

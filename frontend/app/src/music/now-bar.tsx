@@ -41,7 +41,14 @@ export function NowBar({ floating = false }: { floating?: boolean } = {}) {
   const { sound, paused } = now;
   const cover = sound.coverUrl;
   const style = t.style.posts;
-  const line = `${sound.artist}${now.from ? ` · from ${now.from}` : ""}`;
+  // "Listening with Noor" already says where it's from.
+  const line = `${sound.artist}${
+    now.from
+      ? now.from.startsWith("Listening with ")
+        ? ` · ${now.from}`
+        : ` · from ${now.from}`
+      : ""
+  }`;
 
   return (
     <Animated.View
@@ -64,6 +71,7 @@ export function NowBar({ floating = false }: { floating?: boolean } = {}) {
         <View style={s.coverBox}>
           {cover ? (
             <Image
+              transition={150}
               source={cover.startsWith("/") ? mediaSource(cover) : { uri: resolveUrl(cover) }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"

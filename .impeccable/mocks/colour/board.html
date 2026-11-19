@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Realm colour options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Gabarito:wght@500;600;700;800&family=Onest:wght@400;500;600;700&family=Rethink+Sans:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="icons.js"></script>
+<style>
+@font-face { font-family: "Funnel Display"; font-weight: 800; src: url("../app-shell/fonts/FunnelDisplay_800ExtraBold.ttf"); }
+@font-face { font-family: "Funnel Display"; font-weight: 700; src: url("../app-shell/fonts/FunnelDisplay_700Bold.ttf"); }
+@font-face { font-family: "Atkinson"; font-weight: 400; src: url("../app-shell/fonts/AtkinsonHyperlegibleNext_400Regular.ttf"); }
+@font-face { font-family: "Atkinson"; font-weight: 700; src: url("../app-shell/fonts/AtkinsonHyperlegibleNext_700Bold.ttf"); }
+
+:root { --page: #0c0c0e; --page-2: #16161a; --page-t: #f3f1ee; --page-s: #a8a5ae; --page-l: #26262b; }
+* { box-sizing: border-box; }
+html { background: var(--page); color-scheme: dark; }
+body { margin: 0; background: var(--page); color: var(--page-t); font: 16px/1.5 "Figtree", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+::selection { background: #ff3d7f; color: #000; }
+.ico { display: block; flex: none; fill: currentColor; }
+
+/* The board */
+.intro { max-width: 1340px; margin: 0 auto; padding: 56px 32px 8px; }
+.intro h1 { font: 800 clamp(2rem, 4vw, 3rem)/1.05 "Figtree", sans-serif; letter-spacing: -0.03em; margin: 0 0 12px; text-wrap: balance; }
+.intro p { margin: 0; max-width: 62ch; color: var(--page-s); font-size: 1.05rem; }
+.jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.jump a { color: var(--page-t); text-decoration: none; padding: 8px 14px; border-radius: 999px; background: var(--page-2); font-weight: 600; font-size: 0.95rem; }
+.jump a:hover { background: #222228; }
+.jump a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.opt { max-width: 1340px; margin: 0 auto; padding: 64px 32px 24px; border-top: 1px solid var(--page-l); margin-top: 56px; }
+.opt-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 40px; align-items: end; margin-bottom: 32px; }
+.opt-name { margin: 0; font-family: var(--disp); font-weight: var(--dispw); letter-spacing: var(--displs); font-size: clamp(2.2rem, 4.4vw, 3.4rem); line-height: 1; color: var(--page-t); }
+.opt-name em { font-style: normal; color: var(--a); }
+.opt-mood { margin: 12px 0 0; max-width: 58ch; color: var(--page-s); font-size: 1.05rem; text-wrap: pretty; }
+.opt-font { margin: 8px 0 0; color: var(--page-t); font-weight: 600; }
+.opt-font span { color: var(--page-s); font-weight: 400; }
+.chips { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.chip { width: 84px; }
+.chip i { display: block; height: 46px; border-radius: 12px; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1); }
+.chip b { display: block; margin-top: 6px; font: 600 0.78rem/1.2 "Figtree", sans-serif; color: var(--page-t); }
+.chip small { display: block; font: 400 0.72rem/1.2 ui-monospace, monospace; color: var(--page-s); }
+
+.row { display: flex; gap: 36px; flex-wrap: wrap; align-items: flex-start; }
+.cap { margin: 14px 0 0 6px; color: var(--page-s); font-size: 0.92rem; }
+.desk-wrap { margin-top: 44px; }
+.desk-scale { width: 1018px; height: 636px; overflow: hidden; border-radius: 18px; box-shadow: 0 0 0 1px #2b2a31, 0 40px 80px -40px rgb(0 0 0 / 0.9); }
+.desk-scale > .desk { transform: scale(0.795); transform-origin: 0 0; }
+
+/* ── A phone, drawn in an option's own colours ── */
+.phone { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative; isolation: isolate;
+  background: var(--g); color: var(--t); font-family: var(--body); font-size: 15px; line-height: 1.4;
+  box-shadow: 0 0 0 9px #050506, 0 0 0 10px #2c2b31, 0 40px 70px -30px rgb(0 0 0 / 0.85); }
+.sb { height: 48px; display: flex; justify-content: space-between; align-items: center; padding: 6px 30px 0 36px; font: 600 15px var(--body); position: relative; z-index: 3; }
+.sb-i { display: flex; gap: 6px; align-items: center; }
+.sb-bat { width: 25px; height: 12px; border-radius: 4px; border: 1.5px solid var(--t); padding: 1.5px; opacity: .9; }
+.sb-bat::after { content: ""; display: block; height: 100%; width: 70%; background: var(--t); border-radius: 1.5px; }
+.home-ind { position: absolute; left: 50%; bottom: 8px; width: 134px; height: 5px; border-radius: 3px; background: var(--t); transform: translateX(-50%); z-index: 9; opacity: .85; }
+
+.glow { position: absolute; z-index: -1; left: -60px; right: -60px; top: 120px; height: 620px; background-size: cover; background-position: center;
+  filter: blur(70px) saturate(var(--glowsat)); opacity: var(--glowop); }
+.lights { position: absolute; z-index: -1; inset: 0; pointer-events: none;
+  background: radial-gradient(60% 34% at 0% 0%, color-mix(in srgb, var(--l1) 55%, transparent), transparent 70%),
+              radial-gradient(50% 30% at 100% 6%, color-mix(in srgb, var(--l2) 40%, transparent), transparent 70%);
+  opacity: var(--lightsop); }
+
+.top { display: flex; align-items: center; justify-content: space-between; padding: 4px 14px 8px 16px; position: relative; }
+.brand { display: flex; align-items: center; gap: 8px; font-family: var(--disp); font-weight: var(--dispw); letter-spacing: var(--brandls); font-size: var(--brandsize); line-height: 1; }
+.mark { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--t); position: relative; flex: none; }
+.mark::after { content: ""; position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--a); right: 0; top: 0; }
+.ibtn { width: 40px; height: 40px; display: grid; place-items: center; position: relative; }
+.ndot { position: absolute; top: 7px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--badge); box-shadow: 0 0 0 2px var(--g); }
+.top-r { display: flex; gap: 2px; }
+
+.stories { display: flex; gap: 12px; padding: 4px 14px 12px; overflow: hidden; border-bottom: 1px solid var(--l); }
+.story { width: 70px; flex: none; text-align: center; }
+.ring { width: 70px; height: 70px; border-radius: 50%; padding: 3px; background: var(--ring); }
+.ring.seen { background: var(--l); }
+.ring > * { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--g); }
+.ring.me { background: none; padding: 0; position: relative; }
+.ring.me > .av { border: 0; }
+.plus { position: absolute; right: -1px; bottom: -1px; width: 24px; height: 24px; border-radius: 50%; background: var(--plusbg); color: var(--pluson); display: grid; place-items: center; box-shadow: 0 0 0 3px var(--g); }
+.story span { display: block; margin-top: 5px; font-size: 12.5px; font-weight: var(--namew); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.story.me span { color: var(--ts); font-weight: 400; }
+
+.av { border-radius: 50%; object-fit: cover; display: grid; place-items: center; flex: none; font-family: var(--disp); font-weight: var(--dispw); }
+
+/* Photo posts (unchanged layout, Look B glow card) */
+.ph-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 10px 14px; }
+.ph-head .who { flex: 1; min-width: 0; }
+.name { font-weight: var(--namew); font-size: 15px; }
+.when { color: var(--ts); font-size: 12.5px; }
+.ph { margin: 0 12px; height: 452px; border-radius: var(--media); overflow: hidden; position: relative; background: var(--r); }
+.ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.song { position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border-radius: 999px;
+  background: rgb(10 10 12 / 0.5); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); color: #fff; font-size: 12.5px; font-weight: 600; }
+.song img { width: 24px; height: 24px; border-radius: 6px; }
+.song small { font-weight: 400; opacity: .8; }
+.acts { display: flex; align-items: center; gap: 16px; padding: 12px 16px 6px; }
+.acts .sp { flex: 1; }
+.acts .liked { color: var(--like); }
+.likes { padding: 0 16px; font-size: 14px; }
+.likes b { font-weight: var(--namew); }
+.capt { padding: 4px 16px 0; font-size: 14.5px; }
+.capt b { font-weight: var(--namew); }
+.tag { color: var(--link); }
+
+/* Text posts, today: the same block as a photo post, without the photo */
+.tt { padding: 12px 0 10px; }
+.tt .body { padding: 6px 16px 0; font-size: 19px; line-height: 1.35; }
+.quoted { margin: 12px 14px 0; border: 1px solid var(--l); border-radius: 16px; padding: 10px 12px; font-size: 14px; }
+.quoted .q-h { display: flex; gap: 6px; align-items: center; font-weight: var(--namew); font-size: 13.5px; }
+
+/* Text posts, new: their own look, like a conversation (photos stay big) */
+.tp { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 11px; padding: 14px 16px 12px; border-bottom: 1px solid var(--l); }
+.tp-h { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.tp-h .name { white-space: nowrap; }
+.tp-h .handle { color: var(--ts); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tp-h .dots { margin-left: auto; color: var(--ts); align-self: center; }
+.tp-x { margin-top: 2px; font-size: 16px; line-height: 1.45; text-wrap: pretty; }
+.tp-a { display: flex; gap: 0; margin-top: 10px; color: var(--ts); font-size: 13.5px; }
+.tp-a > span { display: flex; align-items: center; gap: 6px; min-width: 64px; }
+.tp-a .liked { color: var(--like); }
+.tp-a .end { margin-left: auto; min-width: 0; }
+.poll { margin-top: 10px; display: grid; gap: 7px; }
+.poll-o { position: relative; height: 40px; border-radius: 12px; overflow: hidden; background: var(--r); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 14.5px; font-weight: 500; }
+.poll-o i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--a) 26%, transparent); }
+.poll-o.mine i { background: color-mix(in srgb, var(--a) 46%, transparent); }
+.poll-o span, .poll-o b { position: relative; }
+.poll-o b { font-weight: var(--namew); font-variant-numeric: tabular-nums; }
+.poll-m { margin-top: 8px; color: var(--ts); font-size: 13px; }
+.today-poll .poll-o { border-radius: 10px; }
+
+/* Tab bar (Look B: floating) */
+.tabs { position: absolute; left: 14px; right: 14px; bottom: 24px; height: 66px; border-radius: 33px; z-index: 5;
+  background: color-mix(in srgb, var(--s) 94%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 14px 30px -12px rgb(0 0 0 / 0.7), inset 0 0 0 1px color-mix(in srgb, var(--t) 7%, transparent);
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; }
+.tab { display: grid; justify-items: center; gap: 3px; color: var(--ts); font-size: 11px; font-weight: 500; position: relative; }
+.tab.on { color: var(--tabon); font-weight: var(--namew); }
+.tab .bdg { position: absolute; top: -6px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--badge); color: var(--badgeon); font-size: 11px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--s); }
+
+/* Chat */
+.ch-top { display: flex; align-items: center; gap: 10px; padding: 4px 12px 10px 8px; border-bottom: 1px solid var(--l); position: relative; }
+.ch-top .who { flex: 1; min-width: 0; }
+.active { display: flex; align-items: center; gap: 6px; color: var(--ts); font-size: 12.5px; }
+.active i { width: 7px; height: 7px; border-radius: 50%; background: #4ee08a; }
+.tint { position: absolute; z-index: -1; inset: 0 0 auto 0; height: 420px; background: radial-gradient(90% 60% at 30% 0%, color-mix(in srgb, var(--chat) var(--tintop), transparent), transparent 75%); }
+.msgs { position: absolute; left: 0; right: 0; bottom: 92px; padding: 0 12px; display: grid; gap: 4px; }
+.day { text-align: center; color: var(--ts); font-size: 12px; margin: 6px 0 10px; }
+.m { max-width: 76%; padding: 9px 14px; border-radius: 22px; font-size: 15.5px; line-height: 1.35; width: fit-content; }
+.m.them { background: var(--r); border-bottom-left-radius: 8px; }
+.m.them + .m.them { border-top-left-radius: 8px; }
+.m.me { justify-self: end; background: var(--mine); color: var(--mine-t); border-bottom-right-radius: 8px; }
+.m.me + .m.me { border-top-right-radius: 8px; }
+.m.pic { padding: 0; overflow: hidden; width: 210px; height: 260px; border-radius: 22px; border-bottom-left-radius: 8px; }
+.m.pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.them-row { display: flex; align-items: flex-end; gap: 8px; }
+.them-col { display: grid; gap: 4px; }
+.seen { justify-self: end; color: var(--ts); font-size: 12px; margin: 2px 4px 0 0; }
+.comp { position: absolute; left: 0; right: 0; bottom: 26px; display: flex; align-items: center; gap: 10px; padding: 0 12px; }
+.field { flex: 1; height: 46px; border-radius: 23px; border: 1.5px solid var(--l2); display: flex; align-items: center; padding: 0 16px; color: var(--ts); font-size: 15px; }
+.send { width: 46px; height: 46px; border-radius: 50%; background: var(--btn); color: var(--on); display: grid; place-items: center; flex: none; }
+
+/* Desktop (the app on a computer) */
+.desk { width: 1280px; height: 800px; background: var(--g); color: var(--t); font-family: var(--body); font-size: 15px; display: grid; grid-template-columns: 236px 1fr; position: relative; isolation: isolate; overflow: hidden; }
+.nav { border-right: 1px solid var(--l); padding: 22px 14px; display: flex; flex-direction: column; gap: 4px; background: color-mix(in srgb, var(--s) 70%, var(--g)); }
+.nav .brand { padding: 0 10px 20px; }
+.ni { display: flex; align-items: center; gap: 14px; padding: 11px 12px; border-radius: 14px; font-size: 15.5px; font-weight: 500; color: var(--t); position: relative; }
+.ni.on { background: var(--r); font-weight: var(--namew); }
+.ni.on .ico { color: var(--tabon); }
+.ni .bdg { position: absolute; left: 26px; top: 4px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--badge); color: var(--badgeon); font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 5px; box-shadow: 0 0 0 2px var(--s); }
+.nav .grow { flex: 1; }
+.feed { position: relative; overflow: hidden; }
+.feed-col { width: 600px; margin: 0 auto; padding-top: 18px; }
+.desk .stories { padding: 4px 4px 14px; }
+.desk .tp { padding: 16px 6px 14px; }
+.desk .ph { height: 380px; margin: 0; }
+.desk .ph-head { padding: 14px 2px 10px; }
+.desk .glow { top: 240px; left: 10%; right: 10%; height: 600px; }
+</style>
+</head>
+<body>
+<header class="intro">
+  <h1>Realm, with more life: pick a colour and font</h1>
+  <p>Same app, same layout, same buttons in the same places. Only three things change: the colours, the font, and how posts with only words look (now like a conversation, so they're clearly different from photos). Today's look is first, so you can compare.</p>
+  <nav class="jump" aria-label="Jump to an option"><a href="#today">Today</a><a href="#club">1 · Club Night</a><a href="#cobalt">2 · Cobalt Volt</a><a href="#sunset">3 · Sunset Pop</a><a href="#mixa">Mix A</a><a href="#mixb">Mix B</a><a href="#blend1">Blend 1</a><a href="#blend2">Blend 2</a><a href="#blend3">Blend 3</a></nav>
+</header>
+<main id="board"></main>
+
+<script>
+const IMG = "../redesign/img/";
+const T = {
+  today: {
+    title: "Today", em: "", mood: "What the app looks like right now: near-black, grey panels, pale mint, rounded display font with a reading font made for accessibility.",
+    font: "Funnel Display for titles, Atkinson Hyperlegible for everything else",
+    g: "#09090c", s: "#121116", r: "#1b1a20", l: "#26252c", l2: "#4a4853", t: "#f7f5f2", ts: "#a9a6b0",
+    a: "#3ee6b0", on: "#04150f", btn: "#3ee6b0", mine: "#3ee6b0", mineT: "#04150f", like: "#ff5f7a", link: "#f7f5f2",
+    ring: "linear-gradient(135deg, #2b47ff, #1fbf8f)", badge: "#ff3040", badgeOn: "#ffffff", tabOn: "#f7f5f2", plusBg: "#f7f5f2", plusOn: "#09090c",
+    chat: "#1fbf8f", l1: "#1fbf8f", l2c: "#2b47ff",
+    fills: ["#b9f27c", "#ffb547", "#8bd3ff", "#ff8fb1", "#d4c2f5", "#ffd28a"], fillInk: "#0b0b0e",
+    disp: "'Funnel Display'", dispw: 800, displs: "-0.03em", brandSize: "26px", brandLs: "-0.03em", body: "'Atkinson'", namew: 700,
+    glowop: .32, glowsat: 1, lightsop: .5, tintop: "16%", textStyle: "today",
+    chips: [["Background", "#09090c"], ["Panels", "#1b1a20"], ["Text", "#f7f5f2"], ["Your colour", "#3ee6b0"], ["Second colour", "#2b47ff"], ["Likes", "#ff5f7a"]],
+  },
+  club: {
+    title: "Club", em: " Night", mood: "Pure black like the big apps, crisp white text, and hot pink as Realm's colour with electric blue beside it. Clean and confident: the photos and your friends' faces do the talking, the pink makes the important bits pop.",
+    font: "Figtree: one clean, round, modern font for everything",
+    g: "#000000", s: "#121214", r: "#1e1e22", l: "#2a2a30", l2: "#4b4b53", t: "#ffffff", ts: "#a7a7b1",
+    a: "#ff3d7f", on: "#1a0410", btn: "#ff3d7f", mine: "#ff3d7f", mineT: "#1a0410", like: "#ff3d7f", link: "#5aa2ff",
+    ring: "linear-gradient(135deg, #3d8bff 0%, #ff3d7f 55%, #ff8a3d 100%)", badge: "#ff3d7f", badgeOn: "#1a0410", tabOn: "#ff3d7f", plusBg: "#ff3d7f", plusOn: "#1a0410",
+    chat: "#3d8bff", l1: "#ff3d7f", l2c: "#3d8bff",
+    fills: ["#ff3d7f", "#3d8bff", "#ff8a3d", "#b6f23a", "#a77bff", "#2fd8e8"], fillInk: "#000000",
+    disp: "'Figtree'", dispw: 800, displs: "-0.035em", brandSize: "27px", brandLs: "-0.04em", body: "'Figtree'", namew: 700,
+    glowop: .5, glowsat: 1.5, lightsop: .55, tintop: "30%", textStyle: "thread",
+    chips: [["Background", "#000000"], ["Panels", "#1e1e22"], ["Text", "#ffffff"], ["Your colour", "#ff3d7f"], ["Second colour", "#3d8bff"], ["Likes", "#ff3d7f"]],
+  },
+  cobalt: {
+    title: "Cobalt", em: " Volt", mood: "The loudest one. A deep cobalt blue instead of black, with acid lime as Realm's colour and pink for likes. Feels like a gig poster or a sneaker drop: young, sporty, impossible to mistake for another app.",
+    font: "Unbounded (wide and bold) for titles, Onest for reading",
+    g: "#0a1033", s: "#121b48", r: "#1c275c", l: "#2a3672", l2: "#4c5a99", t: "#f5f7ff", ts: "#aeb8e6",
+    a: "#c6ff3d", on: "#0a1033", btn: "#c6ff3d", mine: "#c6ff3d", mineT: "#0a1033", like: "#ff5c9a", link: "#8fd3ff",
+    ring: "linear-gradient(135deg, #2ad1ff 0%, #c6ff3d 100%)", badge: "#ff5c9a", badgeOn: "#0a1033", tabOn: "#c6ff3d", plusBg: "#c6ff3d", plusOn: "#0a1033",
+    chat: "#2ad1ff", l1: "#3d63ff", l2c: "#2ad1ff",
+    fills: ["#c6ff3d", "#ff5c9a", "#2ad1ff", "#ffb23d", "#9d8cff", "#ffffff"], fillInk: "#0a1033",
+    disp: "'Unbounded'", dispw: 700, displs: "-0.02em", brandSize: "22px", brandLs: "-0.03em", body: "'Onest'", namew: 600,
+    glowop: .42, glowsat: 1.4, lightsop: .7, tintop: "30%", textStyle: "thread",
+    chips: [["Background", "#0a1033"], ["Panels", "#1c275c"], ["Text", "#f5f7ff"], ["Your colour", "#c6ff3d"], ["Second colour", "#2ad1ff"], ["Likes", "#ff5c9a"]],
+  },
+  sunset: {
+    title: "Sunset", em: " Pop", mood: "Warm and friendly. A deep plum-black instead of grey, with tangerine fading into hot pink on buttons and your messages, and sunny yellow for small highlights. Like golden hour with your friends.",
+    font: "Gabarito (chunky and friendly) for titles, Rethink Sans for reading",
+    g: "#140a10", s: "#22121c", r: "#2f1a27", l: "#43283a", l2: "#6a4a5c", t: "#fff5f0", ts: "#d4b2bf",
+    a: "#ff7a3d", on: "#1d0802", btn: "linear-gradient(135deg, #ff9a3d, #ff3d8a)", mine: "linear-gradient(135deg, #ff8a3d, #ff3d8a)", mineT: "#1d0802", like: "#ff3d8a", link: "#ffc56b",
+    ring: "linear-gradient(135deg, #ffd23f 0%, #ff7a3d 45%, #ff3d8a 100%)", badge: "#ffd23f", badgeOn: "#1d0802", tabOn: "#ff8a4a", plusBg: "linear-gradient(135deg, #ff9a3d, #ff3d8a)", plusOn: "#1d0802",
+    chat: "#ff3d8a", l1: "#ff7a3d", l2c: "#ff3d8a",
+    fills: ["#ff7a3d", "#ff3d8a", "#ffd23f", "#ffb38a", "#ff8fc8", "#f5dcc0"], fillInk: "#1d0802",
+    disp: "'Gabarito'", dispw: 800, displs: "-0.025em", brandSize: "28px", brandLs: "-0.035em", body: "'Rethink Sans'", namew: 700,
+    glowop: .5, glowsat: 1.45, lightsop: .6, tintop: "30%", textStyle: "thread",
+    chips: [["Background", "#140a10"], ["Panels", "#2f1a27"], ["Text", "#fff5f0"], ["Your colour", "#ff7a3d"], ["Second colour", "#ff3d8a"], ["Highlight", "#ffd23f"]],
+  },
+};
+// The owner's mix of today's look and Sunset Pop, both ways round.
+T.mixa = {
+  ...T.sunset,
+  title: "Mix A · Sunset colours,", em: " today's font",
+  mood: "Sunset Pop's warm plum-black, tangerine-to-pink buttons and messages, and yellow highlights, with the fonts Realm has today.",
+  font: "Funnel Display for titles, Atkinson Hyperlegible for everything else (today's)",
+  disp: "'Funnel Display'", dispw: 800, displs: "-0.03em", brandSize: "26px", brandLs: "-0.03em", body: "'Atkinson'", namew: 700,
+};
+T.mixb = {
+  ...T.today,
+  title: "Mix B · Today's colours,", em: " Sunset font",
+  mood: "Today's near-black and mint, a little brighter, with Sunset Pop's chunky, friendly fonts and the new look for posts with only words.",
+  font: "Gabarito for titles, Rethink Sans for reading (Sunset Pop's)",
+  ring: "linear-gradient(135deg, #2b47ff, #3ee6b0)", tabOn: "#3ee6b0", glowop: .42, glowsat: 1.3, lightsop: .55, tintop: "24%",
+  disp: "'Gabarito'", dispw: 800, displs: "-0.025em", brandSize: "28px", brandLs: "-0.035em", body: "'Rethink Sans'", namew: 700,
+  textStyle: "thread",
+};
+
+// The owner, 2026-11-19: "mix the colors of a and b" (Sunset Pop's warm colours with today's
+// black and mint). Three ways to blend them, all in Sunset Pop's font so only colour changes.
+const SUNFONT = { disp: "'Gabarito'", dispw: 800, displs: "-0.025em", brandSize: "28px", brandLs: "-0.035em", body: "'Rethink Sans'", namew: 700, textStyle: "thread" };
+const MIXFILLS = ["#3ee6b0", "#ff7a3d", "#ff3d8a", "#ffd23f", "#8bd3ff", "#ffb38a"];
+T.blend1 = {
+  ...SUNFONT,
+  title: "Blend 1 · Black", em: " with a sunset",
+  mood: "Today's near-black and grey panels. Buttons, your messages and story rings fade from tangerine to pink (Sunset Pop), and mint comes back for links, chat colour and the second light.",
+  font: "Gabarito for titles, Rethink Sans for reading (the font is a separate choice)",
+  g: "#09090c", s: "#121116", r: "#1b1a20", l: "#26252c", l2: "#4a4853", t: "#fff7f2", ts: "#b3aab0",
+  a: "#ff7a3d", on: "#1d0802", btn: "linear-gradient(135deg, #ff9a3d, #ff3d8a)", mine: "linear-gradient(135deg, #ff8a3d, #ff3d8a)", mineT: "#1d0802", like: "#ff3d8a", link: "#3ee6b0",
+  ring: "linear-gradient(135deg, #3ee6b0 0%, #ffd23f 35%, #ff7a3d 65%, #ff3d8a 100%)", badge: "#ffd23f", badgeOn: "#1d0802", tabOn: "#ff8a4a", plusBg: "linear-gradient(135deg, #ff9a3d, #ff3d8a)", plusOn: "#1d0802",
+  chat: "#3ee6b0", l1: "#ff7a3d", l2c: "#3ee6b0", fills: MIXFILLS, fillInk: "#0b0b0e",
+  glowop: .46, glowsat: 1.4, lightsop: .55, tintop: "24%",
+  chips: [["Background", "#09090c"], ["Panels", "#1b1a20"], ["Text", "#fff7f2"], ["Your colour", "#ff7a3d"], ["Second colour", "#ff3d8a"], ["Mint", "#3ee6b0"]],
+};
+T.blend2 = {
+  ...SUNFONT,
+  title: "Blend 2 · Plum", em: " and mint",
+  mood: "Sunset Pop's warm plum-black panels, with today's mint as Realm's colour on buttons and your messages. Pink for likes, and story rings that run mint to yellow to pink.",
+  font: "Gabarito for titles, Rethink Sans for reading (the font is a separate choice)",
+  g: "#140a10", s: "#22121c", r: "#2f1a27", l: "#43283a", l2: "#6a4a5c", t: "#fff5f0", ts: "#d4b2bf",
+  a: "#3ee6b0", on: "#04150f", btn: "#3ee6b0", mine: "#3ee6b0", mineT: "#04150f", like: "#ff3d8a", link: "#ffc56b",
+  ring: "linear-gradient(135deg, #3ee6b0 0%, #ffd23f 50%, #ff3d8a 100%)", badge: "#ff3d8a", badgeOn: "#ffffff", tabOn: "#3ee6b0", plusBg: "#3ee6b0", plusOn: "#04150f",
+  chat: "#ff3d8a", l1: "#ff7a3d", l2c: "#3ee6b0", fills: MIXFILLS, fillInk: "#140a10",
+  glowop: .5, glowsat: 1.45, lightsop: .6, tintop: "28%",
+  chips: [["Background", "#140a10"], ["Panels", "#2f1a27"], ["Text", "#fff5f0"], ["Your colour", "#3ee6b0"], ["Likes", "#ff3d8a"], ["Highlight", "#ffc56b"]],
+};
+T.blend3 = {
+  ...SUNFONT,
+  title: "Blend 3 · Half", em: " and half",
+  mood: "A dark halfway between the two (black with a hint of plum). Mint for buttons and the things you tap; the tangerine-to-pink fade for your messages, story rings and the + button; sunny yellow for small counts.",
+  font: "Gabarito for titles, Rethink Sans for reading (the font is a separate choice)",
+  g: "#0e090c", s: "#1a1217", r: "#251b22", l: "#352731", l2: "#5c4855", t: "#fff6f2", ts: "#c4b0b9",
+  a: "#3ee6b0", on: "#04150f", btn: "#3ee6b0", mine: "linear-gradient(135deg, #ff8a3d, #ff3d8a)", mineT: "#1d0802", like: "#ff3d8a", link: "#3ee6b0",
+  ring: "linear-gradient(135deg, #ffd23f 0%, #ff7a3d 45%, #ff3d8a 100%)", badge: "#ffd23f", badgeOn: "#1d0802", tabOn: "#3ee6b0", plusBg: "linear-gradient(135deg, #ff9a3d, #ff3d8a)", plusOn: "#1d0802",
+  chat: "#ff7a3d", l1: "#ff3d8a", l2c: "#3ee6b0", fills: MIXFILLS, fillInk: "#0e090c",
+  glowop: .48, glowsat: 1.4, lightsop: .58, tintop: "26%",
+  chips: [["Background", "#0e090c"], ["Panels", "#251b22"], ["Text", "#fff6f2"], ["Buttons", "#3ee6b0"], ["Your messages", "#ff7a3d"], ["Highlight", "#ffd23f"]],
+};
+
+const ico = (n, s = 24) => {
+  const p = window.ICON[n];
+  if (!p) return "";
+  return `<svg class="ico" width="${s}" height="${s}" viewBox="0 0 256 256" aria-hidden="true">${p.map((d) => `<path d="${d}"/>`).join("")}</svg>`;
+};
+const P = {
+  me: { name: "Code Tester", first: "You", initial: "C", fill: 0 },
+  jun: { name: "Jun Park", user: "jun", face: "face47.jpg" },
+  maya: { name: "Maya Chen", user: "maya", face: "face25.jpg" },
+  theo: { name: "Theo Marsh", user: "theo", face: "face33.jpg" },
+  lina: { name: "Lina Okafor", user: "lina", face: "face12.jpg" },
+  noa: { name: "Noa Silva", user: "noa", face: "face20.jpg" },
+  sam: { name: "Sam Ade", user: "samade", initial: "S", fill: 1 },
+  priya: { name: "Priya", user: "priya", initial: "P", fill: 2 },
+};
+const av = (t, p, size) =>
+  p.face
+    ? `<img class="av" src="${IMG}${p.face}" alt="" width="${size}" height="${size}" style="width:${size}px;height:${size}px">`
+    : `<span class="av" style="width:${size}px;height:${size}px;background:${t.fills[p.fill]};color:${t.fillInk};font-size:${Math.round(size * 0.42)}px">${p.initial}</span>`;
+
+const statusBar = () => `<div class="sb"><span>9:41</span><span class="sb-i">
+  <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+  <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true" fill="currentColor"><path d="M8 2.2c2.3 0 4.4.9 6 2.4l1.3-1.4A10.3 10.3 0 0 0 8 .3C5.2.3 2.6 1.4.7 3.2L2 4.6a8.4 8.4 0 0 1 6-2.4Zm0 3.8c1.3 0 2.5.5 3.4 1.3l1.3-1.4A6.6 6.6 0 0 0 8 4.1c-1.8 0-3.4.7-4.7 1.8l1.3 1.4C5.5 6.5 6.7 6 8 6Zm0 3.8c.5 0 .9.2 1.2.5L8 11.6l-1.2-1.3c.3-.3.7-.5 1.2-.5Z"/></svg>
+  <span class="sb-bat"></span></span></div>`;
+
+const topBar = () => `<div class="top"><div class="brand"><span class="mark"></span>realm</div>
+  <div class="top-r"><span class="ibtn">${ico("Heart", 26)}<i class="ndot"></i></span><span class="ibtn">${ico("PlusSquare", 26)}</span></div></div>`;
+
+const stories = (t) => `<div class="stories">
+  <div class="story me"><div class="ring me">${av(t, P.me, 70)}<span class="plus">${ico("PlusBold", 13)}</span></div><span>Your story</span></div>
+  ${[P.jun, P.maya, P.theo, P.lina].map((p) => `<div class="story"><div class="ring">${av(t, p, 64)}</div><span>${p.name.split(" ")[0]}</span></div>`).join("")}
+</div>`;
+
+const tabBar = (t, on) => {
+  const items = [["Home", "House", "HouseFill"], ["Clips", "PlayCircle", "PlayCircleFill"], ["Search", "MagnifyingGlass", "MagnifyingGlass"], ["Messages", "ChatCircle", "ChatCircleFill"]];
+  return `<nav class="tabs">${items.map(([label, i, f]) => `<span class="tab ${on === label ? "on" : ""}">${ico(on === label ? f : i, 25)}${label}${label === "Messages" ? '<b class="bdg">2</b>' : ""}</span>`).join("")}
+  <span class="tab">${av(t, P.me, 26)}You</span></nav>`;
+};
+
+const photoPost = (t, p, photo, caption, liked, extra = "") => `
+  <div class="ph-head">${av(t, p, 34)}<div class="who"><div class="name">${p.name}</div><div class="when">4m</div></div><span style="color:var(--ts)">${ico("DotsThreeBold", 22)}</span></div>
+  <div class="ph"><img src="${IMG}${photo}" alt=""><span class="song"><img src="${IMG}song3.jpg" alt="">Midnight Drive <small>· Vienna In Love</small>${ico("MusicNoteFill", 13)}</span></div>
+  <div class="acts">${liked ? `<span class="liked">${ico("HeartFill", 26)}</span>` : ico("Heart", 26)}${ico("ChatCircle", 26)}${ico("Repeat", 26)}${ico("PaperPlaneTilt", 26)}<span class="sp"></span>${ico("BookmarkSimple", 26)}</div>
+  <div class="likes">Liked by <b>maya</b> and <b>127 others</b></div>
+  <div class="capt"><b>${p.name}</b> ${caption}</div>${extra}`;
+
+const hashtags = (s) => s.replace(/#(\w+)/g, '<span class="tag">#$1</span>');
+
+// A text post: today's way (the photo post's block, minus the photo) or the new way (a conversation).
+function textPost(t, p, text, opts = {}) {
+  const poll = opts.poll
+    ? `<div class="poll ${t.textStyle === "today" ? "today-poll" : ""}">${opts.poll.map(([label, pct, mine]) => `<div class="poll-o ${mine ? "mine" : ""}"><i style="width:${pct}%"></i><span style="display:flex;align-items:center;gap:6px">${label}${mine ? ico("CheckBold", 14) : ""}</span><b>${pct}%</b></div>`).join("")}</div><div class="poll-m">212 votes · 6 hours left</div>`
+    : "";
+  if (t.textStyle === "today") {
+    return `<div class="tt"><div class="ph-head">${av(t, p, 34)}<div class="who"><div class="name">${p.name}</div><div class="when">2h</div></div><span style="color:var(--ts)">${ico("DotsThreeBold", 22)}</span></div>
+      <div class="body">${hashtags(text)}${poll ? `<div style="font-size:15px;margin-top:4px">${poll}</div>` : ""}</div>
+      <div class="acts">${opts.liked ? `<span class="liked">${ico("HeartFill", 26)}</span>` : ico("Heart", 26)}${ico("ChatCircle", 26)}${ico("Repeat", 26)}${ico("PaperPlaneTilt", 26)}<span class="sp"></span>${ico("BookmarkSimple", 26)}</div></div>`;
+  }
+  return `<article class="tp">${av(t, p, 42)}<div>
+    <div class="tp-h"><span class="name">${p.name}</span><span class="handle">@${p.user} · 2h</span><span class="dots">${ico("DotsThreeBold", 20)}</span></div>
+    <div class="tp-x">${hashtags(text)}</div>${poll}
+    <div class="tp-a"><span class="${opts.liked ? "liked" : ""}">${ico(opts.liked ? "HeartFill" : "Heart", 19)}${opts.likes ?? 48}</span><span>${ico("ChatCircle", 19)}${opts.comments ?? 12}</span><span>${ico("Repeat", 19)}${opts.reposts ?? 5}</span><span class="end">${ico("PaperPlaneTilt", 19)}</span></div>
+  </div></article>`;
+}
+
+function vars(t) {
+  return `--g:${t.g};--s:${t.s};--r:${t.r};--l:${t.l};--l2:${t.l2};--t:${t.t};--ts:${t.ts};--a:${t.a};--on:${t.on};--btn:${t.btn};--mine:${t.mine};--mine-t:${t.mineT};--like:${t.like};--link:${t.link};--ring:${t.ring};--badge:${t.badge};--badgeon:${t.badgeOn};--tabon:${t.tabOn};--plusbg:${t.plusBg};--pluson:${t.plusOn};--chat:${t.chat};--l1:${t.l1};--l2c:${t.l2c};--disp:${t.disp};--dispw:${t.dispw};--displs:${t.displs};--brandsize:${t.brandSize};--brandls:${t.brandLs};--body:${t.body};--namew:${t.namew};--glowop:${t.glowop};--glowsat:${t.glowsat};--lightsop:${t.lightsop};--tintop:${t.tintop};--media:22px`;
+}
+
+const phoneHome = (t) => `<div class="phone"><div class="lights"></div><div class="glow" style="background-image:url(${IMG}photo-concert6.jpg)"></div>
+  ${statusBar()}${topBar()}${stories(t)}${photoPost(t, P.lina, "photo-concert6.jpg", "no signal, just this sky", true)}
+  ${tabBar(t, "Home")}<i class="home-ind"></i></div>`;
+
+const phoneFeed = (t) => `<div class="phone"><div class="lights"></div>
+  ${statusBar()}${topBar()}
+  <div style="border-top:1px solid var(--l)">
+  ${textPost(t, P.theo, "Hot take: the best songs are the ones your friends send you at 2am. #latenight", { liked: true, likes: 48 })}
+  ${textPost(t, P.priya, "Friday plan?", { poll: [["Movie night", 46], ["Ranked till 3am", 38, true], ["Actually sleep", 16]], likes: 21, comments: 9, reposts: 2 })}
+  ${t.textStyle === "today" ? "" : textPost(t, P.sam, "ok the clip from last night is insane. posting it in the group later", { likes: 7, comments: 3, reposts: 0 })}
+  </div>
+  ${tabBar(t, "Home")}<i class="home-ind"></i></div>`;
+
+const phoneChat = (t) => `<div class="phone"><div class="tint"></div>
+  ${statusBar()}
+  <div class="ch-top">${ico("CaretLeft", 26)}${av(t, P.noa, 38)}<div class="who"><div class="name">Noa Silva</div><div class="active"><i></i>Active now</div></div><span style="color:var(--ts)">${ico("DotsThreeBold", 22)}</span></div>
+  <div class="msgs">
+    <div class="day">Today 3:12 PM</div>
+    <div class="them-row">${av(t, P.noa, 28)}<div class="them-col">
+      <div class="m them">found the best café in town</div>
+      <div class="m them pic"><img src="${IMG}photo-party1.jpg" alt=""></div>
+      <div class="m them">come after class?? I'm saving you a seat</div></div></div>
+    <div class="m me" style="margin-top:8px">omw!! 20 min</div>
+    <div class="m me">get me whatever you're having</div>
+    <div class="seen">Seen</div>
+  </div>
+  <div class="comp"><span style="color:var(--t)">${ico("Image", 26)}</span><div class="field">Message</div><span class="send">${ico("ArrowUpBold", 20)}</span></div>
+  <i class="home-ind"></i></div>`;
+
+const desk = (t) => {
+  const nav = [["Home", "HouseFill", true], ["Clips", "PlayCircle"], ["Search", "MagnifyingGlass"], ["Messages", "ChatCircle", false, 2], ["Music", "MusicNotes"], ["Activity", "Heart"], ["Create", "PlusSquare"]];
+  return `<div class="desk"><div class="lights"></div>
+  <aside class="nav"><div class="brand"><span class="mark"></span>realm</div>
+    ${nav.map(([l, i, on, b]) => `<div class="ni ${on ? "on" : ""}">${ico(i, 24)}${l}${b ? `<b class="bdg">${b}</b>` : ""}</div>`).join("")}
+    <span class="grow"></span><div class="ni">${av(t, P.me, 26)}Profile</div><div class="ni">${ico("Gear", 24)}Settings</div></aside>
+  <section class="feed"><div class="glow" style="background-image:url(${IMG}photo-desk7.jpg)"></div><div class="feed-col">
+    ${stories(t)}
+    ${textPost(t, P.theo, "Hot take: the best songs are the ones your friends send you at 2am. #latenight", { liked: true })}
+    ${photoPost(t, P.jun, "photo-desk7.jpg", "worth every step of the hike", false)}
+  </div></section></div>`;
+};
+
+const board = document.getElementById("board");
+for (const [id, t] of Object.entries(T)) {
+  const sec = document.createElement("section");
+  sec.className = "opt";
+  sec.id = id;
+  sec.setAttribute("style", vars(t));
+  const n = { today: "", club: "Option 1 · ", cobalt: "Option 2 · ", sunset: "Option 3 · " }[id] ?? "";
+  sec.innerHTML = `<div class="opt-head"><div>
+      <h2 class="opt-name">${n}${t.title}<em>${t.em}</em></h2>
+      <p class="opt-mood">${t.mood}</p><p class="opt-font">Font <span>· ${t.font}</span></p></div>
+      <div class="chips">${t.chips.map(([label, hex]) => `<div class="chip"><i style="background:${hex}"></i><b>${label}</b><small>${hex}</small></div>`).join("")}</div></div>
+    <div class="row">
+      <div>${phoneHome(t)}<p class="cap">Home</p></div>
+      <div>${phoneFeed(t)}<p class="cap">${id === "today" ? "Posts with only words look like photo posts" : "Posts with only words: their own look"}</p></div>
+      <div>${phoneChat(t)}<p class="cap">A chat</p></div>
+    </div>
+    <div class="desk-wrap"><div class="desk-scale">${desk(t)}</div><p class="cap">On a computer</p></div>`;
+  board.appendChild(sec);
+}
+</script>
+</body>
+</html>

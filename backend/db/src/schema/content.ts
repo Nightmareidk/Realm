@@ -5,11 +5,13 @@ import {
   doublePrecision,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
   smallint,
   text,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createdAt, id, tstz } from "./_columns";
 import { channels, communities } from "./communities";
@@ -66,8 +68,16 @@ export const posts = pgTable(
     commentsOff: boolean().notNull().default(false),
     /** Archived: only its author sees it, and it can come back to the profile any time. */
     archivedAt: tstz(),
+    /** A quote post: the public post it shows underneath its own words. */
+    quotePostId: id(),
+    /** A time capsule: sealed (only its author sees what's inside) until this moment. */
+    opensAt: tstz(),
+    /** When the opening was announced (to its author and those who saved it). */
+    capsuleOpenedAt: tstz(),
   },
   (t) => [
+    index("posts_quote_idx").on(t.quotePostId),
+    index("posts_capsule_idx").on(t.opensAt).where(sql`${t.opensAt} is not null`),
     index("posts_community_hot_idx").on(t.communityId, t.hotRank.desc()),
     index("posts_community_new_idx").on(t.communityId, t.id.desc()),
     index("posts_author_idx").on(t.authorId, t.id.desc()),
@@ -137,6 +147,72 @@ export const votes = pgTable(
 );
 
 /** People tagged in a post (shown on the photo and on their Tagged tab). */
+/**
+ * Sharing someone's public post with your own followers. Its id is when it happened, which is
+ * where the post sits in those followers' Home.
+ */
+export const reposts = pgTable(
+  "reposts",
+  {
+    id: id().primaryKey(),
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    postId: id()
+      .notNull()
+      .references(() => posts.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("reposts_once_key").on(t.userId, t.postId),
+    index("reposts_user_idx").on(t.userId, t.id.desc()),
+    index("reposts_post_idx").on(t.postId),
+  ],
+);
+
+/** A poll on a post: two to four choices, open until `endsAt`. */
+export const postPolls = pgTable("post_polls", {
+  postId: id()
+    .primaryKey()
+    .references(() => posts.id),
+  options: jsonb().$type<string[]>().notNull(),
+  endsAt: tstz().notNull(),
+  createdAt: createdAt(),
+});
+
+/** One vote per person per poll. Who chose what is never shown to anyone. */
+export const pollVotes = pgTable(
+  "poll_votes",
+  {
+    postId: id()
+      .notNull()
+      .references(() => posts.id),
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    choice: smallint().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.postId, t.userId] })],
+);
+
+/** The #tags in a post's caption, lowercased, so a tag's posts and what's trending are quick. */
+export const postHashtags = pgTable(
+  "post_hashtags",
+  {
+    postId: id()
+      .notNull()
+      .references(() => posts.id),
+    tag: text().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.postId, t.tag] }),
+    index("post_hashtags_tag_idx").on(t.tag, t.postId.desc()),
+    index("post_hashtags_recent_idx").on(t.createdAt.desc()),
+  ],
+);
+
 export const postTags = pgTable(
   "post_tags",
   {

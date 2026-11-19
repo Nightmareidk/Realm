@@ -20,10 +20,9 @@ import { SoundChip } from "@/music/chip";
 import { playUse, stopSound } from "@/music/player";
 import { api, mediaSource } from "@/server";
 import { Avatar } from "@/social/avatar";
-import { LIKED } from "@/social/post-card";
 import { Empty, Loading } from "@/social/screen";
 import { compact } from "@/social/time";
-import { type NativeTheme, useStyles } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
 
 /**
@@ -125,6 +124,7 @@ function Clip({
   onChange: (p: Post) => void;
 }) {
   const s = useStyles(make);
+  const likeColour = useTheme().t.colors.like;
   const router = useRouter();
   const video = post.media[0];
   const player = useVideoPlayer(video ? mediaSource(video.url) : null, (p) => {
@@ -194,7 +194,7 @@ function Clip({
         </Pressable>
         <SideButton
           icon={post.liked ? "HeartFill" : "Heart"}
-          color={post.liked ? LIKED : "#ffffff"}
+          color={post.liked ? likeColour : "#ffffff"}
           label={compact(post.likeCount)}
           a11y={post.liked ? "Unlike" : "Like"}
           onPress={like}

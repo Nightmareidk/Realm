@@ -1,8 +1,16 @@
 import { z } from "zod";
 import { Snowflake } from "../ids";
-import { ThemeButtons, ThemeColors, ThemeFile, ThemeLook, ThemePanels } from "../themes/file";
+import {
+  ThemeButtons,
+  ThemeColors,
+  ThemeFile,
+  ThemeFontPair,
+  ThemeLook,
+  ThemePalette,
+  ThemePanels,
+} from "../themes/file";
 import { IsoDateTime } from "./common";
-import { ThemeAccent, UserSummary } from "./users";
+import { UserSummary } from "./users";
 
 /**
  * The theme store ("More themes"), your theme library, and which theme you're using. A theme is a
@@ -163,10 +171,18 @@ export const ReportThemeBody = z
   .meta({ id: "ReportThemeBody" });
 export type ReportThemeBody = z.infer<typeof ReportThemeBody>;
 
-/** Which theme you're using: one of Realm's looks (with your colour), or a theme from your library. */
+/**
+ * Which theme you're using: one of Realm's looks with a colour set and a font pair, or a theme
+ * from your library. The font pair "match" uses the colour set's own fonts.
+ */
 export const ActiveTheme = z
   .discriminatedUnion("kind", [
-    z.object({ kind: z.literal("look"), look: ThemeLook, accent: ThemeAccent }),
+    z.object({
+      kind: z.literal("look"),
+      look: ThemeLook,
+      palette: ThemePalette,
+      font: ThemeFontPair.default("match"),
+    }),
     z.object({ kind: z.literal("theme"), themeId: Snowflake }),
   ])
   .meta({ id: "ActiveTheme" });

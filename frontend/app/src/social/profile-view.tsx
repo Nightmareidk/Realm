@@ -1,21 +1,24 @@
-import type { Channel, Collection, FollowState, Post, Profile } from "@realm/contracts";
+import type { Collection, FollowState, Post, Profile } from "@realm/contracts";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { type ReactNode, useCallback, useState } from "react";
-import { Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { alert } from "../alert";
 import { postsChanged, useApi, usePosts } from "../data";
+import { dmParams, openDmWith } from "../e2ee/open-dm";
 import { Icon } from "../icon";
 import { useContentWidth } from "../layout";
 import { useLiveEvent } from "../live";
 import { useStories } from "../music/stories";
+import { HScroll } from "../scroll-row";
 import { ApiError, api, mediaSource } from "../server";
 import { useSheet } from "../sheet";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Pill } from "../ui";
 import { Avatar, fillFor } from "./avatar";
+import { untilOpen } from "./capsule";
 import { Highlights } from "./highlights";
 import { MentionText } from "./mention-text";
 import { useSafety } from "./safety";
@@ -81,7 +84,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
   });
 
   if (error && !profile) return <Problem message={error} onRetry={reload} />;
-  if (!profile) return <Loading />;
+  if (!profile) return <Loading shape="profile" />;
 
   async function follow(next: "follow" | "unfollow") {
     if (!profile) return;
@@ -110,10 +113,12 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
   async function message() {
     if (!profile) return;
     try {
-      const dm = await api<Channel>("/users/@me/channels", {
-        body: { recipientIds: [profile.user.id] },
+      const dm = await openDmWith(profile.user.id);
+      // An encrypted chat says so in its header, so it's opened as the DM it is.
+      router.push({
+        pathname: "/chat/[id]",
+        params: dm.secure ? dmParams(dm, profile.user.displayName) : { id: dm.id },
       });
-      router.push({ pathname: "/chat/[id]", params: { id: dm.id } });
     } catch (err) {
       alert("Can't message them", err instanceof ApiError ? err.message : "Try again.");
     }
@@ -352,6 +357,25 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
           </Pressable>
         ) : null}
 
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel={
+            profile.isSelf ? "Your music" : `Music by ${profile.user.displayName}`
+          }
+          onPress={() =>
+            router.push({
+              pathname: "/music/by/[username]",
+              params: { username: profile.user.username },
+            })
+          }
+          style={s.site}
+        >
+          <Icon name="MusicNotesFill" size={15} color={t.colors.text} />
+          <Text style={s.siteText} numberOfLines={1}>
+            {profile.isSelf ? "Your music" : "Music"}
+          </Text>
+        </Pressable>
+
         <View style={s.actions}>
           {profile.isSelf ? (
             <>
@@ -484,11 +508,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
         ))}
       </View>
       {tab === "saved" && (folders.data?.items.length ?? 0) > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.folders}
-        >
+        <HScroll showsHorizontalScrollIndicator={false} contentContainerStyle={s.folders}>
           {[{ id: null as string | null, name: "All saved" }, ...(folders.data?.items ?? [])].map(
             (c) => {
               const on = folder === c.id;
@@ -505,7 +525,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
               );
             },
           )}
-        </ScrollView>
+        </HScroll>
       ) : null}
     </View>
   );
@@ -519,7 +539,7 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
       ListHeaderComponent={header}
       ListEmptyComponent={
         list.loading ? (
-          <Loading />
+          <Loading shape="grid" count={9} />
         ) : (
           <Empty
             title={
@@ -562,11 +582,12 @@ export function ProfileView({ username, top }: { username: string; top: ReactNod
 function Banner({ profile }: { profile: Profile }) {
   const { t } = useTheme();
   const s = useStyles(make);
-  const fill = fillFor(profile.user.id);
+  const fill = fillFor(profile.user.id, t);
   return (
     <View style={s.banner}>
       {profile.user.bannerUrl ? (
         <Image
+          transition={150}
           source={mediaSource(profile.user.bannerUrl)}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
@@ -574,6 +595,7 @@ function Banner({ profile }: { profile: Profile }) {
       ) : profile.user.avatarUrl ? (
         // No banner: their picture, blurred into light (Look B: photos light the room).
         <Image
+          transition={150}
           source={mediaSource(profile.user.avatarUrl)}
           style={[StyleSheet.absoluteFill, s.bannerLight]}
           contentFit="cover"
@@ -616,6 +638,7 @@ function Count({ n, label, onPress }: { n: number; label: string; onPress?: () =
 /** A square in the grid: the first photo, a Clip's play mark, or a text post's opening words. */
 function Tile({ post }: { post: Post }) {
   const s = useStyles(make);
+  const { t } = useTheme();
   const router = useRouter();
   const width = useContentWidth(935);
   const size = (width - 4) / 3;
@@ -625,12 +648,26 @@ function Tile({ post }: { post: Post }) {
       onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })}
       accessibilityRole="link"
       accessibilityLabel={
-        post.kind === "clip" ? "Clip" : post.kind === "text" ? (post.caption ?? "Post") : "Photo"
+        post.capsule?.sealed && !post.caption && !first
+          ? `Time capsule, opens in ${untilOpen(post.capsule.opensAt).n} ${untilOpen(post.capsule.opensAt).unit}`
+          : post.kind === "clip"
+            ? "Clip"
+            : post.kind === "text"
+              ? (post.caption ?? "Post")
+              : "Photo"
       }
       style={[s.tile, { width: size, height: size * 1.25 }]}
     >
-      {post.kind === "image" && first ? (
+      {post.capsule?.sealed && !post.caption && !first ? (
+        // Someone else's sealed time capsule: only the countdown.
+        <View style={s.tileCapsule}>
+          <Icon name="HourglassMedium" size={22} color={t.colors.accent} />
+          <Text style={s.tileCapsuleN}>{untilOpen(post.capsule.opensAt).n}</Text>
+          <Text style={s.tileCapsuleUnit}>{untilOpen(post.capsule.opensAt).unit}</Text>
+        </View>
+      ) : post.kind === "image" && first ? (
         <Image
+          transition={150}
           source={mediaSource(first.url)}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
@@ -640,6 +677,12 @@ function Tile({ post }: { post: Post }) {
         <Text style={s.tileText} numberOfLines={6}>
           {post.caption}
         </Text>
+      ) : null}
+      {post.capsule?.sealed && (post.caption || first) ? (
+        // Your own sealed capsule: what's inside, marked as sealed.
+        <View style={[s.tileMark, s.tileSealed]}>
+          <Icon name="HourglassMedium" size={14} color="#ffffff" />
+        </View>
       ) : null}
       {post.pinned ? (
         <View style={[s.tileMark, s.tilePin]}>
@@ -821,4 +864,28 @@ const make = (t: NativeTheme) =>
       padding: 10,
     },
     tileMark: { position: "absolute", top: 6, right: 6 },
+    tileSealed: { top: undefined, bottom: 6 },
+    tileCapsule: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 2,
+      backgroundColor: t.colors.surfaceSunken,
+    },
+    tileCapsuleN: {
+      marginTop: 6,
+      fontFamily: t.fonts.displayBold,
+      fontSize: 30,
+      lineHeight: 34,
+      color: t.colors.text,
+    },
+    tileCapsuleUnit: {
+      fontFamily: t.fonts.bold,
+      fontSize: 12.5 * t.textScale,
+      color: t.colors.textSoft,
+    },
   });

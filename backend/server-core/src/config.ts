@@ -41,6 +41,16 @@ const Env = z.object({
   /** Resend's HTTP API (https://resend.com). Takes over from SMTP when set. */
   RESEND_API_KEY: z.string().optional(),
   /**
+   * Testing only: also write each one-time sign-in code to this file, so a test can read it
+   * without an inbox. Refused in production.
+   */
+  REALM_LOGIN_CODE_FILE: z.string().optional(),
+  /**
+   * End-to-end encrypted DMs (docs/E2EE.md phase 2). Off by default: the prototype engine has
+   * not been audited, so this is for the test server only until phase 5.
+   */
+  REALM_E2EE_DMS: z.enum(["on", "off"]).default("off"),
+  /**
    * Object storage for uploads, any S3-compatible service. Cloudflare R2:
    * S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com, S3_REGION=auto. Unset in
    * development: files go to REALM_LOCAL_MEDIA_DIR on this machine instead.
@@ -55,6 +65,8 @@ const Env = z.object({
   LIVEKIT_URL: z.string().optional(),
   LIVEKIT_API_KEY: z.string().optional(),
   LIVEKIT_API_SECRET: z.string().optional(),
+  /** The address people can write to; shown at the bottom of every email. */
+  REALM_CONTACT_EMAIL: z.email().default("info@tomyrealm.com"),
   /** Where reports that need Realm itself (sexual content involving a minor) are emailed. */
   REALM_SAFETY_EMAIL: z.email().optional(),
   /**
@@ -106,6 +118,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     if (!config.SMTP_HOST && !config.RESEND_API_KEY) missing.push("RESEND_API_KEY or SMTP_HOST");
     if (!config.S3_ENDPOINT || !config.S3_BUCKET) missing.push("S3_ENDPOINT and S3_BUCKET");
     if (missing.length) throw new Error(`Missing production configuration: ${missing.join(", ")}`);
+    if (config.REALM_LOGIN_CODE_FILE) {
+      throw new Error("REALM_LOGIN_CODE_FILE is for testing only; remove it in production");
+    }
     if (config.DATABASE_URL.startsWith("pglite:")) {
       throw new Error("DATABASE_URL: the embedded database (pglite:) is for development only");
     }

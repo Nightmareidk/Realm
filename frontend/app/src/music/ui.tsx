@@ -150,12 +150,55 @@ export function SongRow({
 }
 
 /** A song's menu: like, add to a playlist, make a post with it, and (in your playlist) remove. */
+/** Report a song someone shared: say what's wrong, and Realm looks at it. */
+function reportSong(sheet: Sheet, sound: Sound) {
+  const send = async (why: "not_theirs" | "harmful" | "other") => {
+    try {
+      await api(`/sounds/${sound.id}/report`, { body: { why } });
+      sheet({
+        title: "Report sent",
+        line: "Thanks for telling us. Realm will look at it, and a song that several people report is taken down until then. Who reported it stays private.",
+        actions: [],
+      });
+    } catch (err) {
+      alert("Not sent", err instanceof ApiError ? err.message : "Try again.");
+    }
+  };
+  sheet({
+    title: "Report this song",
+    line: `"${sound.title}" by ${sound.artist}. What's wrong with it?`,
+    actions: [
+      {
+        label: "It isn't theirs to share",
+        icon: "Flag",
+        onPress: () => send("not_theirs"),
+      },
+      {
+        label: "It's hateful, sexual or violent",
+        icon: "Flag",
+        onPress: () => send("harmful"),
+      },
+      { label: "Something else", icon: "Flag", onPress: () => send("other") },
+    ],
+  });
+}
+
 export function songMenu(
   sheet: Sheet,
   router: Router,
   sound: Sound,
-  opts: { liked: boolean; removeFrom?: { id: string; done: () => void } } = { liked: false },
+  opts: {
+    liked: boolean;
+    removeFrom?: { id: string; done: () => void };
+    /** Who's looking: their own songs can be taken down, other people's reported. */
+    meId?: string | null;
+    /** Called after a song is taken down, so the list it was in can load again. */
+    changed?: () => void;
+  } = { liked: false },
 ) {
+  // A song someone shared themselves (not a library track) belongs to its uploader.
+  const shared = sound.kind === "original" && sound.creator ? sound.creator : null;
+  const mine = shared !== null && shared.id === opts.meId;
   sheet({
     title: sound.title,
     line: `${sound.artist}${sound.licence ? ` · ${sound.licence}` : sound.kind === "original" ? " · Original sound" : ""}`,
@@ -179,6 +222,60 @@ export function songMenu(
             params: { soundId: sound.id, start: "0", length: "15000" },
           }),
       },
+      ...(shared && !mine
+        ? [
+            {
+              label: `More from @${shared.username}`,
+              icon: "MusicNotesFill" as const,
+              onPress: () =>
+                router.push({
+                  pathname: "/music/by/[username]",
+                  params: { username: shared.username },
+                }),
+            },
+          ]
+        : []),
+      ...(mine
+        ? [
+            {
+              label: "Take this song down",
+              icon: "Trash" as const,
+              danger: true,
+              onPress: () =>
+                sheet({
+                  title: "Take this song down?",
+                  line: "It leaves Realm's music: nobody will find or play it any more. Posts that already use it keep their sound.",
+                  actions: [
+                    {
+                      label: "Take it down",
+                      icon: "Trash",
+                      danger: true,
+                      onPress: async () => {
+                        try {
+                          await api(`/sounds/${sound.id}`, { method: "DELETE" });
+                          opts.changed?.();
+                        } catch (err) {
+                          alert(
+                            "Not taken down",
+                            err instanceof ApiError ? err.message : "Try again.",
+                          );
+                        }
+                      },
+                    },
+                  ],
+                }),
+            },
+          ]
+        : shared && opts.meId
+          ? [
+              {
+                label: "Report this song",
+                icon: "Flag" as const,
+                danger: true,
+                onPress: () => reportSong(sheet, sound),
+              },
+            ]
+          : []),
       ...(opts.removeFrom
         ? [
             {

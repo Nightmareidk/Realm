@@ -669,7 +669,18 @@ Components read public role names (`docs/THEMING.md` §4.2.1), never palette val
 
 Also derived from the accent: `--r-mention`, and `--r-selection` (34% accent). Links are `--r-link` (Ink). Outside the front page, `--acc` / `--on-acc` are set to `--r-accent` / `--r-on-accent` on `:root`, so the shared pieces that read them (the mark, the action pill) wear the person's colour too.
 
-### Themes
+### Colour sets inside the app (2026-11-19)
+Inside the signed-in app (website and phone) the colours come from **colour sets**, not from the four front-page themes below. The owner's verdict (2026-11-19): the layout stays, but the colours and font had "no life". So each set brings its own ground and panels (or keeps the look's own), an action colour, an optional second colour that buttons, your chat bubbles and story rings fade to, three lights, a link colour and a heart (like) colour, plus a matching font pair.
+
+- **Afterglow** (default for everyone new): the look's near-black, orange `#ff8a3d` fading to pink `#ff3d8a`, mint links `#3ee6b0`, pink hearts; Gabarito titles with Rethink Sans for reading.
+- **Club Night**: true black, hot pink `#ff3d7f`, blue links; Figtree.
+- **Cobalt Volt**: deep blue ground `#0a1033`, lime `#c6ff3d`; Unbounded titles with Onest.
+- **Sunset Pop**: warm plum-black `#140a10`, the same orange-to-pink fade, gold links; Gabarito with Rethink Sans.
+- **Mint, Orchid, Aqua, Ember**: how Realm looked before, kept as sets with the classic fonts (Funnel Display and Atkinson).
+
+Colours and font are picked separately (Settings › Themes, and the account menu for colours); "Match the colours" uses the set's own font. The choice is stored as `palette` and `font` on `user_settings` and sent as `{ kind: "look", look, palette, font }`. Every look × set × font pair passes the theme checks (text 4.5:1, controls and the heart 3:1), tested in `frontend/design-tokens/src/looks.test.ts`. Word-only posts use their own thread layout (name, @handle and time on one line, the text large beside the avatar, small icons with counts beside them) in every look.
+
+### Themes (front page and signed-out screens)
 Four themes, each writing only six values: the accent, its "on" colour, three lights and a `glow`. Mint is the default on `:root`; Orchid, Aqua and Ember apply through `:root[data-accent="…"]`. The glow is solved per theme so the light field's brightest point stays at relative luminance 0.075: Mint 0.6, Orchid 0.78, Aqua 0.55, Ember 0.6. A pick is remembered on the device (`realm:accent`, applied by the boot script before first paint) and saved to the account.
 
 ### Primary
@@ -707,6 +718,8 @@ Four themes, each writing only six values: the accent, its "on" colour, three li
 
 **Display Font:** Funnel Display (with system-ui, sans-serif)
 **Body Font:** Atkinson Hyperlegible Next (with ui-sans-serif, system-ui, sans-serif)
+
+These two are the front page's and the "Classic" font pair. Inside the app the default since 2026-11-19 is **Gabarito** (titles, 800/700) with **Rethink Sans** (reading, 400/700), from the Afterglow colour set; Figtree, and Unbounded with Onest, are the other pairs. The rules below about "Funnel" and "Atkinson" apply to whichever title and reading fonts are in use.
 
 **Character:** A wide, confident display face set extra-bold and very tight, against a body face designed for legibility with distinct letterforms. The headline shouts; the reading text is calm.
 

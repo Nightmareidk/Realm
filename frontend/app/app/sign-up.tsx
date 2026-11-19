@@ -5,7 +5,7 @@ import { Linking, StyleSheet, Text, type TextInput, View } from "react-native";
 import { FormScreen } from "@/screen";
 import { ApiError, api, waitFor, webOrigin } from "@/server";
 import { useSession } from "@/session";
-import { type NativeTheme, themes, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, PALETTES, useStyles, useTheme } from "@/theme";
 import { Field, Lead, Notice, Pill, TextLink, Title } from "@/ui";
 
 type Step = "birthday" | "account" | "held";
@@ -181,7 +181,7 @@ function Account({
   const s = useStyles(make);
   const router = useRouter();
   const { register } = useSession();
-  const { accentId: accent } = useTheme();
+  const { paletteId: palette } = useTheme();
   const [f, setF] = useState<Form>({ displayName: "", username: "", email: "", password: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [notice, setNotice] = useState<string | null>(null);
@@ -239,7 +239,7 @@ function Account({
         email: f.email.trim(),
         password: f.password,
         birthDate,
-        accent,
+        palette,
       });
       router.replace("/home");
     } catch (err) {
@@ -274,7 +274,7 @@ function Account({
       <View style={s.head}>
         <Title>Make your account.</Title>
         <Lead style={s.lead}>
-          In {themes[accent].name}, the colour you picked. You can change it any time.
+          In {PALETTES[palette].name}, the look you picked. You can change it any time.
         </Lead>
       </View>
       <View style={s.form}>

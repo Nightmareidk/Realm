@@ -4,7 +4,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, {
   cancelAnimation,
   Easing,
@@ -18,6 +26,7 @@ import { leave } from "@/leave";
 import { SoundChip } from "@/music/chip";
 import { playUse, stopSound } from "@/music/player";
 import { dropStory, loadStories, markSeen, useStories } from "@/music/stories";
+import { EdgeArrow, useFinePointer } from "@/scroll-row";
 import { ApiError, api, mediaSource } from "@/server";
 import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
@@ -307,177 +316,229 @@ function Viewer({
     });
   }
 
+  // On a computer: the Story in a phone-shaped frame in the middle of a wide window, arrows
+  // beside it, and the keyboard (left/right, space to pause, Escape to close). Phones keep taps.
+  const fine = useFinePointer();
+  // The space this screen really has (beside the menu on a computer), not the whole window.
+  const win = useWindowDimensions();
+  const [area, setArea] = useState({ width: win.width, height: win.height });
+  const frame =
+    Platform.OS === "web" && area.width > area.height * 0.8
+      ? Math.min(area.width, Math.round(area.height * (9 / 16)))
+      : null;
+  const keys = useRef({ onBack, onNext, onClose, pause, resume, held });
+  keys.current = { onBack, onNext, onClose, pause, resume, held };
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      // Typing a reply: the keys are the reply's.
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable))
+        return;
+      const k = keys.current;
+      if (e.key === "ArrowLeft") k.onBack();
+      else if (e.key === "ArrowRight") k.onNext();
+      else if (e.key === "Escape") k.onClose();
+      else if (e.key === " ") {
+        e.preventDefault();
+        if (k.held) k.resume();
+        else k.pause();
+      } else return;
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const outside = frame ? Math.max(8, (area.width - frame) / 2 - 60) : 8;
+
   return (
-    <View style={s.root}>
-      {isVideo ? (
-        <VideoView
-          player={player}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          nativeControls={false}
-        />
-      ) : (
-        <Image
-          source={mediaSource(story.media.url)}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={120}
-          accessibilityLabel={story.caption ?? `A Story from ${ring.author.displayName}`}
-        />
-      )}
-      <LinearGradient
-        colors={["rgba(0,0,0,0.55)", "rgba(0,0,0,0)"]}
-        style={[s.shadeTop, { height: insets.top + 120 }]}
-        pointerEvents="none"
-      />
-      <LinearGradient
-        colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.6)"]}
-        style={[s.shadeBottom, { height: insets.bottom + 200 }]}
-        pointerEvents="none"
-      />
-
-      {/* Tap zones: back on the left third, next on the rest; hold anywhere to pause. */}
-      <View style={s.zones}>
-        <Pressable
-          style={s.zoneBack}
-          onPress={() => !held && onBack()}
-          onPressIn={pressIn}
-          onPressOut={pressOut}
-          accessibilityRole="button"
-          accessibilityLabel="Previous Story"
-        />
-        <Pressable
-          style={s.zoneNext}
-          onPress={() => !held && onNext()}
-          onPressIn={pressIn}
-          onPressOut={pressOut}
-          accessibilityRole="button"
-          accessibilityLabel="Next Story"
-        />
-      </View>
-
-      <View style={[s.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
-        <View style={s.bars} accessibilityLabel={`Story ${index + 1} of ${ring.stories.length}`}>
-          {ring.stories.map((st, i) => (
-            <View key={st.id} style={[s.track, t.style.stories === "bands" && s.trackSquare]}>
-              {i < index ? <View style={[s.fillDone]} /> : null}
-              {i === index ? <Animated.View style={[s.fillNow, fill]} /> : null}
-            </View>
-          ))}
-        </View>
-        <View style={s.who}>
-          <Pressable
-            onPress={() => {
-              stopSound();
-              router.push({
-                pathname: "/user/[username]",
-                params: { username: ring.author.username },
-              });
-            }}
-            accessibilityRole="link"
-            accessibilityLabel={`${ring.author.displayName}, ${ago(story.createdAt)}`}
-            style={s.whoLink}
-          >
-            <Avatar user={ring.author} size={34} />
-            <Text style={s.name} numberOfLines={1}>
-              {mine ? "Your Story" : ring.author.displayName}
-            </Text>
-            <Text style={s.when}>{ago(story.createdAt)}</Text>
-          </Pressable>
-          {held ? <Icon name="PauseFill" size={18} color="#ffffff" /> : null}
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel="Close Stories"
-            hitSlop={10}
-            style={s.close}
-          >
-            <Icon name="X" size={26} color="#ffffff" />
-          </Pressable>
-        </View>
-        {story.sound ? (
-          <View style={s.music}>
-            <SoundChip sound={story.sound} playKey={`story:${story.id}`} over autoPlaying={!held} />
-          </View>
-        ) : null}
-      </View>
-
-      <View style={[s.bottom, { paddingBottom: insets.bottom + 18 }]} pointerEvents="box-none">
-        {story.caption ? <Text style={s.caption}>{story.caption}</Text> : null}
-        {story.sound?.kind === "library" ? (
-          <Text style={s.credit} numberOfLines={1}>
-            Music: {story.sound.title} by {story.sound.artist}
-            {story.sound.licence ? ` (${story.sound.licence})` : ""}
-          </Text>
-        ) : null}
-        {mine ? (
-          <View style={s.mineRow}>
-            <Pressable
-              onPress={showViewers}
-              accessibilityRole="button"
-              accessibilityLabel={`${story.views ?? 0} views. See who watched`}
-              style={s.views}
-            >
-              <Icon name="Eye" size={20} color="#ffffff" />
-              <Text style={s.viewsText}>
-                {story.views === 1 ? "1 view" : `${story.views ?? 0} views`}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={remove}
-              accessibilityRole="button"
-              accessibilityLabel="Delete this Story"
-              hitSlop={8}
-              style={s.trash}
-            >
-              <Icon name="Trash" size={22} color="#ffffff" />
-            </Pressable>
-          </View>
+    <View
+      style={s.stage}
+      onLayout={(e) =>
+        setArea({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })
+      }
+    >
+      <View style={[s.root, frame !== null && { width: frame, alignSelf: "center" }]}>
+        {isVideo ? (
+          <VideoView
+            player={player}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            nativeControls={false}
+          />
         ) : (
-          <View style={s.replyArea}>
-            {reply ? null : (
-              <View style={s.quick}>
-                {QUICK.map((q) => (
-                  <Pressable
-                    key={q}
-                    onPress={() => sendReply(q)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`React ${q}`}
-                    style={s.quickBtn}
-                  >
-                    <Text style={s.quickText}>{q}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-            <View style={s.replyBar}>
-              <TextInput
-                value={reply}
-                onChangeText={setReply}
-                onFocus={pause}
-                onBlur={() => !reply && resume()}
-                placeholder={note ?? `Reply to ${ring.author.displayName.split(" ")[0]}…`}
-                placeholderTextColor="rgba(255,255,255,0.8)"
-                maxLength={500}
-                returnKeyType="send"
-                onSubmitEditing={() => sendReply(reply)}
-                style={s.replyInput}
-                accessibilityLabel={`Reply to ${ring.author.displayName}`}
-              />
-              {reply ? (
-                <Pressable
-                  onPress={() => sendReply(reply)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Send reply"
-                  style={s.replySend}
-                >
-                  <Text style={s.replySendText}>Send</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
+          <Image
+            source={mediaSource(story.media.url)}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={120}
+            accessibilityLabel={story.caption ?? `A Story from ${ring.author.displayName}`}
+          />
         )}
+        <LinearGradient
+          colors={["rgba(0,0,0,0.55)", "rgba(0,0,0,0)"]}
+          style={[s.shadeTop, { height: insets.top + 120 }]}
+          pointerEvents="none"
+        />
+        <LinearGradient
+          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.6)"]}
+          style={[s.shadeBottom, { height: insets.bottom + 200 }]}
+          pointerEvents="none"
+        />
+
+        {/* Tap zones: back on the left third, next on the rest; hold anywhere to pause. */}
+        <View style={s.zones}>
+          <Pressable
+            style={s.zoneBack}
+            onPress={() => !held && onBack()}
+            onPressIn={pressIn}
+            onPressOut={pressOut}
+            accessibilityRole="button"
+            accessibilityLabel="Previous Story"
+          />
+          <Pressable
+            style={s.zoneNext}
+            onPress={() => !held && onNext()}
+            onPressIn={pressIn}
+            onPressOut={pressOut}
+            accessibilityRole="button"
+            accessibilityLabel="Next Story"
+          />
+        </View>
+
+        <View style={[s.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
+          <View style={s.bars} accessibilityLabel={`Story ${index + 1} of ${ring.stories.length}`}>
+            {ring.stories.map((st, i) => (
+              <View key={st.id} style={[s.track, t.style.stories === "bands" && s.trackSquare]}>
+                {i < index ? <View style={[s.fillDone]} /> : null}
+                {i === index ? <Animated.View style={[s.fillNow, fill]} /> : null}
+              </View>
+            ))}
+          </View>
+          <View style={s.who}>
+            <Pressable
+              onPress={() => {
+                stopSound();
+                router.push({
+                  pathname: "/user/[username]",
+                  params: { username: ring.author.username },
+                });
+              }}
+              accessibilityRole="link"
+              accessibilityLabel={`${ring.author.displayName}, ${ago(story.createdAt)}`}
+              style={s.whoLink}
+            >
+              <Avatar user={ring.author} size={34} />
+              <Text style={s.name} numberOfLines={1}>
+                {mine ? "Your Story" : ring.author.displayName}
+              </Text>
+              <Text style={s.when}>{ago(story.createdAt)}</Text>
+            </Pressable>
+            {held ? <Icon name="PauseFill" size={18} color="#ffffff" /> : null}
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close Stories"
+              hitSlop={10}
+              style={s.close}
+            >
+              <Icon name="X" size={26} color="#ffffff" />
+            </Pressable>
+          </View>
+          {story.sound ? (
+            <View style={s.music}>
+              <SoundChip
+                sound={story.sound}
+                playKey={`story:${story.id}`}
+                over
+                autoPlaying={!held}
+              />
+            </View>
+          ) : null}
+        </View>
+
+        <View style={[s.bottom, { paddingBottom: insets.bottom + 18 }]} pointerEvents="box-none">
+          {story.caption ? <Text style={s.caption}>{story.caption}</Text> : null}
+          {story.sound?.kind === "library" ? (
+            <Text style={s.credit} numberOfLines={1}>
+              Music: {story.sound.title} by {story.sound.artist}
+              {story.sound.licence ? ` (${story.sound.licence})` : ""}
+            </Text>
+          ) : null}
+          {mine ? (
+            <View style={s.mineRow}>
+              <Pressable
+                onPress={showViewers}
+                accessibilityRole="button"
+                accessibilityLabel={`${story.views ?? 0} views. See who watched`}
+                style={s.views}
+              >
+                <Icon name="Eye" size={20} color="#ffffff" />
+                <Text style={s.viewsText}>
+                  {story.views === 1 ? "1 view" : `${story.views ?? 0} views`}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={remove}
+                accessibilityRole="button"
+                accessibilityLabel="Delete this Story"
+                hitSlop={8}
+                style={s.trash}
+              >
+                <Icon name="Trash" size={22} color="#ffffff" />
+              </Pressable>
+            </View>
+          ) : (
+            <View style={s.replyArea}>
+              {reply ? null : (
+                <View style={s.quick}>
+                  {QUICK.map((q) => (
+                    <Pressable
+                      key={q}
+                      onPress={() => sendReply(q)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`React ${q}`}
+                      style={s.quickBtn}
+                    >
+                      <Text style={s.quickText}>{q}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+              <View style={s.replyBar}>
+                <TextInput
+                  value={reply}
+                  onChangeText={setReply}
+                  onFocus={pause}
+                  onBlur={() => !reply && resume()}
+                  placeholder={note ?? `Reply to ${ring.author.displayName.split(" ")[0]}…`}
+                  placeholderTextColor="rgba(255,255,255,0.8)"
+                  maxLength={500}
+                  returnKeyType="send"
+                  onSubmitEditing={() => sendReply(reply)}
+                  style={s.replyInput}
+                  accessibilityLabel={`Reply to ${ring.author.displayName}`}
+                />
+                {reply ? (
+                  <Pressable
+                    onPress={() => sendReply(reply)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Send reply"
+                    style={s.replySend}
+                  >
+                    <Text style={s.replySendText}>Send</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
+          )}
+        </View>
       </View>
+      {fine ? (
+        <>
+          <EdgeArrow side="left" big inset={outside} onPress={onBack} label="Previous Story" />
+          <EdgeArrow side="right" big inset={outside} onPress={onNext} label="Next Story" />
+        </>
+      ) : null}
     </View>
   );
 }
@@ -489,7 +550,8 @@ const styles = StyleSheet.create({ black: { flex: 1, backgroundColor: "#000" } }
 
 const make = (t: NativeTheme) =>
   StyleSheet.create({
-    root: { flex: 1, backgroundColor: "#000" },
+    stage: { flex: 1, backgroundColor: "#000" },
+    root: { flex: 1, backgroundColor: "#000", overflow: "hidden" },
     shadeTop: { position: "absolute", top: 0, left: 0, right: 0 },
     shadeBottom: { position: "absolute", bottom: 0, left: 0, right: 0 },
     zones: { ...StyleSheet.absoluteFill, flexDirection: "row" },

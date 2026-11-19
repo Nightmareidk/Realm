@@ -1,4 +1,4 @@
-import type { Sound, SoundUse } from "@realm/contracts";
+import type { ListeningFriend, Sound, SoundUse } from "@realm/contracts";
 import { createVideoPlayer, type VideoPlayer } from "expo-video";
 import { useSyncExternalStore } from "react";
 import { Platform } from "react-native";
@@ -45,11 +45,21 @@ function browserPlayer(): VideoPlayer {
   const el = new Audio();
   el.preload = "auto";
   let blobUrl: string | null = null;
+  // A jump made before the file has loaded is kept, and done once it has.
+  let wanted: number | null = null;
+  el.addEventListener("loadedmetadata", () => {
+    if (wanted !== null) el.currentTime = wanted;
+    wanted = null;
+  });
   const shim = {
     get currentTime() {
-      return el.currentTime;
+      return wanted ?? el.currentTime;
     },
     set currentTime(v: number) {
+      if (el.readyState < 1) {
+        wanted = v;
+        return;
+      }
       try {
         el.currentTime = v;
       } catch {
@@ -76,6 +86,7 @@ function browserPlayer(): VideoPlayer {
     async replaceAsync(src: { uri: string; headers?: Record<string, string> } | null) {
       if (blobUrl) URL.revokeObjectURL(blobUrl);
       blobUrl = null;
+      wanted = null;
       if (!src) {
         el.removeAttribute("src");
         return;
@@ -100,7 +111,35 @@ let turn = 0;
 const listeners = new Set<() => void>();
 const emit = () => {
   for (const l of listeners) l();
+  tell();
 };
+
+/**
+ * Listening together: friends can see the song you're playing and join at the same moment.
+ * Only whole songs you chose in Music are said, never the part of a song on someone's post.
+ * "Share what I'm listening to" in Settings turns it off (the server then ignores this).
+ */
+let told: string | null = null;
+let telling: ReturnType<typeof setTimeout> | null = null;
+function tell(force = false) {
+  const listening = now?.queue && !now.paused ? now : null;
+  const what = listening ? listening.sound.id : null;
+  if (what === told && !force) return;
+  if (telling) clearTimeout(telling);
+  // A moment's wait, so skipping through songs says only the one you land on.
+  telling = setTimeout(() => {
+    const current = now?.queue && !now.paused ? now : null;
+    told = current ? current.sound.id : null;
+    if (current) {
+      api("/music/now", {
+        method: "PUT",
+        body: { soundId: current.sound.id, positionMs: Math.round(position().at) },
+      }).catch(() => {});
+    } else {
+      api("/music/now", { method: "DELETE" }).catch(() => {});
+    }
+  }, 700);
+}
 
 function source(s: Sound) {
   return s.kind === "original" ? mediaSource(s.audioUrl) : { uri: resolveUrl(s.audioUrl) };
@@ -120,8 +159,10 @@ function guard(p: VideoPlayer, startMs: number, playMs: number) {
   timer = setInterval(() => {
     const at = p.currentTime * 1000;
     if (at >= startMs + playMs && now?.queue) {
-      if (repeat === "one") p.currentTime = startMs / 1000;
-      else if (repeat === "off" && now.at === now.queue.length - 1) pauseSound();
+      if (repeat === "one") {
+        p.currentTime = startMs / 1000;
+        tell(true);
+      } else if (repeat === "off" && now.at === now.queue.length - 1) pauseSound();
       else skip(1);
       return;
     }
@@ -138,6 +179,8 @@ export async function playSound(
   from: string | null = null,
   queue: Sound[] | null = null,
   at = 0,
+  /** Start this far into the part (listening along with a friend). */
+  offsetMs = 0,
 ) {
   const mine = ++turn;
   clearTimer();
@@ -151,7 +194,7 @@ export async function playSound(
     if (mine !== turn) return;
     p.muted = false;
     p.loop = false;
-    p.currentTime = startMs / 1000;
+    p.currentTime = (startMs + offsetMs) / 1000;
     // Keeps playing with the screen off or in another app, with lock-screen controls (on a
     // build that allows background audio).
     try {
@@ -162,8 +205,11 @@ export async function playSound(
     }
     p.play();
     guard(p, startMs, playMs);
-    // Played from the music library: it goes to Recently played.
-    if (queue) api(`/music/played/${s.id}`, { body: {} }).catch(() => {});
+    // Played from the music library: it goes to Recently played, and friends can join in.
+    if (queue) {
+      api(`/music/played/${s.id}`, { body: {} }).catch(() => {});
+      tell(true);
+    }
   } catch {
     if (mine === turn) {
       now = null;
@@ -209,6 +255,29 @@ export function skip(dir: 1 | -1) {
   playList(now.queue, (now.at + dir + n) % n, now.from ?? "", true);
 }
 
+/**
+ * Listen along: play the song a friend is playing, from the moment they're at. `asOf` is when
+ * the server answered, so time spent looking at the list is added on.
+ */
+export function listenAlong(friend: ListeningFriend, asOf: number) {
+  const s = friend.sound;
+  const length = Math.max(5_000, s.durationMs || 30_000);
+  const at = friend.positionMs + (Date.now() - asOf);
+  // Their song has all but finished: start it from the top instead of its last seconds.
+  const offset = at < length - 3_000 ? Math.max(0, at) : 0;
+  given = [s];
+  return playSound(
+    s,
+    0,
+    length,
+    `bar:list:${s.id}`,
+    `Listening with ${friend.user.displayName}`,
+    [s],
+    0,
+    offset,
+  );
+}
+
 /** Jump to a song in the list that's playing (Up next). */
 export function playAt(at: number) {
   if (!now?.queue) return;
@@ -220,6 +289,8 @@ export function seek(ms: number) {
   if (!player || !now) return;
   const to = Math.max(now.startMs, Math.min(now.startMs + now.playMs - 500, ms));
   player.currentTime = to / 1000;
+  // Friends listening along should know you moved.
+  tell(true);
 }
 
 /** Where it is and how long it is, in ms, for the full player. */

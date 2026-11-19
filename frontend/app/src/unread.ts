@@ -1,4 +1,10 @@
-import type { Conversation, Message, ReadState, SafetyLists } from "@realm/contracts";
+import type {
+  Conversation,
+  Message,
+  MessagePreview,
+  ReadState,
+  SafetyLists,
+} from "@realm/contracts";
 import { useEffect, useState } from "react";
 import { live } from "./live";
 import { api } from "./server";
@@ -16,15 +22,52 @@ interface State {
   loaded: boolean;
 }
 
+/**
+ * An end-to-end encrypted chat as this device knows it. The server can't read those messages,
+ * so it has no last message and no unread count for them: the device fills both in.
+ */
+export interface SecurePreview {
+  lastMessage: MessagePreview | null;
+  unread: number;
+  /** How far you've read, as the same kind of id `lastMessage.id` is. */
+  read: string | null;
+}
+
 let state: State = { me: null, conversations: [], reads: {}, muted: new Set(), loaded: false };
+let secure: Record<string, SecurePreview> = {};
 const listeners = new Set<() => void>();
 const emit = () => {
   for (const fn of listeners) fn();
 };
+
+/** Lays what the device knows over what the server sent, for encrypted chats. */
+function withSecure(next: State): State {
+  const ids = next.conversations.filter((c) => secure[c.id]).map((c) => c.id);
+  if (ids.length === 0) return next;
+  return {
+    ...next,
+    conversations: next.conversations.map((c) => {
+      const mine = secure[c.id];
+      return mine ? { ...c, lastMessage: mine.lastMessage, unread: mine.unread } : c;
+    }),
+    reads: {
+      ...next.reads,
+      ...Object.fromEntries(ids.map((id) => [id, secure[id]?.read ?? null])),
+    },
+  };
+}
+
 const set = (next: Partial<State>) => {
-  state = { ...state, ...next };
+  state = withSecure({ ...state, ...next });
   emit();
 };
+
+/** The device's view of one encrypted chat changed (or all of them are gone, with `null`). */
+export function setSecurePreview(channelId: string | null, preview?: SecurePreview) {
+  if (channelId === null) secure = {};
+  else if (preview) secure = { ...secure, [channelId]: preview };
+  set({});
+}
 
 /** Whether snowflake `a` is older than `b`. */
 export const olderId = (a: string, b: string) =>
@@ -64,6 +107,7 @@ export async function refreshUnread(me: string) {
 
 export function resetUnread() {
   state = { me: null, conversations: [], reads: {}, muted: new Set(), loaded: false };
+  secure = {};
   emit();
 }
 

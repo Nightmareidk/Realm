@@ -35,7 +35,7 @@ async function register(account = newAccount(), remoteAddress = nextIp()) {
 
 function codeFrom(email: string): string {
   const mail = t.mailer.last(email);
-  const code = mail?.text.match(/code is: (\d{6})/)?.[1];
+  const code = mail?.text.match(/^(\d{6})$/m)?.[1];
   if (!code) throw new Error(`no verification code mailed to ${email}`);
   return code;
 }
@@ -163,6 +163,39 @@ describe("login & sessions", () => {
     expect(wrong.statusCode).toBe(401);
     expect(unknown.statusCode).toBe(401);
     expect(wrong.json().error.message).toBe(unknown.json().error.message);
+  });
+
+  it("signs in with a one-time emailed code that works once, without telling who has an account", async () => {
+    const { account } = await register();
+    const send = (login: string) =>
+      t.app.inject({
+        method: "POST",
+        url: "/v1/auth/login/code/send",
+        headers: browser(),
+        payload: { login },
+        remoteAddress: nextIp(),
+      });
+    const withCode = (emailCode: string) =>
+      t.app.inject({
+        method: "POST",
+        url: "/v1/auth/login/code",
+        headers: browser(),
+        payload: { login: account.username, emailCode },
+      });
+
+    expect((await send("nobody_here_at_all")).statusCode).toBe(202);
+    expect((await send(account.username)).statusCode).toBe(202);
+    const mail = t.mailer.last(account.email);
+    const code = mail?.text.match(/^(\d{4})$/m)?.[1];
+    expect(code).toBeTruthy();
+
+    const wrongCode = code === "0000" ? "1111" : "0000";
+    expect((await withCode(wrongCode)).statusCode).toBe(401);
+    const ok = await withCode(code as string);
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().user.username).toBe(account.username);
+    expect(sessionCookie(ok)).toBeTruthy();
+    expect((await withCode(code as string)).statusCode).toBe(401); // used up
   });
 
   it("lists sessions, revokes one, and logs out", async () => {

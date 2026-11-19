@@ -54,6 +54,36 @@ export const CreateSoundBody = z
   .meta({ id: "CreateSoundBody" });
 export type CreateSoundBody = z.infer<typeof CreateSoundBody>;
 
+/**
+ * Sharing your own music: a whole song, with its name, who it's by and a cover. Until Realm has
+ * licensed music, what people upload themselves is the catalogue, so the uploader has to say it
+ * is theirs to share, and anyone can report a song that isn't.
+ */
+export const UploadSongBody = z
+  .object({
+    /** The song file (audio, uploaded with purpose "song", finished uploading). */
+    mediaId: Snowflake,
+    title: z.string().trim().min(1, "Give your song a name").max(80),
+    /** Who it's by. Left out: your own name. */
+    artist: z.string().trim().min(1).max(60).optional(),
+    /** A picture for it (your upload). */
+    coverMediaId: Snowflake.optional(),
+    rights: z.literal(true, {
+      error: "Confirm that you made this, or that you have the right to share it.",
+    }),
+  })
+  .meta({ id: "UploadSongBody" });
+export type UploadSongBody = z.infer<typeof UploadSongBody>;
+
+export const ReportSongBody = z
+  .object({
+    /** not_theirs: someone else's music. harmful: hateful, sexual or violent. */
+    why: z.enum(["not_theirs", "harmful", "other"]),
+    details: z.string().trim().max(1000).optional(),
+  })
+  .meta({ id: "ReportSongBody" });
+export type ReportSongBody = z.infer<typeof ReportSongBody>;
+
 /** The part of a sound something uses: from where, and for how long (5 to 60 seconds). */
 export const SoundPick = z
   .object({
@@ -128,9 +158,73 @@ export const MusicHome = z
     popular: z.array(Sound),
     /** Realm's own library: tracks admins added, newest first. */
     featured: z.array(Sound),
+    /** Songs people uploaded themselves, newest first. */
+    fresh: z.array(Sound),
   })
   .meta({ id: "MusicHome" });
 export type MusicHome = z.infer<typeof MusicHome>;
+
+// ── Listening together ───────────────────────────────────────────────────────────
+
+/** The app tells the server what's playing, and where in the song it is. */
+export const NowPlayingBody = z
+  .object({
+    soundId: Snowflake,
+    positionMs: z
+      .number()
+      .int()
+      .min(0)
+      .max(6 * 3_600_000),
+  })
+  .meta({ id: "NowPlayingBody" });
+export type NowPlayingBody = z.infer<typeof NowPlayingBody>;
+
+/**
+ * A friend (you follow each other) playing a song right now. `positionMs` is where they were
+ * when the server answered, so "Listen along" can start at the same moment.
+ */
+export const ListeningFriend = z
+  .object({
+    user: UserSummary,
+    sound: Sound,
+    startedAt: IsoDateTime,
+    positionMs: z.number().int(),
+  })
+  .meta({ id: "ListeningFriend" });
+export type ListeningFriend = z.infer<typeof ListeningFriend>;
+
+export const ListeningFriends = z
+  .object({ items: z.array(ListeningFriend) })
+  .meta({ id: "ListeningFriends" });
+export type ListeningFriends = z.infer<typeof ListeningFriends>;
+
+/** "Your week": the last seven days of someone's own listening and posts. */
+export const WeekRecap = z
+  .object({
+    from: IsoDateTime,
+    to: IsoDateTime,
+    plays: z.number().int(),
+    songs: z.number().int(),
+    /** Roughly: each play counted as the whole song. */
+    minutes: z.number().int(),
+    topSongs: z.array(z.object({ sound: Sound, plays: z.number().int() })),
+    topArtist: z.object({ name: z.string(), plays: z.number().int() }).nullable(),
+    posts: z.number().int(),
+    /** Likes other people gave your posts this week. */
+    likes: z.number().int(),
+    newFollowers: z.number().int(),
+    /** Your post people liked most this week. */
+    topPost: z
+      .object({
+        id: Snowflake,
+        caption: z.string().nullable(),
+        thumbUrl: z.string().nullable(),
+        likes: z.number().int(),
+      })
+      .nullable(),
+  })
+  .meta({ id: "WeekRecap" });
+export type WeekRecap = z.infer<typeof WeekRecap>;
 
 // ── Stories ──────────────────────────────────────────────────────────────────────
 

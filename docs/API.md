@@ -24,7 +24,7 @@
 ### Auth — P1
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/auth/register` | `{ email, username, password, displayName, birthDate }` → creates user + session, sends verification code |
+| POST | `/auth/register` | `{ email, username, password, displayName, birthDate, accent?, palette? }` → creates user + session, sends verification code. `palette` is the colour set picked at sign-up (Afterglow when left out); picking one of the four older colours also sets the profile colour (`accent`). |
 | POST | `/auth/login` | `{ login (email or username), password }` → session |
 | POST | `/auth/logout` | revokes current session |
 | POST | `/auth/email/verify` | `{ code }` or `{ token }` |

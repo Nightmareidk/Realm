@@ -5,6 +5,7 @@ import { Limits, type Note, type NoteList, type Sound } from "@realm/contracts";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Dialog } from "@/components/dialog";
+import { ScrollRow } from "@/components/scroll-row";
 import { player } from "@/features/music/player";
 import { openConversation, send } from "@/features/realtime/actions";
 import { useRealm } from "@/features/realtime/store";
@@ -81,7 +82,10 @@ export function NotesRow() {
   if (!me || !list) return null;
   return (
     <section aria-label="Notes" className="px-2 pt-1 md:px-3">
-      <ul className="flex gap-3 overflow-x-auto px-2 pt-6 pb-2 [scrollbar-width:none]">
+      <ScrollRow
+        className="flex gap-3 overflow-x-auto px-2 pt-6 pb-2 [scrollbar-width:none]"
+        arrowTop="56px"
+      >
         <li className="w-[4.6rem] shrink-0 text-center">
           <button
             type="button"
@@ -121,7 +125,7 @@ export function NotesRow() {
             </span>
           </li>
         ))}
-      </ul>
+      </ScrollRow>
       <NoteEditor
         open={editing}
         mine={list.mine}

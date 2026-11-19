@@ -225,6 +225,8 @@ export async function upload(file: {
   kind: "image" | "video" | "audio";
   mimeType: string;
   durationMs?: number;
+  /** A whole song someone is sharing: allowed to be bigger and longer than a voice message. */
+  purpose?: "song";
 }): Promise<string> {
   const bytes = await (await fetch(file.uri)).blob();
   const ticket = await api<{ mediaId: string; uploadUrl: string; headers: Record<string, string> }>(
@@ -235,6 +237,7 @@ export async function upload(file: {
         mimeType: file.mimeType,
         sizeBytes: bytes.size,
         ...(file.durationMs ? { durationMs: Math.round(file.durationMs) } : {}),
+        ...(file.purpose ? { purpose: file.purpose } : {}),
       },
     },
   );

@@ -4,6 +4,8 @@ import {
   MEDIA_RULES,
   type MediaInfo,
   Permission,
+  SONG_MAX_BYTES,
+  SONG_MAX_MS,
   TRACK_MAX_BYTES,
   TRACK_MAX_MS,
   type UploadTicket,
@@ -62,7 +64,16 @@ export class MediaService {
       }
       if ((body.durationMs ?? 0) > TRACK_MAX_MS) throw invalid("Songs can be up to 20 minutes.");
     }
-    if (!track && body.sizeBytes > rule.maxBytes) {
+    // A song someone shares: anyone may, audio only, bigger and longer than a voice message.
+    const song = body.purpose === "song";
+    if (song) {
+      if (body.kind !== "audio") throw invalid("A song is an audio file: MP3, M4A, WAV or OGG.");
+      if (body.sizeBytes > SONG_MAX_BYTES) {
+        throw new AppError(413, "PAYLOAD_TOO_LARGE", "Songs can be up to 20 MB.");
+      }
+      if ((body.durationMs ?? 0) > SONG_MAX_MS) throw invalid("Songs can be up to 15 minutes.");
+    }
+    if (!track && !song && body.sizeBytes > rule.maxBytes) {
       throw new AppError(
         413,
         "PAYLOAD_TOO_LARGE",
@@ -73,7 +84,7 @@ export class MediaService {
     if (rule.types.length > 0 && !(rule.types as readonly string[]).includes(declared)) {
       throw invalid("Realm can't take that kind of file here.");
     }
-    if (!track && body.kind === "audio" && (body.durationMs ?? 0) > VOICE_MESSAGE_MAX_MS) {
+    if (!track && !song && body.kind === "audio" && (body.durationMs ?? 0) > VOICE_MESSAGE_MAX_MS) {
       throw invalid("Voice messages can be up to five minutes.");
     }
 

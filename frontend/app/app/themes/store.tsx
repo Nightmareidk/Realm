@@ -11,7 +11,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -19,6 +18,7 @@ import {
   View,
 } from "react-native";
 import { Icon } from "@/icon";
+import { HScroll } from "@/scroll-row";
 import { ApiError, api } from "@/server";
 import { AppScreen, Empty, Loading, Problem, TopBar } from "@/social/screen";
 import { type NativeTheme, useStyles } from "@/theme";
@@ -232,8 +232,7 @@ function Chips<V extends string>({
 }) {
   const s = useStyles(make);
   return (
-    <ScrollView
-      horizontal
+    <HScroll
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={s.chips}
       accessibilityLabel={label}
@@ -252,7 +251,7 @@ function Chips<V extends string>({
           </Pressable>
         );
       })}
-    </ScrollView>
+    </HScroll>
   );
 }
 

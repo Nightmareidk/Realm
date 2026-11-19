@@ -22,7 +22,7 @@ import { openCreateSpace, openInvite, useRealm } from "@/features/realtime/store
 import { openComposer } from "@/features/social/composer";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
-import { AccentPicker } from "./accent-picker";
+import { ColourPicker } from "./accent-picker";
 import { SoonTag } from "./place";
 
 /** Signs out of this device, then goes to the sign-in screen. */
@@ -229,8 +229,8 @@ export function YouMenu({
         </div>
       </Link>
       <div className="border-t border-line px-2.5 pt-3 pb-3">
-        <p className="mb-2.5 text-[0.85rem] font-bold text-fg-soft">Your colour</p>
-        <AccentPicker size="sm" />
+        <p className="mb-2.5 text-[0.85rem] font-bold text-fg-soft">Your colours</p>
+        <ColourPicker size="sm" />
       </div>
       <div className="border-t border-line px-1 pt-2 pb-1">
         <MotionToggle label className="w-full justify-start border-transparent px-2" />

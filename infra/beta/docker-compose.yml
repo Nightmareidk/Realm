@@ -1,0 +1,152 @@
+# Realm on one rented Linux server, for the closed beta (12+ testers). Guide: docs/BETA-SERVER.md.
+#
+#   cd realm && docker compose -f infra/beta/docker-compose.yml --env-file infra/beta/.env up -d --build
+#
+# Everything uses the server's own network and listens on 127.0.0.1 only, except Caddy (80/443,
+# the https front door) and LiveKit's media ports. The database stays on Neon, uploads on
+# Cloudflare R2 and email on Resend; keys live in infra/beta/.env (never committed).
+name: realm-beta
+
+# Logs (which can hold visitors' addresses) are capped and overwritten: 3 × 10 MB per service.
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+x-realm: &realm
+  image: realm-api:beta
+  restart: unless-stopped
+  network_mode: host
+  logging: *logs
+  env_file: .env
+  environment:
+    NODE_ENV: production
+    REALM_API_HOST: 127.0.0.1
+    REALM_API_PORT: "4000"
+    REALM_GATEWAY_PORT: "4001"
+    # Caddy sits in front and replaces any X-Forwarded-For a visitor sends with their real
+    # address, so rate limits count people, not the proxy.
+    REALM_TRUST_PROXY: "true"
+    REDIS_URL: redis://:${VALKEY_PASSWORD:?set VALKEY_PASSWORD in .env}@127.0.0.1:6379
+  depends_on:
+    valkey:
+      condition: service_healthy
+
+services:
+  api:
+    <<: *realm
+    build:
+      context: ../..
+      dockerfile: infra/beta/Dockerfile
+      target: api
+    command: ["node", "backend/api/dist/server.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Live updates (messages, typing, who's online) over WebSocket at wss://api.../gateway.
+  gateway:
+    <<: *realm
+    command: ["node", "backend/api/dist/gateway-main.js"]
+
+  # Background jobs (emails, clean-ups) so they never slow the API.
+  worker:
+    <<: *realm
+    command: ["node", "backend/api/dist/worker-main.js"]
+
+  # Database changes. Never runs by itself: `docker compose ... run --rm migrate`, and only after
+  # the owner has said yes to that migration.
+  migrate:
+    image: realm-api:beta
+    network_mode: host
+    env_file: .env
+    working_dir: /repo/backend/db
+    command: ["node", "node_modules/tsx/dist/cli.mjs", "src/migrate.ts"]
+    profiles: ["tools"]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/beta/Dockerfile
+      target: web
+      args:
+        REALM_API_URL: http://127.0.0.1:4000
+        NEXT_PUBLIC_REALM_GATEWAY_URL: wss://${API_DOMAIN:?set API_DOMAIN in .env}/gateway
+        NEXT_PUBLIC_LIVEKIT_HOST: ${VOICE_DOMAIN:?set VOICE_DOMAIN in .env}
+        REALM_STORAGE_ORIGIN: ${REALM_STORAGE_ORIGIN:-}
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
+        NEXT_PUBLIC_GOOGLE_MAPS_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_KEY:-}
+        NEXT_PUBLIC_GOOGLE_MAP_ID: ${NEXT_PUBLIC_GOOGLE_MAP_ID:-}
+    image: realm-web:beta
+    restart: unless-stopped
+    logging: *logs
+    network_mode: host
+    # The website holds no keys: it only needs to know where the API is and its own address.
+    environment:
+      NODE_ENV: production
+      REALM_API_URL: http://127.0.0.1:4000
+      REALM_WEB_ORIGIN: https://${WEB_DOMAIN}
+      REALM_STORAGE_ORIGIN: ${REALM_STORAGE_ORIGIN:-}
+
+  # Online status, typing, rate limits and the job queue. Memory only, this machine only.
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    logging: *logs
+    network_mode: host
+    command:
+      - valkey-server
+      - --bind
+      - 127.0.0.1
+      - --port
+      - "6379"
+      - --requirepass
+      - ${VALKEY_PASSWORD:?set VALKEY_PASSWORD in .env}
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - noeviction
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli -a \"$$VALKEY_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      retries: 10
+    environment:
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD}
+
+  # Voice, video and screen sharing.
+  livekit:
+    image: livekit/livekit-server:v1.13.9
+    command: --config /etc/livekit.yaml
+    restart: unless-stopped
+    logging: *logs
+    network_mode: host
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:?set LIVEKIT_API_KEY in .env}: ${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET in .env}"
+    volumes:
+      - ../selfhost/livekit/livekit.yaml:/etc/livekit.yaml:ro
+
+  # https for the website, the API and voice, with certificates from Let's Encrypt.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    logging: *logs
+    network_mode: host
+    environment:
+      WEB_DOMAIN: ${WEB_DOMAIN:?set WEB_DOMAIN in .env}
+      API_DOMAIN: ${API_DOMAIN}
+      VOICE_DOMAIN: ${VOICE_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  caddy-data:
+  caddy-config:

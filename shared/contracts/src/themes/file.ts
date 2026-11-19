@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { contrast } from "./color";
 
 /**
  * A Realm theme file (docs/THEMING.md). Themes are data, never code: colours, choices from fixed
@@ -74,6 +75,8 @@ export const ThemeColors = z.strictObject({
   heading: Hex.optional(),
   /** Links in messages and posts. */
   link: Hex.optional(),
+  /** The heart on posts you like. */
+  like: Hex.optional(),
 });
 export type ThemeColors = z.infer<typeof ThemeColors>;
 /** Every colour filled in (the optional ones come from the others). */
@@ -128,6 +131,9 @@ export const DISPLAY_FONTS = [
   "orbitron",
   "permanent-marker",
   "comfortaa",
+  "gabarito",
+  "figtree",
+  "unbounded",
 ] as const;
 export const BODY_FONTS = [
   "atkinson",
@@ -136,7 +142,36 @@ export const BODY_FONTS = [
   "nunito",
   "fredoka",
   "comfortaa",
+  "rethink",
+  "figtree",
+  "onest",
 ] as const;
+
+/**
+ * Realm's own colour sets for its looks (Settings › Themes). Afterglow is the default; Mint is how
+ * Realm looked until 2026-11; Orchid, Aqua and Ember are the older colour choices.
+ */
+export const THEME_PALETTES = [
+  "afterglow",
+  "club-night",
+  "cobalt-volt",
+  "sunset-pop",
+  "mint",
+  "orchid",
+  "aqua",
+  "ember",
+] as const;
+export const ThemePalette = z.enum(THEME_PALETTES);
+export type ThemePalette = z.infer<typeof ThemePalette>;
+export const DEFAULT_PALETTE: ThemePalette = "afterglow";
+
+/**
+ * The font pairs for Realm's looks: "match" uses the colour set's own pair. Classic is Funnel
+ * Display with Atkinson Hyperlegible, made to be easy to read.
+ */
+export const THEME_FONT_PAIRS = ["match", "gabarito", "figtree", "unbounded", "classic"] as const;
+export const ThemeFontPair = z.enum(THEME_FONT_PAIRS);
+export type ThemeFontPair = z.infer<typeof ThemeFontPair>;
 
 /** Realm's own app icons that ship inside the app (phones only switch between built-in icons). */
 export const APP_ICONS = [
@@ -341,6 +376,19 @@ export const LOOK_DEFAULTS: Record<
   },
 };
 
+/** The heart on liked posts when a theme doesn't pick one. */
+export const DEFAULT_LIKE = "#ff5f7a";
+/** Deeper reds for light backgrounds, tried in order until the heart stands out (3:1). */
+const LIKE_ON_LIGHT = ["#d81b4a", "#b0123c", "#8a0d2e"] as const;
+
+/** The heart for a theme that doesn't pick one: Realm's pink, or a deeper red on light grounds. */
+export function defaultLike(ground: string, surface: string): string {
+  for (const c of [DEFAULT_LIKE, ...LIKE_ON_LIGHT]) {
+    if (contrast(c, ground) >= 3 && contrast(c, surface) >= 3) return c;
+  }
+  return LIKE_ON_LIGHT[LIKE_ON_LIGHT.length - 1] as string;
+}
+
 /** A theme with every choice filled in, ready to draw. */
 export interface ResolvedTheme {
   name: string;
@@ -366,6 +414,7 @@ export function resolveTheme(file: ThemeFile): ResolvedTheme {
       accent2: file.colors.accent2 ?? file.colors.accent,
       heading: file.colors.heading ?? file.colors.textSoft,
       link: file.colors.link ?? file.colors.text,
+      like: file.colors.like ?? defaultLike(file.colors.ground, file.colors.surface),
     },
     style: { ...base.style, ...file.style },
     panels: { ...base.panels, ...file.panels },

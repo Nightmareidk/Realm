@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 import { useRealm } from "@/features/realtime/store";
 import { Avatar } from "@/features/spaces/person";
 import { Comments } from "./comments";
-import { PostMedia, toggle } from "./post-card";
+import { CapsuleNote, PostMedia, SealedCapsule, toggle } from "./post-card";
 import { MentionText, TagsOnPhoto } from "./post-extras";
 import { ago, compact, SongChip, Verified } from "./shared";
 
@@ -45,7 +45,17 @@ export function PostDialog({
       {post && (
         <div className="flex h-[min(92vh,52rem)] max-md:flex-col">
           <div className="relative flex min-h-0 flex-1 items-center justify-center bg-[#050507] max-md:max-h-[50%]">
-            <PostMedia post={post} rounded="rounded-none" fit="contain" className="size-full" />
+            {post.capsule?.sealed && post.author.id !== me ? (
+              <div className="w-full max-w-md p-6">
+                <SealedCapsule
+                  post={post}
+                  onChange={onChange}
+                  onRemind={() => void toggle(post, "save", onChange)}
+                />
+              </div>
+            ) : (
+              <PostMedia post={post} rounded="rounded-none" fit="contain" className="size-full" />
+            )}
             <TagsOnPhoto tags={post.tags} />
             {post.sound && (
               <SongChip
@@ -81,47 +91,63 @@ export function PostDialog({
                 <span className="sr-only">Close</span>
               </button>
             </header>
+            {post.capsule && (!post.capsule.sealed || post.author.id === me) && (
+              <div className="border-b border-line px-2.5 pt-3">
+                <CapsuleNote post={post} mine={post.author.id === me} />
+              </div>
+            )}
             {post.caption && (
               <p className="border-b border-line px-4 py-3 text-[0.95rem] text-fg">
                 <b>{post.author.username}</b> <MentionText text={post.caption} />
               </p>
             )}
-            <Comments post={post} onCount={(n) => onChange({ ...post, commentCount: n })} />
-            <div className="flex items-center gap-4 border-t border-line px-4 py-2.5">
-              <button
-                type="button"
-                aria-pressed={post.liked}
-                onClick={() => void toggle(post, "like", onChange)}
-                className="flex items-center gap-1.5 font-bold"
-              >
-                <Heart
-                  aria-hidden="true"
-                  size={24}
-                  weight={post.liked ? "fill" : "regular"}
-                  className={post.liked ? "text-[#ff6b8b]" : undefined}
-                />
-                <span className="text-[0.88rem] tabular-nums">
-                  {post.hideLikes && post.author.id !== me
-                    ? post.liked
-                      ? "Liked by you and others"
-                      : "Like"
-                    : `${compact(post.likeCount)} likes`}
-                </span>
-              </button>
-              <button
-                type="button"
-                aria-pressed={post.saved}
-                onClick={() => void toggle(post, "save", onChange)}
-                className="ml-auto"
-              >
-                <BookmarkSimple
-                  aria-hidden="true"
-                  size={24}
-                  weight={post.saved ? "fill" : "regular"}
-                />
-                <span className="sr-only">{post.saved ? "Saved" : "Save"}</span>
-              </button>
-            </div>
+            {post.capsule?.sealed ? (
+              <p className="flex-1 px-4 py-6 text-[0.92rem] text-fg-soft">
+                Comments open when the time capsule does.
+              </p>
+            ) : (
+              <Comments post={post} onCount={(n) => onChange({ ...post, commentCount: n })} />
+            )}
+            {/* Someone else's sealed capsule: nothing to like or save yet ("Remind me" saves it). */}
+            {!(post.capsule?.sealed && post.author.id !== me) && (
+              <div className="flex items-center gap-4 border-t border-line px-4 py-2.5">
+                {!post.capsule?.sealed && (
+                  <button
+                    type="button"
+                    aria-pressed={post.liked}
+                    onClick={() => void toggle(post, "like", onChange)}
+                    className="flex items-center gap-1.5 font-bold"
+                  >
+                    <Heart
+                      aria-hidden="true"
+                      size={24}
+                      weight={post.liked ? "fill" : "regular"}
+                      className={post.liked ? "text-[#ff6b8b]" : undefined}
+                    />
+                    <span className="text-[0.88rem] tabular-nums">
+                      {post.hideLikes && post.author.id !== me
+                        ? post.liked
+                          ? "Liked by you and others"
+                          : "Like"
+                        : `${compact(post.likeCount)} likes`}
+                    </span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  aria-pressed={post.saved}
+                  onClick={() => void toggle(post, "save", onChange)}
+                  className="ml-auto"
+                >
+                  <BookmarkSimple
+                    aria-hidden="true"
+                    size={24}
+                    weight={post.saved ? "fill" : "regular"}
+                  />
+                  <span className="sr-only">{post.saved ? "Saved" : "Save"}</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

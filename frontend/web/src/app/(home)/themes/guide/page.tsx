@@ -1,5 +1,6 @@
 import {
   APP_ICONS,
+  BODY_FONTS,
   DISPLAY_FONTS,
   EFFECT_SHAPES,
   PATTERN_SHAPES,
@@ -104,8 +105,9 @@ export default function ThemeGuidePage() {
         </li>
         <li>
           <strong>Every colour:</strong> the background, panels, menus and bubbles, lines, the two
-          text colours, your colour (the main button) and the text on it, and three soft lights that
-          glow behind the page.
+          text colours, your colour (the main button) and the text on it, a second colour buttons
+          can fade to (<code>"fill": "gradient"</code>), links, the heart on liked posts, and three
+          soft lights that glow behind the page.
         </li>
         <li>
           <strong>Shapes and style:</strong> square, soft or round corners; how much things glow;
@@ -134,7 +136,7 @@ export default function ThemeGuidePage() {
         </li>
         <li>
           <strong>Fonts for titles:</strong> {list(DISPLAY_FONTS)}. Reading text keeps a font made
-          for reading.
+          for reading: {list(BODY_FONTS)}.
         </li>
         <li>
           <strong>An app icon</strong> on phones that allow it: {list(APP_ICONS)}. Phones only

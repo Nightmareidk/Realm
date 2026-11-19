@@ -20,11 +20,13 @@ export const THEME_CACHE = "realm:theme:v1";
 export const APP_PATHS =
   /^\/(home|spaces|messages|feed|explore|settings|themes(?!\/guide)|clips|search|create|u\/)/;
 
-export const DEFAULT_THEME = resolveTheme(lookTheme("now-playing", "mint"));
+/** Realm's default: Now Playing in Afterglow, with Gabarito and Rethink Sans. */
+export const DEFAULT_THEME = resolveTheme(lookTheme("now-playing"));
 
 export function resolveMine(my: MyTheme): ResolvedTheme {
   if (my.active.kind === "theme" && my.file) return resolveTheme(my.file);
-  if (my.active.kind === "look") return resolveTheme(lookTheme(my.active.look, my.active.accent));
+  if (my.active.kind === "look")
+    return resolveTheme(lookTheme(my.active.look, my.active.palette, my.active.font));
   return DEFAULT_THEME;
 }
 

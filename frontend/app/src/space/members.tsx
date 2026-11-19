@@ -13,6 +13,7 @@ import { alert } from "../alert";
 import { useApi } from "../data";
 import { Icon } from "../icon";
 import { useLiveEvent } from "../live";
+import { HList } from "../scroll-row";
 import { ApiError, api } from "../server";
 import { useSheet } from "../sheet";
 import { Avatar } from "../social/avatar";
@@ -255,8 +256,7 @@ export function Members({
           accessibilityLabel="Find a member"
         />
       </View>
-      <FlatList
-        horizontal
+      <HList
         data={chips}
         keyExtractor={([k]) => k}
         showsHorizontalScrollIndicator={false}

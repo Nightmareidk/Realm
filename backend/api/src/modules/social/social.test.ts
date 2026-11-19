@@ -7,6 +7,7 @@ import {
   sessionCookie,
   type TestContext,
 } from "../../test/helpers";
+import { SocialService } from "./service";
 
 let t: TestContext;
 
@@ -409,5 +410,467 @@ describe("profiles like the big apps", () => {
     const profile = (await call(kenji.cookie, "GET", `/users/${noor.username}/profile`)).json();
     expect(profile.followedBy.count).toBe(1);
     expect(profile.followedBy.users[0].username).toBe(ama.username);
+  });
+});
+
+describe("hashtags", () => {
+  const tagPosts = async (cookie: string, tag: string) =>
+    (await call(cookie, "GET", `/tags/${encodeURIComponent(tag)}/posts`)).json().items as {
+      id: string;
+    }[];
+
+  it("finds public posts by their #tags, in any case and any language", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const a = await say(noor, "Sunset run #Running #sunset #日本 #run_club and #1 isn't a tag");
+    const b = await say(kenji, "Morning miles #running");
+    const none = await say(kenji, "no tags here, an email@address.com#frag and C#");
+
+    const running = await tagPosts(kenji.cookie, "RUNNING");
+    expect(running.map((p) => p.id)).toEqual([b.id, a.id]);
+    expect((await tagPosts(kenji.cookie, "日本")).map((p) => p.id)).toEqual([a.id]);
+    expect((await tagPosts(kenji.cookie, "run_club")).map((p) => p.id)).toEqual([a.id]);
+    expect(await tagPosts(kenji.cookie, "frag")).toEqual([]);
+    expect(none.id).toBeTruthy();
+    // Not a tag at all: refused, not searched.
+    expect((await call(kenji.cookie, "GET", "/tags/a%20b/posts")).statusCode).toBe(400);
+    expect((await call(undefined, "GET", "/tags/running/posts")).statusCode).toBe(401);
+  });
+
+  it("follows an edited caption, and forgets a deleted post", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const post = await say(noor, "first thoughts #draft");
+    expect(await tagPosts(kenji.cookie, "draft")).toHaveLength(1);
+    await call(noor.cookie, "PATCH", `/posts/${post.id}`, { caption: "final words #finished" });
+    expect(await tagPosts(kenji.cookie, "draft")).toEqual([]);
+    expect(await tagPosts(kenji.cookie, "finished")).toHaveLength(1);
+    await call(noor.cookie, "DELETE", `/posts/${post.id}`);
+    expect(await tagPosts(kenji.cookie, "finished")).toEqual([]);
+  });
+
+  it("keeps private, followers-only and blocked people's posts out of a tag", async () => {
+    const noor = await person();
+    const kenji = await person();
+    const shy = await person();
+    await call(shy.cookie, "PATCH", "/users/@me/settings", { profileVisibility: "private" });
+    await say(shy, "only for my people #secretclub");
+    await say(noor, "for followers #secretclub", { visibility: "followers" });
+    const open = await say(noor, "for everyone #secretclub");
+    expect((await tagPosts(kenji.cookie, "secretclub")).map((p) => p.id)).toEqual([open.id]);
+    // Blocked either way: gone from the tag for both.
+    await call(noor.cookie, "PUT", `/users/@me/blocks/${kenji.id}`);
+    expect(await tagPosts(kenji.cookie, "secretclub")).toEqual([]);
+  });
+
+  it("ranks trending tags by how many different people used them", async () => {
+    const people = [await person(), await person(), await person()];
+    const tag = `wave${Date.now()}`;
+    const spam = `spam${Date.now()}`;
+    for (const p of people) await say(p, `joining in #${tag}`);
+    // One account posting a tag five times doesn't beat three people posting another.
+    for (let i = 0; i < 5; i++) await say(people[0] as { cookie: string }, `again ${i} #${spam}`);
+    const trending = (await call(people[1]?.cookie, "GET", "/tags/trending")).json().tags as {
+      tag: string;
+      posts: number;
+    }[];
+    const names = trending.map((x) => x.tag);
+    expect(names).toContain(tag);
+    expect(trending.find((x) => x.tag === tag)?.posts).toBe(3);
+    if (names.includes(spam)) expect(names.indexOf(tag)).toBeLessThan(names.indexOf(spam));
+  });
+});
+
+describe("reposts", () => {
+  type Item = { id: string; caption: string; repostedBy: { id: string } | null };
+  const home = async (who: { cookie: string }) =>
+    (await call(who.cookie, "GET", "/feed")).json().items as Item[];
+
+  it("shows a repost in the reposter's followers' Home, with their name on it", async () => {
+    const author = await person();
+    const noor = await person();
+    const fan = await person();
+    await call(fan.cookie, "PUT", `/users/${noor.username}/follow`);
+    const post = await say(author, "worth sharing");
+
+    // The fan doesn't follow the author, so it isn't in their Home yet.
+    expect((await home(fan)).map((p) => p.id)).not.toContain(post.id);
+    const done = await call(noor.cookie, "PUT", `/posts/${post.id}/repost`);
+    expect(done.statusCode, done.body).toBe(200);
+    expect(done.json()).toMatchObject({ repostCount: 1, reposted: true });
+
+    const seen = (await home(fan)).find((p) => p.id === post.id);
+    expect(seen?.repostedBy?.id).toBe(noor.id);
+    // Reposting twice counts once, and the author is told once.
+    await call(noor.cookie, "PUT", `/posts/${post.id}/repost`);
+    expect((await call(author.cookie, "GET", `/posts/${post.id}`)).json().repostCount).toBe(1);
+    const activity = (await call(author.cookie, "GET", "/users/@me/activity")).json().items as {
+      type: string;
+      actor: { id: string };
+    }[];
+    expect(activity.filter((a) => a.type === "post_repost")).toHaveLength(1);
+    expect(activity.find((a) => a.type === "post_repost")?.actor.id).toBe(noor.id);
+
+    // Taking it back removes it from the follower's Home.
+    const undone = await call(noor.cookie, "DELETE", `/posts/${post.id}/repost`);
+    expect(undone.json()).toMatchObject({ repostCount: 0, reposted: false });
+    expect((await home(fan)).map((p) => p.id)).not.toContain(post.id);
+  });
+
+  it("puts a reposted post once, at its newest place, and pages without repeats", async () => {
+    const author = await person();
+    const noor = await person();
+    const fan = await person();
+    await call(fan.cookie, "PUT", `/users/${noor.username}/follow`);
+    await call(fan.cookie, "PUT", `/users/${author.username}/follow`);
+    const old = await say(author, "an older post");
+    const mid = await say(noor, "noor's own post");
+    // Reposted after Noor's own post: it now sits above it, and only once.
+    await call(noor.cookie, "PUT", `/posts/${old.id}/repost`);
+    const list = await home(fan);
+    expect(list.map((p) => p.id)).toEqual([old.id, mid.id]);
+    expect(list[0]?.repostedBy?.id).toBe(noor.id);
+
+    // Paging by one never shows the same post twice.
+    const first = (await call(fan.cookie, "GET", "/feed?limit=1")).json();
+    expect(first.items.map((p: Item) => p.id)).toEqual([old.id]);
+    const second = (
+      await call(fan.cookie, "GET", `/feed?limit=1&before=${first.nextCursor}`)
+    ).json();
+    expect(second.items.map((p: Item) => p.id)).toEqual([mid.id]);
+    const third = (
+      await call(fan.cookie, "GET", `/feed?limit=1&before=${second.nextCursor ?? "1"}`)
+    ).json();
+    expect(third.items.map((p: Item) => p.id)).not.toContain(old.id);
+  });
+
+  it("only takes public posts by other people, and respects blocks", async () => {
+    const author = await person();
+    const noor = await person();
+    const fan = await person();
+    await call(fan.cookie, "PUT", `/users/${noor.username}/follow`);
+    const own = await say(noor, "my own words");
+    expect((await call(noor.cookie, "PUT", `/posts/${own.id}/repost`)).statusCode).toBe(400);
+    await call(noor.cookie, "PUT", `/users/${author.username}/follow`);
+    const quiet = await say(author, "for followers only", { visibility: "followers" });
+    expect((await call(noor.cookie, "PUT", `/posts/${quiet.id}/repost`)).statusCode).toBe(400);
+    expect((await call(undefined, "PUT", `/posts/${own.id}/repost`)).statusCode).toBe(401);
+
+    // The fan blocked the author: a repost of the author's post never reaches the fan.
+    const open = await say(author, "public words");
+    await call(fan.cookie, "PUT", `/users/@me/blocks/${author.id}`);
+    await call(noor.cookie, "PUT", `/posts/${open.id}/repost`);
+    expect((await home(fan)).map((p) => p.id)).not.toContain(open.id);
+    // And the author, blocked by someone, can't repost that person's posts.
+    const fans = await say(fan, "the fan's post");
+    expect((await call(author.cookie, "PUT", `/posts/${fans.id}/repost`)).statusCode).toBe(404);
+  });
+});
+
+describe("polls", () => {
+  type Poll = {
+    options: { text: string; votes: number | null }[];
+    total: number;
+    voted: number | null;
+    ended: boolean;
+  };
+  const poll = { options: ["Tea", "Coffee", "Water"], hours: 24 };
+
+  it("hides the numbers until you vote, takes one vote each, and shows them after", async () => {
+    const author = await person();
+    const noor = await person();
+    const kenji = await person();
+    const post = await say(author, "What's in your cup?", { poll });
+
+    // Someone who hasn't voted sees the choices and how many voted, not who's winning.
+    const before = (await call(noor.cookie, "GET", `/posts/${post.id}`)).json().poll as Poll;
+    expect(before.options.map((o) => o.text)).toEqual(poll.options);
+    expect(before.options.every((o) => o.votes === null)).toBe(true);
+    expect(before).toMatchObject({ total: 0, voted: null, ended: false });
+
+    const voted = await call(noor.cookie, "PUT", `/posts/${post.id}/poll/vote`, { choice: 1 });
+    expect(voted.statusCode, voted.body).toBe(200);
+    expect((voted.json().poll as Poll).options.map((o) => o.votes)).toEqual([0, 1, 0]);
+    expect(voted.json().poll).toMatchObject({ total: 1, voted: 1 });
+
+    // One vote each: no second go, and no changing it.
+    expect(
+      (await call(noor.cookie, "PUT", `/posts/${post.id}/poll/vote`, { choice: 0 })).statusCode,
+    ).toBe(400);
+    await call(kenji.cookie, "PUT", `/posts/${post.id}/poll/vote`, { choice: 1 });
+    // The author sees the numbers without voting; a stranger who hasn't voted still doesn't.
+    const mine = (await call(author.cookie, "GET", `/posts/${post.id}`)).json().poll as Poll;
+    expect(mine.options.map((o) => o.votes)).toEqual([0, 2, 0]);
+    expect(mine.voted).toBeNull();
+    const stranger = await person();
+    const theirs = (await call(stranger.cookie, "GET", `/posts/${post.id}`)).json().poll as Poll;
+    expect(theirs.total).toBe(2);
+    expect(theirs.options.every((o) => o.votes === null)).toBe(true);
+  });
+
+  it("refuses bad polls and bad votes", async () => {
+    const author = await person();
+    const noor = await person();
+    const bad = async (extra: object) =>
+      (await call(author.cookie, "POST", "/posts", { kind: "text", caption: "hm", ...extra }))
+        .statusCode;
+    expect(await bad({ poll: { options: ["only one"] } })).toBe(400);
+    expect(await bad({ poll: { options: ["a", "b", "c", "d", "e"] } })).toBe(400);
+    expect(await bad({ poll: { options: ["Same", "same"] } })).toBe(400);
+    expect(await bad({ poll: { options: ["a", "b"], hours: 5 } })).toBe(400);
+    expect(await bad({ poll: { options: ["a", "x".repeat(41)] } })).toBe(400);
+
+    const post = await say(author, "Pick one", { poll: { options: ["Left", "Right"] } });
+    const vote = (who: { cookie: string } | null, choice: unknown) =>
+      call(who?.cookie, "PUT", `/posts/${post.id}/poll/vote`, { choice });
+    expect((await vote(null, 0)).statusCode).toBe(401);
+    expect((await vote(noor, 2)).statusCode).toBe(400);
+    expect((await vote(noor, -1)).statusCode).toBe(400);
+    expect((await vote(noor, "0; drop table posts")).statusCode).toBe(400);
+    // A post without a poll has nothing to vote in.
+    const plain = await say(author, "no poll here");
+    expect(
+      (await call(noor.cookie, "PUT", `/posts/${plain.id}/poll/vote`, { choice: 0 })).statusCode,
+    ).toBe(404);
+    // The question people voted on can't be rewritten afterwards.
+    expect(
+      (
+        await call(author.cookie, "PATCH", `/posts/${post.id}`, {
+          caption: "Pick the other",
+          visibility: "public",
+          tags: [],
+        })
+      ).statusCode,
+    ).toBe(400);
+  });
+
+  it("closes when its time is up, and then shows everyone the result", async () => {
+    const author = await person();
+    const noor = await person();
+    const late = await person();
+    const post = await say(author, "Quick one", { poll: { options: ["Yes", "No"], hours: 1 } });
+    await call(noor.cookie, "PUT", `/posts/${post.id}/poll/vote`, { choice: 0 });
+    await t.deps.db
+      .update(schema.postPolls)
+      .set({ endsAt: new Date(Date.now() - 1000) })
+      .where(inArray(schema.postPolls.postId, [BigInt(post.id)]));
+    expect(
+      (await call(late.cookie, "PUT", `/posts/${post.id}/poll/vote`, { choice: 1 })).statusCode,
+    ).toBe(400);
+    const done = (await call(late.cookie, "GET", `/posts/${post.id}`)).json().poll as Poll;
+    expect(done.ended).toBe(true);
+    expect(done.options.map((o) => o.votes)).toEqual([1, 0]);
+  });
+
+  it("can't be voted in by someone who can't see the post", async () => {
+    const author = await person();
+    const outsider = await person();
+    const post = await say(author, "Followers, choose", {
+      visibility: "followers",
+      poll: { options: ["A", "B"] },
+    });
+    expect(
+      (await call(outsider.cookie, "PUT", `/posts/${post.id}/poll/vote`, { choice: 0 })).statusCode,
+    ).toBe(404);
+  });
+});
+
+describe("quote posts", () => {
+  type Quoted = { id: string; post: { caption: string; author: { id: string } } | null } | null;
+  const quotedOf = async (who: { cookie: string }, id: string) =>
+    (await call(who.cookie, "GET", `/posts/${id}`)).json().quoted as Quoted;
+
+  it("shows the quoted post under the new words, and tells its author", async () => {
+    const author = await person();
+    const noor = await person();
+    const original = await say(author, "the original thought");
+    const quote = await say(noor, "adding my view", { quoteOf: original.id });
+
+    const seen = await quotedOf(author, quote.id);
+    expect(seen?.id).toBe(original.id);
+    expect(seen?.post).toMatchObject({ caption: "the original thought" });
+    expect(seen?.post?.author.id).toBe(author.id);
+
+    const activity = (await call(author.cookie, "GET", "/users/@me/activity")).json().items as {
+      type: string;
+      actor: { id: string };
+      post: { id: string };
+      text: string | null;
+    }[];
+    const told = activity.find((a) => a.type === "post_quote");
+    // It opens the new post, the one with the quote in it.
+    expect(told).toMatchObject({ actor: { id: noor.id }, post: { id: quote.id } });
+    expect(told?.text).toBe("adding my view");
+    // Quoting your own post tells nobody.
+    await say(author, "more on that", { quoteOf: original.id });
+    const again = (await call(author.cookie, "GET", "/users/@me/activity")).json().items as {
+      type: string;
+    }[];
+    expect(again.filter((a) => a.type === "post_quote")).toHaveLength(1);
+  });
+
+  it("only quotes public posts the writer can see", async () => {
+    const author = await person();
+    const noor = await person();
+    await call(noor.cookie, "PUT", `/users/${author.username}/follow`);
+    const quiet = await say(author, "for followers only", { visibility: "followers" });
+    const tryQuote = async (who: { cookie: string }, id: string) =>
+      (
+        await call(who.cookie, "POST", "/posts", {
+          kind: "text",
+          caption: "look at this",
+          quoteOf: id,
+        })
+      ).statusCode;
+    // A follower can see it, but quoting would show it to people who can't.
+    expect(await tryQuote(noor, quiet.id)).toBe(400);
+    const stranger = await person();
+    expect(await tryQuote(stranger, quiet.id)).toBe(404);
+    expect(await tryQuote(noor, "1")).toBe(404);
+    // A quote can't also carry a poll.
+    const open = await say(author, "public words");
+    expect(
+      (
+        await call(noor.cookie, "POST", "/posts", {
+          kind: "text",
+          caption: "both?",
+          quoteOf: open.id,
+          poll: { options: ["a", "b"] },
+        })
+      ).statusCode,
+    ).toBe(400);
+  });
+
+  it("stops showing a quoted post that was deleted, hidden away, or whose author you blocked", async () => {
+    const author = await person();
+    const noor = await person();
+    const reader = await person();
+    const one = await say(author, "soon deleted");
+    const two = await say(author, "soon followers-only");
+    const three = await say(author, "from someone the reader blocks");
+    const q1 = await say(noor, "quote one", { quoteOf: one.id });
+    const q2 = await say(noor, "quote two", { quoteOf: two.id });
+    const q3 = await say(noor, "quote three", { quoteOf: three.id });
+
+    await call(author.cookie, "DELETE", `/posts/${one.id}`);
+    const hid = await call(author.cookie, "PATCH", `/posts/${two.id}`, {
+      caption: "soon followers-only",
+      visibility: "followers",
+      tags: [],
+    });
+    expect(hid.statusCode, hid.body).toBe(200);
+    expect(await quotedOf(reader, q1.id)).toEqual({ id: one.id, post: null });
+    expect(await quotedOf(reader, q2.id)).toEqual({ id: two.id, post: null });
+    // Still shown to everyone else...
+    expect((await quotedOf(reader, q3.id))?.post?.caption).toBe("from someone the reader blocks");
+    // ...but not to the reader once they block its author. The quote's own words stay.
+    await call(reader.cookie, "PUT", `/users/@me/blocks/${author.id}`);
+    expect(await quotedOf(reader, q3.id)).toEqual({ id: three.id, post: null });
+    expect((await call(reader.cookie, "GET", `/posts/${q3.id}`)).json().caption).toBe(
+      "quote three",
+    );
+  });
+});
+
+describe("time capsules", () => {
+  const inDays = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString();
+  const openNow = async (postId: string) => {
+    await t.deps.db
+      .update(schema.posts)
+      .set({ opensAt: new Date(Date.now() - 5) })
+      .where(inArray(schema.posts.id, [BigInt(postId)]));
+    return new SocialService(t.deps).openCapsules();
+  };
+
+  it("keeps what's inside sealed from everyone but its author until it opens", async () => {
+    const author = await person();
+    const noor = await person();
+    await call(noor.cookie, "PUT", `/users/${author.username}/follow`);
+    const opensAt = inDays(30);
+    const post = await say(author, "Dear future me, #goals @nobody", { opensAt });
+
+    // Its author sees the words, and that it's sealed.
+    const mine = (await call(author.cookie, "GET", `/posts/${post.id}`)).json();
+    expect(mine.caption).toBe("Dear future me, #goals @nobody");
+    expect(mine.capsule).toEqual({ opensAt, sealed: true });
+
+    // Anyone else sees only that it exists and when it opens, here and on the profile.
+    const theirs = (await call(noor.cookie, "GET", `/posts/${post.id}`)).json();
+    expect(theirs.caption).toBeNull();
+    expect(theirs.media).toEqual([]);
+    expect(theirs.capsule).toEqual({ opensAt, sealed: true });
+    const profile = (await call(noor.cookie, "GET", `/users/${author.username}/posts`)).json();
+    expect(profile.items.find((p: { id: string }) => p.id === post.id)?.caption).toBeNull();
+
+    // Not in Home, not under its #tag, until it opens.
+    expect(await feed(noor)).not.toContain("Dear future me, #goals @nobody");
+    const underTag = async () => {
+      const res = await call(noor.cookie, "GET", "/tags/goals/posts");
+      expect(res.statusCode).toBe(200);
+      return (res.json().items as { id: string }[]).some((p) => p.id === post.id);
+    };
+    expect(await underTag()).toBe(false);
+
+    // Nobody can like, comment on, repost or quote it yet; saving it (to be reminded) is fine.
+    const act = (method: Method, url: string, payload?: unknown) =>
+      call(noor.cookie, method, url, payload).then((r) => r.statusCode);
+    expect(await act("PUT", `/posts/${post.id}/like`)).toBe(400);
+    expect(await act("PUT", `/posts/${post.id}/repost`)).toBe(400);
+    expect(await act("POST", `/posts/${post.id}/comments`, { body: "what is it?" })).toBe(400);
+    expect(await act("POST", "/posts", { kind: "text", caption: "hm", quoteOf: post.id })).toBe(
+      400,
+    );
+    expect(await act("PUT", `/posts/${post.id}/save`)).toBe(200);
+
+    // Once it opens, its #tag finds it.
+    await openNow(post.id);
+    expect(await underTag()).toBe(true);
+  });
+
+  it("opens on time: arrives fresh in Home and tells its author and the people who saved it", async () => {
+    const author = await person();
+    const noor = await person();
+    await call(noor.cookie, "PUT", `/users/${author.username}/follow`);
+    const post = await say(author, "Open me later", { opensAt: inDays(1) });
+    await say(author, "an ordinary post after it");
+    await call(noor.cookie, "PUT", `/posts/${post.id}/save`);
+    await new Promise((r) => setTimeout(r, 30));
+
+    expect(await openNow(post.id)).toBeGreaterThanOrEqual(1);
+    // Announced once only, however often the job runs.
+    await new SocialService(t.deps).openCapsules();
+
+    const opened = (await call(noor.cookie, "GET", `/posts/${post.id}`)).json();
+    expect(opened.caption).toBe("Open me later");
+    expect(opened.capsule.sealed).toBe(false);
+    // Placed by when it opened: above the post written after it.
+    const home = await feed(noor);
+    expect(home.indexOf("Open me later")).toBeLessThan(home.indexOf("an ordinary post after it"));
+    expect(home.filter((c) => c === "Open me later")).toHaveLength(1);
+
+    const told = async (who: { cookie: string }) =>
+      (await call(who.cookie, "GET", "/users/@me/activity"))
+        .json()
+        .items.filter(
+          (a: { type: string; post: { id: string } | null }) =>
+            a.type === "capsule_open" && a.post?.id === post.id,
+        );
+    expect(await told(author)).toHaveLength(1);
+    expect(await told(noor)).toHaveLength(1);
+    expect((await call(noor.cookie, "PUT", `/posts/${post.id}/like`)).statusCode).toBe(200);
+  });
+
+  it("refuses capsules that open too soon, too late, or can't be one", async () => {
+    const author = await person();
+    const bad = async (extra: object, kind = "text") =>
+      (await call(author.cookie, "POST", "/posts", { kind, caption: "later", ...extra }))
+        .statusCode;
+    expect(await bad({ opensAt: new Date(Date.now() + 10 * 60_000).toISOString() })).toBe(400);
+    expect(await bad({ opensAt: inDays(-1) })).toBe(400);
+    expect(await bad({ opensAt: inDays(6 * 366) })).toBe(400);
+    expect(await bad({ opensAt: "next tuesday" })).toBe(400);
+    expect(await bad({ opensAt: inDays(7), poll: { options: ["a", "b"] } })).toBe(400);
+    expect(await bad({ opensAt: inDays(7), tags: ["someone"] })).toBe(400);
+    expect(await bad({ opensAt: inDays(7) })).toBe(201);
   });
 });

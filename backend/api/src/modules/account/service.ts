@@ -7,7 +7,7 @@ import {
   type TwoStepSetup,
   type TwoStepStatus,
 } from "@realm/contracts";
-import { and, eq, inArray, isNull, lt, or, schema, sql } from "@realm/db";
+import { and, eq, inArray, isNull, lt, ne, or, schema, sql } from "@realm/db";
 import {
   hashPassword,
   hmacHex,
@@ -26,6 +26,9 @@ import { type ClientContext, revokeAllSessions } from "../../lib/sessions";
 import { deletionScheduledEmail, twoStepChangedEmail } from "../auth/emails";
 
 const {
+  accountIdentityKeys,
+  devices,
+  keyPackages,
   users,
   userSettings,
   securityEvents,
@@ -51,6 +54,8 @@ const {
   playlists,
   playlistItems,
   messages,
+  messageAttachments,
+  media,
 } = schema;
 
 type UserRow = typeof users.$inferSelect;
@@ -327,6 +332,8 @@ export class AccountService {
           displayName: "Deleted account",
           email: `deleted+${userId}@deleted.invalid`,
           emailVerifiedAt: null,
+          // The column can't be empty; this placeholder replaces the real birthday.
+          birthDate: "1900-01-01",
           passwordHash: placeholder,
           bio: null,
           pronouns: null,
@@ -350,6 +357,8 @@ export class AccountService {
         .update(posts)
         .set({ deletedAt: now })
         .where(and(eq(posts.authorId, userId), isNull(posts.deletedAt)));
+      // Their words go too, including posts they had already deleted.
+      await tx.update(posts).set({ body: null }).where(eq(posts.authorId, userId));
       await tx
         .update(comments)
         .set({ deletedAt: now, body: "" })
@@ -359,6 +368,20 @@ export class AccountService {
         .set({ deletedAt: now })
         .where(and(eq(stories.authorId, userId), isNull(stories.deletedAt)));
       await tx.delete(notes).where(eq(notes.userId, userId));
+      // Encrypted chats: nobody can add their devices any more, and their key is retired.
+      await tx
+        .delete(keyPackages)
+        .where(sql`${keyPackages.deviceId} in (select id from devices where user_id = ${userId})`);
+      await tx
+        .update(devices)
+        .set({ status: "revoked", revokedAt: now })
+        .where(and(eq(devices.userId, userId), ne(devices.status, "revoked")));
+      await tx
+        .update(accountIdentityKeys)
+        .set({ supersededAt: now })
+        .where(
+          and(eq(accountIdentityKeys.userId, userId), isNull(accountIdentityKeys.supersededAt)),
+        );
       await tx
         .delete(follows)
         .where(or(eq(follows.followerId, userId), eq(follows.followeeId, userId)));
@@ -391,8 +414,43 @@ export class AccountService {
       await tx.delete(pushTokens).where(eq(pushTokens.userId, userId));
       await tx.delete(mfaBackupCodes).where(eq(mfaBackupCodes.userId, userId));
       await tx.delete(userSettings).where(eq(userSettings.userId, userId));
-      await tx.update(sessions).set({ revokedAt: now }).where(eq(sessions.userId, userId));
+      await tx
+        .update(sessions)
+        .set({ revokedAt: now, ipCreated: null, userAgent: null, country: null })
+        .where(eq(sessions.userId, userId));
+      await tx.update(securityEvents).set({ ip: null }).where(eq(securityEvents.userId, userId));
     });
+    await this.eraseUploads(userId);
+  }
+
+  /**
+   * The files they uploaded (photos, videos, voice notes, files), except ones still attached to a
+   * message in a group chat, which stays like the message itself. A file that fails to delete
+   * is logged for a person to look at; the account itself is already erased.
+   */
+  private async eraseUploads(userId: bigint) {
+    const theirs = await this.db
+      .select({ id: media.id, key: media.storageKey, variants: media.variants })
+      .from(media)
+      .where(
+        and(
+          eq(media.ownerId, userId),
+          ne(media.status, "failed"),
+          sql`not exists (select 1 from ${messageAttachments} inner join ${messages} on ${messages.id} = ${messageAttachments.messageId} where ${messageAttachments.mediaId} = ${media.id} and ${messages.deletedAt} is null)`,
+        ),
+      );
+    for (const file of theirs) {
+      const keys = [file.key, ...Object.values(file.variants ?? {}).map((v) => v.key)];
+      try {
+        for (const key of new Set(keys)) await this.deps.storage.delete(key);
+        await this.db.update(media).set({ status: "failed" }).where(eq(media.id, file.id));
+      } catch (err) {
+        this.deps.logger.error(
+          { err, userId: userId.toString(), mediaId: file.id.toString() },
+          "deleting an upload of a deleted account failed",
+        );
+      }
+    }
   }
 
   /**

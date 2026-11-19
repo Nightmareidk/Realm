@@ -1,6 +1,7 @@
 import type { MediaRef, Message } from "@realm/contracts";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { memo, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -12,6 +13,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { Icon } from "../icon";
+import { useWide } from "../layout";
 import { mediaSource } from "../server";
 import { Avatar } from "../social/avatar";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
@@ -24,8 +26,11 @@ export const QUICK_REACTIONS = ["❤️", "😂", "👍", "😮", "😢", "🔥"
 const REPLY_AT = 56;
 const BUBBLE_MAX = 280;
 
+/** A message's time ("12:37 AM"), with no-break spaces so it never splits across two lines. */
 export const timeOf = (iso: string) =>
-  new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  new Date(iso)
+    .toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    .replace(/\s/g, "\u00a0");
 
 /** What a message is, said in words: its text, or what it holds. */
 export function bodyOf(m: Pick<Message, "hidden" | "content" | "attachments" | "place">) {
@@ -85,6 +90,8 @@ type RowProps = {
   status: "sent" | "seen" | null;
   accent: string;
   onAccent: string;
+  /** Your bubbles fade from `accent` to this (a colour set with a fade, like Afterglow). */
+  accent2?: string;
   onReply: (m: Message) => void;
   onReact: (m: Message, emoji: string) => void;
   onMenu: (m: Message) => void;
@@ -107,6 +114,7 @@ function Bubble({
   status,
   accent,
   onAccent,
+  accent2,
   onReply,
   onReact,
   onMenu,
@@ -115,6 +123,10 @@ function Bubble({
   const { t } = useTheme();
   const s = useStyles(make);
   const [hover, setHover] = useState(false);
+  // A computer-sized window has room beside a bubble for all three buttons. A narrow one (a
+  // small browser window, a phone's browser) doesn't: there, only "More" shows, and only while
+  // the pointer is on the message, so nothing ever pushes a row wider than the screen.
+  const wide = useWide();
   const shift = useSharedValue(0);
   const armed = useSharedValue(false);
 
@@ -181,9 +193,19 @@ function Bubble({
       style={[
         s.bubble,
         mine ? { backgroundColor: accent } : s.theirs,
+        mine && accent2 ? s.faded : null,
         images.length > 0 && !text && s.bare,
       ]}
     >
+      {mine && accent2 ? (
+        <LinearGradient
+          colors={[accent, accent2]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      ) : null}
       {m.replyTo ? (
         <View style={[s.quote, mine ? s.quoteMine : s.quoteTheirs]}>
           <Text style={[s.quoteName, { color: ink }]} numberOfLines={1}>
@@ -233,41 +255,42 @@ function Bubble({
   );
 
   // With a mouse: react, reply and more, beside the bubble while the pointer is on the message.
-  const tools = POINTER ? (
-    <View
-      style={[s.tools, mine && s.toolsMine, !hover && s.toolsHidden]}
-      pointerEvents={hover ? "auto" : "none"}
-    >
-      {canTouch ? (
-        <>
-          <Pressable
-            onPress={heart}
-            accessibilityRole="button"
-            accessibilityLabel="React with a heart"
-            style={({ hovered }: Hover) => [s.tool, hovered && s.toolOn]}
-          >
-            <Icon name="Heart" size={17} color={t.colors.textSoft} />
-          </Pressable>
-          <Pressable
-            onPress={replyNow}
-            accessibilityRole="button"
-            accessibilityLabel="Reply"
-            style={({ hovered }: Hover) => [s.tool, hovered && s.toolOn]}
-          >
-            <Icon name="ArrowBendUpLeft" size={17} color={t.colors.textSoft} />
-          </Pressable>
-        </>
-      ) : null}
-      <Pressable
-        onPress={() => onMenu(m)}
-        accessibilityRole="button"
-        accessibilityLabel="More options"
-        style={({ hovered }: Hover) => [s.tool, hovered && s.toolOn]}
+  const tools =
+    POINTER && (wide || hover) ? (
+      <View
+        style={[s.tools, mine && s.toolsMine, !hover && s.toolsHidden]}
+        pointerEvents={hover ? "auto" : "none"}
       >
-        <Icon name="DotsThreeBold" size={17} color={t.colors.textSoft} />
-      </Pressable>
-    </View>
-  ) : null;
+        {canTouch && wide ? (
+          <>
+            <Pressable
+              onPress={heart}
+              accessibilityRole="button"
+              accessibilityLabel="React with a heart"
+              style={({ hovered }: Hover) => [s.tool, hovered && s.toolOn]}
+            >
+              <Icon name="Heart" size={17} color={t.colors.textSoft} />
+            </Pressable>
+            <Pressable
+              onPress={replyNow}
+              accessibilityRole="button"
+              accessibilityLabel="Reply"
+              style={({ hovered }: Hover) => [s.tool, hovered && s.toolOn]}
+            >
+              <Icon name="ArrowBendUpLeft" size={17} color={t.colors.textSoft} />
+            </Pressable>
+          </>
+        ) : null}
+        <Pressable
+          onPress={() => onMenu(m)}
+          accessibilityRole="button"
+          accessibilityLabel="More options"
+          style={({ hovered }: Hover) => [s.tool, hovered && s.toolOn]}
+        >
+          <Icon name="DotsThreeBold" size={17} color={t.colors.textSoft} />
+        </Pressable>
+      </View>
+    ) : null;
 
   return (
     <Pressable
@@ -402,7 +425,8 @@ const make = (t: NativeTheme) =>
     rowMine: { justifyContent: "flex-end" },
     rowTheirs: { justifyContent: "flex-start" },
     gap: { width: 28 },
-    col: { maxWidth: "82%" },
+    // It gives way before the row would overflow: a row is never wider than the screen.
+    col: { maxWidth: "82%", flexShrink: 1 },
     colMine: { alignItems: "flex-end" },
     author: {
       fontFamily: t.fonts.bold,
@@ -419,6 +443,7 @@ const make = (t: NativeTheme) =>
       paddingVertical: 9,
       gap: 6,
     },
+    faded: { overflow: "hidden" },
     // A photo on its own: a thin frame (the side padding has to be undone by name, not by "padding").
     bare: { paddingHorizontal: 4, paddingVertical: 4 },
     theirs: { backgroundColor: t.colors.surfaceSunken },

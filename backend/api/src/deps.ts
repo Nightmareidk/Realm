@@ -1,5 +1,6 @@
 import { type Database, openDb } from "@realm/db";
 import {
+  BrandedMailer,
   type Config,
   createLogger,
   type EventBus,
@@ -99,7 +100,7 @@ export async function createDeps(config: Config): Promise<Deps> {
     logger.warn("REDIS_URL not set — using in-memory stores (single process, dev only)");
   }
 
-  const mailer: Mailer = config.RESEND_API_KEY
+  const sender: Mailer = config.RESEND_API_KEY
     ? new ResendMailer(config.SMTP_FROM, config.RESEND_API_KEY)
     : config.SMTP_HOST
       ? new SmtpMailer(config.SMTP_FROM, {
@@ -109,6 +110,11 @@ export async function createDeps(config: Config): Promise<Deps> {
           password: config.SMTP_PASSWORD,
         })
       : new MemoryMailer(logger, { echo: config.NODE_ENV === "development" });
+  // Every email goes out in Realm's design, with the contact address in its footer.
+  const mailer: Mailer = new BrandedMailer(sender, {
+    origin: config.REALM_WEB_ORIGIN,
+    contact: config.REALM_CONTACT_EMAIL,
+  });
 
   const queue: JobQueue = config.REDIS_URL
     ? new RedisQueue(config.REDIS_URL, logger)

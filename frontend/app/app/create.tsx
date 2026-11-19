@@ -1,4 +1,6 @@
 import {
+  POLL_HOURS,
+  POLL_OPTION_MAX,
   type Post,
   type Profile,
   type Sound,
@@ -27,9 +29,12 @@ import { leave } from "@/leave";
 import { chip, MusicPicker, type Picked, toPick } from "@/music/picker";
 import { clock, playSound, stopSound, usePlaying } from "@/music/player";
 import { loadStories } from "@/music/stories";
+import { HScroll } from "@/scroll-row";
 import { ApiError, api, upload } from "@/server";
 import { useSession } from "@/session";
 import { CLIP_MAX_SECONDS, shrinkPhoto } from "@/shrink";
+import { opensOn } from "@/social/capsule";
+import { asQuoted, QuotedCard } from "@/social/quoted";
 import { AppScreen, TopBar } from "@/social/screen";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
@@ -43,6 +48,45 @@ const MODES: [Mode, string][] = [
 const TITLE: Record<Mode, string> = { post: "New post", story: "New Story", clip: "New Clip" };
 /** The longest part of a song each can use. */
 const MUSIC_MAX: Record<Mode, number> = { post: 60_000, story: 60_000, clip: 60_000 };
+/** How long a poll stays open, as people say it. */
+const POLL_LENGTH: Record<(typeof POLL_HOURS)[number], string> = {
+  1: "1 hour",
+  6: "6 hours",
+  24: "1 day",
+  72: "3 days",
+  168: "1 week",
+};
+/** When a time capsule can open, as people say it. */
+const CAPSULE_WHEN = [
+  ["tomorrow", "Tomorrow"],
+  ["week", "In a week"],
+  ["month", "In a month"],
+  ["half", "In 6 months"],
+  ["year", "In a year"],
+  ["newyear", "New Year's Day"],
+] as const;
+type CapsuleWhen = (typeof CAPSULE_WHEN)[number][0];
+
+/** The moment a capsule opens: on the hour, so it reads "at 9:00 PM", never "at 9:47". */
+function capsuleDate(when: CapsuleWhen, now = new Date()): Date {
+  if (when === "newyear") {
+    const next = new Date(now.getFullYear() + 1, 0, 1);
+    // Too close to midnight on 31 December: the New Year after that.
+    return next.getTime() - now.getTime() < 2 * 3_600_000
+      ? new Date(now.getFullYear() + 2, 0, 1)
+      : next;
+  }
+  const d = new Date(now);
+  if (when === "tomorrow") d.setDate(d.getDate() + 1);
+  if (when === "week") d.setDate(d.getDate() + 7);
+  if (when === "month") d.setMonth(d.getMonth() + 1);
+  if (when === "half") d.setMonth(d.getMonth() + 6);
+  if (when === "year") d.setFullYear(d.getFullYear() + 1);
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() + 1);
+  return d;
+}
+
 /** How long a photo Story shows. */
 const STORY_LENGTHS = [5_000, 10_000, 15_000, 30_000, 60_000] as const;
 
@@ -65,15 +109,30 @@ export default function Create() {
     soundId?: string;
     start?: string;
     length?: string;
+    /** A quote post: the public post it's about. */
+    quote?: string;
   }>();
   const { accent } = useTheme();
   const { session } = useSession();
   const me = session.status === "signedIn" ? session.user : null;
   const profile = useApi<Profile>(me ? `/users/${me.username}/profile` : null);
   const spaces = useApi<{ spaces: SpaceDetail[] }>("/users/@me/communities");
+  const quoteId = params.quote && /^\d{1,20}$/.test(params.quote) ? params.quote : null;
+  const quoting = useApi<Post>(quoteId ? `/posts/${quoteId}` : null);
   const [mode, setMode] = useState<Mode>(
-    params.mode === "clip" || params.mode === "story" ? params.mode : "post",
+    !quoteId && (params.mode === "clip" || params.mode === "story") ? params.mode : "post",
   );
+  /** A poll on a post of just words: its choices, and how long it stays open. */
+  const [poll, setPoll] = useState<{
+    options: string[];
+    hours: (typeof POLL_HOURS)[number];
+  } | null>(null);
+  /** Seal the post as a time capsule: when it opens. */
+  const [capsule, setCapsule] = useState<CapsuleWhen | null>(null);
+  const choices = (poll?.options ?? []).map((o) => o.trim()).filter(Boolean);
+  const pollReady =
+    !poll ||
+    (choices.length >= 2 && new Set(choices.map((c) => c.toLowerCase())).size === choices.length);
   const [picked, setPicked] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [caption, setCaption] = useState("");
   const [spaceId, setSpaceId] = useState<string | null>(null);
@@ -125,11 +184,20 @@ export default function Create() {
         : flip
           ? "followers"
           : "public";
+  // A time capsule is a post on your profile: never a poll, a quote, a Story or a Clip.
+  const sealing = capsule !== null && mode === "post" && !quoteId && !poll;
   const ready =
-    (single ? picked.length === 1 : picked.length > 0 || caption.trim().length > 0) && !status;
+    (single ? picked.length === 1 : picked.length > 0 || caption.trim().length > 0) &&
+    // A poll needs its question, and two different choices.
+    (!poll || (caption.trim().length > 0 && pollReady)) &&
+    !status;
   const what = mode === "story" ? "Story" : "post";
 
   async function pick(from: "library" | "camera") {
+    if (poll) {
+      alert("A poll is words only", "Remove the poll first if you'd rather share photos.");
+      return;
+    }
     const options: ImagePicker.ImagePickerOptions = {
       mediaTypes:
         mode === "clip" ? ["videos"] : mode === "story" ? ["images", "videos"] : ["images"],
@@ -172,6 +240,8 @@ export default function Create() {
 
   function switchMode(m: Mode) {
     setMode(m);
+    setPoll(null);
+    setCapsule(null);
     setPicked([]);
     setDetails(false);
     // A song's part can be too long for the new kind: keep the song, shorten the part.
@@ -200,6 +270,7 @@ export default function Create() {
       }
       setStatus("Sharing");
       const sound = music && (mode !== "post" || ids.length) ? toPick(music) : undefined;
+      const opensAt = sealing && capsule ? capsuleDate(capsule).toISOString() : null;
       if (mode === "story") {
         await api("/stories", {
           body: {
@@ -229,11 +300,16 @@ export default function Create() {
           caption: caption.trim() || undefined,
           mediaIds: ids,
           ...(sound ? { sound } : {}),
-          ...(spaceId ? { spaceId } : {}),
-          visibility,
-          ...(tagList(tags).length ? { tags: tagList(tags) } : {}),
+          ...(spaceId && !sealing ? { spaceId } : {}),
+          visibility: sealing && visibility === "space" ? "public" : visibility,
+          ...(tagList(tags).length && !sealing ? { tags: tagList(tags) } : {}),
           ...(hideLikes ? { hideLikes } : {}),
           ...(commentsOff ? { commentsOff } : {}),
+          ...(poll && mode === "post" && !ids.length
+            ? { poll: { options: choices, hours: poll.hours } }
+            : {}),
+          ...(quoteId ? { quoteOf: quoteId } : {}),
+          ...(opensAt ? { opensAt } : {}),
         },
       });
       // The Clip's own sound, shared for others to use. The Clip is already up if this fails.
@@ -243,6 +319,12 @@ export default function Create() {
         }).catch(() => {});
       }
       postsChanged();
+      if (opensAt) {
+        alert(
+          "Time capsule sealed",
+          `It opens ${opensOn(opensAt)}. Until then it waits on your profile with a countdown, and only you can see what's inside.`,
+        );
+      }
       leave(router);
     } catch (err) {
       setStatus(null);
@@ -299,14 +381,46 @@ export default function Create() {
     );
   }
 
+  // The words: a caption, a poll's question, or what you say about a quoted post.
+  const captionField = (
+    <>
+      <Text style={s.label}>{poll ? "Your question" : quoteId ? "Your words" : "Caption"}</Text>
+      <TextInput
+        value={caption}
+        onChangeText={setCaption}
+        placeholder={
+          poll
+            ? "Ask something"
+            : quoteId
+              ? "Add what you think"
+              : mode === "clip"
+                ? "Say what happened"
+                : mode === "story"
+                  ? "Add a few words (if you like)"
+                  : "Write a caption, or post just words"
+        }
+        placeholderTextColor={t.colors.textMuted}
+        selectionColor={accent}
+        cursorColor={accent}
+        multiline
+        maxLength={mode === "story" ? 200 : 2200}
+        style={s.caption}
+        accessibilityLabel="Caption"
+      />
+      <Text style={s.count}>
+        {caption.length} / {mode === "story" ? 200 : 2200}
+      </Text>
+    </>
+  );
+
   return (
     <AppScreen>
       <TopBar
-        title={TITLE[mode]}
+        title={quoteId ? "Quote" : TITLE[mode]}
         right={
           <Pill
             size="md"
-            label="Share"
+            label={sealing ? "Seal" : "Share"}
             pending={Boolean(status)}
             pendingLabel={status ?? "Sharing"}
             onPress={() => void share()}
@@ -316,19 +430,36 @@ export default function Create() {
       />
       <KeyboardAvoidingView behavior="padding" style={s.fill}>
         <ScrollView contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
-          <View style={s.modes} accessibilityRole="radiogroup">
-            {MODES.map(([m, label]) => (
-              <Pressable
-                key={m}
-                onPress={() => switchMode(m)}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: mode === m }}
-                style={[s.mode, mode === m && s.modeOn]}
-              >
-                <Text style={[s.modeText, mode === m && s.modeTextOn]}>{label}</Text>
-              </Pressable>
-            ))}
-          </View>
+          {quoteId ? (
+            // A quote is a post: your words (and photos if you like) above someone's post.
+            <>
+              {captionField}
+              <Text style={s.label}>You're quoting</Text>
+              {quoting.data ? (
+                <View style={s.quoting}>
+                  <QuotedCard quoted={asQuoted(quoting.data)} still />
+                </View>
+              ) : (
+                <Text style={s.toggleLine}>
+                  {quoting.error ? "That post can't be quoted any more." : "Loading the post"}
+                </Text>
+              )}
+            </>
+          ) : (
+            <View style={s.modes} accessibilityRole="radiogroup">
+              {MODES.map(([m, label]) => (
+                <Pressable
+                  key={m}
+                  onPress={() => switchMode(m)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: mode === m }}
+                  style={[s.mode, mode === m && s.modeOn]}
+                >
+                  <Text style={[s.modeText, mode === m && s.modeTextOn]}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
 
           {mode === "post" && picked.length ? (
             // The photos big, as they'll look in the feed (4:5), before the details.
@@ -345,11 +476,7 @@ export default function Create() {
               ) : null}
             </View>
           ) : null}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.picked}
-          >
+          <HScroll showsHorizontalScrollIndicator={false} contentContainerStyle={s.picked}>
             {picked.map((a, i) => (
               <View
                 key={a.uri}
@@ -416,7 +543,7 @@ export default function Create() {
                 </Pressable>
               </>
             ) : null}
-          </ScrollView>
+          </HScroll>
 
           <Text style={s.label}>Music</Text>
           {music ? (
@@ -550,30 +677,168 @@ export default function Create() {
             </>
           ) : null}
 
-          <Text style={s.label}>Caption</Text>
-          <TextInput
-            value={caption}
-            onChangeText={setCaption}
-            placeholder={
-              mode === "clip"
-                ? "Say what happened"
-                : mode === "story"
-                  ? "Add a few words (if you like)"
-                  : "Write a caption, or post just words"
-            }
-            placeholderTextColor={t.colors.textMuted}
-            selectionColor={accent}
-            cursorColor={accent}
-            multiline
-            maxLength={mode === "story" ? 200 : 2200}
-            style={s.caption}
-            accessibilityLabel="Caption"
-          />
-          <Text style={s.count}>
-            {caption.length} / {mode === "story" ? 200 : 2200}
-          </Text>
+          {quoteId ? null : captionField}
 
-          {mode !== "story" && spaces.data?.spaces.length ? (
+          {mode === "post" && !quoteId && picked.length === 0 && !sealing ? (
+            poll ? (
+              <View style={s.pollBox}>
+                <View style={s.pollHead}>
+                  <Text style={s.toggleTitle}>Poll</Text>
+                  <Pressable
+                    onPress={() => setPoll(null)}
+                    accessibilityRole="button"
+                    hitSlop={8}
+                    style={s.musicBtn}
+                  >
+                    <Text style={s.musicBtnText}>Remove</Text>
+                  </Pressable>
+                </View>
+                {poll.options.map((value, i) => (
+                  <View
+                    // biome-ignore lint/suspicious/noArrayIndexKey: the choices are edited in place.
+                    key={i}
+                    style={s.pollRow}
+                  >
+                    <TextInput
+                      value={value}
+                      onChangeText={(text) =>
+                        setPoll({
+                          ...poll,
+                          options: poll.options.map((o, j) => (j === i ? text : o)),
+                        })
+                      }
+                      placeholder={`Choice ${i + 1}`}
+                      placeholderTextColor={t.colors.textMuted}
+                      selectionColor={accent}
+                      cursorColor={accent}
+                      maxLength={POLL_OPTION_MAX}
+                      style={[s.tagInput, s.fill]}
+                      accessibilityLabel={`Choice ${i + 1}`}
+                    />
+                    {poll.options.length > 2 ? (
+                      <Pressable
+                        onPress={() =>
+                          setPoll({ ...poll, options: poll.options.filter((_, j) => j !== i) })
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove choice ${i + 1}`}
+                        hitSlop={6}
+                        style={s.pollX}
+                      >
+                        <Icon name="X" size={18} color={t.colors.textSoft} />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ))}
+                {poll.options.length < 4 ? (
+                  <Pressable
+                    onPress={() => setPoll({ ...poll, options: [...poll.options, ""] })}
+                    accessibilityRole="button"
+                    style={({ pressed }) => [s.pollAdd, pressed && s.pressed]}
+                  >
+                    <Icon name="Plus" size={16} color={t.colors.text} />
+                    <Text style={s.musicBtnText}>Add a choice</Text>
+                  </Pressable>
+                ) : null}
+                {!pollReady && choices.length >= 2 ? (
+                  <Text style={s.pollWarn}>Two choices are the same.</Text>
+                ) : null}
+                <Text style={s.label}>Open for</Text>
+                <View style={s.lengths} accessibilityRole="radiogroup">
+                  {POLL_HOURS.map((h) => {
+                    const on = poll.hours === h;
+                    return (
+                      <Pressable
+                        key={h}
+                        onPress={() => setPoll({ ...poll, hours: h })}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: on }}
+                        style={[s.length, on && s.lengthOn]}
+                      >
+                        <Text style={[s.lengthText, on && s.lengthTextOn]}>{POLL_LENGTH[h]}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Text style={s.toggleLine}>
+                  People see the numbers after they vote. Nobody sees who chose what.
+                </Text>
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => setPoll({ options: ["", ""], hours: 24 })}
+                accessibilityRole="button"
+                style={({ pressed }) => [s.music, s.musicAdd, pressed && s.pressed]}
+              >
+                <View style={[s.musicPlay, s.musicIcon]}>
+                  <Icon name="ChartBarHorizontal" size={18} color={t.colors.text} />
+                </View>
+                <View style={s.fill}>
+                  <Text style={s.musicTitle}>Add a poll</Text>
+                  <Text style={s.musicLine}>Ask a question with 2 to 4 choices</Text>
+                </View>
+                <Icon name="CaretRight" size={18} color={t.colors.textSoft} />
+              </Pressable>
+            )
+          ) : null}
+
+          {mode === "post" && !quoteId && !poll ? (
+            sealing && capsule ? (
+              <View style={s.pollBox}>
+                <View style={s.pollHead}>
+                  <Text style={s.toggleTitle}>Time capsule</Text>
+                  <Pressable
+                    onPress={() => setCapsule(null)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Don't seal it"
+                    hitSlop={8}
+                    style={s.musicBtn}
+                  >
+                    <Text style={s.musicBtnText}>Remove</Text>
+                  </Pressable>
+                </View>
+                <Text style={s.label}>Opens</Text>
+                <View style={s.lengths} accessibilityRole="radiogroup">
+                  {CAPSULE_WHEN.map(([key, label]) => {
+                    const on = capsule === key;
+                    return (
+                      <Pressable
+                        key={key}
+                        onPress={() => setCapsule(key)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: on }}
+                        style={[s.length, on && s.lengthOn]}
+                      >
+                        <Text style={[s.lengthText, on && s.lengthTextOn]}>{label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Text style={s.capsuleWhen}>{opensOn(capsuleDate(capsule).toISOString())}</Text>
+                <Text style={s.toggleLine}>
+                  Until then, people see a sealed capsule with a countdown, never what's inside.
+                  Likes and comments open with it, and you get told when it opens.
+                </Text>
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => setCapsule("month")}
+                accessibilityRole="button"
+                style={({ pressed }) => [s.music, s.musicAdd, pressed && s.pressed]}
+              >
+                <View style={[s.musicPlay, s.musicIcon]}>
+                  <Icon name="HourglassMedium" size={18} color={t.colors.text} />
+                </View>
+                <View style={s.fill}>
+                  <Text style={s.musicTitle}>Seal as a time capsule</Text>
+                  <Text style={s.musicLine}>It stays sealed until the day you pick</Text>
+                </View>
+                <Icon name="CaretRight" size={18} color={t.colors.textSoft} />
+              </Pressable>
+            )
+          ) : null}
+
+          {mode !== "story" && !sealing && spaces.data?.spaces.length ? (
             <>
               <Text style={s.label}>Also share to a Space</Text>
               <View style={s.chips}>
@@ -616,18 +881,22 @@ export default function Create() {
           </View>
           {mode !== "story" ? (
             <>
-              <Text style={s.label}>Tag people</Text>
-              <TextInput
-                value={tags}
-                onChangeText={setTags}
-                placeholder="@username, @another"
-                placeholderTextColor={t.colors.textMuted}
-                autoCapitalize="none"
-                autoCorrect={false}
-                selectionColor={accent}
-                style={s.tagInput}
-                accessibilityLabel="People to tag, by username"
-              />
+              {sealing ? null : (
+                <>
+                  <Text style={s.label}>Tag people</Text>
+                  <TextInput
+                    value={tags}
+                    onChangeText={setTags}
+                    placeholder="@username, @another"
+                    placeholderTextColor={t.colors.textMuted}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    selectionColor={accent}
+                    style={s.tagInput}
+                    accessibilityLabel="People to tag, by username"
+                  />
+                </>
+              )}
               {(
                 [
                   [
@@ -711,6 +980,36 @@ const make = (t: NativeTheme) =>
       color: t.colors.text,
     },
     pressed: { opacity: 0.75 },
+    quoting: { marginHorizontal: -14, marginBottom: 10 },
+    pollBox: {
+      gap: 10,
+      marginTop: 12,
+      padding: 14,
+      borderRadius: t.radius.box,
+      borderWidth: 1.5,
+      borderColor: t.colors.border,
+    },
+    pollHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    pollRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+    pollX: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+    pollAdd: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      gap: 8,
+      minHeight: 44,
+      paddingHorizontal: 4,
+    },
+    capsuleWhen: {
+      fontFamily: t.fonts.bold,
+      fontSize: 15.5 * t.textScale,
+      color: t.colors.text,
+    },
+    pollWarn: {
+      fontFamily: t.fonts.body,
+      fontSize: 14 * t.textScale,
+      color: t.colors.danger,
+    },
     lengths: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     length: {
       minHeight: 40,

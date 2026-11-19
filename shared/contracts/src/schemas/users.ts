@@ -99,6 +99,8 @@ export const UserSettings = z
     friendRequestPolicy: z.enum(["everyone", "friends_of_friends", "nobody"]),
     showPresence: z.boolean(),
     showReadReceipts: z.boolean(),
+    /** Friends (people you follow who follow you back) can see the song you're playing. */
+    shareListening: z.boolean(),
   })
   .meta({ id: "UserSettings" });
 export type UserSettings = z.infer<typeof UserSettings>;
@@ -113,6 +115,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   friendRequestPolicy: "everyone",
   showPresence: true,
   showReadReceipts: true,
+  shareListening: true,
 };
 
 /**

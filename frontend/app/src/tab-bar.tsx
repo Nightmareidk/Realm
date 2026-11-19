@@ -77,7 +77,7 @@ export function TabBar({ state, navigation }: BarProps) {
                   <Icon
                     name={on ? tab.on : tab.icon}
                     size={24}
-                    color={on ? t.colors.text : t.colors.textSoft}
+                    color={on ? t.colors.accent : t.colors.textSoft}
                   />
                 ) : session.status === "signedIn" ? (
                   <Avatar user={session.user} size={26} ring={on ? "self" : undefined} />
@@ -150,5 +150,6 @@ const make = (t: NativeTheme) =>
     },
     badgeText: { fontFamily: t.fonts.bold, fontSize: 10.5 * t.textScale },
     label: { fontFamily: t.fonts.bold, fontSize: 11.5 * t.textScale, color: t.colors.textSoft },
-    labelOn: { color: t.colors.text },
+    // The tab you are on lights up in your colour (text and icon both pass 4.5:1 on the pill).
+    labelOn: { color: t.colors.accent },
   });

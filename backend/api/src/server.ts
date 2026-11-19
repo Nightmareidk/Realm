@@ -3,6 +3,7 @@ import { buildApp } from "./app";
 import { createDeps } from "./deps";
 import { attachGateway, type Gateway } from "./gateway/gateway";
 import { AccountService } from "./modules/account/service";
+import { SocialService } from "./modules/social/service";
 
 const config = loadConfig();
 const deps = await createDeps(config);
@@ -58,6 +59,13 @@ const sweep = () =>
   account.sweepDeletions().catch((err) => app.log.error({ err }, "deletion sweep failed"));
 void sweep();
 setInterval(sweep, 60 * 60 * 1000).unref();
+
+// Time capsules whose moment has come are announced: now, then every minute.
+const social = new SocialService(deps);
+const openCapsules = () =>
+  social.openCapsules().catch((err) => app.log.error({ err }, "time capsule sweep failed"));
+void openCapsules();
+setInterval(openCapsules, 60 * 1000).unref();
 
 try {
   const host = config.REALM_API_HOST ?? (config.isProduction ? "0.0.0.0" : "127.0.0.1");

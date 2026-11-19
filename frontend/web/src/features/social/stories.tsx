@@ -4,6 +4,7 @@ import { CaretLeft, CaretRight, Eye, Pause, Play, Plus, X } from "@phosphor-icon
 import type { Story, StoryRing, StoryViewer as Viewer } from "@realm/contracts";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ScrollRow } from "@/components/scroll-row";
 import { player } from "@/features/music/player";
 import { openConversation } from "@/features/realtime/actions";
 import { Avatar } from "@/features/spaces/person";
@@ -63,9 +64,10 @@ export function StoryRings({
   const mineAt = rings.findIndex((r) => r.author.id === me.id);
   const others = rings.map((r, i) => ({ r, i })).filter(({ r }) => r.author.id !== me.id);
   return (
-    <ul
+    <ScrollRow
       className="flex gap-4 overflow-x-auto pt-1.5 pb-[22px] [scrollbar-width:none]"
-      aria-label="Stories"
+      label="Stories"
+      arrowTop="42px"
     >
       <li className="w-[72px] shrink-0 text-center">
         <span className="relative mx-auto block size-[72px]">
@@ -120,7 +122,7 @@ export function StoryRings({
           </li>
         );
       })}
-    </ul>
+    </ScrollRow>
   );
 }
 

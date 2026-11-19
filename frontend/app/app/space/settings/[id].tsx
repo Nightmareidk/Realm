@@ -23,6 +23,7 @@ import { alert } from "@/alert";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
 import { useLiveEvent } from "@/live";
+import { HScroll } from "@/scroll-row";
 import { ApiError, api } from "@/server";
 import { AppScreen, Loading, Problem, TopBar } from "@/social/screen";
 import { ago } from "@/social/time";
@@ -100,8 +101,7 @@ export default function SpaceSettings() {
         <Loading />
       ) : (
         <>
-          <ScrollView
-            horizontal
+          <HScroll
             showsHorizontalScrollIndicator={false}
             style={s.tabsBar}
             contentContainerStyle={s.tabs}
@@ -118,7 +118,7 @@ export default function SpaceSettings() {
                 <Text style={[s.tabText, tab === k && s.tabTextOn]}>{label}</Text>
               </Pressable>
             ))}
-          </ScrollView>
+          </HScroll>
           {tab === "members" ? <Members space={space.data} onRolesChanged={space.reload} /> : null}
           {tab === "roles" ? <Roles space={space.data} onChanged={space.reload} /> : null}
           {tab === "reports" ? <Reports space={space.data} /> : null}

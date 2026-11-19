@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { Icon } from "../icon";
+import { useSession } from "../session";
 import { useSheet } from "../sheet";
 import { Empty, Loading, Problem, TopBar } from "../social/screen";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
@@ -29,6 +30,7 @@ export function SongList({
   emptyLine,
   from,
   removeFrom,
+  onChanged,
   extra,
   right,
 }: {
@@ -45,9 +47,13 @@ export function SongList({
   from: string;
   /** Your own playlist: songs can be taken out of it. */
   removeFrom?: { id: string; done: () => void };
+  /** Called after a song in the list is taken down by its uploader. */
+  onChanged?: () => void;
   extra?: ReactNode;
   right?: ReactNode;
 }) {
+  const { session } = useSession();
+  const meId = session.status === "signedIn" ? session.user.id : null;
   const { t, accent, onAccent } = useTheme();
   const s = useStyles(make);
   const router = useRouter();
@@ -59,6 +65,7 @@ export function SongList({
     <View style={s.head}>
       {glow ? (
         <Image
+          transition={150}
           source={coverSource(glow)}
           style={[StyleSheet.absoluteFill, s.glow]}
           blurRadius={50}
@@ -111,7 +118,7 @@ export function SongList({
       {error && !songs ? (
         <Problem message={error} onRetry={onRetry} />
       ) : loading && !songs ? (
-        <Loading />
+        <Loading shape="songs" />
       ) : (
         <FlatList
           data={songs ?? []}
@@ -122,7 +129,12 @@ export function SongList({
               sound={item}
               onPress={() => playList(songs ?? [], index, from)}
               onMore={() =>
-                songMenu(sheet, router, item, { liked: item.liked ?? false, removeFrom })
+                songMenu(sheet, router, item, {
+                  liked: item.liked ?? false,
+                  removeFrom,
+                  meId,
+                  changed: onChanged,
+                })
               }
             />
           )}

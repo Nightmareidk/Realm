@@ -17,6 +17,10 @@ import { adminRoutes, verificationRoutes } from "./modules/admin/routes";
 import { authRoutes, gatewayRoutes } from "./modules/auth/routes";
 import { conversationRoutes } from "./modules/dms/routes";
 import { ConversationsService } from "./modules/dms/service";
+import { e2eeChatRoutes } from "./modules/e2ee/chat-routes";
+import { E2eeChatService } from "./modules/e2ee/chat-service";
+import { e2eeRoutes } from "./modules/e2ee/routes";
+import { E2eeService } from "./modules/e2ee/service";
 import { friendRoutes } from "./modules/friends/routes";
 import { mediaRoutes } from "./modules/media/routes";
 import { musicRoutes, soundRoutes, storyRoutes } from "./modules/music/routes";
@@ -74,9 +78,15 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
   registerSecurity(app, deps);
 
   app.get("/health", async () => ({ ok: true }));
-  app.get("/ready", async (_req, reply) => {
-    await deps.db.execute(sql`select 1`);
-    return reply.send({ ok: true });
+  // "Can this copy take traffic?" 503 (not a crash report) while the database can't be reached.
+  app.get("/ready", async (req, reply) => {
+    try {
+      await deps.db.execute(sql`select 1`);
+      return reply.send({ ok: true });
+    } catch (err) {
+      req.log.error({ err }, "readiness check: database unreachable");
+      return reply.code(503).send({ ok: false });
+    }
   });
 
   await app.register(
@@ -84,14 +94,21 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       await v1.register(authRoutes(deps), { prefix: "/auth" });
       await v1.register(gatewayRoutes(deps), { prefix: "/gateway" });
       await v1.register(userRoutes(deps), { prefix: "/users" });
-      await v1.register(accountRoutes(deps, new AccountService(deps)), { prefix: "/users" });
+      const account = new AccountService(deps);
+      await v1.register(accountRoutes(deps, account), { prefix: "/users" });
+      // Quiet log level: no request lines (or IPs) for encrypted-chat traffic (docs/E2EE.md §12.3).
+      const e2ee = new E2eeService(deps, account);
+      await v1.register(e2eeRoutes(e2ee), { prefix: "/e2ee", logLevel: "warn" });
       await v1.register(verificationRoutes(deps), { prefix: "/users" });
       await v1.register(friendRoutes(deps), { prefix: "/users" });
       await v1.register(adminRoutes(deps), { prefix: "/admin" });
       const spaces = spacesModule(deps);
       await v1.register(meSpaceRoutes(deps, spaces), { prefix: "/users" });
-      await v1.register(conversationRoutes(deps, new ConversationsService(deps, spaces.messages)), {
-        prefix: "/users",
+      const dms = new ConversationsService(deps, spaces.messages);
+      await v1.register(conversationRoutes(deps, dms), { prefix: "/users" });
+      await v1.register(e2eeChatRoutes(new E2eeChatService(deps, e2ee, dms)), {
+        prefix: "/e2ee",
+        logLevel: "warn",
       });
       await v1.register(communityRoutes(deps, spaces), { prefix: "/communities" });
       await v1.register(channelRoutes(deps, spaces), { prefix: "/channels" });

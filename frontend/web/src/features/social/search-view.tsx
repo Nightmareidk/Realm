@@ -20,6 +20,7 @@ import type {
 } from "@realm/contracts";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ScrollRow } from "@/components/scroll-row";
 import { player, usePlayer } from "@/features/music/player";
 import { JoinOpenButton } from "@/features/spaces/join-open";
 import { Avatar } from "@/features/spaces/person";
@@ -396,7 +397,10 @@ export function SearchView() {
                   Clear all
                 </button>
               </div>
-              <ul className="flex gap-4 overflow-x-auto px-2 pb-1 [scrollbar-width:none]">
+              <ScrollRow
+                className="flex gap-4 overflow-x-auto px-2 pb-1 [scrollbar-width:none]"
+                arrowTop="32px"
+              >
                 {recent.map((u) => (
                   <li key={u.id} className="relative w-[4.5rem] shrink-0 text-center">
                     <Link href={`/u/${u.username}`} className="block">
@@ -415,7 +419,7 @@ export function SearchView() {
                     </button>
                   </li>
                 ))}
-              </ul>
+              </ScrollRow>
             </section>
           )}
           {(spaces.data?.spaces ?? []).filter((s) => !s.joined).length > 0 && (
@@ -429,7 +433,7 @@ export function SearchView() {
                   See all
                 </Link>
               </div>
-              <ul className="flex gap-3 overflow-x-auto px-2 pb-1 [scrollbar-width:none]">
+              <ScrollRow className="flex gap-3 overflow-x-auto px-2 pb-1 [scrollbar-width:none]">
                 {(spaces.data?.spaces ?? [])
                   .filter((s) => !s.joined)
                   .map((sp) => (
@@ -447,7 +451,7 @@ export function SearchView() {
                       </span>
                     </li>
                   ))}
-              </ul>
+              </ScrollRow>
             </section>
           )}
           <section aria-label="Explore">

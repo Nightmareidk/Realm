@@ -74,6 +74,7 @@ export default function NewHighlight() {
               >
                 {item.media.kind === "image" ? (
                   <Image
+                    transition={150}
                     source={mediaSource(item.media.url)}
                     style={StyleSheet.absoluteFill}
                     contentFit="cover"

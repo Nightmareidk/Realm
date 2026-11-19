@@ -20,7 +20,7 @@ export default function People() {
       {list.error && !list.data ? (
         <Problem message={list.error} onRetry={list.reload} />
       ) : !list.data ? (
-        <Loading />
+        <Loading shape="rows" />
       ) : (
         <FlatList
           data={list.data.items}

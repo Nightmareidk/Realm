@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useApi } from "../data";
 import { mediaSource, webOrigin } from "../server";
+import { opensOn } from "../social/capsule";
 import { type NativeTheme, useStyles } from "../theme";
 
 /** A Realm post link in a message: `…/p/123` (or an older `…/u/name?post=123`). */
@@ -47,7 +48,17 @@ export function PostLinkCard({ id }: { id: string }) {
         {p.author.displayName}
       </Text>
       {first?.kind === "image" ? (
-        <Image source={mediaSource(first.url)} style={s.photo} contentFit="cover" />
+        <Image
+          transition={150}
+          source={mediaSource(first.url)}
+          style={s.photo}
+          contentFit="cover"
+        />
+      ) : null}
+      {p.capsule?.sealed && !p.caption && !first ? (
+        <Text style={s.caption} numberOfLines={2}>
+          A time capsule. Opens {opensOn(p.capsule.opensAt)}.
+        </Text>
       ) : null}
       {p.caption ? (
         <Text style={s.caption} numberOfLines={2}>

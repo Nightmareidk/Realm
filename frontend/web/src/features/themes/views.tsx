@@ -11,17 +11,28 @@ import {
   UploadSimple,
 } from "@phosphor-icons/react";
 import {
+  DEFAULT_PALETTE,
   type ResolvedTheme,
   resolveTheme,
   type ThemeDetail,
   type ThemeFile,
+  type ThemeFontPair,
   type ThemeLook,
   type ThemePage,
+  type ThemePalette,
   type ThemePayments,
   type ThemeSummary,
   type ThemeTag,
 } from "@realm/contracts";
-import { LOOKS, lookTheme, THEME_ORDER, type ThemeId, themes } from "@realm/design-tokens";
+import {
+  FONT_PAIR_ORDER,
+  FONT_PAIRS,
+  fontPairOf,
+  LOOKS,
+  lookTheme,
+  PALETTE_ORDER,
+  PALETTES,
+} from "@realm/design-tokens";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -67,19 +78,23 @@ function Section({ title, children, lead }: { title: string; lead?: string; chil
 
 // ── Settings › Themes ──────────────────────────────────────────────────────────
 
+/** A font pair's title font, as the website loads it (see the app layout's next/font list). */
+const webFont = (id: string) => `var(--font-${id})`;
+
 /**
- * Settings › Themes: Realm's three looks (Now Playing is the default), your colour, your themes,
- * and the doors to the store, the maker, adding a file, and the guide.
+ * Settings › Themes: Realm's three looks (Now Playing is the default), your colours, your font,
+ * your themes, and the doors to the store, the maker, adding a file, and the guide.
  */
 export function ThemesHome() {
   const { mine, choose, previewing, preview } = useThemes();
   const library = useLoad<{ items: ThemeSummary[] }>("/themes/library");
   const [problem, setProblem] = useState<string | null>(null);
   const active = mine?.active;
-  const accent: ThemeId = active?.kind === "look" ? active.accent : "mint";
+  const palette: ThemePalette = active?.kind === "look" ? active.palette : DEFAULT_PALETTE;
+  const font: ThemeFontPair = active?.kind === "look" ? active.font : "match";
   const looks = useMemo(
-    () => LOOKS.map((l) => ({ ...l, theme: resolveTheme(lookTheme(l.id, accent)) })),
-    [accent],
+    () => LOOKS.map((l) => ({ ...l, theme: resolveTheme(lookTheme(l.id, palette, font)) })),
+    [palette, font],
   );
   const run = async (fn: () => Promise<void>) => {
     try {
@@ -120,7 +135,7 @@ export function ThemesHome() {
                 key={l.id}
                 type="button"
                 aria-pressed={on}
-                onClick={() => run(() => choose({ kind: "look", look: l.id, accent }))}
+                onClick={() => run(() => choose({ kind: "look", look: l.id, palette, font }))}
                 className={cx(
                   "grid gap-3 rounded-[1.25rem] bg-surface-raised p-3 text-left ring-2 transition-shadow",
                   on ? "ring-fg" : "ring-transparent hover:ring-line-strong",
@@ -146,26 +161,84 @@ export function ThemesHome() {
 
       {active?.kind === "look" && (
         <Section
-          title="Your colour"
-          lead="The colour of what you press and the light behind every screen."
+          title="Colours"
+          lead="The background, what you press, your messages and the light behind every screen."
         >
-          <fieldset aria-label="Your colour" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {THEME_ORDER.map((id) => {
-              const [l1, l2, l3] = themes[id].lights;
-              const on = id === accent;
+          <fieldset aria-label="Colours" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {PALETTE_ORDER.map((id) => {
+              const p = PALETTES[id];
+              const [s1, s2, s3] = p.swatch;
+              const on = id === palette;
+              const ground = resolveTheme(lookTheme(active.look, id)).colors.ground;
               return (
                 <button
                   key={id}
                   type="button"
                   aria-pressed={on}
-                  onClick={() => run(() => choose({ kind: "look", look: active.look, accent: id }))}
-                  className={cx("rounded-2xl p-1 ring-2", on ? "ring-fg" : "ring-transparent")}
+                  title={p.blurb}
+                  onClick={() => run(() => choose({ ...active, palette: id }))}
+                  className={cx(
+                    "grid gap-2 rounded-2xl bg-surface-raised p-2 text-left ring-2 transition-shadow",
+                    on ? "ring-fg" : "ring-transparent hover:ring-line-strong",
+                  )}
                 >
                   <span
-                    className="flex h-16 items-end rounded-xl p-2 font-bold text-white"
-                    style={{ background: `linear-gradient(135deg, ${l1}, ${l2}, ${l3})` }}
+                    className="block h-16 rounded-xl p-2"
+                    style={{ background: ground }}
+                    aria-hidden
                   >
-                    {themes[id].name}
+                    <span
+                      className="block size-full rounded-lg"
+                      style={{ background: `linear-gradient(135deg, ${s1}, ${s2}, ${s3})` }}
+                    />
+                  </span>
+                  <span className="px-1">
+                    <span className="block truncate font-bold text-fg">{p.name}</span>
+                    {id === DEFAULT_PALETTE && (
+                      <span className="block text-[0.85rem] text-fg-soft">Realm's default</span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </fieldset>
+        </Section>
+      )}
+
+      {active?.kind === "look" && (
+        <Section
+          title="Font"
+          lead="The letters for titles and for reading. Pick any with any colours."
+        >
+          <fieldset aria-label="Font" className="grid gap-1">
+            {FONT_PAIR_ORDER.map((id) => {
+              const pair = id === "match" ? fontPairOf(palette) : FONT_PAIRS[id];
+              const on = id === font;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => run(() => choose({ ...active, font: id }))}
+                  className={cx(
+                    "flex items-center gap-4 rounded-2xl px-2 py-2 text-left ring-2 transition-shadow hover:bg-surface-raised",
+                    on ? "ring-fg" : "ring-transparent",
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-raised text-[1.25rem] font-bold text-fg"
+                    style={{ fontFamily: webFont(pair.display) }}
+                  >
+                    Aa
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-bold text-fg">
+                      {id === "match" ? "Match the colours" : pair.name}
+                    </span>
+                    <span className="block text-[0.92rem] leading-snug text-fg-soft">
+                      {id === "match" ? `${pair.name} with ${PALETTES[palette].name}` : pair.blurb}
+                    </span>
                   </span>
                 </button>
               );
@@ -243,7 +316,14 @@ export function ThemesHome() {
             <button
               type="button"
               onClick={() =>
-                run(() => choose({ kind: "look", look: "now-playing", accent: "mint" }))
+                run(() =>
+                  choose({
+                    kind: "look",
+                    look: "now-playing",
+                    palette: DEFAULT_PALETTE,
+                    font: "match",
+                  }),
+                )
               }
               className="flex items-center gap-4 rounded-2xl px-3 py-3 text-left hover:bg-surface-raised"
             >
@@ -252,7 +332,7 @@ export function ThemesHome() {
               </span>
               <span>
                 <span className="block font-bold text-fg">Back to Realm's default</span>
-                <span className="block text-[0.92rem] text-fg-soft">Now Playing in Mint</span>
+                <span className="block text-[0.92rem] text-fg-soft">Now Playing in Afterglow</span>
               </span>
             </button>
           )}

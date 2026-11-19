@@ -1,4 +1,5 @@
 import { inArray, schema } from "@realm/db";
+import { layoutFromText } from "@realm/server-core";
 import type { Deps } from "../deps";
 
 const { ownerAlerts } = schema;
@@ -23,7 +24,15 @@ export async function alertOwnerOnce(
   const to = deps.config.REALM_ALERT_EMAIL ?? deps.config.REALM_SAFETY_EMAIL;
   if (to) {
     await deps.mailer
-      .send({ to, ...mail })
+      .send({
+        to,
+        ...mail,
+        layout: layoutFromText(
+          mail.subject,
+          mail.text,
+          "You get these because this address is set as Realm's alert inbox.",
+        ),
+      })
       .catch((err) => deps.logger.error({ err, alert: key }, "owner alert email failed"));
   }
   return true;

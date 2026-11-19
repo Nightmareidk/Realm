@@ -10,14 +10,22 @@ import type {
   PostPage,
   PostVisibility,
   Profile,
+  QuotedPost,
   SearchResults,
   Suggestion,
   UpdateAccountBody,
   UpdatePostBody,
   UserSummary,
 } from "@realm/contracts";
-import { Limits } from "@realm/contracts";
-import { and, desc, eq, inArray, isNotNull, isNull, lt, or, schema, sql } from "@realm/db";
+import {
+  CAPSULE_MAX_MS,
+  CAPSULE_MIN_MS,
+  hashtagsIn,
+  Limits,
+  snowflakeFromDate,
+  snowflakeTimestamp,
+} from "@realm/contracts";
+import { and, desc, eq, inArray, isNotNull, isNull, lt, lte, ne, or, schema, sql } from "@realm/db";
 import type { Deps } from "../../deps";
 import { AppError, badRequest, forbidden, notFound } from "../../lib/errors";
 import { mediaUrl, toPublicUser } from "../../lib/serialize";
@@ -42,18 +50,32 @@ const {
   notifications,
   relationships,
   messageAttachments,
+  postHashtags,
+  postPolls,
+  pollVotes,
   postTags,
+  reposts,
   closeFriends,
   accountMutes,
 } = schema;
 
 type PostRow = typeof posts.$inferSelect;
+
+/** A time capsule that hasn't opened yet: only its author may see what's inside. */
+function sealed(row: PostRow, now = Date.now()): boolean {
+  return row.opensAt !== null && row.opensAt.getTime() > now;
+}
+
+const SEALED = "This time capsule hasn't opened yet.";
 type Db = Deps["db"];
 
 const ACTIVITY_TYPES = [
   "follow",
   "follow_request",
   "post_like",
+  "post_repost",
+  "post_quote",
+  "capsule_open",
   "post_comment",
   "comment_reply",
   "mention",
@@ -129,6 +151,24 @@ export class SocialService {
       body.visibility ?? ((await isPrivateAccount(this.db, authorId)) ? "followers" : "public");
 
     if (body.sound && body.kind === "text") throw invalid("Music goes on photos and Clips.");
+    if (body.poll && body.kind !== "text") throw invalid("A poll goes on a text post.");
+    if (body.poll && body.quoteOf) throw invalid("A quote post can't also be a poll.");
+    if (body.poll) for (const option of body.poll.options) await this.guard(authorId, option);
+    const opensAt = body.opensAt ? new Date(body.opensAt) : null;
+    if (opensAt) {
+      const ahead = opensAt.getTime() - Date.now();
+      // A minute of slack for the time it took to press Share.
+      if (ahead < CAPSULE_MIN_MS - 60_000) {
+        throw invalid("A time capsule opens at least an hour from now.");
+      }
+      if (ahead > CAPSULE_MAX_MS) throw invalid("A time capsule opens within five years.");
+      if (body.kind === "clip") throw invalid("Time capsules are for posts, not Clips.");
+      if (body.poll) throw invalid("A time capsule can't have a poll.");
+      if (body.quoteOf) throw invalid("A time capsule can't quote a post.");
+      if (spaceId) throw invalid("A time capsule goes on your profile, not in a Space.");
+      if (body.tags?.length) throw invalid("Tag people after your time capsule opens.");
+    }
+    const quoted = body.quoteOf ? await this.quotable(BigInt(body.quoteOf), authorId) : null;
     const sound = await new MusicService(this.deps).pick(body.sound);
     const tagged = body.tags?.length ? await this.taggable(authorId, body.tags) : [];
     const id = this.deps.ids.next();
@@ -141,8 +181,17 @@ export class SocialService {
       visibility: toDbVisibility(visibility),
       hideLikes: body.hideLikes ?? false,
       commentsOff: body.commentsOff ?? false,
+      quotePostId: quoted?.id ?? null,
+      opensAt,
       ...(sound ?? {}),
     });
+    if (body.poll) {
+      await this.db.insert(postPolls).values({
+        postId: id,
+        options: body.poll.options,
+        endsAt: new Date(Date.now() + body.poll.hours * 3_600_000),
+      });
+    }
     if (files.length) {
       await this.db
         .insert(postMedia)
@@ -150,8 +199,133 @@ export class SocialService {
     }
     const [row] = await this.db.select().from(posts).where(eq(posts.id, id));
     if (tagged.length) await this.setTags(row as PostRow, tagged);
-    if (caption) await this.mention(row as PostRow, authorId, caption, "caption");
+    // A capsule's @mentions are told when it opens, so nobody reads its words early.
+    if (caption && !opensAt) await this.mention(row as PostRow, authorId, caption, "caption");
+    await this.setHashtags(id, caption);
+    if (quoted && quoted.authorId !== authorId) {
+      await this.notify(quoted.authorId, "post_quote", authorId, "post", id, {
+        text: caption?.slice(0, 120) ?? null,
+      });
+    }
     return (await this.hydrate([row as PostRow], authorId))[0] as Post;
+  }
+
+  /** A post that may be quoted: one the author can see, public, on a profile and still up. */
+  private async quotable(id: bigint, authorId: bigint): Promise<PostRow> {
+    const row = await this.visible(id, authorId);
+    if (row.visibility !== "public" || row.communityId || row.archivedAt || row.removedAt) {
+      throw invalid("Only public posts can be quoted.");
+    }
+    if (sealed(row)) throw invalid(SEALED);
+    return row;
+  }
+
+  /**
+   * Vote in a post's poll: once, while it's open. The numbers come back with the post, now that
+   * the voter is allowed to see them.
+   */
+  async votePoll(id: bigint, userId: bigint, choice: number): Promise<Post> {
+    await this.visible(id, userId);
+    const [poll] = await this.db.select().from(postPolls).where(eq(postPolls.postId, id)).limit(1);
+    if (!poll) throw notFound("Poll");
+    if (poll.endsAt.getTime() <= Date.now()) throw invalid("This poll has ended.");
+    if (choice >= poll.options.length) throw invalid("That isn't one of the choices.");
+    const added = await this.db
+      .insert(pollVotes)
+      .values({ postId: id, userId, choice })
+      .onConflictDoNothing()
+      .returning({ userId: pollVotes.userId });
+    if (!added.length) throw invalid("You've already voted in this poll.");
+    return this.get(id, userId);
+  }
+
+  /** Keeps a post's #tags in step with its caption. */
+  private async setHashtags(postId: bigint, caption: string | null) {
+    const tags = caption ? hashtagsIn(caption) : [];
+    await this.db.transaction(async (tx) => {
+      await tx.delete(postHashtags).where(eq(postHashtags.postId, postId));
+      if (tags.length) {
+        await tx.insert(postHashtags).values(tags.map((tag) => ({ postId, tag })));
+      }
+    });
+  }
+
+  /**
+   * What can show under a #tag or count towards trending: public posts on profiles, from public
+   * adult accounts, that are still up. The same rule as Explore, so a tag never shows what
+   * discovery wouldn't.
+   */
+  /** Not a time capsule that's still sealed. */
+  private notSealed() {
+    return or(isNull(posts.opensAt), lte(posts.opensAt, sql`now()`));
+  }
+
+  private discoverable() {
+    return and(
+      eq(posts.visibility, "public"),
+      this.notSealed(),
+      isNull(posts.deletedAt),
+      isNull(posts.removedAt),
+      isNull(posts.archivedAt),
+      isNull(posts.communityId),
+      eq(users.status, "active"),
+      or(
+        eq(users.accountKind, "business"),
+        sql`coalesce(${userSettings.profileVisibility}, 'public') = 'public'`,
+      ),
+      sql`(${users.birthDate} is null or ${users.birthDate} <= now() - interval '18 years')`,
+    );
+  }
+
+  /** The posts under a #tag, newest first. Never from someone in a block with the viewer. */
+  async taggedWith(
+    tag: string,
+    viewerId: bigint,
+    before: bigint | null,
+    limit: number,
+  ): Promise<PostPage> {
+    const rows = await this.db
+      .select({ post: posts })
+      .from(postHashtags)
+      .innerJoin(posts, eq(posts.id, postHashtags.postId))
+      .innerJoin(users, eq(users.id, posts.authorId))
+      .leftJoin(userSettings, eq(userSettings.userId, posts.authorId))
+      .where(
+        and(
+          eq(postHashtags.tag, tag),
+          before ? lt(posts.id, before) : undefined,
+          this.discoverable(),
+          sql`${posts.authorId} not in ${blockedWith(viewerId)}`,
+          sql`${posts.authorId} not in ${mutedBy(viewerId, "posts")}`,
+        ),
+      )
+      .orderBy(desc(posts.id))
+      .limit(limit + 1);
+    return this.page(
+      rows.map((r) => r.post),
+      limit,
+      viewerId,
+    );
+  }
+
+  /** The #tags the most different people posted with this week. */
+  async trendingTags(): Promise<{ tag: string; posts: number }[]> {
+    const rows = await this.db
+      .select({
+        tag: postHashtags.tag,
+        posts: sql<number>`count(distinct ${posts.id})::int`,
+        people: sql<number>`count(distinct ${posts.authorId})::int`,
+      })
+      .from(postHashtags)
+      .innerJoin(posts, eq(posts.id, postHashtags.postId))
+      .innerJoin(users, eq(users.id, posts.authorId))
+      .leftJoin(userSettings, eq(userSettings.userId, posts.authorId))
+      .where(and(sql`${postHashtags.createdAt} > now() - interval '7 days'`, this.discoverable()))
+      .groupBy(postHashtags.tag)
+      // By how many people, so one account can't push a tag up by posting it again and again.
+      .orderBy(sql`count(distinct ${posts.authorId}) desc`, sql`count(distinct ${posts.id}) desc`)
+      .limit(10);
+    return rows.map((r) => ({ tag: r.tag, posts: r.posts }));
   }
 
   /**
@@ -209,7 +383,18 @@ export class SocialService {
       throw invalid("It isn't shared to a Space, so it can't be Space-only.");
     }
     const captionChanged = body.caption !== undefined && (body.caption || null) !== row.body;
+    if (captionChanged) {
+      const [poll] = await this.db
+        .select({ id: postPolls.postId })
+        .from(postPolls)
+        .where(eq(postPolls.postId, id))
+        .limit(1);
+      // People voted on the question as it was.
+      if (poll) throw invalid("A poll's question can't be changed after it's posted.");
+    }
     if (captionChanged && body.caption) await this.guard(userId, body.caption);
+    if (sealed(row) && body.tags?.length)
+      throw invalid("Tag people after your time capsule opens.");
     const tagged = body.tags ? await this.taggable(userId, body.tags) : null;
     await this.db
       .update(posts)
@@ -230,7 +415,10 @@ export class SocialService {
       })
       .where(eq(posts.id, id));
     if (tagged) await this.setTags(row, tagged);
-    if (captionChanged && body.caption) await this.mention(row, userId, body.caption, "caption");
+    if (captionChanged && body.caption && !sealed(row)) {
+      await this.mention(row, userId, body.caption, "caption");
+    }
+    if (captionChanged) await this.setHashtags(id, body.caption || null);
     return this.get(id, userId);
   }
 
@@ -370,6 +558,7 @@ export class SocialService {
 
   async like(id: bigint, userId: bigint, on: boolean): Promise<Post> {
     const row = await this.visible(id, userId);
+    if (on && sealed(row)) throw invalid(SEALED);
     if (on) {
       const added = await this.db
         .insert(votes)
@@ -398,6 +587,32 @@ export class SocialService {
       }
     }
     await this.postNews(id);
+    return this.get(id, userId);
+  }
+
+  /**
+   * Repost: share someone's public post with your own followers (it shows in their Home with
+   * your name on it), or take that back. Only public posts, never your own.
+   */
+  async repost(id: bigint, userId: bigint, on: boolean): Promise<Post> {
+    const row = await this.visible(id, userId);
+    if (on) {
+      if (row.authorId === userId) throw invalid("That's your own post.");
+      if (sealed(row)) throw invalid(SEALED);
+      if (row.visibility !== "public" || row.communityId || row.archivedAt || row.removedAt) {
+        throw invalid("Only public posts can be reposted.");
+      }
+      const added = await this.db
+        .insert(reposts)
+        .values({ id: this.deps.ids.next(), userId, postId: id })
+        .onConflictDoNothing()
+        .returning({ id: reposts.id });
+      if (added.length) {
+        await this.notify(row.authorId, "post_repost", userId, "post", id, {}, `repost:${id}`);
+      }
+    } else {
+      await this.db.delete(reposts).where(and(eq(reposts.userId, userId), eq(reposts.postId, id)));
+    }
     return this.get(id, userId);
   }
 
@@ -448,6 +663,10 @@ export class SocialService {
 
   /** Home: your own posts, people you follow, and what's shared to your Spaces. Newest first. */
   async home(viewerId: bigint, before: bigint | null, limit: number): Promise<PostPage> {
+    const following = sql`(select ${follows.followeeId} from ${follows} where ${follows.followerId} = ${viewerId} and ${follows.status} = 'active')`;
+    // A repost that counts for this viewer: by someone they follow, and haven't blocked or muted.
+    const counts = (r: string) =>
+      sql`${sql.raw(r)}.user_id in ${following} and ${sql.raw(r)}.user_id not in ${blockedWith(viewerId)} and ${sql.raw(r)}.user_id not in ${mutedBy(viewerId, "posts")}`;
     const rows = await this.db
       .select()
       .from(posts)
@@ -456,13 +675,20 @@ export class SocialService {
           isNull(posts.deletedAt),
           isNull(posts.removedAt),
           isNull(posts.archivedAt),
+          // Time capsules come in below, at the moment they opened.
+          isNull(posts.opensAt),
           before ? lt(posts.id, before) : undefined,
           sql`${posts.authorId} not in ${blockedWith(viewerId)}`,
           sql`${posts.authorId} not in ${mutedBy(viewerId, "posts")}`,
+          // A post someone you follow reposted has one place only: where it was reposted.
+          or(
+            eq(posts.authorId, viewerId),
+            sql`not exists (select 1 from ${reposts} as rp where rp.post_id = ${posts.id} and ${counts("rp")})`,
+          ),
           or(
             eq(posts.authorId, viewerId),
             and(
-              sql`${posts.authorId} in (select ${follows.followeeId} from ${follows} where ${follows.followerId} = ${viewerId} and ${follows.status} = 'active')`,
+              sql`${posts.authorId} in ${following}`,
               inArray(posts.visibility, ["public", "followers"]),
             ),
             sql`${posts.communityId} in (select ${communityMembers.communityId} from ${communityMembers} where ${communityMembers.userId} = ${viewerId})`,
@@ -471,7 +697,87 @@ export class SocialService {
       )
       .orderBy(desc(posts.id))
       .limit(limit + 1);
-    return this.page(rows, limit, viewerId);
+
+    // What the people you follow reposted: public posts by others, placed by when they were
+    // last reposted by one of them. Never from, or by, anyone you've blocked or muted.
+    const shared = await this.db
+      .select({ post: posts, repostId: reposts.id, by: reposts.userId })
+      .from(reposts)
+      .innerJoin(posts, eq(posts.id, reposts.postId))
+      .where(
+        and(
+          before ? lt(reposts.id, before) : undefined,
+          // Several people you follow reposted it: it shows once, for the newest of them.
+          sql`${reposts.id} = (select max(rn.id) from ${reposts} as rn where rn.post_id = ${reposts.postId} and ${counts("rn")})`,
+          eq(posts.visibility, "public"),
+          isNull(posts.communityId),
+          isNull(posts.deletedAt),
+          isNull(posts.removedAt),
+          isNull(posts.archivedAt),
+          sql`${posts.authorId} <> ${viewerId}`,
+          sql`${posts.authorId} not in ${blockedWith(viewerId)}`,
+          sql`${posts.authorId} not in ${mutedBy(viewerId, "posts")}`,
+        ),
+      )
+      .orderBy(desc(reposts.id))
+      .limit(limit + 1);
+
+    // Time capsules that have opened, by yourself or people you follow: placed by when they
+    // opened, so an old capsule arrives fresh. A sealed one waits on its author's profile.
+    const opened = await this.db
+      .select()
+      .from(posts)
+      .where(
+        and(
+          isNotNull(posts.opensAt),
+          lte(posts.opensAt, sql`now()`),
+          before ? lt(posts.opensAt, new Date(snowflakeTimestamp(before.toString()))) : undefined,
+          isNull(posts.deletedAt),
+          isNull(posts.removedAt),
+          isNull(posts.archivedAt),
+          sql`${posts.authorId} not in ${blockedWith(viewerId)}`,
+          sql`${posts.authorId} not in ${mutedBy(viewerId, "posts")}`,
+          or(
+            eq(posts.authorId, viewerId),
+            and(
+              sql`${posts.authorId} in ${following}`,
+              inArray(posts.visibility, ["public", "followers"]),
+            ),
+          ),
+        ),
+      )
+      .orderBy(desc(posts.opensAt))
+      .limit(limit + 1);
+
+    // One list, newest first: a post by when it was posted, a repost by when it was reposted,
+    // a time capsule by when it opened. A post shows once, at its newest place.
+    const merged = [
+      ...rows.map((post) => ({ post, at: post.id, by: null as bigint | null })),
+      ...shared.map((s) => ({ post: s.post, at: s.repostId, by: s.by as bigint | null })),
+      ...opened.map((post) => ({
+        post,
+        at: BigInt(snowflakeFromDate(post.opensAt ?? post.createdAt)),
+        by: null as bigint | null,
+      })),
+    ].sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+    const seen = new Set<bigint>();
+    const unique = merged.filter((m) => !seen.has(m.post.id) && Boolean(seen.add(m.post.id)));
+    const shown = unique.slice(0, limit);
+    const items = await this.hydrate(
+      shown.map((m) => m.post),
+      viewerId,
+    );
+    const reposterIds = [...new Set(shown.flatMap((m) => (m.by ? [m.by] : [])))];
+    const reposters = reposterIds.length
+      ? await this.db.select(summaryColumns).from(users).where(inArray(users.id, reposterIds))
+      : [];
+    return {
+      items: items.map((item, i) => {
+        const by = reposters.find((r) => r.id === shown[i]?.by);
+        return by ? { ...item, repostedBy: toUserSummary(by) } : item;
+      }),
+      nextCursor: unique.length > limit ? (shown.at(-1)?.at.toString() ?? null) : null,
+    };
   }
 
   /** Clips: public Clips from anyone, plus those from people you follow and your Spaces. */
@@ -522,6 +828,7 @@ export class SocialService {
         and(
           inArray(posts.kind, ["image", "clip"]),
           eq(posts.visibility, "public"),
+          this.notSealed(),
           isNull(posts.deletedAt),
           isNull(posts.removedAt),
           isNull(posts.archivedAt),
@@ -705,12 +1012,26 @@ export class SocialService {
       .from(postTags)
       .innerJoin(users, eq(users.id, postTags.userId))
       .where(and(inArray(postTags.postId, ids), eq(users.status, "active")));
+    const shares = await this.db
+      .select({ postId: reposts.postId, n: sql<number>`count(*)::int` })
+      .from(reposts)
+      .where(inArray(reposts.postId, ids))
+      .groupBy(reposts.postId);
+    const myShares = viewerId
+      ? await this.db
+          .select({ postId: reposts.postId })
+          .from(reposts)
+          .where(and(eq(reposts.userId, viewerId), inArray(reposts.postId, ids)))
+      : [];
+    const polls = await this.polls(rows, viewerId);
+    const quotes = await this.quotedPosts(rows, viewerId);
     const likedSet = new Set(liked.map((l) => l.id.toString()));
     const savedSet = new Set(saved.map((s) => s.id.toString()));
+    const now = Date.now();
     return rows.map((r, i) => {
       const author = authors.find((a) => a.id === r.authorId);
       const space = r.communityId ? spaces.find((s) => s.id === r.communityId) : undefined;
-      return {
+      const post = {
         sound: soundList[i] ?? null,
         id: r.id.toString(),
         author: author ? toUserSummary(author) : deletedUser(r.authorId),
@@ -729,6 +1050,11 @@ export class SocialService {
         // A hidden like count is the author's alone.
         likeCount: r.hideLikes && viewerId !== r.authorId ? 0 : r.score,
         commentCount: r.commentCount,
+        repostCount: shares.find((x) => x.postId === r.id)?.n ?? 0,
+        reposted: myShares.some((x) => x.postId === r.id),
+        repostedBy: null,
+        quoted: quotes.get(r.id) ?? null,
+        poll: polls.get(r.id) ?? null,
         liked: likedSet.has(r.id.toString()),
         saved: savedSet.has(r.id.toString()),
         createdAt: r.createdAt.toISOString(),
@@ -739,8 +1065,209 @@ export class SocialService {
         hideLikes: r.hideLikes,
         commentsOff: r.commentsOff,
         archived: r.archivedAt !== null,
+        capsule: r.opensAt ? { opensAt: r.opensAt.toISOString(), sealed: sealed(r, now) } : null,
       } satisfies Post;
+      // A sealed time capsule: everyone but its author sees that it exists and when it opens,
+      // never what's inside.
+      if (post.capsule?.sealed && viewerId !== r.authorId) {
+        return {
+          ...post,
+          caption: null,
+          media: [],
+          sound: null,
+          quoted: null,
+          poll: null,
+          tags: [],
+          likeCount: 0,
+          commentCount: 0,
+          repostCount: 0,
+        } satisfies Post;
+      }
+      return post;
     });
+  }
+
+  /**
+   * Time capsules whose moment has come: tell their authors, and the people who saved them to
+   * be reminded, then the people mentioned in them (held back until now so nobody read the
+   * words early). Each capsule is claimed first, so two servers never announce one twice.
+   */
+  async openCapsules(now = new Date()): Promise<number> {
+    const due = await this.db
+      .select()
+      .from(posts)
+      .where(
+        and(
+          isNotNull(posts.opensAt),
+          lte(posts.opensAt, now),
+          isNull(posts.capsuleOpenedAt),
+          isNull(posts.deletedAt),
+        ),
+      )
+      .orderBy(posts.opensAt)
+      .limit(200);
+    let opened = 0;
+    for (const row of due) {
+      const [claimed] = await this.db
+        .update(posts)
+        .set({ capsuleOpenedAt: now })
+        .where(and(eq(posts.id, row.id), isNull(posts.capsuleOpenedAt)))
+        .returning({ id: posts.id });
+      if (!claimed) continue;
+      opened++;
+      // Taken down: nobody is told it opened.
+      if (row.removedAt) continue;
+      await this.notify(row.authorId, "capsule_open", row.authorId, "post", row.id, {});
+      if (row.archivedAt) continue;
+      const savers = await this.db
+        .select({ id: saves.userId })
+        .from(saves)
+        .innerJoin(users, eq(users.id, saves.userId))
+        .where(
+          and(
+            eq(saves.postId, row.id),
+            ne(saves.userId, row.authorId),
+            eq(users.status, "active"),
+            sql`${saves.userId} not in ${blockedWith(row.authorId)}`,
+          ),
+        )
+        .limit(500);
+      for (const { id } of savers) {
+        // Only those who may still see it (someone may have stopped following since).
+        if (!(await canSeePost(this.db, row, id))) continue;
+        await this.notify(
+          id,
+          "capsule_open",
+          row.authorId,
+          "post",
+          row.id,
+          {},
+          `capsule:${row.id}`,
+        );
+      }
+      if (row.body) await this.mention(row, row.authorId, row.body, "caption");
+    }
+    return opened;
+  }
+
+  /** The polls on these posts, with numbers only for people allowed to see them yet. */
+  private async polls(rows: PostRow[], viewerId: bigint | null) {
+    const out = new Map<bigint, Post["poll"]>();
+    const ids = rows.map((r) => r.id);
+    const found = await this.db.select().from(postPolls).where(inArray(postPolls.postId, ids));
+    if (!found.length) return out;
+    const pollIds = found.map((p) => p.postId);
+    const counts = await this.db
+      .select({
+        postId: pollVotes.postId,
+        choice: pollVotes.choice,
+        n: sql<number>`count(*)::int`,
+      })
+      .from(pollVotes)
+      .where(inArray(pollVotes.postId, pollIds))
+      .groupBy(pollVotes.postId, pollVotes.choice);
+    const mine = viewerId
+      ? await this.db
+          .select({ postId: pollVotes.postId, choice: pollVotes.choice })
+          .from(pollVotes)
+          .where(and(eq(pollVotes.userId, viewerId), inArray(pollVotes.postId, pollIds)))
+      : [];
+    const now = Date.now();
+    for (const poll of found) {
+      const post = rows.find((r) => r.id === poll.postId);
+      const voted = mine.find((m) => m.postId === poll.postId)?.choice ?? null;
+      const ended = poll.endsAt.getTime() <= now;
+      const of = counts.filter((c) => c.postId === poll.postId);
+      const open = ended || voted !== null || (viewerId !== null && post?.authorId === viewerId);
+      out.set(poll.postId, {
+        options: poll.options.map((text, i) => ({
+          text,
+          votes: open ? (of.find((c) => c.choice === i)?.n ?? 0) : null,
+        })),
+        total: of.reduce((sum, c) => sum + c.n, 0),
+        voted,
+        endsAt: poll.endsAt.toISOString(),
+        ended,
+      });
+    }
+    return out;
+  }
+
+  /**
+   * The posts these quote posts are about. Checked again for every viewer: a quoted post that was
+   * deleted, taken down, archived or made followers-only since, or whose author is in a block
+   * with the viewer, comes back empty ("not available") rather than leaking through the quote.
+   */
+  private async quotedPosts(rows: PostRow[], viewerId: bigint | null) {
+    const out = new Map<bigint, QuotedPost>();
+    const wanted = [...new Set(rows.flatMap((r) => (r.quotePostId ? [r.quotePostId] : [])))];
+    if (!wanted.length) return out;
+    const found = await this.db
+      .select({ post: posts, author: summaryColumns, status: users.status })
+      .from(posts)
+      .innerJoin(users, eq(users.id, posts.authorId))
+      .where(inArray(posts.id, wanted));
+    const authorIds = [...new Set(found.map((f) => f.post.authorId))];
+    const blocked =
+      viewerId && authorIds.length
+        ? await this.db
+            .select({ a: relationships.userId, b: relationships.targetId })
+            .from(relationships)
+            .where(
+              and(
+                eq(relationships.type, "blocked"),
+                or(
+                  and(
+                    eq(relationships.userId, viewerId),
+                    inArray(relationships.targetId, authorIds),
+                  ),
+                  and(
+                    eq(relationships.targetId, viewerId),
+                    inArray(relationships.userId, authorIds),
+                  ),
+                ),
+              ),
+            )
+        : [];
+    const blockedIds = new Set(blocked.flatMap((b) => [b.a, b.b]));
+    const first = await this.db
+      .select({ postId: postMedia.postId, file: media })
+      .from(postMedia)
+      .innerJoin(media, eq(media.id, postMedia.mediaId))
+      .where(and(inArray(postMedia.postId, wanted), eq(postMedia.position, 0)));
+    const withPoll = await this.db
+      .select({ postId: postPolls.postId })
+      .from(postPolls)
+      .where(inArray(postPolls.postId, wanted));
+    for (const r of rows) {
+      if (!r.quotePostId) continue;
+      const q = found.find((f) => f.post.id === r.quotePostId);
+      const shown =
+        q &&
+        q.status === "active" &&
+        q.post.visibility === "public" &&
+        !q.post.communityId &&
+        !q.post.deletedAt &&
+        !q.post.removedAt &&
+        !q.post.archivedAt &&
+        !blockedIds.has(q.post.authorId);
+      const file = first.find((f) => f.postId === r.quotePostId);
+      out.set(r.id, {
+        id: r.quotePostId.toString(),
+        post:
+          q && shown
+            ? {
+                author: toUserSummary(q.author),
+                kind: q.post.kind === "clip" ? "clip" : q.post.kind === "text" ? "text" : "image",
+                caption: q.post.body,
+                media: file ? toMediaRef(file.file) : null,
+                hasPoll: withPoll.some((p) => p.postId === q.post.id),
+                createdAt: q.post.createdAt.toISOString(),
+              }
+            : null,
+      });
+    }
+    return out;
   }
 
   /* ── Comments ──────────────────────────────────────────────────────────── */
@@ -839,6 +1366,7 @@ export class SocialService {
 
   async comment(postId: bigint, userId: bigint, body: CreateCommentBody): Promise<Comment> {
     const post = await this.visible(postId, userId);
+    if (sealed(post)) throw invalid(SEALED);
     if (post.lockedAt || post.commentsOff) {
       throw new AppError(403, "COMMENTS_OFF", "Comments are turned off on this post.");
     }

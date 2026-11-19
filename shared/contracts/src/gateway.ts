@@ -122,6 +122,8 @@ export const DispatchEvents = {
   CHANNEL_UPDATE: Channel,
   CHANNEL_DELETE: z.object({ id: Snowflake, communityId: Snowflake.nullable() }),
   CHANNEL_PINS_UPDATE: z.object({ channelId: Snowflake }),
+  /** Something encrypted is waiting for your devices in this chat. Says nothing about what. */
+  E2EE_PENDING: z.object({ channelId: Snowflake }),
   MESSAGE_CREATE: Message,
   MESSAGE_UPDATE: Message,
   MESSAGE_DELETE: z.object({ id: Snowflake, channelId: Snowflake }),

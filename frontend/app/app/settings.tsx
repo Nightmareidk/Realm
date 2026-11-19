@@ -65,6 +65,21 @@ export default function Settings() {
     }
   }
 
+  async function setShareListening(on: boolean) {
+    if (!settings.data) return;
+    settings.setData({ ...settings.data, shareListening: on });
+    try {
+      settings.setData(
+        await api<UserSettings>("/users/@me/settings", {
+          method: "PATCH",
+          body: { shareListening: on },
+        }),
+      );
+    } catch {
+      settings.reload();
+    }
+  }
+
   async function setKind(kind: "personal" | "business", extra: object = {}) {
     setSaving(true);
     try {
@@ -111,6 +126,22 @@ export default function Settings() {
             disabled={business}
             trackColor={{ true: accent }}
             accessibilityLabel="Private account"
+          />
+        </View>
+
+        <View style={[s.row, s.rowNext]}>
+          <View style={s.fill}>
+            <Text style={s.title}>Share what I'm listening to</Text>
+            <Text style={s.line}>
+              Friends (people you follow who follow you back) can see the song you play in Music and
+              listen along. Nobody else can.
+            </Text>
+          </View>
+          <Switch
+            value={settings.data.shareListening ?? true}
+            onValueChange={setShareListening}
+            trackColor={{ true: accent }}
+            accessibilityLabel="Share what I'm listening to"
           />
         </View>
 
@@ -224,6 +255,14 @@ export default function Settings() {
           line="People who can't see you or message you"
           onPress={() => router.push("/blocked")}
         />
+        {__DEV__ ? (
+          <NavRow
+            icon="Lock"
+            title="Encryption check (developer)"
+            line="Run the encryption library on this phone"
+            onPress={() => router.push("/dev/encryption-check")}
+          />
+        ) : null}
 
         <Text style={s.heading}>Your people</Text>
         <NavRow
@@ -348,6 +387,7 @@ const make = (t: NativeTheme) =>
       marginTop: 26,
       marginBottom: 10,
     },
+    rowNext: { marginTop: 18 },
     row: { flexDirection: "row", alignItems: "center", gap: 14 },
     title: { fontFamily: t.fonts.bold, fontSize: 15.5 * t.textScale, color: t.colors.text },
     line: {

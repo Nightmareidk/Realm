@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Snowflake } from "../ids";
 import { Limits } from "../limits";
+import { ThemePalette } from "../themes/file";
 import { SecondStepCode } from "./account";
 import { IsoDateTime, Platform } from "./common";
 import { DisplayName, SelfUser, ThemeAccent, Username } from "./users";
@@ -41,8 +42,10 @@ export const RegisterBody = z
     displayName: DisplayName,
     password: Password,
     birthDate: BirthDate,
-    /** The colour picked on sign-up's first step. */
+    /** The colour picked on sign-up's first step (the profile colour). */
     accent: ThemeAccent.optional(),
+    /** The colour set picked in the introduction, for Realm's look. */
+    palette: ThemePalette.optional(),
   })
   .meta({ id: "RegisterBody" });
 
@@ -79,6 +82,25 @@ export const LoginBody = z
   })
   .meta({ id: "LoginBody" });
 export type LoginBody = z.infer<typeof LoginBody>;
+
+/** Sign in without a password: first ask for a one-time code by email. */
+export const LoginCodeRequestBody = z
+  .object({ login: z.string().trim().min(1).max(254) })
+  .meta({ id: "LoginCodeRequestBody" });
+export type LoginCodeRequestBody = z.infer<typeof LoginCodeRequestBody>;
+
+/** Then send the emailed code (and, with two-step sign-in on, the app's code too). */
+export const LoginCodeBody = z
+  .object({
+    login: z.string().trim().min(1).max(254),
+    emailCode: z
+      .string()
+      .trim()
+      .regex(/^\d{4}$/, "Enter the 4-digit code"),
+    code: SecondStepCode.optional(),
+  })
+  .meta({ id: "LoginCodeBody" });
+export type LoginCodeBody = z.infer<typeof LoginCodeBody>;
 
 export const SessionInfo = z
   .object({

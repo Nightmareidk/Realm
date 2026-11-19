@@ -9,9 +9,10 @@ import { useApi } from "@/data";
 import { Icon } from "@/icon";
 import type { IconName } from "@/icon-paths";
 import { ApiError, api, mediaSource } from "@/server";
+import { useSession } from "@/session";
 import { Avatar } from "@/social/avatar";
 import { GlowTop } from "@/social/glow-top";
-import { LIKED } from "@/social/post-card";
+import { LIKED, REPOSTED } from "@/social/post-card";
 import { AppScreen, Empty, Loading, Problem, TopBar } from "@/social/screen";
 import { ago } from "@/social/time";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
@@ -42,8 +43,8 @@ function lines(items: Activity[]): Line[] {
     const prev = out.at(-1);
     if (
       prev &&
-      a.type === "post_like" &&
-      prev.first.type === "post_like" &&
+      (a.type === "post_like" || a.type === "post_repost") &&
+      prev.first.type === a.type &&
       prev.first.post?.id === a.post?.id
     ) {
       if (a.actor && !prev.people.some((p) => p.id === a.actor?.id)) prev.people.push(a.actor);
@@ -106,7 +107,7 @@ export default function ActivityScreen() {
       {feed.error && !feed.data ? (
         <Problem message={feed.error} onRetry={feed.reload} />
       ) : !feed.data ? (
-        <Loading />
+        <Loading shape="rows" />
       ) : (
         <SectionList
           sections={sections}
@@ -192,21 +193,31 @@ function RequestsRow({ waiting }: { waiting: FollowRequest[] }) {
 
 const BADGE: Partial<Record<Activity["type"], { icon: IconName; bg: string }>> = {
   post_like: { icon: "HeartFill", bg: LIKED },
+  post_repost: { icon: "Repeat", bg: REPOSTED },
+  post_quote: { icon: "Quotes", bg: REPOSTED },
+  capsule_open: { icon: "HourglassMedium", bg: "#e0a526" },
   post_comment: { icon: "ChatCircleFill", bg: "#5b8cff" },
   comment_reply: { icon: "ChatCircleFill", bg: "#5b8cff" },
   follow: { icon: "UserPlus", bg: "#8a63ff" },
   mention: { icon: "UserCircleFill", bg: "#22b3a6" },
 };
 
-function sentence(l: Line) {
+/** A time capsule opening is yours when you're the one who sealed it. */
+function sentence(l: Line, own = false) {
   const a = l.first;
   switch (a.type) {
+    case "capsule_open":
+      return own ? "just opened. See what you sealed." : "just opened. You asked to be reminded.";
     case "follow":
       return a.accepted ? "accepted your follow request." : "started following you.";
     case "follow_request":
       return "asked to follow you.";
     case "post_like":
       return "liked your post.";
+    case "post_repost":
+      return "reposted your post.";
+    case "post_quote":
+      return a.text ? `quoted your post: ${a.text}` : "quoted your post.";
     case "post_comment":
       return a.text ? `commented: ${a.text}` : "commented on your post.";
     case "comment_reply":
@@ -220,8 +231,11 @@ function sentence(l: Line) {
   }
 }
 
-function names(l: Line) {
+function names(l: Line, own = false) {
   const [one, two] = l.people;
+  if (l.first.type === "capsule_open") {
+    return own ? "Your time capsule" : `${one?.username ?? "Someone"}'s time capsule`;
+  }
   const rest = l.people.length - 2;
   if (!one) return "Someone";
   if (!two) return one.username;
@@ -250,12 +264,17 @@ function Row({
     router.push({ pathname: "/user/[username]", params: { username } });
   const open = () => (item.post ? openPost() : one ? openPerson(one.username) : undefined);
   const isFollow = item.type === "follow" && !item.accepted;
+  const { session } = useSession();
+  const own =
+    item.type === "capsule_open" &&
+    session.status === "signedIn" &&
+    item.actor?.id === session.user.id;
 
   return (
     <Pressable
       onPress={open}
       accessibilityRole="link"
-      accessibilityLabel={`${names(line)} ${sentence(line)} ${ago(item.createdAt)}`}
+      accessibilityLabel={`${names(line, own)} ${sentence(line, own)} ${ago(item.createdAt)}`}
       style={({ pressed }) => [s.row, pressed && s.pressed]}
     >
       <Pressable
@@ -282,8 +301,8 @@ function Row({
       </Pressable>
       <View style={s.fill}>
         <Text style={s.text} numberOfLines={4}>
-          <Text style={s.name}>{names(line)} </Text>
-          {sentence(line)} <Text style={s.when}>{ago(item.createdAt)}</Text>
+          <Text style={s.name}>{names(line, own)} </Text>
+          {sentence(line, own)} <Text style={s.when}>{ago(item.createdAt)}</Text>
         </Text>
         {item.type === "post_comment" ||
         item.type === "comment_reply" ||
@@ -306,6 +325,7 @@ function Row({
         )
       ) : item.post?.thumbUrl ? (
         <Image
+          transition={150}
           source={mediaSource(item.post.thumbUrl)}
           style={s.thumb}
           contentFit="cover"

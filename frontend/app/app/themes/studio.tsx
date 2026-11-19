@@ -63,6 +63,11 @@ const FONT_NAMES: Record<string, string> = {
   comfortaa: "Comfortaa",
   lexend: "Lexend",
   nunito: "Nunito",
+  gabarito: "Gabarito",
+  figtree: "Figtree",
+  unbounded: "Unbounded",
+  rethink: "Rethink Sans",
+  onest: "Onest",
 };
 
 const PALETTE = [

@@ -1,0 +1,27 @@
+# The beta server's front door. Caddy gets and renews the certificates by itself, and replaces any
+# X-Forwarded-For a visitor sends with their real address (no proxies are trusted), so the API's
+# rate limits count people. Keep these names "DNS only" (grey cloud) in Cloudflare.
+
+# The website (and its /api, which the website forwards to the API on this machine).
+{$WEB_DOMAIN}, www.{$WEB_DOMAIN} {
+	@www host www.{$WEB_DOMAIN}
+	redir @www https://{$WEB_DOMAIN}{uri} permanent
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+}
+
+# The phone app's address: the API, and the live connection at /gateway.
+{$API_DOMAIN} {
+	encode zstd gzip
+	handle /gateway* {
+		reverse_proxy 127.0.0.1:4001
+	}
+	handle {
+		reverse_proxy 127.0.0.1:4000
+	}
+}
+
+# Voice and video signalling (the calls themselves go straight to LiveKit's UDP ports).
+{$VOICE_DOMAIN} {
+	reverse_proxy 127.0.0.1:7880
+}

@@ -1,7 +1,7 @@
 import type { ErrorBoundaryProps } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { type NativeTheme, useStyles } from "./theme";
+import { type NativeTheme, useThemeIfAny } from "./theme";
 
 /**
  * When a screen crashes: say so plainly and offer another try, instead of a blank or frozen app.
@@ -9,7 +9,9 @@ import { type NativeTheme, useStyles } from "./theme";
  * views, the system font, and the ink colours.
  */
 export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
-  const s = useStyles(make);
+  // Not useStyles: that needs the ThemeProvider, which may be what just failed.
+  const t = useThemeIfAny();
+  const s = useMemo(() => make(t), [t]);
   useEffect(() => {
     console.error(error);
   }, [error]);

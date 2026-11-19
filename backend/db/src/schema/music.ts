@@ -1,4 +1,5 @@
 import {
+  date,
   index,
   integer,
   pgEnum,
@@ -28,6 +29,10 @@ export const sounds = pgTable(
     /** Original sounds: who made it and the upload it plays. */
     creatorId: id().references(() => users.id),
     mediaId: id().references(() => media.id),
+    /** A song someone uploaded: its cover picture (their upload). */
+    coverMediaId: id().references(() => media.id),
+    /** A song someone uploaded: when they confirmed it is theirs to share. */
+    rightsConfirmedAt: tstz(),
     /** Library tracks: where they came from ("openverse:<id>"), and where they stream from. */
     externalId: text(),
     audioUrl: text(),
@@ -179,6 +184,28 @@ export const soundPlays = pgTable(
   (t) => [
     primaryKey({ columns: [t.userId, t.soundId] }),
     index("sound_plays_recent_idx").on(t.userId, t.playedAt.desc()),
+  ],
+);
+
+/**
+ * How many times someone played a song on a day, for "Your week" (the recap). Kept per day so a
+ * week is a small sum and old days can be cleared.
+ */
+export const soundPlayDays = pgTable(
+  "sound_play_days",
+  {
+    userId: id()
+      .notNull()
+      .references(() => users.id),
+    soundId: id()
+      .notNull()
+      .references(() => sounds.id),
+    day: date({ mode: "string" }).notNull(),
+    plays: integer().notNull().default(1),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.soundId, t.day] }),
+    index("sound_play_days_user_idx").on(t.userId, t.day.desc()),
   ],
 );
 

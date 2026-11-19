@@ -8,6 +8,8 @@ export * from "./schemas/auth";
 export * from "./schemas/channels";
 export * from "./schemas/common";
 export * from "./schemas/communities";
+export * from "./schemas/e2ee";
+export * from "./schemas/e2ee-events";
 export * from "./schemas/media";
 export * from "./schemas/messages";
 export * from "./schemas/music";

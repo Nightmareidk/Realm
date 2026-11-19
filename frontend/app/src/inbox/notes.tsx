@@ -1,10 +1,12 @@
-import type { Channel, Note, NoteList, Sound } from "@realm/contracts";
+import type { Note, NoteList, Sound } from "@realm/contracts";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useApi } from "../data";
+import { dmParams, openDmWith } from "../e2ee/open-dm";
 import { Icon } from "../icon";
 import { playSound } from "../music/player";
+import { HScroll } from "../scroll-row";
 import { ApiError, api } from "../server";
 import { useSession } from "../session";
 import { useSheet } from "../sheet";
@@ -84,10 +86,12 @@ export function NotesRow() {
           icon: "ChatCircle",
           onPress: async () => {
             try {
-              const dm = await api<Channel>("/users/@me/channels", {
-                body: { recipientIds: [n.author.id] },
+              // The same way every other "Message" opens a chat: encrypted when both can, and
+              // marked as a one-to-one chat so its header, "Seen" and requests work.
+              router.push({
+                pathname: "/chat/[id]",
+                params: dmParams(await openDmWith(n.author.id), n.author.displayName),
               });
-              router.push({ pathname: "/chat/[id]", params: { id: dm.id } });
             } catch (err) {
               sheet({
                 title: "Can't message them",
@@ -102,8 +106,7 @@ export function NotesRow() {
   };
 
   return (
-    <ScrollView
-      horizontal
+    <HScroll
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={s.row}
       accessibilityLabel="Notes"
@@ -133,7 +136,7 @@ export function NotesRow() {
           </Text>
         </Pressable>
       ))}
-    </ScrollView>
+    </HScroll>
   );
 }
 

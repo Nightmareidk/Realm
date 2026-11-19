@@ -25,6 +25,15 @@ overrides:
   "@grpc/grpc-js@<1.13.6": 1.14.6
   # Security fix (a slow-down bug in reading source maps), a patch release of the same version.
   "source-map-js@<1.2.2": 1.2.2
+  # Security fixes found in the beta sweep (2026-11-19), each the same major line:
+  # fast-uri (the API's request handling: scheme spoofing and host confusion),
+  # node-forge (Expo's build tools),
+  # re2js (inside the Firebase package; Realm only uses Firebase for push).
+  "fast-uri@>=3.0.0 <3.1.9": 3.1.9
+  "fast-uri@>=4.0.0 <4.2.3": 4.2.3
+  "node-forge@<1.4.3": 1.4.3
+  "zod@>=4.0.0 <4.6.6": 4.6.7
+  "re2js@>=2.2.0 <2.8.8": 2.8.8
 
 patchedDependencies:
   gsap@3.15.0: patches/gsap@3.15.0.patch

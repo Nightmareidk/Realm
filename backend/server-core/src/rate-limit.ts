@@ -42,6 +42,9 @@ export const Limits = {
   register: { bucket: "auth:register:ip", limit: 5, windowSeconds: 3600 },
   loginIp: { bucket: "auth:login:ip", limit: 20, windowSeconds: 900 },
   loginAccount: { bucket: "auth:login:account", limit: 8, windowSeconds: 900 },
+  /** One-time sign-in codes by email: few per account, a few more per address. */
+  loginCodeAccount: { bucket: "auth:login-code:account", limit: 3, windowSeconds: 900 },
+  loginCodeIp: { bucket: "auth:login-code:ip", limit: 10, windowSeconds: 3600 },
   /**
    * Wrong passwords across all of Realm: past this, someone is likely trying stolen password
    * lists (credential stuffing), and the owner gets an email. Nothing is blocked by it.
@@ -57,6 +60,15 @@ export const Limits = {
   forgotEmail: { bucket: "auth:forgot:email", limit: 3, windowSeconds: 3600 },
   reset: { bucket: "auth:reset:ip", limit: 10, windowSeconds: 3600 },
   gatewayTicket: { bucket: "gateway:ticket:user", limit: 30, windowSeconds: 60 },
+  /** End-to-end encryption: new devices, KeyPackage uploads, and claims (claims use up others'). */
+  e2eeDevice: { bucket: "e2ee:device:user", limit: 10, windowSeconds: 3600 },
+  e2eeUpload: { bucket: "e2ee:upload:device", limit: 20, windowSeconds: 3600 },
+  e2eeClaim: { bucket: "e2ee:claim:user", limit: 60, windowSeconds: 3600 },
+  /** Encrypted chats: starting one, sending, key changes, and proven reports. */
+  e2eeOpen: { bucket: "e2ee:open:user", limit: 30, windowSeconds: 3600 },
+  e2eeSend: { bucket: "e2ee:send:device", limit: 120, windowSeconds: 60 },
+  e2eeCommit: { bucket: "e2ee:commit:device", limit: 60, windowSeconds: 3600 },
+  e2eeReport: { bucket: "e2ee:report:user", limit: 20, windowSeconds: 3600 },
   ageCheck: { bucket: "auth:age:ip", limit: 20, windowSeconds: 3600 },
   usernameCheck: { bucket: "auth:username:ip", limit: 120, windowSeconds: 60 },
   // Spaces: generous for a friend group, tight against scripts.
@@ -92,6 +104,11 @@ export const Limits = {
   themeStore: { bucket: "theme:store:key", limit: 120, windowSeconds: 60 },
   // Music: searching the free library asks Openverse, which allows few requests.
   soundSearch: { bucket: "music:search:user", limit: 30, windowSeconds: 60 },
+  /** Sharing your own songs, and reporting someone's. */
+  songUpload: { bucket: "music:song:user", limit: 10, windowSeconds: 86_400 },
+  songReport: { bucket: "music:report:user", limit: 20, windowSeconds: 3600 },
+  /** Saying what's playing (each play, pause and skip), and looking at what friends play. */
+  listenNow: { bucket: "music:now:user", limit: 90, windowSeconds: 60 },
   storyCreate: { bucket: "story:create:user", limit: 30, windowSeconds: 3600 },
   // Asking to be verified: a few tries a day; staff actions: steady work, not a script.
   verifyRequest: { bucket: "verify:request:user", limit: 3, windowSeconds: 86400 },

@@ -1,9 +1,10 @@
-import type { Channel, Relationship } from "@realm/contracts";
+import type { Relationship } from "@realm/contracts";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { alert } from "../alert";
 import { useApi } from "../data";
+import { dmParams, openDmWith } from "../e2ee/open-dm";
 import { Icon } from "../icon";
 import { useLiveEvent } from "../live";
 import { usePresence } from "../presence";
@@ -162,10 +163,9 @@ function FriendRow({ r, onRemoved }: { r: Relationship; onRemoved: () => void })
   const status = usePresence(r.user.id);
   async function message() {
     try {
-      const dm = await api<Channel>("/users/@me/channels", { body: { recipientIds: [r.user.id] } });
       router.push({
         pathname: "/chat/[id]",
-        params: { id: dm.id, title: r.user.displayName, kind: "dm" },
+        params: dmParams(await openDmWith(r.user.id), r.user.displayName),
       });
     } catch (err) {
       alert("Can't message them", err instanceof ApiError ? err.message : "Try again.");

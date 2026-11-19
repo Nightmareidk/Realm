@@ -8,6 +8,7 @@ import {
   DotsThree,
   GridFour,
   Heart,
+  HourglassMedium,
   LinkSimple,
   LockSimple,
   MusicNotes,
@@ -36,12 +37,14 @@ import type {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { ScrollRow } from "@/components/scroll-row";
 import { useAmbient } from "@/features/app/ambient";
 import { Popover, row } from "@/features/app/menus";
 import { Avatar } from "@/features/spaces/person";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
 import { onMade, openComposer } from "./composer";
+import { shortDay } from "./post-card";
 import { PostDialog } from "./post-dialog";
 import { MentionText } from "./post-extras";
 import { SendSheet } from "./send-sheet";
@@ -280,7 +283,8 @@ export function ProfileView({ username }: { username: string }) {
           ? "/users/@me/archive"
           : tab === "tagged"
             ? `/users/${who}/tagged`
-            : `/users/${who}/posts?kind=${tab === "clips" ? "clip" : "image"}`
+            : // Posts shows everything (photos, words, polls), like the app; Clips only Clips.
+              `/users/${who}/posts${tab === "clips" ? "?kind=clip" : ""}`
       : null,
   );
   const highlights = useFetch<{ items: Highlight[] }>(
@@ -645,7 +649,10 @@ export function ProfileView({ username }: { username: string }) {
       {/* Highlights. */}
       {(p.isSelf || (highlights.data?.items.length ?? 0) > 0) && (
         <section aria-label="Highlights" className="pb-6">
-          <ul className="flex gap-5 overflow-x-auto pb-1 [scrollbar-width:none]">
+          <ScrollRow
+            className="flex gap-5 overflow-x-auto pb-1 [scrollbar-width:none]"
+            arrowTop="39px"
+          >
             {p.isSelf && (
               <li className="w-[84px] shrink-0 text-center">
                 <button
@@ -694,7 +701,7 @@ export function ProfileView({ username }: { username: string }) {
                 )}
               </li>
             ))}
-          </ul>
+          </ScrollRow>
         </section>
       )}
 
@@ -737,9 +744,10 @@ export function ProfileView({ username }: { username: string }) {
         ))}
       </div>
       {tab === "saved" && (folders.data?.items.length ?? 0) > 0 && (
-        <ul
+        <ScrollRow
           className="mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"
-          aria-label="Collections"
+          label="Collections"
+          arrowTop="calc(50% - 0.6rem)"
         >
           {[{ id: null, name: "All saved", count: null }, ...(folders.data?.items ?? [])].map(
             (c) => (
@@ -759,7 +767,7 @@ export function ProfileView({ username }: { username: string }) {
               </li>
             ),
           )}
-        </ul>
+        </ScrollRow>
       )}
       {!canList ? (
         <div className="py-14 text-center">
@@ -829,12 +837,24 @@ export function ProfileView({ username }: { username: string }) {
                       loading="lazy"
                       className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     />
+                  ) : post.capsule?.sealed && !post.caption ? (
+                    // Someone's sealed time capsule: only when it opens.
+                    <span className="grid size-full place-content-center justify-items-center gap-1 bg-surface-sunken p-3 text-center">
+                      <HourglassMedium aria-hidden="true" size={26} className="text-accent" />
+                      <span className="mt-1 font-bold text-[0.85rem] text-fg">Time capsule</span>
+                      <span className="text-[0.8rem] text-fg-soft">
+                        Opens {shortDay(post.capsule.opensAt)}
+                      </span>
+                    </span>
                   ) : (
                     <span className="grid size-full place-items-center p-3 text-[0.9rem] text-fg">
                       {post.caption}
                     </span>
                   )}
                   <span className="absolute top-2 right-2 flex gap-1.5 text-fg drop-shadow">
+                    {post.capsule?.sealed && (m || post.caption) && (
+                      <HourglassMedium aria-hidden="true" size={18} weight="bold" />
+                    )}
                     {post.pinned && tab === "posts" && (
                       <PushPin aria-hidden="true" size={18} weight="fill" />
                     )}
@@ -856,7 +876,9 @@ export function ProfileView({ username }: { username: string }) {
                     </span>
                   </span>
                   <span className="sr-only">
-                    Open the post{post.caption ? `: ${post.caption.slice(0, 80)}` : ""}
+                    {post.capsule?.sealed && !post.caption
+                      ? `Open the time capsule, opens ${shortDay(post.capsule.opensAt)}`
+                      : `Open the post${post.caption ? `: ${post.caption.slice(0, 80)}` : ""}`}
                   </span>
                 </button>
               </li>

@@ -1,8 +1,10 @@
 import type { ReportReason, ReportReceipt } from "@realm/contracts";
+import { E2eeNotice, E2eeRequestError } from "@realm/e2ee";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { e2ee } from "@/e2ee";
 import { Icon } from "@/icon";
 import { leave } from "@/leave";
 import { ApiError, api } from "@/server";
@@ -40,6 +42,9 @@ export default function Report() {
     userId: string;
     username: string;
     name: string;
+    /** A message in an end-to-end encrypted chat: which chat, and the sender's id for it. */
+    secureChannel?: string;
+    secureMessage?: string;
   }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -51,6 +56,7 @@ export default function Report() {
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<ReportReceipt | null>(null);
+  const [secureSent, setSecureSent] = useState(false);
   const author = { id: params.userId, username: params.username, displayName: params.name };
 
   async function send() {
@@ -58,6 +64,19 @@ export default function Report() {
     setNotice(null);
     setPending(true);
     try {
+      if (params.secureChannel && params.secureMessage) {
+        // Realm can't read this chat, so this device sends the one message and its proof.
+        if (!e2ee.client) throw new E2eeNotice("not-ready", "Encrypted chats aren't ready here.");
+        await e2ee.client.report(
+          params.secureChannel,
+          params.secureMessage,
+          reason,
+          details.trim() || undefined,
+        );
+        setSecureSent(true);
+        setReceipt({ hidden: false, goesTo: "realm" });
+        return;
+      }
       setReceipt(
         await api<ReportReceipt>("/reports", {
           body: {
@@ -69,7 +88,11 @@ export default function Report() {
         }),
       );
     } catch (err) {
-      setNotice(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
+      setNotice(
+        err instanceof ApiError || err instanceof E2eeRequestError || err instanceof E2eeNotice
+          ? err.message
+          : "Something went wrong. Try again.",
+      );
     } finally {
       setPending(false);
     }
@@ -86,7 +109,11 @@ export default function Report() {
           <Text style={s.title} accessibilityRole="header">
             Thanks for telling us.
           </Text>
-          <Text style={s.lead}>{nextSteps(receipt, kind)}</Text>
+          <Text style={s.lead}>
+            {secureSent
+              ? "Realm will look at it. Only this one message was shared, with proof they sent it. The rest of the chat stays between you two."
+              : nextSteps(receipt, kind)}
+          </Text>
           {reason && URGENT.includes(reason) ? (
             <Text style={s.lead}>
               If someone is in danger right now, call your local emergency number.

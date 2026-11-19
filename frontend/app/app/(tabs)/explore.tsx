@@ -1,4 +1,4 @@
-import type { DiscoverSpace, SearchResults, SpaceDetail } from "@realm/contracts";
+import type { DiscoverSpace, SearchResults, SpaceDetail, TrendingTags } from "@realm/contracts";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -88,7 +88,7 @@ export default function Explore() {
 
 function Results({ results, searching }: { results: SearchResults | null; searching: boolean }) {
   const s = useStyles(make);
-  if (!results) return searching ? <Loading /> : null;
+  if (!results) return searching ? <Loading shape="rows" count={5} /> : null;
   if (!results.users.length && !results.spaces.length) {
     return (
       <Text style={s.none}>{searching ? "Searching…" : "No one and nothing by that name."}</Text>
@@ -107,7 +107,7 @@ function Results({ results, searching }: { results: SearchResults | null; search
           id={sp.id}
           name={sp.name}
           accent={sp.accent}
-          line={`${compact(sp.memberCount)} members${sp.joined ? " · Joined" : ""}`}
+          line={`${compact(sp.memberCount)} ${sp.memberCount === 1 ? "member" : "members"}${sp.joined ? " · Joined" : ""}`}
         />
       ))}
     </>
@@ -147,6 +147,7 @@ function Browse() {
         <Icon name="CaretRight" size={20} color={t.colors.onAccent} />
       </Pressable>
       <SoundsRow />
+      <Trending />
       <Text style={s.heading}>Your Spaces</Text>
       {mine.data?.spaces.length ? (
         mine.data.spaces.map((sp) => (
@@ -159,7 +160,7 @@ function Browse() {
           />
         ))
       ) : mine.loading ? (
-        <Loading />
+        <Loading shape="rows" count={3} />
       ) : (
         <Text style={s.none}>
           You're not in a Space yet. Open an invite from a friend, or join one below.
@@ -173,7 +174,7 @@ function Browse() {
           id={d.slug}
           name={d.name}
           accent={d.accent}
-          line={`${compact(d.memberCount)} members${d.hereNow ? ` · ${d.hereNow} here now` : ""}`}
+          line={`${compact(d.memberCount)} ${d.memberCount === 1 ? "member" : "members"}${d.hereNow ? ` · ${d.hereNow} here now` : ""}`}
         />
       ))}
 
@@ -187,6 +188,39 @@ function Browse() {
           Discussion boards with upvotes and threads, inside Spaces and open to everyone here in
           Explore.
         </Text>
+      </View>
+    </>
+  );
+}
+
+/** The #tags the most people posted with this week. Hidden until there are some. */
+function Trending() {
+  const { t } = useTheme();
+  const s = useStyles(make);
+  const router = useRouter();
+  const trending = useApi<TrendingTags>("/tags/trending");
+  const tags = trending.data?.tags ?? [];
+  if (tags.length === 0) return null;
+  return (
+    <>
+      <Text style={s.heading}>Trending this week</Text>
+      <View style={s.tags}>
+        {tags.map((x) => (
+          <Pressable
+            key={x.tag}
+            onPress={() => router.push({ pathname: "/tag/[tag]", params: { tag: x.tag } })}
+            accessibilityRole="link"
+            accessibilityLabel={`#${x.tag}, ${x.posts} ${x.posts === 1 ? "post" : "posts"}`}
+            style={({ pressed }) => [s.tag, pressed && { backgroundColor: t.colors.surfaceRaised }]}
+          >
+            <Text style={s.tagName} numberOfLines={1}>
+              #{x.tag}
+            </Text>
+            <Text style={s.tagCount}>
+              {compact(x.posts)} {x.posts === 1 ? "post" : "posts"}
+            </Text>
+          </Pressable>
+        ))}
       </View>
     </>
   );
@@ -278,6 +312,19 @@ const make = (t: NativeTheme) =>
       marginTop: 2,
       opacity: 0.9,
     },
+    tags: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16 },
+    tag: {
+      minHeight: 44,
+      maxWidth: "100%",
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 14,
+      justifyContent: "center",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.borderStrong,
+    },
+    tagName: { fontFamily: t.fonts.bold, fontSize: 15 * t.textScale, color: t.colors.text },
+    tagCount: { fontFamily: t.fonts.body, fontSize: 12.5 * t.textScale, color: t.colors.textSoft },
     heading: {
       fontFamily: t.fonts.bold,
       fontSize: 16 * t.textScale,

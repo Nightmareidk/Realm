@@ -156,6 +156,7 @@ export default function PostScreen() {
         {side && post.data && shown ? (
           <View style={s.duoMedia}>
             <Image
+              transition={150}
               source={mediaSource(shown.url)}
               style={StyleSheet.absoluteFill}
               contentFit="contain"
@@ -208,7 +209,11 @@ export default function PostScreen() {
                     onRemoved={() => leave(router)}
                   />
                   <Text style={s.heading}>
-                    {comments.length ? "Comments" : "No comments yet. Start the conversation."}
+                    {post.data.capsule?.sealed
+                      ? "Comments open when the time capsule does."
+                      : comments.length
+                        ? "Comments"
+                        : "No comments yet. Start the conversation."}
                   </Text>
                 </View>
               }
@@ -227,48 +232,54 @@ export default function PostScreen() {
               keyboardShouldPersistTaps="handled"
             />
           )}
-          <View style={[s.composer, { paddingBottom: insets.bottom + 8 }]}>
-            {replyTo ? (
-              <View style={s.replying}>
-                <Text style={s.replyingText} numberOfLines={1}>
-                  Replying to {replyTo.author.displayName}
-                </Text>
-                <Pressable onPress={() => setReplyTo(null)} accessibilityRole="button" hitSlop={10}>
-                  <Text style={s.cancel}>Cancel</Text>
+          {post.data?.capsule?.sealed ? null : (
+            <View style={[s.composer, { paddingBottom: insets.bottom + 8 }]}>
+              {replyTo ? (
+                <View style={s.replying}>
+                  <Text style={s.replyingText} numberOfLines={1}>
+                    Replying to {replyTo.author.displayName}
+                  </Text>
+                  <Pressable
+                    onPress={() => setReplyTo(null)}
+                    accessibilityRole="button"
+                    hitSlop={10}
+                  >
+                    <Text style={s.cancel}>Cancel</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+              <View style={s.row}>
+                {me ? <Avatar user={me} size={34} /> : null}
+                <TextInput
+                  ref={input}
+                  value={text}
+                  onChangeText={setText}
+                  placeholder={
+                    post.data
+                      ? `Add a comment for ${post.data.author.displayName}…`
+                      : "Add a comment…"
+                  }
+                  placeholderTextColor={t.colors.textMuted}
+                  selectionColor={accent}
+                  cursorColor={accent}
+                  multiline
+                  maxLength={1000}
+                  style={s.input}
+                  accessibilityLabel="Comment"
+                />
+                <Pressable
+                  onPress={send}
+                  disabled={!text.trim() || sending}
+                  accessibilityRole="button"
+                  accessibilityLabel="Post comment"
+                  accessibilityState={{ disabled: !text.trim() || sending }}
+                  style={[s.send, { backgroundColor: accent }, (!text.trim() || sending) && s.dim]}
+                >
+                  <Icon name="ArrowUpBold" size={20} color={onAccent} />
                 </Pressable>
               </View>
-            ) : null}
-            <View style={s.row}>
-              {me ? <Avatar user={me} size={34} /> : null}
-              <TextInput
-                ref={input}
-                value={text}
-                onChangeText={setText}
-                placeholder={
-                  post.data
-                    ? `Add a comment for ${post.data.author.displayName}…`
-                    : "Add a comment…"
-                }
-                placeholderTextColor={t.colors.textMuted}
-                selectionColor={accent}
-                cursorColor={accent}
-                multiline
-                maxLength={1000}
-                style={s.input}
-                accessibilityLabel="Comment"
-              />
-              <Pressable
-                onPress={send}
-                disabled={!text.trim() || sending}
-                accessibilityRole="button"
-                accessibilityLabel="Post comment"
-                accessibilityState={{ disabled: !text.trim() || sending }}
-                style={[s.send, { backgroundColor: accent }, (!text.trim() || sending) && s.dim]}
-              >
-                <Icon name="ArrowUpBold" size={20} color={onAccent} />
-              </Pressable>
             </View>
-          </View>
+          )}
         </KeyboardAvoidingView>
       </View>
     </AppScreen>

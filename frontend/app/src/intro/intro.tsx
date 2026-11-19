@@ -14,17 +14,18 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { LightField } from "../light-field";
-import { roles, THEME_ORDER, type ThemeId, themes, useTheme } from "../theme";
+import { INTRO_PALETTES, PALETTES, type ThemePalette, useTheme } from "../theme";
 import { FadeSwap, Lead, Pill, TextLink, Title, Wordmark } from "../ui";
 import { CARD, ProfileCard } from "./profile-card";
 import { useTilt } from "./use-tilt";
 
-/** What each colour's page says: what your colour and your profile do in Realm. */
-const LINES: Record<ThemeId, string> = {
-  mint: "Pick a colour and the whole app follows it. Swipe the card to try one.",
-  orchid: "Your Spaces and what you're up to right now, all on one profile.",
-  aqua: "Your colour goes everywhere with you: your profile, your buttons, your bubbles in every chat.",
-  ember: "Tap the card to turn it over: who's around right now, and where.",
+/** What each colour set's page says: what your colours and your profile do in Realm. */
+const LINES: Partial<Record<ThemePalette, string>> = {
+  afterglow: "Pick a look and the whole app follows it. Swipe the card to try one.",
+  "club-night": "Your Spaces and what you're up to right now, all on one profile.",
+  "cobalt-volt":
+    "Your colours go everywhere with you: your profile, your buttons, your bubbles in every chat.",
+  "sunset-pop": "Tap the card to turn it over: who's around right now, and where.",
 };
 
 const SWIPE = 56;
@@ -37,7 +38,7 @@ const SWIPE = 56;
 export function Intro() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { accentId: id, setTheme } = useTheme();
+  const { paletteId: id, setTheme, t } = useTheme();
   const calm = useReducedMotion();
   const tilt = useTilt(!calm);
   const drag = useSharedValue(0);
@@ -45,9 +46,9 @@ export function Intro() {
   const [flipped, setFlipped] = useState(false);
   const [stage, setStage] = useState({ w: 0, h: 0 });
 
-  const index = THEME_ORDER.indexOf(id);
+  const index = INTRO_PALETTES.indexOf(id);
   const go = (to: number) => {
-    const next = THEME_ORDER[(to + THEME_ORDER.length) % THEME_ORDER.length];
+    const next = INTRO_PALETTES[(to + INTRO_PALETTES.length) % INTRO_PALETTES.length];
     if (!next || next === id) return;
     Haptics.selectionAsync();
     setTheme(next);
@@ -93,7 +94,7 @@ export function Intro() {
   };
 
   return (
-    <View style={s.screen}>
+    <View style={[s.screen, { backgroundColor: t.colors.bg }]}>
       <LightField />
       <View style={[s.top, { paddingTop: insets.top + 6 }]}>
         <Wordmark />
@@ -132,19 +133,19 @@ export function Intro() {
       </GestureDetector>
 
       <View style={s.dots} accessibilityRole="radiogroup" accessibilityLabel="Colour">
-        {THEME_ORDER.map((t, i) => {
-          const [l1, l2] = themes[t].lights;
-          const on = t === id;
+        {INTRO_PALETTES.map((p, i) => {
+          const [l1, l2] = PALETTES[p].swatch;
+          const on = p === id;
           return (
             <Pressable
-              key={t}
+              key={p}
               accessibilityRole="radio"
-              accessibilityLabel={themes[t].name}
+              accessibilityLabel={PALETTES[p].name}
               accessibilityState={{ checked: on }}
               onPress={() => go(i)}
               style={s.dotHit}
             >
-              <View style={[s.dotRing, on && s.dotRingOn]}>
+              <View style={[s.dotRing, on && { borderColor: t.colors.text }]}>
                 <LinearGradient
                   colors={[l1, l2]}
                   start={{ x: 0, y: 0 }}
@@ -161,7 +162,7 @@ export function Intro() {
         <Title size={42}>Make it yours.</Title>
         <View style={s.leadBox}>
           <FadeSwap swapKey={id}>
-            <Lead>{LINES[id]}</Lead>
+            <Lead>{LINES[id] ?? LINES.afterglow}</Lead>
           </FadeSwap>
         </View>
       </View>
@@ -174,7 +175,7 @@ export function Intro() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: roles.bg },
+  screen: { flex: 1 },
   top: {
     paddingHorizontal: 20,
     flexDirection: "row",
@@ -193,7 +194,6 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
-  dotRingOn: { borderColor: roles.text },
   dot: { width: 28, height: 28, borderRadius: 14 },
   copy: { paddingHorizontal: 24, marginTop: 14 },
   leadBox: { marginTop: 10, minHeight: 78 },

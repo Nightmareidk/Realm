@@ -1,6 +1,12 @@
 import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { browser, createTestApp, newAccount, sessionCookie, type TestContext } from "../../test/helpers";
+import {
+  browser,
+  createTestApp,
+  newAccount,
+  sessionCookie,
+  type TestContext,
+} from "../../test/helpers";
 import { mentionsIn } from "./service";
 
 let t: TestContext;
@@ -83,9 +89,7 @@ describe("tags, mentions, hidden likes and comments off", () => {
       tags: [kenji.username],
     });
     expect(post.statusCode).toBe(201);
-    expect(post.json().tags.map((u: { username: string }) => u.username)).toEqual([
-      kenji.username,
-    ]);
+    expect(post.json().tags.map((u: { username: string }) => u.username)).toEqual([kenji.username]);
     const kinds = (await activity(kenji)).map((a) => `${a.type}:${a.via}`);
     expect(kinds).toContain("mention:tag");
     expect(kinds).toContain("mention:caption");
@@ -145,8 +149,11 @@ describe("tags, mentions, hidden likes and comments off", () => {
     ).toBe(403);
     await call(noor.cookie, "PATCH", `/posts/${post.id}`, { commentsOff: false });
     expect(
-      (await call(kenji.cookie, "POST", `/posts/${post.id}/comments`, { body: `hi @${noor.username}` }))
-        .statusCode,
+      (
+        await call(kenji.cookie, "POST", `/posts/${post.id}/comments`, {
+          body: `hi @${noor.username}`,
+        })
+      ).statusCode,
     ).toBe(201);
   });
 
@@ -154,7 +161,9 @@ describe("tags, mentions, hidden likes and comments off", () => {
     const noor = await person();
     const kenji = await person();
     await follow(kenji, noor);
-    const post = (await call(noor.cookie, "POST", "/posts", { kind: "text", caption: "old" })).json();
+    const post = (
+      await call(noor.cookie, "POST", "/posts", { kind: "text", caption: "old" })
+    ).json();
     await call(noor.cookie, "PATCH", `/posts/${post.id}`, { archived: true });
     expect((await call(kenji.cookie, "GET", `/posts/${post.id}`)).statusCode).toBe(404);
     const feed = (await call(kenji.cookie, "GET", "/feed")).json().items as { id: string }[];
@@ -182,9 +191,9 @@ describe("Close Friends, mute and Notes", () => {
       visibility: "close_friends",
     });
     expect(story.json().closeFriends).toBe(true);
-    const ring = (await call(close.cookie, "GET", "/stories/feed")).json().rings.find(
-      (r: { author: { id: string } }) => r.author.id === noor.id,
-    );
+    const ring = (await call(close.cookie, "GET", "/stories/feed"))
+      .json()
+      .rings.find((r: { author: { id: string } }) => r.author.id === noor.id);
     expect(ring?.closeFriends).toBe(true);
     const theirs = (await call(other.cookie, "GET", "/stories/feed")).json().rings;
     expect(theirs.some((r: { author: { id: string } }) => r.author.id === noor.id)).toBe(false);
@@ -216,7 +225,10 @@ describe("Close Friends, mute and Notes", () => {
     const profile = (await call(kenji.cookie, "GET", `/users/${noor.username}/profile`)).json();
     expect(profile).toMatchObject({ follow: "following", muted: { posts: true, stories: true } });
 
-    await call(kenji.cookie, "PUT", `/users/${noor.username}/mute`, { posts: false, stories: false });
+    await call(kenji.cookie, "PUT", `/users/${noor.username}/mute`, {
+      posts: false,
+      stories: false,
+    });
     const again = (await call(kenji.cookie, "GET", "/feed")).json().items as { caption: string }[];
     expect(again.some((p) => p.caption === "loud")).toBe(true);
     expect((await call(kenji.cookie, "GET", "/users/@me/muted")).json().items).toEqual([]);
@@ -277,12 +289,12 @@ describe("collections", () => {
     expect(inside.items[0].id).toBe(post.id);
 
     // Someone else's folder doesn't exist for you.
-    expect(
-      (await call(kenji.cookie, "GET", `/users/@me/collections/${id}/posts`)).statusCode,
-    ).toBe(404);
-    expect(
-      (await call(kenji.cookie, "DELETE", `/users/@me/collections/${id}`)).statusCode,
-    ).toBe(404);
+    expect((await call(kenji.cookie, "GET", `/users/@me/collections/${id}/posts`)).statusCode).toBe(
+      404,
+    );
+    expect((await call(kenji.cookie, "DELETE", `/users/@me/collections/${id}`)).statusCode).toBe(
+      404,
+    );
 
     await call(noor.cookie, "PATCH", `/users/@me/collections/${id}`, { name: "Food" });
     await call(noor.cookie, "DELETE", `/users/@me/collections/${id}`);

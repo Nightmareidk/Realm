@@ -83,6 +83,7 @@ export default function Player() {
     <View style={s.root}>
       {cover ? (
         <Image
+          transition={150}
           source={coverSource(cover)}
           style={[StyleSheet.absoluteFill, s.glow]}
           blurRadius={70}

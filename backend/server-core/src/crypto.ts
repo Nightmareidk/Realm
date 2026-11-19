@@ -1,4 +1,12 @@
-import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
+import {
+  createHash,
+  createHmac,
+  createPublicKey,
+  randomBytes,
+  randomInt,
+  timingSafeEqual,
+  verify as verifySignature,
+} from "node:crypto";
 import { hash, verify } from "@node-rs/argon2";
 
 /** 256-bit random token, URL-safe. Used for sessions, reset links, verification links. */
@@ -52,4 +60,25 @@ let dummyHash: Promise<string> | undefined;
 export function timingSafeDummyVerify(password: string): Promise<boolean> {
   dummyHash ??= hashPassword(randomToken());
   return dummyHash.then((h) => verifyPassword(h, password)).then(() => false);
+}
+
+/** The fixed DER header that turns a raw 32-byte Ed25519 key into SPKI (RFC 8410). */
+const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
+
+/**
+ * Checks an Ed25519 signature (RFC 8032) with Node's built-in implementation. Used for E2EE
+ * device certificates and revocations. False for any malformed key or signature, never a throw.
+ */
+export function verifyEd25519(publicKey: Uint8Array, message: Uint8Array, signature: Uint8Array) {
+  if (publicKey.length !== 32 || signature.length !== 64) return false;
+  try {
+    const key = createPublicKey({
+      key: Buffer.concat([ED25519_SPKI_PREFIX, publicKey]),
+      format: "der",
+      type: "spki",
+    });
+    return verifySignature(null, message, key, signature);
+  } catch {
+    return false;
+  }
 }

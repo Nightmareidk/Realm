@@ -24,7 +24,31 @@
     "production": {
       "node": "24.16.0",
       "pnpm": "12.6.0",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_REALM_API_URL": "https://api.tomyrealm.com",
+        "EXPO_PUBLIC_REALM_GATEWAY_URL": "wss://api.tomyrealm.com/gateway",
+        "EXPO_PUBLIC_REALM_WEB_URL": "https://tomyrealm.com"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "beta-apk": {
+      "extends": "production",
+      "distribution": "internal",
+      "autoIncrement": false,
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "alpha",
+        "releaseStatus": "draft"
+      }
     }
   }
 }

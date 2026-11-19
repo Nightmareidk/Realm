@@ -1,6 +1,7 @@
 import type { PresenceStatus, UserSummary } from "@realm/contracts";
 import { THEME_ORDER, THEMES } from "@/features/home/themes";
 import { cx } from "@/lib/cx";
+import { AvatarImage } from "./avatar-image";
 
 /** A steady colour per person (from their ID) until profile pictures arrive with media. */
 function colourFor(id: string) {
@@ -16,6 +17,8 @@ export const presenceLabel: Record<PresenceStatus, string> = {
   dnd: "Do not disturb",
   offline: "Away",
 };
+
+const initialOf = (name: string) => name.trim().slice(0, 1).toUpperCase() || "?";
 
 /** Someone's initial in their colour, with a presence dot when they're around. */
 export function Avatar({
@@ -44,16 +47,9 @@ export function Avatar({
       style={{ width: size, height: size, fontSize: size * 0.42, background: t.acc, color: t.on }}
     >
       {user.avatarUrl ? (
-        // biome-ignore lint/performance/noImgElement: a small uploaded picture behind an access check, not a static asset.
-        <img
-          src={user.avatarUrl}
-          alt=""
-          className="size-full rounded-full object-cover"
-          loading="lazy"
-          decoding="async"
-        />
+        <AvatarImage src={user.avatarUrl} initial={initialOf(user.displayName)} />
       ) : (
-        user.displayName.trim().slice(0, 1).toUpperCase()
+        initialOf(user.displayName)
       )}
       {dot && (
         <span

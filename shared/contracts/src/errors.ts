@@ -69,6 +69,15 @@ export const ErrorCode = z.enum([
   "PRIVATE_ACCOUNT",
   /** Realm's storage is full: no new photos or videos until there's room again. */
   "UPLOADS_PAUSED",
+  // end-to-end encryption
+  /** A device certificate or revocation wasn't signed by the account's current key. */
+  "SIGNATURE_INVALID",
+  /** This needs a device that one of your confirmed devices has approved. */
+  "DEVICE_NOT_APPROVED",
+  /** The encrypted chat moved on (someone changed keys first). Catch up, then try again. */
+  "EPOCH_STALE",
+  /** This chat is end-to-end encrypted: the server only takes ciphertext for it. */
+  "ENCRYPTED_CHAT",
 ]);
 export type ErrorCode = z.infer<typeof ErrorCode>;
 

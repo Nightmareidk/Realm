@@ -10,14 +10,26 @@
     "backgroundColor": "#0b0b0e",
     "android": {
       "package": "com.tomyrealm",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#091321"
+      },
       "allowBackup": false,
-      "permissions": ["android.permission.RECORD_AUDIO"]
+      "permissions": ["android.permission.RECORD_AUDIO"],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACTIVITY_RECOGNITION",
+        "com.google.android.gms.permission.AD_ID"
+      ]
     },
     "ios": {
       "bundleIdentifier": "com.tomyrealm"
     },
     "plugins": [
       "expo-router",
+      "react-native-quick-crypto",
       [
         "expo-image-picker",
         {

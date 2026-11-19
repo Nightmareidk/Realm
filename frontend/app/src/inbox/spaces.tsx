@@ -121,7 +121,12 @@ function SpaceRow({
     >
       <View style={[s.tile, { backgroundColor: colour }]}>
         {iconUrl ? (
-          <Image source={mediaSource(iconUrl)} style={StyleSheet.absoluteFill} contentFit="cover" />
+          <Image
+            transition={150}
+            source={mediaSource(iconUrl)}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+          />
         ) : (
           <Text style={s.tileText}>{name.trim().slice(0, 2).toUpperCase()}</Text>
         )}

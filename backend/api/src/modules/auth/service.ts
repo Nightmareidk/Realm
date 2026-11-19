@@ -1,8 +1,11 @@
+import { writeFile } from "node:fs/promises";
 import {
   isMinor,
   type LoginBody,
+  type LoginCodeBody,
   type RegisterBody,
   TEEN_USER_SETTINGS,
+  ThemeAccent,
   Username,
   type UsernameAvailability,
 } from "@realm/contracts";
@@ -29,6 +32,7 @@ import {
   newSignInEmail,
   passwordChangedEmail,
   passwordResetEmail,
+  signInCodeEmail,
   signInPausedEmail,
   verificationEmail,
 } from "./emails";
@@ -39,6 +43,10 @@ const { users, userSettings, emailVerifications, passwordResets, securityEvents,
 const VERIFICATION_TTL_MS = 15 * 60 * 1000;
 const VERIFICATION_MAX_ATTEMPTS = 5;
 const RESET_TTL_MS = 60 * 60 * 1000;
+const LOGIN_CODE_TTL_SECONDS = 10 * 60;
+const LOGIN_CODE_DIGITS = 4;
+/** Few wrong tries per code, since 4 digits are quick to type and so quicker to guess. */
+const LOGIN_CODE_MAX_ATTEMPTS = 3;
 
 type UserRow = typeof users.$inferSelect;
 
@@ -146,7 +154,8 @@ export class AuthService {
         if (!user) throw new Error("user insert returned nothing");
         await tx.insert(userSettings).values({
           userId,
-          accent: body.accent ?? "mint",
+          accent: body.accent ?? ThemeAccent.safeParse(body.palette).data ?? "mint",
+          palette: body.palette ?? null,
           // Under 18: private profile, DMs from friends, requests from friends of friends.
           ...(isMinor(body.birthDate) ? TEEN_USER_SETTINGS : {}),
         });
@@ -184,13 +193,7 @@ export class AuthService {
       throw err;
     }
 
-    const column = login.includes("@") ? users.email : users.username;
-    const [user] = await this.deps.db
-      .select()
-      .from(users)
-      .where(sql`lower(${column}) = ${login}`)
-      .limit(1);
-
+    const user = await this.findByLogin(login);
     if (!user) {
       await timingSafeDummyVerify(body.password);
       await this.countFailure();
@@ -208,19 +211,109 @@ export class AuthService {
     if (user.status !== "active" && user.status !== "deactivated") {
       throw new AppError(401, "INVALID_CREDENTIALS", "Wrong username/email or password");
     }
+    await this.secondStep(user, body.code, client);
+    return this.finishLogin(user, login, client);
+  }
 
-    // Two-step sign-in: the password was right, now the app's code (or a backup code). Wrong
-    // codes count against the same per-account limit as wrong passwords.
-    if (user.mfaSecret) {
-      if (!body.code) {
-        throw new AppError(401, "MFA_REQUIRED", "Enter the code from your authenticator app.");
-      }
-      if (!(await this.account.checkSecondStep(user, body.code, client.ip))) {
-        await this.logEvent(user.id, "login_failed", client);
-        throw new AppError(401, "INVALID_CODE", "That code isn't right. Try the newest one.");
-      }
+  /**
+   * Two-step sign-in: the first step was right, now the app's code (or a backup code). Wrong
+   * codes count against the same per-account limit as wrong passwords.
+   */
+  private async secondStep(user: UserRow, code: string | undefined, client: ClientContext) {
+    if (!user.mfaSecret) return;
+    if (!code) {
+      throw new AppError(401, "MFA_REQUIRED", "Enter the code from your authenticator app.");
     }
+    if (!(await this.account.checkSecondStep(user, code, client.ip))) {
+      await this.logEvent(user.id, "login_failed", client);
+      throw new AppError(401, "INVALID_CODE", "That code isn't right. Try the newest one.");
+    }
+  }
 
+  private async findByLogin(login: string) {
+    const column = login.includes("@") ? users.email : users.username;
+    const [user] = await this.deps.db
+      .select()
+      .from(users)
+      .where(sql`lower(${column}) = ${login}`)
+      .limit(1);
+    return user;
+  }
+
+  /**
+   * Sign in without a password: email a 4-digit code that works once for 10 minutes. Always
+   * looks the same to the caller, so it never tells whether an account exists. Only the code's
+   * HMAC is kept, and a new code replaces the old one.
+   */
+  async requestLoginCode(raw: string, client: ClientContext) {
+    const login = raw.trim().toLowerCase();
+    await this.enforce(Limits.loginCodeIp, client.ip);
+    await this.enforce(Limits.loginCodeAccount, login);
+    const user = await this.findByLogin(login);
+    if (!user || (user.status !== "active" && user.status !== "deactivated")) return;
+    const code = randomNumericCode(LOGIN_CODE_DIGITS);
+    await this.deps.kv.set(
+      `login-code:${user.id}`,
+      JSON.stringify({ h: hmacHex(this.deps.config.REALM_SECRET, `login:${code}`), n: 0 }),
+      LOGIN_CODE_TTL_SECONDS,
+    );
+    this.sendMail(signInCodeEmail({ to: user.email, code, minutes: LOGIN_CODE_TTL_SECONDS / 60 }));
+    const file = this.deps.config.REALM_LOGIN_CODE_FILE;
+    if (file && !this.deps.config.isProduction) {
+      await writeFile(
+        file,
+        `${code}
+`,
+      ).catch((err) => this.deps.logger.error({ err }, "login code file write failed"));
+    }
+  }
+
+  async loginWithCode(body: LoginCodeBody, client: ClientContext) {
+    const login = body.login.trim().toLowerCase();
+    await this.enforce(Limits.loginIp, client.ip);
+    try {
+      await this.enforce(Limits.loginAccount, login);
+    } catch (err) {
+      await this.warnPaused(login);
+      throw err;
+    }
+    const wrong = () =>
+      new AppError(401, "INVALID_CODE", "That code isn't right or has expired. Ask for a new one.");
+
+    const user = await this.findByLogin(login);
+    const key = user ? `login-code:${user.id}` : null;
+    const saved = key ? await this.deps.kv.get(key) : null;
+    if (!user || !key || !saved) {
+      await this.countFailure();
+      throw wrong();
+    }
+    const pending = JSON.parse(saved) as { h: string; n: number };
+    const expected = hmacHex(this.deps.config.REALM_SECRET, `login:${body.emailCode}`);
+    if (!safeEqual(pending.h, expected)) {
+      // A few guesses, then the code is gone and a new one has to be asked for.
+      if (pending.n + 1 >= LOGIN_CODE_MAX_ATTEMPTS) await this.deps.kv.del(key);
+      else {
+        await this.deps.kv.set(
+          key,
+          JSON.stringify({ h: pending.h, n: pending.n + 1 }),
+          LOGIN_CODE_TTL_SECONDS,
+        );
+      }
+      await this.logEvent(user.id, "login_failed", client);
+      await this.countFailure();
+      throw wrong();
+    }
+    if (user.status === "suspended") {
+      throw new AppError(403, "ACCOUNT_SUSPENDED", "This account is suspended");
+    }
+    if (user.status !== "active" && user.status !== "deactivated") throw wrong();
+    // The emailed code stays valid until two-step sign-in (if on) passes too, then it's used up.
+    await this.secondStep(user, body.code, client);
+    if (!(await this.deps.kv.take(key))) throw wrong();
+    return this.finishLogin(user, login, client);
+  }
+
+  private async finishLogin(user: UserRow, login: string, client: ClientContext) {
     // Back from a break, or within the 30 days after asking to delete: it all comes back.
     const welcomeBack =
       user.status === "deactivated" ? await this.account.welcomeBack(user, client.ip) : undefined;

@@ -102,6 +102,13 @@ export const userSettings = pgTable("user_settings", {
   look: themeLookPref().notNull().default("now-playing"),
   /** A theme from their library in place of a look; null for Realm's own looks. */
   themeId: id(),
+  /**
+   * The colour set for Realm's looks (THEME_PALETTES in contracts, checked by the API); null means
+   * they never picked one since colour sets came in, so the default (or their old colour) applies.
+   */
+  palette: text(),
+  /** The font pair for Realm's looks (THEME_FONT_PAIRS); null is "match the colour set". */
+  font: text(),
   reducedMotion: motionPref().notNull().default("system"),
   locale: text().notNull().default("en"),
   profileVisibility: profileVisibility().notNull().default("public"),
@@ -109,6 +116,8 @@ export const userSettings = pgTable("user_settings", {
   friendRequestPolicy: friendRequestPolicy().notNull().default("everyone"),
   showPresence: boolean().notNull().default(true),
   showReadReceipts: boolean().notNull().default(true),
+  /** Friends (people you follow who follow you back) can see the song you're playing. */
+  shareListening: boolean().notNull().default(true),
   updatedAt: updatedAt(),
 });
 
@@ -192,6 +201,9 @@ export const securityEventType = pgEnum("security_event_type", [
   "deactivated",
   "deletion_requested",
   "reactivated",
+  "e2ee_device_approved",
+  "e2ee_device_revoked",
+  "e2ee_key_reset",
 ]);
 
 /** Single-use backup codes for two-step sign-in, for when the phone is lost. Only hashes are kept. */

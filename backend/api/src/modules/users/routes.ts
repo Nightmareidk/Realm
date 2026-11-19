@@ -148,6 +148,7 @@ export const userRoutes =
               and(eq(schema.follows.followeeId, userId), eq(schema.follows.status, "pending")),
             );
         }
+        if (req.body.shareListening === false) await deps.kv.del(`listening:${userId}`);
         const settings = toUserSettings(row);
         await deps.bus.publish(`user:${userId}`, { type: "USER_SETTINGS_UPDATE", data: settings });
         return settings;

@@ -60,6 +60,7 @@ export class MusicLibrary {
         userId,
       ),
       featured: await this.music.featured(userId),
+      fresh: await this.music.fresh(userId),
     };
   }
 
@@ -92,13 +93,13 @@ export class MusicLibrary {
     }
   }
 
-  /** You played it: it goes to the top of Recently played. */
-  async played(userId: bigint, soundId: bigint) {
+  /** You played it: it goes to the top of Recently played. False when there's no such song. */
+  async played(userId: bigint, soundId: bigint): Promise<boolean> {
     const [song] = await this.db
       .select({ id: sounds.id })
       .from(sounds)
       .where(eq(sounds.id, soundId));
-    if (!song) return;
+    if (!song) return false;
     await this.db
       .insert(soundPlays)
       .values({ userId, soundId })
@@ -106,6 +107,7 @@ export class MusicLibrary {
         target: [soundPlays.userId, soundPlays.soundId],
         set: { playedAt: new Date() },
       });
+    return true;
   }
 
   // ── Playlists ─────────────────────────────────────────────────────────────

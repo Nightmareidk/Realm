@@ -17,7 +17,11 @@ const TEXT_SCALE = { normal: 1, large: 1.1, larger: 1.2 } as const;
 
 /** A colour made see-through: #rrggbb plus an alpha pair. */
 const alpha = (hex: string, a: number) =>
-  a >= 1 ? hex : `${hex}${Math.round(a * 255).toString(16).padStart(2, "0")}`;
+  a >= 1
+    ? hex
+    : `${hex}${Math.round(a * 255)
+        .toString(16)
+        .padStart(2, "0")}`;
 
 const NONE = "0 0 0 0 transparent";
 
@@ -37,6 +41,11 @@ const WEB_FONT: Record<string, string> = {
   comfortaa: "var(--font-comfortaa)",
   lexend: "var(--font-lexend)",
   nunito: "var(--font-nunito)",
+  gabarito: "var(--font-gabarito)",
+  figtree: "var(--font-figtree)",
+  unbounded: "var(--font-unbounded)",
+  rethink: "var(--font-rethink)",
+  onest: "var(--font-onest)",
 };
 
 /** The phone app's loaded font names: [regular or display, bold]. */
@@ -55,7 +64,18 @@ export const NATIVE_FONT: Record<string, [string, string]> = {
   comfortaa: ["Comfortaa_400Regular", "Comfortaa_700Bold"],
   lexend: ["Lexend_400Regular", "Lexend_700Bold"],
   nunito: ["Nunito_400Regular", "Nunito_700Bold"],
+  gabarito: ["Gabarito_800ExtraBold", "Gabarito_700Bold"],
+  figtree: ["Figtree_800ExtraBold", "Figtree_700Bold"],
+  unbounded: ["Unbounded_700Bold", "Unbounded_600SemiBold"],
+  rethink: ["RethinkSans_400Regular", "RethinkSans_700Bold"],
+  onest: ["Onest_400Regular", "Onest_700Bold"],
 };
+
+/** A font used for reading text where its title weights differ (Figtree titles are 800). */
+export const NATIVE_BODY_FONT: Record<string, [string, string]> = {
+  figtree: ["Figtree_400Regular", "Figtree_700Bold"],
+};
+const bodyFont = (id: string) => NATIVE_BODY_FONT[id] ?? NATIVE_FONT[id] ?? NATIVE_FONT.atkinson;
 
 /** The `--r-*` values for a theme; the web app applies them to <html>. */
 export function cssVars(t: ResolvedTheme): Record<string, string> {
@@ -95,6 +115,8 @@ export function cssVars(t: ResolvedTheme): Record<string, string> {
     "--r-btn-glow": b.glow ? `0 0 24px -4px ${c.accent}` : NONE,
     "--r-heading": c.heading,
     "--r-link": c.link,
+    "--r-like": c.like,
+    "--r-accent-2": c.accent2,
     "--r-font-display": WEB_FONT[t.type.display] ?? "var(--font-funnel)",
     "--r-font-body": WEB_FONT[t.type.body] ?? "var(--font-atkinson)",
     "--r-border": c.line,
@@ -162,7 +184,10 @@ export function nativeTheme(t: ResolvedTheme) {
       surfaceSunken: alpha(c.raised, Math.min(1, t.panels.opacity + 0.15)),
       heading: c.heading,
       link: c.link,
+      like: c.like,
       accent2: c.accent2,
+      /** Buttons, your messages and the + fade from your colour to this one (else it's flat). */
+      gradient: t.buttons.fill === "gradient",
       border: c.line,
       borderStrong: strongLine(t),
       text: c.text,
@@ -185,8 +210,8 @@ export function nativeTheme(t: ResolvedTheme) {
     fonts: {
       display: (NATIVE_FONT[t.type.display] ?? NATIVE_FONT.funnel)?.[0] as string,
       displayBold: (NATIVE_FONT[t.type.display] ?? NATIVE_FONT.funnel)?.[1] as string,
-      body: (NATIVE_FONT[t.type.body] ?? NATIVE_FONT.atkinson)?.[0] as string,
-      bold: (NATIVE_FONT[t.type.body] ?? NATIVE_FONT.atkinson)?.[1] as string,
+      body: bodyFont(t.type.body)?.[0] as string,
+      bold: bodyFont(t.type.body)?.[1] as string,
     },
     panels: t.panels,
     buttons: t.buttons,

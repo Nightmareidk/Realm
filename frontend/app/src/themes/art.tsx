@@ -213,6 +213,7 @@ export function Backdrop({ lightOpacity = 0.38 }: { lightOpacity?: number }) {
       {w && src ? (
         <>
           <Image
+            transition={150}
             source={src}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
@@ -263,6 +264,7 @@ export function Sticker({
   if (!src) return null;
   return (
     <Image
+      transition={150}
       source={src}
       style={{ width: size, height: size }}
       contentFit="contain"

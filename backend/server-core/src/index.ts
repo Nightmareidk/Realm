@@ -1,5 +1,6 @@
 export * from "./config";
 export * from "./crypto";
+export * from "./email-layout";
 export * from "./event-bus";
 export * from "./jwt";
 export * from "./kv";

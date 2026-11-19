@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../icon";
 import { useWide } from "../layout";
+import { type LoadingShape, Skeleton } from "../skeleton";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
 import { Backdrop, Sticker } from "../themes/art";
 
@@ -47,9 +48,15 @@ export function TopBar({ title, right }: { title?: string; right?: ReactNode }) 
   );
 }
 
-export function Loading() {
+/**
+ * Waiting for content. With a `shape`, the outline of what's coming is drawn where it will be
+ * (a feed, a list of rows, a grid), so the screen fills in without jumping. Without one, a
+ * small spinner, for screens with no fixed layout to promise.
+ */
+export function Loading({ shape, count }: { shape?: LoadingShape; count?: number }) {
   const { t } = useTheme();
   const s = useStyles(make);
+  if (shape) return <Skeleton shape={shape} count={count} />;
   return (
     <View style={s.center}>
       <ActivityIndicator color={t.colors.textSoft} />

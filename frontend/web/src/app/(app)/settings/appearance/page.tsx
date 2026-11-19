@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MotionToggle } from "@/components/motion-toggle";
 import { pill } from "@/components/pill";
-import { AccentPicker } from "@/features/app/accent-picker";
+import { ColourPicker } from "@/features/app/accent-picker";
 import { SoonTag } from "@/features/app/place";
 import { SettingsPlace, SettingsSection } from "@/features/settings/settings-place";
 
@@ -13,10 +13,10 @@ export default function AppearancePage() {
     <SettingsPlace title="Appearance">
       <SettingsSection
         id="colour"
-        title="Your colour"
-        lead="The light behind every screen and the colour of what you press. Your profile wears it too. Saved to your account, so it follows you to every device."
+        title="Your colours"
+        lead="The background, what you press, your messages and the light behind every screen. Saved to your account, so they follow you to every device. Fonts are in Themes."
       >
-        <AccentPicker />
+        <ColourPicker />
       </SettingsSection>
       <SettingsSection
         id="mode"

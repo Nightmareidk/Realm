@@ -10,6 +10,7 @@ import {
 } from "@realm/contracts";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ScrollRow } from "@/components/scroll-row";
 import { useAmbient } from "@/features/app/ambient";
 import { useFetch } from "@/features/social/shared";
 import { api } from "@/lib/api";
@@ -40,7 +41,7 @@ function Shelf({ title, items, from }: { title: string; items: Sound[]; from: st
   return (
     <section aria-label={title} className="mt-9">
       <h2 className="mb-3 font-display text-[1.3rem] font-bold text-fg">{title}</h2>
-      <ul className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:thin]">
+      <ScrollRow className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:thin]" arrowTop="76px">
         {items.slice(0, 12).map((s, i) => (
           <li key={s.id} className="w-[9.5rem] shrink-0">
             <button
@@ -60,7 +61,7 @@ function Shelf({ title, items, from }: { title: string; items: Sound[]; from: st
             </button>
           </li>
         ))}
-      </ul>
+      </ScrollRow>
     </section>
   );
 }

@@ -1,15 +1,33 @@
-import { resolveTheme, type ThemeLook, type ThemeSummary } from "@realm/contracts";
-import { LOOKS, lookTheme } from "@realm/design-tokens";
+import {
+  DEFAULT_PALETTE,
+  resolveTheme,
+  type ThemeFontPair,
+  type ThemeLook,
+  type ThemePalette,
+  type ThemeSummary,
+} from "@realm/contracts";
+import {
+  FONT_PAIR_ORDER,
+  FONT_PAIRS,
+  fontPairOf,
+  LOOKS,
+  lookTheme,
+  NATIVE_FONT,
+  PALETTE_ORDER,
+  PALETTES,
+} from "@realm/design-tokens";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useApi } from "@/data";
 import { Icon } from "@/icon";
 import type { IconName } from "@/icon-paths";
+import { HScroll } from "@/scroll-row";
 import { webOrigin } from "@/server";
 import { AppScreen, TopBar } from "@/social/screen";
-import { type NativeTheme, THEME_ORDER, type ThemeId, themes, useStyles, useTheme } from "@/theme";
+import { type NativeTheme, useStyles, useTheme } from "@/theme";
+import { loadFont } from "@/themes/fonts";
 import { ThemePreview } from "@/themes/preview";
 import { themeChoice, useApplyTheme } from "@/themes/use";
 
@@ -24,13 +42,15 @@ export default function Themes() {
   const router = useRouter();
   const apply = useApplyTheme();
   const library = useApi<{ items: ThemeSummary[] }>("/themes/library");
-  const accent: ThemeId = choice.kind === "look" ? choice.accent : "mint";
+  const palette: ThemePalette = choice.kind === "look" ? choice.palette : DEFAULT_PALETTE;
+  const font: ThemeFontPair = choice.kind === "look" ? choice.font : "match";
   const looks = useMemo(
-    () => LOOKS.map((l) => ({ ...l, theme: resolveTheme(lookTheme(l.id, accent)) })),
-    [accent],
+    () => LOOKS.map((l) => ({ ...l, theme: resolveTheme(lookTheme(l.id, palette, font)) })),
+    [palette, font],
   );
+  const fontFaces = useFontSamples();
 
-  const pickLook = (look: ThemeLook) => apply({ kind: "look", look, accent });
+  const pickLook = (look: ThemeLook) => apply({ kind: "look", look, palette, font });
   const pickLibrary = async (item: ThemeSummary) => {
     try {
       await apply(await themeChoice(item.id));
@@ -64,8 +84,7 @@ export default function Themes() {
         <Text style={s.heading} accessibilityRole="header">
           Realm's looks
         </Text>
-        <ScrollView
-          horizontal
+        <HScroll
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={s.looks}
           accessibilityRole="radiogroup"
@@ -92,34 +111,86 @@ export default function Themes() {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </HScroll>
 
         {choice.kind === "look" ? (
           <>
             <Text style={s.heading} accessibilityRole="header">
-              Your colour
+              Colours
             </Text>
-            <View style={s.swatches} accessibilityRole="radiogroup">
-              {THEME_ORDER.map((id) => {
-                const [l1, l2, l3] = themes[id].lights;
-                const on = id === accent;
+            <View style={s.palettes} accessibilityRole="radiogroup">
+              {PALETTE_ORDER.map((id) => {
+                const p = PALETTES[id];
+                const on = id === palette;
+                const ground = resolveTheme(lookTheme(choice.look, id)).colors.ground;
                 return (
                   <Pressable
                     key={id}
-                    onPress={() => apply({ kind: "look", look: choice.look, accent: id })}
+                    onPress={() => apply({ ...choice, palette: id })}
                     accessibilityRole="radio"
-                    accessibilityLabel={themes[id].name}
+                    accessibilityLabel={`${p.name}. ${p.blurb}`}
                     accessibilityState={{ checked: on }}
-                    style={[s.swatchWrap, on && s.swatchOn]}
+                    style={({ pressed }) => [s.palette, on && s.paletteOn, pressed && s.pressed]}
                   >
-                    <LinearGradient
-                      colors={[l1, l2, l3]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={s.swatch}
-                    >
-                      <Text style={s.swatchName}>{themes[id].name}</Text>
-                    </LinearGradient>
+                    <View style={[s.paletteChip, { backgroundColor: ground }]}>
+                      <LinearGradient
+                        colors={p.swatch}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={s.paletteFade}
+                      />
+                    </View>
+                    <View style={s.lookName}>
+                      <Text style={s.lookTitle} numberOfLines={1}>
+                        {p.name}
+                      </Text>
+                      {on ? <Icon name="CheckCircleFill" size={18} color={t.colors.text} /> : null}
+                    </View>
+                    {id === "afterglow" ? <Text style={s.lookLine}>Realm's default</Text> : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={s.heading} accessibilityRole="header">
+              Font
+            </Text>
+            <View accessibilityRole="radiogroup">
+              {FONT_PAIR_ORDER.map((id) => {
+                const pair = id === "match" ? fontPairOf(palette) : FONT_PAIRS[id];
+                const on = id === choice.font;
+                const face = fontFaces[pair.display];
+                return (
+                  <Pressable
+                    key={id}
+                    onPress={() => apply({ ...choice, font: id })}
+                    accessibilityRole="radio"
+                    accessibilityLabel={
+                      id === "match"
+                        ? `Match the colours: ${pair.name}`
+                        : `${pair.name}. ${pair.blurb}`
+                    }
+                    accessibilityState={{ checked: on }}
+                    style={({ pressed }) => [s.row, pressed && s.pressed]}
+                  >
+                    <View style={s.fontSample}>
+                      <Text style={[s.fontSampleText, face ? { fontFamily: face } : null]}>Aa</Text>
+                    </View>
+                    <View style={s.rowText}>
+                      <Text style={s.rowTitle}>
+                        {id === "match" ? "Match the colours" : pair.name}
+                      </Text>
+                      <Text style={s.rowLine} numberOfLines={2}>
+                        {id === "match"
+                          ? `${pair.name} with ${PALETTES[palette].name}`
+                          : pair.blurb}
+                      </Text>
+                    </View>
+                    {on ? (
+                      <Icon name="CheckCircleFill" size={22} color={t.colors.text} />
+                    ) : (
+                      <View style={s.radioOff} />
+                    )}
                   </Pressable>
                 );
               })}
@@ -134,22 +205,25 @@ export default function Themes() {
           library.data.items.map((item) => {
             const on = choice.kind === "theme" && choice.themeId === item.id;
             return (
-              <Pressable
-                key={item.id}
-                onPress={() => router.push(`/themes/${item.id}`)}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.name}, ${item.mine ? "made by you" : `by ${item.creator.username}`}`}
-                style={s.row}
-              >
-                <ThemePreview theme={resolveTheme(item.file)} width={44} />
-                <View style={s.rowText}>
-                  <Text style={s.rowTitle} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={s.rowLine} numberOfLines={1}>
-                    {item.mine ? "Made by you" : `by @${item.creator.username}`}
-                  </Text>
-                </View>
+              // The row opens the theme and "Use" switches to it: two buttons side by side, never
+              // one inside the other (a browser can't reach a button inside a button).
+              <View key={item.id} style={s.row}>
+                <Pressable
+                  onPress={() => router.push(`/themes/${item.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.name}, ${item.mine ? "made by you" : `by ${item.creator.username}`}`}
+                  style={({ pressed }) => [s.rowMain, pressed && s.pressed]}
+                >
+                  <ThemePreview theme={resolveTheme(item.file)} width={44} />
+                  <View style={s.rowText}>
+                    <Text style={s.rowTitle} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text style={s.rowLine} numberOfLines={1}>
+                      {item.mine ? "Made by you" : `by @${item.creator.username}`}
+                    </Text>
+                  </View>
+                </Pressable>
                 {on ? (
                   <Text style={s.using}>Using</Text>
                 ) : (
@@ -162,7 +236,7 @@ export default function Themes() {
                     <Text style={s.useText}>Use</Text>
                   </Pressable>
                 )}
-              </Pressable>
+              </View>
             );
           })
         ) : (
@@ -202,7 +276,7 @@ export default function Themes() {
             <Action
               icon="ArrowCounterClockwise"
               title="Back to Realm's default"
-              line="Now Playing in your colour"
+              line="Now Playing in Afterglow"
               onPress={() => pickLook("now-playing")}
             />
           ) : null}
@@ -210,6 +284,27 @@ export default function Themes() {
       </ScrollView>
     </AppScreen>
   );
+}
+
+/**
+ * Each font pair's title face, loaded so the "Aa" beside it shows the real thing. A face that
+ * hasn't loaded (or can't) is left out, and its sample reads in the current font.
+ */
+function useFontSamples(): Record<string, string> {
+  const [faces, setFaces] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let live = true;
+    for (const pair of Object.values(FONT_PAIRS)) {
+      loadFont(pair.display).then((ok) => {
+        const face = NATIVE_FONT[pair.display]?.[0];
+        if (ok && live && face) setFaces((f) => ({ ...f, [pair.display]: face }));
+      });
+    }
+    return () => {
+      live = false;
+    };
+  }, []);
+  return faces;
 }
 
 function Action({
@@ -305,17 +400,37 @@ const make = (t: NativeTheme) =>
       lineHeight: 18 * t.textScale,
       color: t.colors.textSoft,
     },
-    swatches: { flexDirection: "row", gap: 10, paddingHorizontal: 16 },
-    swatchWrap: {
-      flex: 1,
-      borderRadius: 18,
-      padding: 3,
+    palettes: { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 16 },
+    palette: {
+      width: "48%",
+      flexGrow: 1,
+      padding: 10,
+      borderRadius: t.radius.box,
+      backgroundColor: t.colors.surface,
       borderWidth: 2,
       borderColor: "transparent",
+      gap: 8,
     },
-    swatchOn: { borderColor: t.colors.text },
-    swatch: { height: 64, borderRadius: 14, justifyContent: "flex-end", padding: 8 },
-    swatchName: { fontFamily: t.fonts.bold, fontSize: 13 * t.textScale, color: "#ffffff" },
+    paletteOn: { borderColor: t.colors.text },
+    paletteChip: { height: 58, borderRadius: t.radius.card, padding: 8, justifyContent: "center" },
+    paletteFade: { height: 22, borderRadius: 11 },
+    fontSample: {
+      width: 48,
+      height: 48,
+      borderRadius: t.radius.card,
+      backgroundColor: t.colors.surfaceRaised,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    fontSampleText: { fontSize: 22 * t.textScale, color: t.colors.text },
+    radioOff: {
+      width: 20,
+      height: 20,
+      margin: 1,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: t.colors.borderStrong,
+    },
     row: {
       flexDirection: "row",
       alignItems: "center",
@@ -323,6 +438,7 @@ const make = (t: NativeTheme) =>
       paddingHorizontal: 20,
       paddingVertical: 10,
     },
+    rowMain: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 14 },
     rowText: { flex: 1, minWidth: 0 },
     rowTitle: { fontFamily: t.fonts.bold, fontSize: 16 * t.textScale, color: t.colors.text },
     rowLine: {

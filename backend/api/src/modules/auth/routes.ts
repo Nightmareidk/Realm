@@ -6,6 +6,8 @@ import {
   ForgotPasswordBody,
   GatewayTicket,
   LoginBody,
+  LoginCodeBody,
+  LoginCodeRequestBody,
   Limits as ProductLimits,
   RegisterBody,
   ResetPasswordBody,
@@ -129,6 +131,18 @@ export const authRoutes =
       "/login",
       { schema: { body: LoginBody, response: { 200: AuthResult } } },
       async (req, reply) => issue(req, reply, await service.login(req.body, req.client)),
+    );
+
+    /** One-time code by email instead of a password. Always 202: never says if the account exists. */
+    app.post("/login/code/send", { schema: { body: LoginCodeRequestBody } }, async (req, reply) => {
+      await service.requestLoginCode(req.body.login, req.client);
+      return reply.status(202).send();
+    });
+
+    app.post(
+      "/login/code",
+      { schema: { body: LoginCodeBody, response: { 200: AuthResult } } },
+      async (req, reply) => issue(req, reply, await service.loginWithCode(req.body, req.client)),
     );
 
     app.post("/logout", { preHandler: requireAuth }, async (req, reply) => {

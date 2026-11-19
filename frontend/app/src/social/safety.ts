@@ -20,8 +20,17 @@ export function useSafety() {
   const sheet = useSheet();
   return useMemo(
     () => ({
-      /** Opens the report screen for a post, comment, message or account by `author`. */
-      report(kind: ReportKind, id: string, author: UserSummary) {
+      /**
+       * Opens the report screen for a post, comment, message or account by `author`. A message
+       * in an end-to-end encrypted chat is named by `secure`: the report then sends that one
+       * message with the proof that they wrote it, because the server can't look it up.
+       */
+      report(
+        kind: ReportKind,
+        id: string,
+        author: UserSummary,
+        secure?: { channelId: string; messageId: string },
+      ) {
         router.push({
           pathname: "/report",
           params: {
@@ -30,6 +39,7 @@ export function useSafety() {
             userId: author.id,
             username: author.username,
             name: author.displayName,
+            ...(secure ? { secureChannel: secure.channelId, secureMessage: secure.messageId } : {}),
           },
         });
       },

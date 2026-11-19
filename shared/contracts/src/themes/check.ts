@@ -36,6 +36,7 @@ const NAMES: Record<keyof Omit<ResolvedColors, "lights">, string> = {
   accent2: "The end of your button gradient",
   heading: "The section titles",
   link: "The links",
+  like: "The heart on liked posts",
 };
 
 const round = (n: number) => Math.round(n * 10) / 10;
@@ -160,6 +161,9 @@ export function checkTheme(t: ResolvedTheme, wallpaper?: WallpaperLight): ThemeP
     pair(out, "heading", bg, c, TEXT_CONTRAST);
     pair(out, "link", bg, c, TEXT_CONTRAST);
   }
+  // A liked heart has to stand out from the panels it sits on.
+  pair(out, "like", "ground", c, UI_CONTRAST);
+  pair(out, "like", "surface", c, UI_CONTRAST);
   pair(out, "onAccent", "accent", c, TEXT_CONTRAST);
   if (t.buttons.fill === "gradient") {
     const before = out.length;
@@ -300,7 +304,8 @@ export function fixTheme(t: ResolvedTheme, wallpaper?: WallpaperLight): Resolved
       p.fix === "text" ||
       p.fix === "textSoft" ||
       p.fix === "heading" ||
-      p.fix === "link"
+      p.fix === "link" ||
+      p.fix === "like"
     ) {
       c[p.fix] = mixHex(c[p.fix], away, 0.15);
     }

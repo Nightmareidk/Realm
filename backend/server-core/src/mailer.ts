@@ -1,4 +1,12 @@
 import { createTransport, type Transporter } from "nodemailer";
+import {
+  type EmailBrand,
+  type EmailLayout,
+  emailBodyText,
+  layoutFromText,
+  renderEmailHtml,
+  renderEmailText,
+} from "./email-layout";
 import type { Logger } from "./logger";
 
 export interface Mail {
@@ -6,6 +14,16 @@ export interface Mail {
   subject: string;
   text: string;
   html?: string;
+  /** The designed version (see email-layout.ts). BrandedMailer turns it into HTML. */
+  layout?: EmailLayout;
+}
+
+/**
+ * A designed email. Its plain text is the same words; BrandedMailer adds the footer and the HTML
+ * when it goes out.
+ */
+export function brandedMail(to: string, subject: string, layout: EmailLayout): Mail {
+  return { to, subject, layout, text: emailBodyText(layout) };
 }
 
 export interface Mailer {
@@ -51,7 +69,14 @@ export class SmtpMailer implements Mailer {
   }
 
   async send(mail: Mail) {
-    await this.transport.sendMail({ from: this.from, ...mail });
+    const { to, subject, text, html } = mail;
+    await this.transport.sendMail({
+      from: this.from,
+      to,
+      subject,
+      text,
+      ...(html ? { html } : {}),
+    });
   }
 }
 
@@ -90,5 +115,26 @@ ${rule}
   last(to?: string): Mail | undefined {
     const list = to ? this.outbox.filter((m) => m.to === to) : this.outbox;
     return list[list.length - 1];
+  }
+}
+
+/**
+ * Dresses every email in Realm's design before it goes out: the HTML version, and a plain-text
+ * version with the same footer. An email with no layout of its own is laid out from its text.
+ */
+export class BrandedMailer implements Mailer {
+  constructor(
+    private readonly inner: Mailer,
+    private readonly brand: EmailBrand,
+  ) {}
+
+  async send(mail: Mail) {
+    const layout = mail.layout ?? layoutFromText(mail.subject, mail.text);
+    await this.inner.send({
+      to: mail.to,
+      subject: mail.subject,
+      text: renderEmailText(layout, mail.to, this.brand),
+      html: mail.html ?? renderEmailHtml(layout, mail.to, this.brand),
+    });
   }
 }

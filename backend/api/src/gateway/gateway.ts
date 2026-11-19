@@ -396,6 +396,7 @@ class Connection {
         friendRequestPolicy: "everyone",
         showPresence: true,
         showReadReceipts: true,
+        shareListening: true,
       },
       relationships: [],
       communities,

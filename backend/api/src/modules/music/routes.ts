@@ -4,12 +4,15 @@ import {
   Highlight,
   HighlightBody,
   HighlightDetail,
+  ListeningFriends,
   MOODS,
   type MoodId,
   MusicHome,
+  NowPlayingBody,
   Playlist,
   PlaylistBody,
   PlaylistDetail,
+  ReportSongBody,
   Snowflake,
   Sound,
   SoundList,
@@ -18,7 +21,9 @@ import {
   StoryFeed,
   StoryViewer,
   UpdateHighlightBody,
+  UploadSongBody,
   Username,
+  WeekRecap,
 } from "@realm/contracts";
 import { Limits } from "@realm/server-core";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
@@ -29,6 +34,7 @@ import { enforceLimit } from "../../plugins/security";
 import { HighlightsService } from "./highlights";
 import { MusicLibrary } from "./library";
 import type { MusicService } from "./service";
+import { ListeningNow, Recap } from "./together";
 
 const Id = z.object({ id: Snowflake });
 
@@ -70,6 +76,42 @@ export const soundRoutes =
       "/:id",
       { preHandler: requireAuth, schema: { params: Id, response: { 200: Sound } } },
       async (req) => music.get(BigInt(req.params.id)),
+    );
+
+    // Your own music: share a whole song, see anyone's songs, take yours down, report one.
+    app.post(
+      "/songs",
+      { preHandler: requireAuth, schema: { body: UploadSongBody, response: { 201: Sound } } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.songUpload, userId.toString());
+        return reply.status(201).send(await music.uploadSong(userId, req.body));
+      },
+    );
+    app.get(
+      "/by/:username",
+      {
+        preHandler: requireAuth,
+        schema: {
+          params: z.object({ username: z.string().min(1).max(40) }),
+          response: { 200: SoundList },
+        },
+      },
+      async (req) => ({ items: await music.byCreator(req.params.username, authOf(req).userId) }),
+    );
+    app.delete("/:id", { preHandler: requireAuth, schema: { params: Id } }, async (req, reply) => {
+      await music.removeSong(authOf(req).userId, BigInt(req.params.id));
+      return reply.status(204).send();
+    });
+    app.post(
+      "/:id/report",
+      { preHandler: requireAuth, schema: { params: Id, body: ReportSongBody } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.songReport, userId.toString());
+        await music.reportSong(userId, BigInt(req.params.id), req.body);
+        return reply.status(204).send();
+      },
     );
   };
 
@@ -194,6 +236,8 @@ export const musicRoutes =
   (deps: Deps, music: MusicService): FastifyPluginAsyncZod =>
   async (app) => {
     const library = new MusicLibrary(deps, music);
+    const together = new ListeningNow(deps, music);
+    const recap = new Recap(deps, music);
     const SoundId = z.object({ soundId: Snowflake });
     const ListId = z.object({ id: Snowflake });
     const Item = ListId.extend({ soundId: Snowflake });
@@ -251,8 +295,46 @@ export const musicRoutes =
       "/played/:soundId",
       { preHandler: requireAuth, schema: { params: SoundId } },
       async (req, reply) => {
-        await library.played(authOf(req).userId, BigInt(req.params.soundId));
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.listenNow, userId.toString());
+        if (await library.played(userId, BigInt(req.params.soundId))) {
+          await recap.played(userId, BigInt(req.params.soundId));
+        }
         return reply.status(204).send();
+      },
+    );
+
+    // Listening together: say what's playing, see what friends play, and your week.
+    app.put(
+      "/now",
+      { preHandler: requireAuth, schema: { body: NowPlayingBody } },
+      async (req, reply) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.listenNow, userId.toString());
+        await together.set(userId, BigInt(req.body.soundId), req.body.positionMs);
+        return reply.status(204).send();
+      },
+    );
+    app.delete("/now", { preHandler: requireAuth }, async (req, reply) => {
+      await together.clear(authOf(req).userId);
+      return reply.status(204).send();
+    });
+    app.get(
+      "/friends",
+      { preHandler: requireAuth, schema: { response: { 200: ListeningFriends } } },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.listenNow, userId.toString());
+        return { items: await together.friends(userId) };
+      },
+    );
+    app.get(
+      "/recap",
+      { preHandler: requireAuth, schema: { response: { 200: WeekRecap } } },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.soundSearch, userId.toString());
+        return recap.week(userId);
       },
     );
 

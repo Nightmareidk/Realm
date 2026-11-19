@@ -68,6 +68,8 @@
   --color-fg-muted: var(--r-text-muted);
   --color-accent: var(--r-accent);
   --color-on-accent: var(--r-on-accent);
+  /* A liked heart: the theme's own, else Realm's pink. */
+  --color-like: var(--r-like, #ff6b8b);
   --color-focus: var(--r-focus);
   --color-danger: var(--r-danger);
   --color-danger-line: var(--r-danger-line);
@@ -837,6 +839,15 @@ html:has([data-world="canvas"]) body::after {
   position: relative;
   border-radius: 18px;
   background: var(--r-surface);
+}
+/* A sealed time capsule (post card): Plain drops the glow and the rounded frame. */
+html[data-look="plain"] .r-capsule {
+  border-radius: 0;
+  border-color: var(--r-border);
+  background: transparent;
+}
+html[data-look="plain"] .r-capsule-pool {
+  display: none;
 }
 html[data-look="plain"] .r-panel {
   border-radius: 0;

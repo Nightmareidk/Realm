@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { chatAccent } from "@/chat/colour";
+import { syncE2ee, useE2eeStatus } from "@/e2ee";
 import { Icon } from "@/icon";
 import { Friends } from "@/inbox/friends";
 import { NotesRow } from "@/inbox/notes";
@@ -57,6 +58,9 @@ export default function Inbox() {
   const { session } = useSession();
   const meId = session.status === "signedIn" ? session.user.id : null;
   const state = useUnreadState();
+  // Said only where it's true: this device is set up for encrypted chats and has at least one.
+  const secureChats =
+    useE2eeStatus() === "ready" && state.conversations.some((c) => c.encryption === "mls");
   const sheet = useSheet();
   const [filter, setFilter] = useState<Filter>("all");
   const [section, setSection] = useState<"chats" | "spaces" | "friends">("chats");
@@ -72,6 +76,20 @@ export default function Inbox() {
       );
   }, [meId]);
   useFocusEffect(reload);
+  // Pulling the list down asks again, and fetches any encrypted messages that are waiting.
+  const [pulling, setPulling] = useState(false);
+  const pull = useCallback(async () => {
+    if (!meId) return;
+    setPulling(true);
+    try {
+      await Promise.all([refreshUnread(meId), syncE2ee()]);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Couldn't load your chats.");
+    } finally {
+      setPulling(false);
+    }
+  }, [meId]);
 
   const items = [...state.conversations]
     .filter((c) =>
@@ -201,7 +219,11 @@ export default function Inbox() {
         </View>
         {section === "chats" ? (
           <>
-            <Text style={s.note}>Not end-to-end encrypted yet</Text>
+            <Text style={s.note}>
+              {secureChats
+                ? "Chats with a lock are end-to-end encrypted. The others aren't yet."
+                : "Not end-to-end encrypted yet"}
+            </Text>
             <View style={s.chips} accessibilityRole="tablist">
               {FILTERS.map((f) => {
                 const on = filter === f.id;
@@ -238,10 +260,12 @@ export default function Inbox() {
       ) : error && !state.loaded ? (
         <Problem message={error} onRetry={reload} />
       ) : !state.loaded ? (
-        <Loading />
+        <Loading shape="rows" />
       ) : (
         <FlatList
           data={items}
+          refreshing={pulling}
+          onRefresh={pull}
           keyExtractor={(c) => c.id}
           renderItem={({ item }) => (
             <Row
@@ -334,14 +358,19 @@ function Row({
   const router = useRouter();
   const other = c.recipients.find((r) => r.id !== meId) ?? c.recipients[0];
   const name = title(c, meId);
+  // Its messages are on this device, not the server: the chat screen reads them from there.
+  const secure = c.encryption === "mls";
   return (
     <Pressable
       onPress={() =>
-        router.push({ pathname: "/chat/[id]", params: { id: c.id, title: name, kind: c.type } })
+        router.push({
+          pathname: "/chat/[id]",
+          params: { id: c.id, title: name, kind: c.type, ...(secure ? { secure: "1" } : {}) },
+        })
       }
       onLongPress={onLongPress}
       accessibilityRole="link"
-      accessibilityLabel={`${name}${unread ? `, ${unread} unread` : ""}${muted ? ", muted" : ""}${c.pinned ? ", pinned" : ""}${c.request ? ", message request" : ""}. ${preview(c, meId, unread)}`}
+      accessibilityLabel={`${name}${secure ? ", end-to-end encrypted" : ""}${unread ? `, ${unread} unread` : ""}${muted ? ", muted" : ""}${c.pinned ? ", pinned" : ""}${c.request ? ", message request" : ""}. ${preview(c, meId, unread)}`}
       accessibilityHint={POINTER ? undefined : "Long press to pin, mute or mark as read"}
       style={({ pressed, hovered }: Hover) => [
         s.row,
@@ -354,6 +383,7 @@ function Row({
           <Text style={[s.name, unread > 0 && s.strong]} numberOfLines={1}>
             {name}
           </Text>
+          {secure ? <Icon name="Lock" size={14} color={t.colors.textSoft} /> : null}
           {c.pinned ? <Icon name="PushPin" size={14} color={t.colors.textSoft} /> : null}
           {muted ? <Icon name="BellSlash" size={14} color={t.colors.textSoft} /> : null}
           {c.lastMessage ? (
