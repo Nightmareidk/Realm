@@ -144,6 +144,15 @@ Category: **Social**. Contact email: info@tomyrealm.com. Website: https://tomyre
 
 From `frontend/app` on your PC (Expo account needed; the free plan's monthly builds are enough):
 
+**Once, before the first build:** give Expo's build servers the Firebase file (it stays out of
+Git), or the Play app gets no phone notifications:
+
+```powershell
+npx eas-cli env:set --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --visibility sensitive --environment production --environment preview
+```
+
+Then:
+
 ```powershell
 npx eas-cli build -p android --profile production
 ```
@@ -158,6 +167,17 @@ closed "alpha" track as a draft), once a Google service account key is set up fo
 
 For your own phone before Play: `npx eas-cli build -p android --profile beta-apk` gives an APK you
 can install directly.
+
+### Each update after that
+
+1. Raise `version` in `frontend/app/app.json` (0.1.0 → 0.2.0, or 0.1.1 for small fixes).
+2. Add an entry **at the top** of `shared/contracts/src/changelog.ts` with the same version: a
+   title, up to 5 short highlights (what the app's "What's new" box shows), and the longer
+   sections (what tomyrealm.com/changelog shows). A test fails if the two versions don't match.
+3. Commit, push, update the server (`docs/BETA-SERVER.md`), then build and upload as above.
+
+Each tester sees the "What's new" box once, the first time they open the new version. Someone
+installing for the first time gets the 7-step tour instead (it can be taken again from Settings).
 
 ## 6. Testers: 12 people, 14 days
 
