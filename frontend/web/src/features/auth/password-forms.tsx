@@ -1,6 +1,6 @@
 "use client";
 
-import { Limits, Password, type ResetTokenStatus } from "@realm/contracts";
+import { BREACH_WARNING, Limits, Password, type ResetTokenStatus } from "@realm/contracts";
 import Link from "next/link";
 import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { FormNotice, PasswordField, SubmitButton, TextField } from "@/components/form";
@@ -115,6 +115,9 @@ export function ResetForm({ token }: { token: string }) {
   const [notice, setNotice] = useState<ReactNode>("");
   const [done, setDone] = useState(false);
   const [pending, setPending] = useState(false);
+  /** A password the server warned was in a data breach: sending it again keeps it anyway. */
+  const [breached, setBreached] = useState<string | null>(null);
+  const keepBreached = breached !== null && breached === password;
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -135,7 +138,9 @@ export function ResetForm({ token }: { token: string }) {
     setError("");
     setPending(true);
     try {
-      await api("/auth/password/reset", { body: { token, password } });
+      await api("/auth/password/reset", {
+        body: { token, password, ...(keepBreached ? { allowBreached: true } : {}) },
+      });
       setDone(true);
     } catch (err) {
       setPending(false);
@@ -146,10 +151,11 @@ export function ResetForm({ token }: { token: string }) {
         setStatus("used");
         return;
       }
-      if (
-        err instanceof ApiError &&
-        (err.code === "PASSWORD_TOO_COMMON" || err.code === "PASSWORD_BREACHED")
-      ) {
+      if (err instanceof ApiError && err.code === "PASSWORD_BREACHED") {
+        setBreached(password);
+        return;
+      }
+      if (err instanceof ApiError && err.code === "PASSWORD_TOO_COMMON") {
         setError(err.message);
         input.current?.focus();
         return;
@@ -208,8 +214,9 @@ export function ResetForm({ token }: { token: string }) {
         error={error}
         inputRef={input}
       />
+      <FormNotice tone="info">{keepBreached && BREACH_WARNING}</FormNotice>
       <SubmitButton pending={pending} pendingLabel="Saving your password" className="w-full">
-        Save new password
+        {keepBreached ? "Use this password anyway" : "Save new password"}
       </SubmitButton>
     </form>
   );

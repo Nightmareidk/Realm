@@ -1,7 +1,7 @@
 "use client";
 
 import { SignOut } from "@phosphor-icons/react";
-import { Limits, Password } from "@realm/contracts";
+import { BREACH_WARNING, Limits, Password } from "@realm/contracts";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 import { FormNotice, focusFirstError, PasswordField, SubmitButton } from "@/components/form";
@@ -20,6 +20,9 @@ export function ChangePasswordForm() {
   const [notice, setNotice] = useState("");
   const [done, setDone] = useState(false);
   const [pending, setPending] = useState(false);
+  /** A password the server warned was in a data breach: sending it again keeps it anyway. */
+  const [breached, setBreached] = useState<string | null>(null);
+  const keepBreached = breached !== null && breached === next;
   const currentRef = useRef<HTMLInputElement>(null);
   const nextRef = useRef<HTMLInputElement>(null);
 
@@ -46,10 +49,15 @@ export function ChangePasswordForm() {
     setPending(true);
     try {
       await api("/auth/password/change", {
-        body: { currentPassword: current, newPassword: next },
+        body: {
+          currentPassword: current,
+          newPassword: next,
+          ...(keepBreached ? { allowBreached: true } : {}),
+        },
       });
       setCurrent("");
       setNext("");
+      setBreached(null);
       setDone(true);
     } catch (err) {
       if (err instanceof ApiError && err.signedOut) {
@@ -59,6 +67,11 @@ export function ChangePasswordForm() {
       if (err instanceof ApiError && err.code === "INVALID_CREDENTIALS") {
         setErrors({ currentPassword: "That isn't your current password. Check it and try again." });
         currentRef.current?.select();
+      } else if (err instanceof ApiError && err.code === "PASSWORD_BREACHED") {
+        setBreached(next);
+      } else if (err instanceof ApiError && err.code === "PASSWORD_TOO_COMMON") {
+        setErrors({ newPassword: err.message });
+        nextRef.current?.focus();
       } else if (err instanceof ApiError && Object.keys(err.fields).length > 0) {
         setErrors(err.fields);
       } else {
@@ -100,8 +113,9 @@ export function ChangePasswordForm() {
         error={errors.newPassword}
         inputRef={nextRef}
       />
+      <FormNotice tone="info">{keepBreached && BREACH_WARNING}</FormNotice>
       <SubmitButton pending={pending} pendingLabel="Changing your password" variant="secondary">
-        Change password
+        {keepBreached ? "Use this password anyway" : "Change password"}
       </SubmitButton>
     </form>
   );

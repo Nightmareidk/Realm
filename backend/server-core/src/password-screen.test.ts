@@ -8,6 +8,14 @@ describe("password screen", () => {
     expect(isCommonPassword("QWERTYUIOP")).toBe(true);
   });
 
+  it("refuses common 8- and 9-character passwords now that 8 is the minimum", () => {
+    expect(isCommonPassword("password")).toBe(true);
+    expect(isCommonPassword("12345678")).toBe(true);
+    expect(isCommonPassword("Iloveyou")).toBe(true);
+    expect(isCommonPassword("qwerty123")).toBe(true);
+    expect(isCommonPassword("tq7#mVw2")).toBe(false);
+  });
+
   it("refuses trivial patterns", () => {
     expect(isCommonPassword("zzzzzzzzzzzz")).toBe(true);
     expect(isCommonPassword("abcdefghijkl")).toBe(true);

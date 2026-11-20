@@ -1,4 +1,4 @@
-import { Limits, Username } from "@realm/contracts";
+import { BREACH_WARNING, Limits, Username } from "@realm/contracts";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Linking, StyleSheet, Text, type TextInput, View } from "react-native";
@@ -187,6 +187,9 @@ function Account({
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [taken, setTaken] = useState<string | null>(null);
+  /** A password the server warned was in a data breach: sending it again keeps it anyway. */
+  const [breached, setBreached] = useState<string | null>(null);
+  const keepBreached = breached !== null && breached === f.password;
   const refs = {
     displayName: useRef<TextInput>(null),
     username: useRef<TextInput>(null),
@@ -238,6 +241,7 @@ function Account({
         username: f.username.trim().toLowerCase(),
         email: f.email.trim(),
         password: f.password,
+        ...(keepBreached ? { allowBreached: true } : {}),
         birthDate,
         palette,
       });
@@ -255,8 +259,11 @@ function Account({
       if (err.code === "USERNAME_RESERVED") {
         fe.username = "That username isn't available. Try another.";
       }
-      if (err.code === "PASSWORD_TOO_COMMON" || err.code === "PASSWORD_BREACHED") {
-        fe.password = err.message;
+      if (err.code === "PASSWORD_TOO_COMMON") fe.password = err.message;
+      if (err.code === "PASSWORD_BREACHED") {
+        // A warning, not a refusal: the box under the password explains, and the button keeps it.
+        setBreached(f.password);
+        return;
       }
       if (err.code === "RATE_LIMITED") {
         setNotice(`Too many sign-ups from here. ${waitFor(err.retryAfter)} and try again.`);
@@ -340,6 +347,7 @@ function Account({
           returnKeyType="go"
           onSubmitEditing={submit}
         />
+        {keepBreached ? <Notice tone="info">{BREACH_WARNING}</Notice> : null}
         {web ? (
           <View style={s.terms}>
             <Text style={s.termsText}>By creating an account you agree to the</Text>
@@ -351,7 +359,7 @@ function Account({
       </View>
       <View style={s.foot}>
         <Pill
-          label="Create account"
+          label={keepBreached ? "Use this password anyway" : "Create account"}
           pendingLabel="Creating your account"
           pending={pending}
           onPress={submit}

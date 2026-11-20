@@ -1,4 +1,4 @@
-import { Limits } from "@realm/contracts";
+import { BREACH_WARNING, Limits } from "@realm/contracts";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
@@ -29,6 +29,9 @@ export default function ChangePassword() {
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
+  /** A password the server warned was in a data breach: sending it again keeps it anyway. */
+  const [breached, setBreached] = useState<string | null>(null);
+  const keepBreached = breached !== null && breached === next;
   const currentRef = useRef<TextInput>(null);
   const nextRef = useRef<TextInput>(null);
 
@@ -47,7 +50,11 @@ export default function ChangePassword() {
     setPending(true);
     try {
       await api("/auth/password/change", {
-        body: { currentPassword: current, newPassword: next },
+        body: {
+          currentPassword: current,
+          newPassword: next,
+          ...(keepBreached ? { allowBreached: true } : {}),
+        },
       });
       setDone(true);
     } catch (err) {
@@ -56,10 +63,9 @@ export default function ChangePassword() {
         currentRef.current?.focus();
       } else if (err instanceof ApiError && err.fields.newPassword) {
         setErrors({ next: err.fields.newPassword });
-      } else if (
-        err instanceof ApiError &&
-        (err.code === "PASSWORD_TOO_COMMON" || err.code === "PASSWORD_BREACHED")
-      ) {
+      } else if (err instanceof ApiError && err.code === "PASSWORD_BREACHED") {
+        setBreached(next);
+      } else if (err instanceof ApiError && err.code === "PASSWORD_TOO_COMMON") {
         setErrors({ next: err.message });
       } else {
         setNotice(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
@@ -126,10 +132,11 @@ export default function ChangePassword() {
                   returnKeyType="go"
                   onSubmitEditing={submit}
                 />
+                {keepBreached ? <Notice tone="info">{BREACH_WARNING}</Notice> : null}
               </View>
               <View style={s.foot}>
                 <Pill
-                  label="Change password"
+                  label={keepBreached ? "Use this password anyway" : "Change password"}
                   pendingLabel="Changing"
                   pending={pending}
                   onPress={submit}

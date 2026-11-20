@@ -8,6 +8,13 @@ import { DisplayName, SelfUser, ThemeAccent, Username } from "./users";
 
 export const Email = z.email("Enter a valid email address").trim().max(254);
 
+/**
+ * What people see when a new password is found in data breaches (PASSWORD_BREACHED). It's a
+ * warning: sending the same password again with `allowBreached` keeps it.
+ */
+export const BREACH_WARNING =
+  "This password has shown up in a data breach, so it's easier for someone to guess. You can pick another one, or use it anyway.";
+
 export const Password = z
   .string()
   .min(Limits.password.min, `Use at least ${Limits.password.min} characters`)
@@ -41,6 +48,8 @@ export const RegisterBody = z
     username: Username,
     displayName: DisplayName,
     password: Password,
+    /** Keep a password found in data breaches after the PASSWORD_BREACHED warning. */
+    allowBreached: z.boolean().optional(),
     birthDate: BirthDate,
     /** The colour picked on sign-up's first step (the profile colour). */
     accent: ThemeAccent.optional(),
@@ -141,10 +150,12 @@ export const ForgotPasswordBody = z.object({ email: Email });
 export const ResetPasswordBody = z.object({
   token: z.string().min(20).max(200),
   password: Password,
+  allowBreached: z.boolean().optional(),
 });
 export const ChangePasswordBody = z.object({
   currentPassword: z.string().min(1).max(Limits.password.max),
   newPassword: Password,
+  allowBreached: z.boolean().optional(),
 });
 
 export const GatewayTicket = z.object({

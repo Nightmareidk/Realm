@@ -2,7 +2,7 @@
 export const Limits = {
   username: { min: 3, max: 32 },
   displayName: { min: 1, max: 48 },
-  password: { min: 10, max: 256 },
+  password: { min: 8, max: 256 },
   bio: { max: 300 },
   pronouns: { max: 40 },
   minimumAgeYears: 13,

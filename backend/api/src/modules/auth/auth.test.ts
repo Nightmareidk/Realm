@@ -1,6 +1,7 @@
+import { createHash } from "node:crypto";
 import { eq, schema } from "@realm/db";
 import { sha256Hex } from "@realm/server-core";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   browser,
   createTestApp,
@@ -19,7 +20,7 @@ afterAll(async () => {
 });
 
 let ip = 0;
-/** Each simulated sign-up comes from its own IP (registration is limited to 5/hour/IP). */
+/** Each simulated sign-up comes from its own IP (5 accounts per IP in 5 minutes). */
 const nextIp = () => `10.0.${Math.floor(++ip / 250)}.${ip % 250}`;
 
 async function register(account = newAccount(), remoteAddress = nextIp()) {
@@ -133,6 +134,79 @@ describe("registration", () => {
       statuses.push((await register(newAccount(), "192.0.2.99")).res.statusCode);
     expect(statuses.slice(0, 5).every((s) => s === 201)).toBe(true);
     expect(statuses[5]).toBe(429);
+  });
+
+  it("doesn't count turned-down tries against the sign-up limit", async () => {
+    const from = "192.0.2.77";
+    for (let i = 0; i < 6; i++) {
+      const tried = await register(newAccount({ password: "password123" }), from);
+      expect(tried.res.json().error.code).toBe("PASSWORD_TOO_COMMON");
+    }
+    for (let i = 0; i < 5; i++) {
+      expect((await register(newAccount(), from)).res.statusCode).toBe(201);
+    }
+  });
+
+  it("allows 8-character passwords", async () => {
+    const { res } = await register(newAccount({ password: "tq7#mVw2" }));
+    expect(res.statusCode).toBe(201);
+  });
+
+  it("warns about a password found in breaches, then keeps it when asked", async () => {
+    const password = "breached but mine 2026";
+    const hash = createHash("sha1").update(password).digest("hex").toUpperCase();
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      async () =>
+        new Response(`0000000000000000000000000000000000A:3
+
+${hash.slice(5)}:42`),
+    );
+    const config = t.deps.config as { REALM_PWNED_PASSWORDS: boolean };
+    config.REALM_PWNED_PASSWORDS = true;
+    try {
+      const account = newAccount({ password });
+      const warned = await register(account);
+      expect(warned.res.statusCode).toBe(400);
+      expect(warned.res.json().error.code).toBe("PASSWORD_BREACHED");
+      const kept = await register({ ...account, allowBreached: true } as never);
+      expect(kept.res.statusCode).toBe(201);
+    } finally {
+      config.REALM_PWNED_PASSWORDS = false;
+      fetchSpy.mockRestore();
+    }
+  });
+});
+
+describe("changing your password", () => {
+  const change = (cookie: string | undefined, currentPassword: string, newPassword: string) =>
+    t.app.inject({
+      method: "POST",
+      url: "/v1/auth/password/change",
+      headers: browser(cookie),
+      payload: { currentPassword, newPassword },
+    });
+
+  it("never pauses someone for picking a new password that's turned down", async () => {
+    const { account, cookie } = await register();
+    for (let i = 0; i < 10; i++) {
+      const tried = await change(cookie, account.password, "password123");
+      expect(tried.json().error.code).toBe("PASSWORD_TOO_COMMON");
+    }
+    expect((await change(cookie, account.password, "another long passphrase")).statusCode).toBe(
+      204,
+    );
+  });
+
+  it("pauses after too many wrong current passwords", async () => {
+    const { cookie } = await register();
+    const statuses: number[] = [];
+    for (let i = 0; i < 9; i++) {
+      statuses.push(
+        (await change(cookie, "not my password at all", "fresh long passphrase")).statusCode,
+      );
+    }
+    expect(statuses.slice(0, 8).every((s) => s === 401)).toBe(true);
+    expect(statuses[8]).toBe(429);
   });
 });
 

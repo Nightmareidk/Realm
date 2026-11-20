@@ -3,6 +3,7 @@
 import { Check } from "@phosphor-icons/react";
 import {
   type AuthResult,
+  BREACH_WARNING,
   DisplayName,
   Email,
   Limits,
@@ -509,6 +510,9 @@ function AccountStep({
   const [tried, setTried] = useState(false);
   const [notice, setNotice] = useState<ReactNode>("");
   const [pending, setPending] = useState(false);
+  /** A password the server warned was in a data breach: sending it again keeps it anyway. */
+  const [breached, setBreached] = useState<string | null>(null);
+  const keepBreached = breached !== null && breached === f.password;
   const [free, setFree] = useState<{ name: string; result: UsernameAvailability } | null>(null);
   const touched = useRef(false);
   const refs = {
@@ -577,6 +581,7 @@ function AccountStep({
           username: f.username,
           email: f.email.trim(),
           password: f.password,
+          ...(keepBreached ? { allowBreached: true } : {}),
           birthDate,
           palette,
         },
@@ -608,8 +613,12 @@ function AccountStep({
       if (err.code === "USERNAME_TAKEN") fe.username = `@${f.username} is taken. Try another.`;
       if (err.code === "USERNAME_RESERVED")
         fe.username = "That username isn't available. Try another.";
-      if (err.code === "PASSWORD_TOO_COMMON" || err.code === "PASSWORD_BREACHED")
-        fe.password = err.message;
+      if (err.code === "PASSWORD_TOO_COMMON") fe.password = err.message;
+      if (err.code === "PASSWORD_BREACHED") {
+        // A warning, not a refusal: the box under the password explains, and the button keeps it.
+        setBreached(f.password);
+        return;
+      }
       if (err.code === "RATE_LIMITED") {
         setNotice(`Too many sign-ups from here. ${waitFor(err.retryAfter)} and try again.`);
       }
@@ -681,6 +690,7 @@ function AccountStep({
           error={errors.password}
           inputRef={refs.password}
         />
+        <FormNotice tone="info">{keepBreached && BREACH_WARNING}</FormNotice>
       </div>
       <p className="mt-7 text-[0.95rem] leading-snug text-fg-soft">
         By creating an account you agree to the{" "}
@@ -695,7 +705,7 @@ function AccountStep({
       </p>
       <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
         <SubmitButton pending={pending} pendingLabel="Creating your account" className="px-9">
-          Create account
+          {keepBreached ? "Use this password anyway" : "Create account"}
         </SubmitButton>
         <span className="text-fg-soft">{stepLabel}</span>
       </div>

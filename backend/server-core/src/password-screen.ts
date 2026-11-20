@@ -2,14 +2,68 @@ import { createHash } from "node:crypto";
 
 /**
  * Screens a new password against what attackers try first (NIST SP 800-63B rev 4; OWASP ASVS
- * 6.2.4): a short local list of passwords long enough to pass Realm's 10-character minimum but
+ * 6.2.4): a short local list of passwords long enough to pass Realm's 8-character minimum but
  * still common, and trivial patterns. Optionally also against Have I Been Pwned's Pwned
  * Passwords (k-anonymity: only the first five characters of the SHA-1 hash leave the server, and
- * an unreachable service never blocks anyone).
+ * an unreachable service never blocks anyone). A breach hit is a warning the person can accept;
+ * the common list is always refused.
  */
 
-/** Common passwords of 10+ characters, lowercased (from public breach top lists). */
+/** Common passwords of 8+ characters, lowercased (from public breach top lists). */
 const COMMON = new Set([
+  "12345678",
+  "123456789",
+  "87654321",
+  "11223344",
+  "12341234",
+  "1234qwer",
+  "qwer1234",
+  "q1w2e3r4",
+  "1q2w3e4r",
+  "1qaz2wsx",
+  "zaq12wsx",
+  "qwerty12",
+  "qwerty123",
+  "qwertyui",
+  "asdfghjk",
+  "asdf1234",
+  "zxcvbnm1",
+  "aa123456",
+  "abc12345",
+  "abcd1234",
+  "a1b2c3d4",
+  "password",
+  "password1",
+  "password!",
+  "passw0rd",
+  "p@ssword",
+  "p@ssw0rd",
+  "changeme",
+  "welcome1",
+  "letmein1",
+  "trustno1",
+  "iloveyou",
+  "iloveyou1",
+  "sunshine",
+  "princess",
+  "football",
+  "baseball",
+  "superman",
+  "starwars",
+  "computer",
+  "internet",
+  "whatever",
+  "michael1",
+  "charlie1",
+  "monkey12",
+  "dragon12",
+  "master12",
+  "shadow12",
+  "pokemon1",
+  "minecraft",
+  "fortnite",
+  "liverpool",
+  "realm123",
   "1234567890",
   "0987654321",
   "1234567891",

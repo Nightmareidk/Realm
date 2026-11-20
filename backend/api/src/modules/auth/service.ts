@@ -1,5 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import {
+  BREACH_WARNING,
   isMinor,
   type LoginBody,
   type LoginCodeBody,
@@ -93,13 +94,14 @@ export class AuthService {
   }
 
   /**
-   * Refuses passwords attackers try first: common ones, trivial patterns, the person's own name,
-   * and (when switched on) passwords found in breaches.
+   * Refuses passwords attackers try first: common ones, trivial patterns and the person's own
+   * name. A password found in data breaches (when that check is on) is only a warning: the first
+   * try answers PASSWORD_BREACHED, and the person can send it again with `allowBreached` to keep it.
    */
-  private async screen(password: string, related: string[]) {
+  private async screen(password: string, related: string[], allowBreached = false) {
     const result = await screenPassword(password, {
       related,
-      pwned: this.deps.config.REALM_PWNED_PASSWORDS,
+      pwned: this.deps.config.REALM_PWNED_PASSWORDS && !allowBreached,
     });
     if (result === "common") {
       throw badRequest(
@@ -108,10 +110,7 @@ export class AuthService {
       );
     }
     if (result === "breached") {
-      throw badRequest(
-        "PASSWORD_BREACHED",
-        "That password has shown up in a data breach, so it's easy to guess. Pick another one.",
-      );
+      throw badRequest("PASSWORD_BREACHED", BREACH_WARNING);
     }
   }
 
@@ -119,7 +118,11 @@ export class AuthService {
     const kept = await whyReserved(this.deps.db, body.username);
     if (kept) throw conflict("USERNAME_RESERVED", RESERVED_MESSAGE[kept]);
     const email = body.email.toLowerCase();
-    await this.screen(body.password, [body.username, email.split("@")[0] ?? ""]);
+    await this.screen(
+      body.password,
+      [body.username, email.split("@")[0] ?? ""],
+      body.allowBreached,
+    );
 
     const existing = await this.deps.db
       .select({ username: users.username, email: users.email })
@@ -529,7 +532,12 @@ export class AuthService {
     return "valid";
   }
 
-  async resetPassword(token: string, password: string, client: ClientContext) {
+  async resetPassword(
+    token: string,
+    password: string,
+    client: ClientContext,
+    allowBreached = false,
+  ) {
     await this.enforce(Limits.reset, client.ip);
     const tokenHash = sha256Hex(token);
     const now = new Date();
@@ -546,7 +554,7 @@ export class AuthService {
       .limit(1);
     if (!reset) throw badRequest("TOKEN_INVALID", "This reset link isn't valid anymore.");
     const owner = await this.getUser(reset.userId);
-    await this.screen(password, [owner.username, owner.email.split("@")[0] ?? ""]);
+    await this.screen(password, [owner.username, owner.email.split("@")[0] ?? ""], allowBreached);
 
     const passwordHash = await hashPassword(password);
     const user = await this.deps.db.transaction(async (tx) => {
@@ -577,13 +585,17 @@ export class AuthService {
     current: string,
     next: string,
     client: ClientContext,
+    allowBreached = false,
   ) {
+    // Wrong current passwords count (someone with a stolen session guessing it); once the right
+    // one is given, the count clears, so turning down the new password never locks anyone out.
     await this.enforce(Limits.loginAccount, `change:${userId}`);
     const user = await this.getUser(userId);
     if (!(await verifyPassword(user.passwordHash, current))) {
       throw new AppError(401, "INVALID_CREDENTIALS", "That isn't your current password.");
     }
-    await this.screen(next, [user.username, user.email.split("@")[0] ?? ""]);
+    await this.deps.limiter.reset(Limits.loginAccount, `change:${userId}`);
+    await this.screen(next, [user.username, user.email.split("@")[0] ?? ""], allowBreached);
     const passwordHash = await hashPassword(next);
     await this.deps.db.transaction(async (tx) => {
       await tx.update(users).set({ passwordHash }).where(eq(users.id, userId));

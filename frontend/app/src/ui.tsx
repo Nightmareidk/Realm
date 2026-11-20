@@ -273,12 +273,23 @@ export const Field = forwardRef<
 });
 
 /** A notice above a form's submit: what went wrong, said once. */
-export function Notice({ children }: { children: ReactNode }) {
+/** A message above or inside a form: an error ("danger", the default) or a calmer heads-up ("info"). */
+export function Notice({
+  children,
+  tone = "danger",
+}: {
+  children: ReactNode;
+  tone?: "danger" | "info";
+}) {
   const { t } = useTheme();
   const s = useStyles(make);
   return (
-    <View style={s.notice} accessibilityLiveRegion="polite">
-      <Icon name="WarningCircle" size={20} color={t.colors.danger} />
+    <View style={[s.notice, tone === "info" && s.noticeInfo]} accessibilityLiveRegion="polite">
+      <Icon
+        name="WarningCircle"
+        size={20}
+        color={tone === "info" ? t.colors.textSoft : t.colors.danger}
+      />
       <Text style={s.noticeText}>{children}</Text>
     </View>
   );
@@ -390,6 +401,7 @@ const make = (t: NativeTheme) =>
       borderColor: t.colors.dangerLine,
       backgroundColor: "rgba(11,11,14,0.7)",
     },
+    noticeInfo: { borderColor: t.colors.border },
     noticeText: {
       flex: 1,
       fontFamily: t.fonts.body,

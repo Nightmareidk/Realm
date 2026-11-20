@@ -28,7 +28,7 @@ import { AppError, badRequest, notFound } from "../../lib/errors";
 import { toSelfUser, toSessionInfo } from "../../lib/serialize";
 import { revokeAllSessions, revokeSession, SESSION_COOKIE } from "../../lib/sessions";
 import { authOf, requireAuth, sessionCookieOptions } from "../../plugins/context";
-import { enforceLimit } from "../../plugins/security";
+import { checkLimit, enforceLimit } from "../../plugins/security";
 import { AuthService } from "./service";
 
 const { sessions } = schema;
@@ -121,8 +121,12 @@ export const authRoutes =
       { schema: { body: RegisterBody, response: { 201: AuthResult } } },
       async (req, reply) => {
         if (holdActive(req)) throw underAge();
-        await enforceLimit(deps, Limits.register, req.ip);
+        // Every try counts toward the loose limit; only an account actually made counts toward
+        // the tight one, so a turned-down password or a taken username never locks anyone out.
+        await enforceLimit(deps, Limits.registerTry, req.ip);
+        await checkLimit(deps, Limits.register, req.ip);
         const result = await service.register(req.body, req.client);
+        await deps.limiter.hit(Limits.register, req.ip);
         return reply.status(201).send(issue(req, reply, result));
       },
     );
@@ -191,7 +195,12 @@ export const authRoutes =
     );
 
     app.post("/password/reset", { schema: { body: ResetPasswordBody } }, async (req, reply) => {
-      await service.resetPassword(req.body.token, req.body.password, req.client);
+      await service.resetPassword(
+        req.body.token,
+        req.body.password,
+        req.client,
+        req.body.allowBreached,
+      );
       reply.clearCookie(SESSION_COOKIE, { path: "/", domain: deps.config.REALM_COOKIE_DOMAIN });
       return reply.status(204).send();
     });
@@ -207,6 +216,7 @@ export const authRoutes =
           req.body.currentPassword,
           req.body.newPassword,
           req.client,
+          req.body.allowBreached,
         );
         return reply.status(204).send();
       },

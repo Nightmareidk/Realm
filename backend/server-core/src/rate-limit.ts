@@ -31,6 +31,20 @@ export class RateLimiter {
     };
   }
 
+  /**
+   * The rule's state without counting this request: for limits that count only what succeeded
+   * (accounts actually made), so a turned-down try never uses one up.
+   */
+  async peek(rule: RateLimitRule, key: string): Promise<RateLimitResult> {
+    const count = Number(await this.store.get(`rl:${rule.bucket}:${key}`)) || 0;
+    return {
+      allowed: count < rule.limit,
+      limit: rule.limit,
+      remaining: Math.max(0, rule.limit - count),
+      resetSeconds: rule.windowSeconds,
+    };
+  }
+
   async reset(rule: RateLimitRule, key: string): Promise<void> {
     await this.store.del(`rl:${rule.bucket}:${key}`);
   }
@@ -39,7 +53,12 @@ export class RateLimiter {
 /** Route budgets in one place so they're easy to audit and tune. */
 export const Limits = {
   global: { bucket: "global:ip", limit: 600, windowSeconds: 60 },
-  register: { bucket: "auth:register:ip", limit: 5, windowSeconds: 3600 },
+  /**
+   * Sign-up. Only accounts actually made count toward `register`, so picking another password or
+   * username never locks anyone out; `registerTry` counts every try, against scripts.
+   */
+  register: { bucket: "auth:register:ip", limit: 5, windowSeconds: 300 },
+  registerTry: { bucket: "auth:register-try:ip", limit: 20, windowSeconds: 300 },
   loginIp: { bucket: "auth:login:ip", limit: 20, windowSeconds: 900 },
   loginAccount: { bucket: "auth:login:account", limit: 8, windowSeconds: 900 },
   /** One-time sign-in codes by email: few per account, a few more per address. */
@@ -58,7 +77,8 @@ export const Limits = {
   resend: { bucket: "auth:resend:user", limit: 3, windowSeconds: 900 },
   forgotIp: { bucket: "auth:forgot:ip", limit: 5, windowSeconds: 3600 },
   forgotEmail: { bucket: "auth:forgot:email", limit: 3, windowSeconds: 3600 },
-  reset: { bucket: "auth:reset:ip", limit: 10, windowSeconds: 3600 },
+  /** Reset links are long random tokens (nothing to guess), so this only stops floods. */
+  reset: { bucket: "auth:reset:ip", limit: 20, windowSeconds: 300 },
   gatewayTicket: { bucket: "gateway:ticket:user", limit: 30, windowSeconds: 60 },
   /** End-to-end encryption: new devices, KeyPackage uploads, and claims (claims use up others'). */
   e2eeDevice: { bucket: "e2ee:device:user", limit: 10, windowSeconds: 3600 },

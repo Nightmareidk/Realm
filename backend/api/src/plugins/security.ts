@@ -56,3 +56,13 @@ export async function enforceLimit(
   const result = await deps.limiter.hit(rule, key);
   if (!result.allowed) throw rateLimited(result.resetSeconds);
 }
+
+/** Refuses when a limit that counts only successes is used up, without counting this request. */
+export async function checkLimit(
+  deps: Deps,
+  rule: (typeof Limits)[keyof typeof Limits],
+  key: string,
+): Promise<void> {
+  const result = await deps.limiter.peek(rule, key);
+  if (!result.allowed) throw rateLimited(result.resetSeconds);
+}
