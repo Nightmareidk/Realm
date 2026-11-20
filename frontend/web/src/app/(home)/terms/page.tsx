@@ -35,7 +35,8 @@ export default function TermsPage() {
       <ul>
         <li>
           <strong>Anything sexual involving someone under 18</strong>, ever. We remove it, close the
-          account and report it to the authorities.
+          account and report it to the authorities (our{" "}
+          <Link href="/child-safety">child safety standards</Link>).
         </li>
         <li>Nudity or sexual content in public places, and sending it to people who didn't ask.</li>
         <li>
