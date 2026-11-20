@@ -22,9 +22,11 @@ import { E2eeChatService } from "./modules/e2ee/chat-service";
 import { e2eeRoutes } from "./modules/e2ee/routes";
 import { E2eeService } from "./modules/e2ee/service";
 import { friendRoutes } from "./modules/friends/routes";
+import { helpRoutes } from "./modules/help/routes";
 import { mediaRoutes } from "./modules/media/routes";
 import { musicRoutes, soundRoutes, storyRoutes } from "./modules/music/routes";
 import { MusicService } from "./modules/music/service";
+import { placeRoutes } from "./modules/places/routes";
 import { releaseRoutes } from "./modules/releases/routes";
 import { meSafetyRoutes, moderationRoutes, reportRoutes } from "./modules/safety/routes";
 import { SafetyService } from "./modules/safety/service";
@@ -131,6 +133,8 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
       await v1.register(soundRoutes(deps, music), { prefix: "/sounds" });
       await v1.register(musicRoutes(deps, music), { prefix: "/music" });
       await v1.register(storyRoutes(deps, music), { prefix: "/stories" });
+      await v1.register(placeRoutes(deps), { prefix: "/places" });
+      await v1.register(helpRoutes(deps), { prefix: "/help" });
       // The API's map is for building Realm, not for strangers mapping it out: off in production.
       if (!deps.config.isProduction) {
         v1.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());

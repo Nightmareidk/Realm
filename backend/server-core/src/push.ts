@@ -1,14 +1,54 @@
 import { signRS256 } from "./jwt";
 import type { Logger } from "./logger";
 
+export type PushPlatform = "web" | "ios" | "android";
+
+/** The phone's notification groups (Android "channels"): people can turn each off on its own. */
+export type PushChannel = "messages" | "activity";
+
 export interface PushMessage {
   token: string;
+  /** Where the token came from: the website's service worker, or the phone app. */
+  platform?: PushPlatform;
   title: string;
   body: string;
-  /** Where a tap opens, e.g. `/spaces/lobby/general`. */
+  /** Where a tap opens, as a website path, e.g. `/spaces/lobby/general`. */
   link: string;
   /** Notifications with the same tag replace each other (one per room, not one per message). */
   tag: string;
+  /** Which group it belongs to on the phone. */
+  channel?: PushChannel;
+  /** Small extra hints for the phone app, such as a chat's id and kind (strings only). */
+  extra?: Record<string, string>;
+}
+
+/**
+ * The Firebase message for one device. FCM data values must all be strings.
+ * - Website: a data message that Realm's service worker (`public/sw.js`) shows itself.
+ * - Android app: the data shape the phone's notifications library reads (`title`, `message`,
+ *   `channelId`, `tag`, and `body` as JSON for the app), so it shows while the app is closed too.
+ */
+export function fcmMessage(m: PushMessage) {
+  const extra = m.extra ?? {};
+  if (m.platform === "android") {
+    return {
+      token: m.token,
+      data: {
+        title: m.title,
+        message: m.body,
+        body: JSON.stringify({ link: m.link, tag: m.tag, ...extra }),
+        channelId: m.channel ?? "messages",
+        tag: m.tag,
+        color: "#FF8A3D",
+      },
+      android: { priority: "high", collapse_key: m.tag, ttl: "3600s" },
+    };
+  }
+  return {
+    token: m.token,
+    data: { ...extra, title: m.title, body: m.body, link: m.link, tag: m.tag },
+    webpush: { headers: { Urgency: "high", TTL: "3600" } },
+  };
 }
 
 export type PushResult = "sent" | "gone" | "failed";
@@ -81,6 +121,7 @@ export class FcmPusher implements Pusher {
         grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
         assertion,
       }),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) throw new Error(`FCM auth failed: ${res.status}`);
     const json = (await res.json()) as { access_token: string; expires_in: number };
@@ -98,14 +139,8 @@ export class FcmPusher implements Pusher {
             authorization: `Bearer ${await this.accessToken()}`,
             "content-type": "application/json",
           },
-          body: JSON.stringify({
-            message: {
-              token: m.token,
-              data: { title: m.title, body: m.body, link: m.link, tag: m.tag },
-              webpush: { headers: { Urgency: "high", TTL: "3600" } },
-              android: { priority: "high", collapse_key: m.tag },
-            },
-          }),
+          body: JSON.stringify({ message: fcmMessage(m) }),
+          signal: AbortSignal.timeout(10_000),
         },
       );
       if (res.ok) return "sent";

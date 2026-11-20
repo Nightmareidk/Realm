@@ -98,9 +98,9 @@ reasons given, never for ads or analytics):
 | Audio › Music files | songs the user uploads to their library; **optional** | App functionality |
 | Files and docs | files sent in chat; **optional** | App functionality |
 | App activity › App interactions | likes, follows, saves, songs played (Recently played) | App functionality |
-| App activity › Other user-generated content | posts, comments, Stories, notes, polls | App functionality |
+| App activity › Other user-generated content | posts, comments, Stories, notes, polls; Ask Realm help questions (processed ephemerally, not stored) | App functionality |
 | App info and performance › Crash logs / Diagnostics | **Not collected** (no crash or analytics tools) | — |
-| Device or other IDs | notification token, if notifications are on | App functionality |
+| Device or other IDs | the phone's notification token (Firebase), if notifications are on | App functionality |
 
 Not collected: financial info, health, contacts, calendar, web history, installed apps, SMS/call
 logs, advertising ID.
@@ -199,7 +199,8 @@ can install directly.
 
 ## 7. Known gaps to tell testers about
 
-- **No push notifications yet** (Firebase isn't connected): new messages show when the app is open.
+- **Notifications are new:** tell us if one doesn't arrive, comes twice, or opens the wrong screen.
+- **Ask Realm** (Settings › Help) is a simple helper with fixed answers, there for the beta only.
 - **Voice rooms are on the website only** for now; the app says so and points there.
 - **Messages are not end-to-end encrypted yet** (the privacy policy says so).
 - Spotify listening is limited by Spotify's rules for apps in development; the free library works.

@@ -10,6 +10,7 @@ import { NowBar } from "./music/now-bar";
 import { useSession } from "./session";
 import { Avatar } from "./social/avatar";
 import { type NativeTheme, useStyles, useTheme } from "./theme";
+import { useTourSpot } from "./tour";
 import { useUnreadCount } from "./unread";
 
 type BarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0];
@@ -33,6 +34,13 @@ export function TabBar({ state, navigation }: BarProps) {
   const unread = useUnreadCount();
   const floating = t.style.tabBar === "floating";
   const wide = useWide();
+  // Stops on the welcome tour (src/tour.tsx).
+  const spots: Record<string, ReturnType<typeof useTourSpot>> = {
+    explore: useTourSpot("tab-explore"),
+    clips: useTourSpot("tab-clips"),
+    inbox: useTourSpot("tab-inbox"),
+    you: useTourSpot("tab-you"),
+  };
   // On a computer the menu down the left (in the app's frame) stands in for the tabs.
   if (wide) return null;
   return (
@@ -62,6 +70,8 @@ export function TabBar({ state, navigation }: BarProps) {
           return (
             <Pressable
               key={route.key}
+              ref={spots[route.name]}
+              collapsable={false}
               onPress={press}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}

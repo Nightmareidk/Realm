@@ -22,7 +22,9 @@ import { PostCard } from "@/social/post-card";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Sticker } from "@/themes/art";
+import { useTourSpot } from "@/tour";
 import { Pill, Wordmark } from "@/ui";
+import { FirstRun } from "@/whats-new";
 
 /**
  * Home (the owner's pick, 2026-10-17: "like Instagram, opening on the posts of people you
@@ -43,6 +45,8 @@ export default function Home() {
   const unconfirmed = session.status === "signedIn" && !session.user.emailVerified;
   const sheet = useSheet();
   const wide = useWide();
+  const createSpot = useTourSpot("create");
+  const activitySpot = useTourSpot("activity");
   // The photo on screen, whose colours light the room (Now Playing's glow).
   const lit = t.style.posts === "glow" && t.style.glow > 0;
   const [ambient, setAmbient] = useState<string | null>(null);
@@ -94,6 +98,8 @@ export default function Home() {
           </View>
           <View style={s.topRight}>
             <Pressable
+              ref={activitySpot}
+              collapsable={false}
               accessibilityRole="button"
               accessibilityLabel={unread ? `Activity, ${unread} new` : "Activity"}
               onPress={() => router.push("/activity")}
@@ -103,6 +109,8 @@ export default function Home() {
               {unread ? <View style={s.badge} /> : null}
             </Pressable>
             <Pressable
+              ref={createSpot}
+              collapsable={false}
               accessibilityRole="button"
               accessibilityLabel="Create: a post, a Story or a Clip"
               onPress={create}
@@ -137,6 +145,8 @@ export default function Home() {
 
   return (
     <AppScreen>
+      {/* The welcome tour the first time, then "What's new" once after each update. */}
+      <FirstRun />
       {lit && ambient ? (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
           <Image

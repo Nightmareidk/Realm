@@ -66,3 +66,19 @@ export async function disablePush(): Promise<PushState> {
   }
   return "off";
 }
+
+/**
+ * Signing out: this browser stops getting that account's notifications (a shared computer
+ * shouldn't show the next person yours). Quick, and never in the way: it gives up after 3 seconds.
+ */
+export async function forgetPush(): Promise<void> {
+  let stored = false;
+  try {
+    stored = Boolean(localStorage.getItem(TOKEN_KEY));
+  } catch {}
+  if (!stored) return;
+  await Promise.race([
+    disablePush().catch(() => {}),
+    new Promise((done) => setTimeout(done, 3000)),
+  ]);
+}

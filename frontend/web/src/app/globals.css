@@ -1,9 +1,14 @@
 @import "tailwindcss";
 @import "@realm/design-tokens/tokens.css";
 
-/* Only Realm's tokens exist as colors — no stray Tailwind palette values. */
+/*
+ * Only Realm's tokens exist as colors — no stray Tailwind palette values. White and black stay,
+ * for words and shades laid over photos, videos and maps, which look the same in every theme.
+ */
 @theme {
   --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
 }
 
 /* The theme's colour and lights are typed, so a theme change cross-fades instead of snapping. */
@@ -1031,4 +1036,37 @@ html:not([data-look="plain"]) .r-chat-wall {
   .r-burst > svg {
     animation-duration: 400ms;
   }
+}
+
+/*
+ * The free maps (MapLibre on OpenFreeMap) are dark in every theme, so their controls are too:
+ * the map credit and the zoom buttons sit on a dark glass instead of MapLibre's white.
+ */
+.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib,
+.maplibregl-map .maplibregl-ctrl-attrib.maplibregl-compact {
+  background-color: rgb(11 11 14 / 0.72);
+  color: rgb(245 244 242 / 0.82);
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib a {
+  color: inherit;
+}
+.maplibregl-map .maplibregl-ctrl-attrib.maplibregl-compact {
+  border-radius: 0.6rem;
+}
+.maplibregl-map .maplibregl-ctrl-attrib-button {
+  background-color: rgb(245 244 242 / 0.9);
+  border-radius: 999px;
+}
+.maplibregl-map .maplibregl-ctrl-group:not(:empty) {
+  background: rgb(11 11 14 / 0.78);
+  box-shadow: 0 0 0 1px rgb(245 244 242 / 0.14);
+  border-radius: 0.7rem;
+}
+.maplibregl-map .maplibregl-ctrl-group button + button {
+  border-top-color: rgb(245 244 242 / 0.14);
+}
+.maplibregl-map .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1);
 }

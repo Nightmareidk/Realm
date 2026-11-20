@@ -49,6 +49,15 @@ export const SETTINGS: {
     ],
   },
   { group: "Security", items: [{ href: "/settings/devices", label: "Devices" }] },
+  // Temporary: the help chat for the course project (features/settings/help-chat.tsx).
+  {
+    group: "Help",
+    items: [
+      { href: "/settings/changelog", label: "What's new" },
+      // Temporary (course project): remove with features/settings/help-chat.tsx.
+      { href: "/settings/help", label: "Ask Realm" },
+    ],
+  },
 ];
 
 export function isActive(pathname: string, href: string) {

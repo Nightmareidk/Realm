@@ -12,6 +12,7 @@ import {
 import { Platform } from "react-native";
 import { startE2ee, stopE2ee } from "./e2ee";
 import { live } from "./live";
+import { forgetPhonePush, startPhonePush, watchPhonePushToken } from "./push";
 import { api, setSessionToken, whenSessionEnds } from "./server";
 import { choiceFrom, useTheme } from "./theme";
 import { refreshUnread, resetUnread } from "./unread";
@@ -128,7 +129,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     refreshUnread(meId).catch(() => {});
     // Encrypted chats, when this server offers them: set this device up and fetch what's waiting.
     startE2ee(meId);
-    return () => live.stop();
+    // Phone notifications: keep this phone signed up (and ask, the very first time).
+    void startPhonePush();
+    const stopWatching = watchPhonePushToken();
+    return () => {
+      live.stop();
+      stopWatching();
+    };
   }, [meId]);
 
   const start = useCallback(
@@ -169,6 +176,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setSession({ status: "signedIn", user });
       },
       async signOut() {
+        // First, while still signed in: this phone stops getting this account's notifications.
+        await forgetPhonePush();
         await api("/auth/logout", { method: "POST" }).catch(() => {});
         await tokenStore.deleteItemAsync(TOKEN_KEY).catch(() => {});
         setSessionToken(null);

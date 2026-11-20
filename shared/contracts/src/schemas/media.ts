@@ -78,6 +78,30 @@ export const Place = z
   .meta({ id: "Place" });
 export type Place = z.infer<typeof Place>;
 
+/** A place from Realm's own place search (OpenStreetMap data), ready to share. */
+export const FoundPlace = Place.extend({ id: z.string().max(80) }).meta({ id: "FoundPlace" });
+export type FoundPlace = z.infer<typeof FoundPlace>;
+
+export const PlaceSearchQuery = z.object({
+  q: z.string().trim().min(2).max(100),
+  /** Near here first (rounded by the server; never stored). */
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lng: z.coerce.number().min(-180).max(180).optional(),
+  /** "1": towns and cities only (Spaces near you, a Space's home town). */
+  cities: z.enum(["0", "1"]).optional(),
+});
+export type PlaceSearchQuery = z.infer<typeof PlaceSearchQuery>;
+
+export const PlaceList = z.object({ items: z.array(FoundPlace) }).meta({ id: "PlaceList" });
+export type PlaceList = z.infer<typeof PlaceList>;
+
+export const PlacePointQuery = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+});
+export const PlaceAt = z.object({ place: FoundPlace.nullable() }).meta({ id: "PlaceAt" });
+export type PlaceAt = z.infer<typeof PlaceAt>;
+
 /** A Space's city, for "nearby" in Explore. Stored rounded to about a kilometre. */
 export const SpaceLocation = z.object({
   city: z.string().trim().min(1).max(120),

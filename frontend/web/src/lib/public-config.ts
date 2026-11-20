@@ -10,13 +10,16 @@ export const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
 /** Optional: a Map ID from Google Cloud's map styling, to give the maps Realm's own look. */
 export const GOOGLE_MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "";
 
-/** Which maps Realm draws: Google when its key is set, otherwise Mapbox, otherwise none. */
-export const MAP_PROVIDER: "google" | "mapbox" | null = GOOGLE_MAPS_KEY
+/**
+ * Which maps Realm draws: Google when its key is set, otherwise Mapbox, otherwise the free maps
+ * (OpenStreetMap data from OpenFreeMap, with place search through Realm's own API). No key needed.
+ */
+export const MAP_PROVIDER: "google" | "mapbox" | "osm" = GOOGLE_MAPS_KEY
   ? "google"
   : MAPBOX_TOKEN
     ? "mapbox"
-    : null;
-export const MAPS_ON = MAP_PROVIDER !== null;
+    : "osm";
+export const MAPS_ON = true;
 
 export const FIREBASE =
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&

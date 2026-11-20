@@ -18,6 +18,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { MotionToggle } from "@/components/motion-toggle";
+import { forgetPush } from "@/features/push/push";
 import { openCreateSpace, openInvite, useRealm } from "@/features/realtime/store";
 import { openComposer } from "@/features/social/composer";
 import { ApiError, api } from "@/lib/api";
@@ -33,6 +34,8 @@ export function useSignOut() {
     if (pending) return;
     setPending(true);
     setError("");
+    // First, while still signed in: this browser stops getting this account's notifications.
+    await forgetPush();
     try {
       await api("/auth/logout", { method: "POST" });
     } catch (err) {

@@ -1,3 +1,4 @@
+export * from "./changelog";
 export * from "./errors";
 export * from "./ids";
 export * from "./limits";
@@ -10,6 +11,7 @@ export * from "./schemas/common";
 export * from "./schemas/communities";
 export * from "./schemas/e2ee";
 export * from "./schemas/e2ee-events";
+export * from "./schemas/help";
 export * from "./schemas/media";
 export * from "./schemas/messages";
 export * from "./schemas/music";

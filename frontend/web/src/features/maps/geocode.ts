@@ -1,3 +1,5 @@
+import type { PlaceAt, PlaceList } from "@realm/contracts";
+import { api } from "@/lib/api";
 import { MAP_PROVIDER, MAPBOX_TOKEN } from "@/lib/public-config";
 import { type GeocodingLibrary, googleLibrary, type PlacesLibrary } from "./google";
 
@@ -38,6 +40,7 @@ export async function searchPlaces(
 ): Promise<Found[]> {
   if (query.trim().length < 2) return [];
   if (MAP_PROVIDER === "google") return googleSearch(query.trim(), opts);
+  if (MAP_PROVIDER === "osm") return realmSearch(query.trim(), opts);
   if (!MAPBOX_TOKEN) return [];
   const params = new URLSearchParams({ q: query.trim(), limit: "6", access_token: MAPBOX_TOKEN });
   if (opts.near) params.set("proximity", `${opts.near.lng},${opts.near.lat}`);
@@ -55,6 +58,10 @@ export async function nameOf(
   signal?: AbortSignal,
 ): Promise<Found | null> {
   if (MAP_PROVIDER === "google") return googleName(lat, lng);
+  if (MAP_PROVIDER === "osm") {
+    const { place } = await api<PlaceAt>(`/places/at?lat=${lat}&lng=${lng}`, { signal });
+    return place;
+  }
   if (!MAPBOX_TOKEN) return null;
   const params = new URLSearchParams({
     longitude: String(lng),
@@ -67,6 +74,24 @@ export async function nameOf(
   const json = (await res.json()) as { features: Feature[] };
   const f = json.features[0];
   return f ? { ...toFound(f), lat, lng } : null;
+}
+
+/**
+ * The free maps' search: Realm's API asks OpenStreetMap's Photon search for us, so the service
+ * sees Realm rather than you, and only a rough "near here" (about 1 km) is passed on.
+ */
+async function realmSearch(
+  query: string,
+  opts: { near?: { lat: number; lng: number }; cities?: boolean; signal?: AbortSignal },
+): Promise<Found[]> {
+  const params = new URLSearchParams({ q: query.slice(0, 100) });
+  if (opts.near) {
+    params.set("lat", opts.near.lat.toFixed(2));
+    params.set("lng", opts.near.lng.toFixed(2));
+  }
+  if (opts.cities) params.set("cities", "1");
+  const { items } = await api<PlaceList>(`/places/search?${params}`, { signal: opts.signal });
+  return items;
 }
 
 async function googleSearch(

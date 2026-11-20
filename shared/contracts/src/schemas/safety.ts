@@ -145,3 +145,23 @@ export const RegisterPushToken = z.object({
   token: z.string().min(20).max(4096),
   platform: z.enum(["web", "ios", "android"]).default("web"),
 });
+
+/** The kinds of notification someone can switch off one by one. */
+export const NOTIFICATION_KINDS = ["messages", "likes", "comments", "follows", "mentions"] as const;
+export const NotificationKind = z.enum(NOTIFICATION_KINDS);
+export type NotificationKind = z.infer<typeof NotificationKind>;
+
+/** What buzzes your phone or browser: everything on by default, or all paused. */
+export const NotificationPrefs = z
+  .object({
+    paused: z.boolean(),
+    kinds: z.record(NotificationKind, z.boolean()),
+  })
+  .meta({ id: "NotificationPrefs" });
+export type NotificationPrefs = z.infer<typeof NotificationPrefs>;
+
+export const UpdateNotificationPrefs = z.object({
+  paused: z.boolean().optional(),
+  kinds: z.partialRecord(NotificationKind, z.boolean()).optional(),
+});
+export type UpdateNotificationPrefs = z.infer<typeof UpdateNotificationPrefs>;

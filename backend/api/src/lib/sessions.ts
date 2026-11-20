@@ -3,7 +3,7 @@ import { and, type Executor, eq, gt, isNull, ne, schema } from "@realm/db";
 import { describeUserAgent, randomToken, sha256Hex } from "@realm/server-core";
 import type { Deps } from "../deps";
 
-const { sessions, users } = schema;
+const { sessions, users, pushTokens } = schema;
 
 export const SESSION_COOKIE = "realm_session";
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -192,5 +192,8 @@ export async function revokeAllSessions(
     )
     .returning({ tokenHash: sessions.tokenHash });
   await deps.kv.del(...rows.map((r) => cacheKey(r.tokenHash)));
+  // Signed out everywhere (a reset password, a suspension): no device keeps getting
+  // notifications for this account either. They sign up again when someone signs back in.
+  if (!exceptSessionId) await tx.delete(pushTokens).where(eq(pushTokens.userId, userId));
   return rows.length;
 }

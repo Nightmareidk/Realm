@@ -11,7 +11,9 @@ import { ApiError, api, webOrigin } from "@/server";
 import { useSession } from "@/session";
 import { AppScreen, Loading, TopBar } from "@/social/screen";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
+import { useTour } from "@/tour";
 import { Field, Pill } from "@/ui";
+import { APP_VERSION } from "@/whats-new";
 
 /**
  * Settings: who can see you, personal or business, your colour, keeping the account safe (email,
@@ -22,6 +24,7 @@ export default function Settings() {
   const s = useStyles(make);
   const router = useRouter();
   const { session, signOut } = useSession();
+  const tour = useTour();
   const me = session.status === "signedIn" ? session.user : null;
   const { accent } = useTheme();
   const settings = useApi<UserSettings>("/users/@me/settings");
@@ -215,6 +218,14 @@ export default function Settings() {
           onPress={() => router.push("/verification")}
         />
 
+        <Text style={s.heading}>Notifications</Text>
+        <NavRow
+          icon="BellSimple"
+          title="Notifications"
+          line="This phone, and what to tell you about"
+          onPress={() => router.push("/notifications")}
+        />
+
         <Text style={s.heading}>Look</Text>
         <NavRow
           icon="Palette"
@@ -293,6 +304,31 @@ export default function Settings() {
           title="Take a break or delete your account"
           line="Hide it for a while, or delete it after 30 days"
           onPress={() => router.push("/leave-realm")}
+        />
+
+        <Text style={s.heading}>Help and updates</Text>
+        <NavRow
+          icon="ClipboardText"
+          title="What's new"
+          line={`Version ${APP_VERSION} · what changed in each update`}
+          onPress={() => router.push("/changelog")}
+        />
+        <NavRow
+          icon="Compass"
+          title="Take the tour again"
+          line="A quick look at where everything is"
+          onPress={() => {
+            // The tour points at Home's buttons and the tabs, so it runs there.
+            router.navigate("/home");
+            setTimeout(() => tour.start(), 400);
+          }}
+        />
+        {/* Temporary (course project): the small help chat. Remove with app/help.tsx. */}
+        <NavRow
+          icon="Sparkle"
+          title="Ask Realm"
+          line="Quick answers to basic questions"
+          onPress={() => router.push("/help")}
         />
 
         <View style={s.signOut}>

@@ -12,6 +12,7 @@ const COLUMNS = [
       { href: "/#profiles", label: "Profiles" },
       { href: "/#boards", label: "Boards" },
       { href: "/download", label: "Download" },
+      { href: "/changelog", label: "What's new" },
     ],
   },
   {

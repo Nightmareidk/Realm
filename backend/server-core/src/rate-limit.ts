@@ -104,6 +104,10 @@ export const Limits = {
   themeStore: { bucket: "theme:store:key", limit: 120, windowSeconds: 60 },
   // Music: searching the free library asks Openverse, which allows few requests.
   soundSearch: { bucket: "music:search:user", limit: 30, windowSeconds: 60 },
+  /** Place search asks a free OpenStreetMap service that asks for fair use. */
+  placeSearch: { bucket: "places:search:user", limit: 40, windowSeconds: 60 },
+  /** The little help chat in settings. */
+  helpAsk: { bucket: "help:ask:user", limit: 30, windowSeconds: 300 },
   /** Sharing your own songs, and reporting someone's. */
   songUpload: { bucket: "music:song:user", limit: 10, windowSeconds: 86_400 },
   songReport: { bucket: "music:report:user", limit: 20, windowSeconds: 3600 },

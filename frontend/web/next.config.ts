@@ -26,6 +26,8 @@ const LIVEKIT = process.env.NEXT_PUBLIC_LIVEKIT_HOST
 const LIVEKIT_LOCAL = isDev ? "ws://localhost:7880 http://localhost:7880" : "";
 /** Maps (Mapbox) and push sign-up (Firebase Cloud Messaging). */
 const MAPBOX = "https://api.mapbox.com https://events.mapbox.com";
+/** The free maps (OpenStreetMap data, drawn from OpenFreeMap's tiles, styles and fonts). */
+const OSM = "https://tiles.openfreemap.org";
 /** Google Maps, when its key is set (it loads its own script, tiles and fonts from Google). */
 const GOOGLE = Boolean(process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY);
 const GOOGLE_SCRIPT = GOOGLE ? "https://maps.googleapis.com https://maps.gstatic.com" : "";
@@ -46,17 +48,18 @@ const FIREBASE =
  * it prebuilt. 'wasm-unsafe-eval' lets the 3D model decoder (Draco, WebAssembly) compile; its
  * workers start from blob: URLs. Development also needs 'unsafe-eval' (React's debugging).
  * Beyond that, the page may reach exactly the services Realm uses: the realtime gateway, upload
- * storage, LiveKit for calls, Mapbox for maps, and Firebase to sign up for push notifications.
+ * storage, LiveKit for calls, OpenFreeMap (or Mapbox/Google, when set) for maps, and Firebase to
+ * sign up for push notifications.
  */
 const CSP = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""} ${GOOGLE_SCRIPT}`.trim(),
   `style-src 'self' 'unsafe-inline'${GOOGLE ? " https://fonts.googleapis.com" : ""}`,
   // Free library music: covers from Openverse and Jamendo, tracks streamed from Jamendo.
-  `img-src 'self' data: blob: https://api.mapbox.com https://api.openverse.org https://usercontent.jamendo.com ${GOOGLE_IMG} ${STORAGE_ORIGIN}`.trim(),
+  `img-src 'self' data: blob: https://api.mapbox.com ${OSM} https://api.openverse.org https://usercontent.jamendo.com ${GOOGLE_IMG} ${STORAGE_ORIGIN}`.trim(),
   `font-src 'self'${GOOGLE ? " https://fonts.gstatic.com" : ""}`,
   `media-src 'self' blob: https://prod-1.storage.jamendo.com https://*.jamendo.com ${STORAGE_ORIGIN}`.trim(),
-  `connect-src 'self' blob: data: ${GATEWAY_ORIGIN} ${LAN_GATEWAYS} ${STORAGE_ORIGIN} ${LIVEKIT} ${LIVEKIT_LOCAL} ${MAPBOX} ${GOOGLE_CONNECT} ${FIREBASE}`.replace(
+  `connect-src 'self' blob: data: ${GATEWAY_ORIGIN} ${LAN_GATEWAYS} ${STORAGE_ORIGIN} ${LIVEKIT} ${LIVEKIT_LOCAL} ${MAPBOX} ${OSM} ${GOOGLE_CONNECT} ${FIREBASE}`.replace(
     /\s+/g,
     " ",
   ),

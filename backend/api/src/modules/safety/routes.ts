@@ -9,6 +9,8 @@ import {
   Member,
   MuteBody,
   MuteTarget,
+  NOTIFICATION_KINDS,
+  NotificationPrefs,
   RegisterPushToken,
   ReorderRolesBody,
   ReportedItem,
@@ -18,6 +20,7 @@ import {
   Snowflake,
   SparkStatus,
   UpdateMemberBody,
+  UpdateNotificationPrefs,
   UpdateRoleBody,
 } from "@realm/contracts";
 import { and, eq, schema } from "@realm/db";
@@ -362,6 +365,73 @@ export const meSafetyRoutes =
             ),
           );
         return reply.status(204).send();
+      },
+    );
+
+    // What buzzes your devices: each kind on or off, or everything paused.
+    const globalPrefs = (userId: bigint) =>
+      and(
+        eq(schema.notificationPrefs.userId, userId),
+        eq(schema.notificationPrefs.scopeType, "global"),
+        eq(schema.notificationPrefs.scopeId, 0n),
+      );
+    const toPrefs = (
+      row: { level: string; toggles: Record<string, boolean> } | undefined,
+    ): NotificationPrefs => ({
+      paused: row?.level === "none",
+      kinds: Object.fromEntries(
+        NOTIFICATION_KINDS.map((k) => [k, row?.toggles[k] !== false]),
+      ) as NotificationPrefs["kinds"],
+    });
+
+    app.get(
+      "/@me/notification-prefs",
+      { preHandler: requireAuth, schema: { response: { 200: NotificationPrefs } } },
+      async (req) => {
+        const [row] = await deps.db
+          .select()
+          .from(schema.notificationPrefs)
+          .where(globalPrefs(authOf(req).userId))
+          .limit(1);
+        return toPrefs(row);
+      },
+    );
+
+    app.put(
+      "/@me/notification-prefs",
+      {
+        preHandler: requireAuth,
+        schema: { body: UpdateNotificationPrefs, response: { 200: NotificationPrefs } },
+      },
+      async (req) => {
+        const { userId } = authOf(req);
+        await enforceLimit(deps, Limits.pushToken, userId.toString());
+        const [row] = await deps.db
+          .select()
+          .from(schema.notificationPrefs)
+          .where(globalPrefs(userId))
+          .limit(1);
+        const now = toPrefs(row);
+        const next: NotificationPrefs = {
+          paused: req.body.paused ?? now.paused,
+          kinds: { ...now.kinds, ...req.body.kinds },
+        };
+        const values = {
+          level: next.paused ? ("none" as const) : ("all" as const),
+          toggles: next.kinds,
+        };
+        await deps.db
+          .insert(schema.notificationPrefs)
+          .values({ userId, scopeType: "global", scopeId: 0n, ...values })
+          .onConflictDoUpdate({
+            target: [
+              schema.notificationPrefs.userId,
+              schema.notificationPrefs.scopeType,
+              schema.notificationPrefs.scopeId,
+            ],
+            set: values,
+          });
+        return next;
       },
     );
   };

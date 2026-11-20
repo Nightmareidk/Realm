@@ -1983,8 +1983,9 @@ export class SocialService {
           ),
         );
     }
+    const notificationId = this.deps.ids.next();
     await this.db.insert(notifications).values({
-      id: this.deps.ids.next(),
+      id: notificationId,
       userId,
       type,
       actorId,
@@ -1993,6 +1994,10 @@ export class SocialService {
       groupKey: groupKey ?? null,
       data,
     });
+    // Their phone or browser too, if they're away (jobs.ts decides).
+    await this.deps.queue
+      .enqueue("push.activity", { notificationId: notificationId.toString() })
+      .catch((err) => this.deps.logger.warn({ err }, "push.activity: couldn't queue"));
     // The heart on Home lights up at once.
     const [count] = await this.db
       .select({ n: sql<number>`count(*)::int` })

@@ -49,3 +49,8 @@ test-results/
 expo-env.d.ts
 frontend/app/android/
 frontend/app/ios/
+
+# Firebase files: the Android app's config (an EAS file variable) and any service account key
+google-services.json
+GoogleService-Info.plist
+*firebase-adminsdk*.json

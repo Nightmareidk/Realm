@@ -17,6 +17,7 @@ import { useWide } from "../layout";
 import { mediaSource } from "../server";
 import { Avatar } from "../social/avatar";
 import { type NativeTheme, useStyles, useTheme } from "../theme";
+import { PlaceCard } from "./place-card";
 import { linkedPostId, PostLinkCard } from "./post-link";
 
 /** The same quick six as the website; double-tap sends the first. */
@@ -239,9 +240,10 @@ function Bubble({
           </Text>
         </View>
       ))}
-      {text || m.place ? (
+      {m.place && !m.hidden ? <PlaceCard place={m.place} ink={ink} soft={soft} /> : null}
+      {text ? (
         <Text style={[s.text, { color: ink }, m.hidden && s.hiddenText]}>
-          {text || `Shared a place: ${m.place?.name}`}
+          {text}
           <Text style={[s.time, { color: soft }]}>
             {"  "}
             {m.editedAt ? "edited · " : ""}

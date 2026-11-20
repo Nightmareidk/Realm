@@ -8,7 +8,7 @@ export default function NotificationsPage() {
   return (
     <SettingsPlace
       title="Notifications"
-      lead="Hear about new messages while you're away from Realm."
+      lead="Hear about messages, comments, mentions and new followers while you're away from Realm."
     >
       <NotificationsPanel />
     </SettingsPlace>

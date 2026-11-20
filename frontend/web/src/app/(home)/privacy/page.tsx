@@ -17,7 +17,7 @@ export default function PrivacyPage() {
   return (
     <DocPage
       title="Privacy policy"
-      lead="What Realm collects, why, who can see it and how to delete it. Written to be read, not skimmed past. Last updated 19 November 2026."
+      lead="What Realm collects, why, who can see it and how to delete it. Written to be read, not skimmed past. Last updated 20 November 2026."
     >
       <h2>Who we are</h2>
       <p>
@@ -64,6 +64,11 @@ export default function PrivacyPage() {
           <strong>Camera and microphone:</strong> used only when you take a photo or video, record a
           voice message or join a call. Realm never records in the background, and calls are not
           recorded.
+        </li>
+        <li>
+          <strong>Help questions:</strong> what you ask <em>Ask Realm</em>, the help chat in
+          Settings, is answered on Realm&apos;s own server from a fixed list of answers. No AI
+          service sees it, and your questions aren&apos;t saved.
         </li>
         <li>
           <strong>Location:</strong> Realm never tracks where you are.{" "}
@@ -130,8 +135,9 @@ export default function PrivacyPage() {
           <strong>Resend</strong> sends Realm's emails.
         </li>
         <li>
-          <strong>Google Firebase Cloud Messaging</strong> delivers notifications, if you turn them
-          on. A notification includes who it's from and a preview of the message.
+          <strong>Google Firebase Cloud Messaging</strong> delivers notifications to your phone or
+          browser, if you turn them on. A notification includes who it's from and a short preview:
+          the message, comment or mention, or what happened (&quot;liked your post&quot;).
         </li>
         <li>
           <strong>Jamendo and Openverse:</strong> songs in Realm's free music library play straight
@@ -139,8 +145,15 @@ export default function PrivacyPage() {
           device's internet address when you play a song.
         </li>
         <li>
-          <strong>Google Maps or Mapbox</strong> draw maps and find places on the website. Your
-          browser talks to them directly when a map is on screen.
+          <strong>OpenFreeMap</strong> draws Realm's maps from OpenStreetMap data. When a map is on
+          screen, your browser loads it straight from OpenFreeMap, which sees your device's internet
+          address.
+        </li>
+        <li>
+          <strong>Photon (by Komoot)</strong> finds places when you search for one. Realm's server
+          asks it for you, so it never learns who you are: it gets only the words you typed and the
+          rough area the map is showing (rounded to about a kilometre), so nearby places come first.
+          To name a spot you picked on the map, Realm sends it just that point.
         </li>
       </ul>
 
@@ -201,7 +214,8 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Control who reaches you:</strong> a private profile, who can message you, read
-          receipts, blocking, muting and notifications per device.
+          receipts, blocking, muting, notifications on each device, and which kinds of notification
+          you get (Settings › Notifications).
         </li>
         <li>
           <strong>Delete your account</strong> in the app (Settings › Take a break or delete your

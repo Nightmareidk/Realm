@@ -19,10 +19,12 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { CrashScreen } from "@/crash";
 import { useWide } from "@/layout";
+import { PushTaps } from "@/push-taps";
 import { Rail } from "@/rail";
 import { SessionProvider, useSession } from "@/session";
 import { SheetProvider } from "@/sheet";
 import { roles, ThemeProvider } from "@/theme";
+import { TourProvider } from "@/tour";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -57,31 +59,34 @@ export default function RootLayout() {
           <SessionProvider>
             <SheetProvider>
               <StatusBar style="light" />
-              <SessionGate>
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    contentStyle: { backgroundColor: roles.bg },
-                  }}
-                >
-                  <Stack.Screen name="index" options={{ animation: "fade" }} />
-                  <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
-                  <Stack.Screen name="create" options={{ presentation: "modal" }} />
-                  <Stack.Screen
-                    name="stories"
-                    options={{
-                      presentation: "fullScreenModal",
-                      animation: "fade",
-                      contentStyle: { backgroundColor: "#000000" },
+              <PushTaps />
+              <TourProvider>
+                <SessionGate>
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      contentStyle: { backgroundColor: roles.bg },
                     }}
-                  />
-                  <Stack.Screen name="report" options={{ presentation: "modal" }} />
-                  <Stack.Screen
-                    name="player"
-                    options={{ presentation: "fullScreenModal", animation: "slide_from_bottom" }}
-                  />
-                </Stack>
-              </SessionGate>
+                  >
+                    <Stack.Screen name="index" options={{ animation: "fade" }} />
+                    <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
+                    <Stack.Screen name="create" options={{ presentation: "modal" }} />
+                    <Stack.Screen
+                      name="stories"
+                      options={{
+                        presentation: "fullScreenModal",
+                        animation: "fade",
+                        contentStyle: { backgroundColor: "#000000" },
+                      }}
+                    />
+                    <Stack.Screen name="report" options={{ presentation: "modal" }} />
+                    <Stack.Screen
+                      name="player"
+                      options={{ presentation: "fullScreenModal", animation: "slide_from_bottom" }}
+                    />
+                  </Stack>
+                </SessionGate>
+              </TourProvider>
             </SheetProvider>
           </SessionProvider>
         </ThemeProvider>

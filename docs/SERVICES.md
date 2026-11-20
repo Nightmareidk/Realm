@@ -11,7 +11,7 @@ installed. Set the keys in `.env` (copy `.env.example`) to switch each one on.
 | Photos, videos, voice messages, files | Cloudflare R2 | 10 GB stored, no egress fees | a folder (`.data/media`) |
 | Live chat | Realm's own WebSocket gateway | (part of Realm) | served by the API at `/gateway` |
 | Voice, video, screen sharing | LiveKit (Cloud, or your own server) | Cloud: monthly participant minutes; self-hosted: free | LiveKit for Windows in dev mode (`realm-voice`), or off |
-| Maps and place search | Google Maps (preferred) or Mapbox | Google: monthly free usage per API | places and the map picker hidden |
+| Maps and place search | OpenFreeMap + Photon (free, no key), or Google Maps / Mapbox | free (fair use) | the free maps work with nothing set |
 | Email | Resend | daily/monthly sends | written to the API's log |
 | Push notifications | Firebase Cloud Messaging | free | off |
 
@@ -80,7 +80,23 @@ Realm hands each person a 10-minute pass to one room. What they may publish foll
 permissions in the Space. Calls are not end-to-end encrypted (LiveKit supports it; Realm hasn't
 switched it on).
 
-## Maps: Google Maps (preferred)
+## Maps: free OpenStreetMap (the default)
+
+With no map key set, Realm uses free maps built on OpenStreetMap data (owner, 2026-11-20):
+- **Map pictures** come from [OpenFreeMap](https://openfreemap.org) (its dark style), drawn in
+  the browser with MapLibre. The browser loads them straight from `tiles.openfreemap.org` (allowed
+  in the web app's CSP). A shared place's card draws a small map picture the same way.
+- **Place search and naming a spot** go through Realm's API (`GET /places/search`,
+  `GET /places/at`) to [Photon](https://photon.komoot.io), so Photon sees Realm's server, never
+  the person. The API rounds "near here" to about 1 km (a picked spot to about 10 m), keeps
+  answers for a day, and backs off for a minute if Photon says it's busy. Signed in only, 40
+  searches a minute each.
+- Both are free under fair use, need no account, and ask for the "© OpenStreetMap" credit, which
+  Realm shows on every map.
+
+Google Maps or Mapbox replace them when their key is set (below).
+
+## Maps: Google Maps (optional)
 
 1. In Google Cloud, create a project and turn on billing (Google gives monthly free usage per
    API; check the current amounts).
@@ -97,9 +113,9 @@ Worth knowing: Google's terms limit how long Places results may be kept, and req
 logo on its maps (shown automatically). Realm stores what someone chose to share in their message
 (a name, an address and a rounded point); check Google's current Places terms before launch.
 
-## Maps: Mapbox (alternative)
+## Maps: Mapbox (optional)
 
-Used only when no Google key is set.
+Used only when no Google key is set (and instead of the free maps).
 
 1. Create a **public** access token (`pk.`) with the default public scopes.
 2. Under URL restrictions, add your Realm domains (and `http://localhost:3000` for development).
@@ -122,9 +138,27 @@ Used only when no Google key is set.
 3. Under Project settings → Service accounts, generate a private key (a JSON file). Put its
    contents (or their base64) in `FIREBASE_SERVICE_ACCOUNT` on the server. Never commit it.
 
-Realm sends data-only messages. Its own service worker (`public/sw.js`) shows them, one per room
-at a time. A message notifies members of Spaces of up to 50 people when they're away, unless
-they muted it or blocked its author, at most once per room every two minutes.
+4. For the Android app: add an **Android app** (package `com.tomyrealm`) and download its
+   `google-services.json`. It stays out of git. EAS builds read it from the file variable
+   `GOOGLE_SERVICES_JSON` (`eas env:create --name GOOGLE_SERVICES_JSON --type file`); a local
+   build uses a copy in `frontend/app/`. `frontend/app/app.config.js` picks whichever is there.
+5. Turn on the **Firebase Cloud Messaging API (V1)** for the project.
+
+Realm sends data-only messages. On the website its own service worker (`public/sw.js`) shows
+them; in the Android app, `expo-notifications` does, in two Android channels ("Messages" and
+"Likes, comments and follows"). Each one replaces the older one about the same thing, and a tap
+opens the chat, post or profile.
+
+What sends one, only while the person is away from Realm (not online):
+- a message in a chat, or in a Space of up to 50 people: at most once per room every 2 minutes;
+- a like or repost: at most once per post every 10 minutes;
+- a comment, reply, quote, mention, tag, new follower or follow request: at most one of each
+  kind a minute.
+
+Nothing comes from people they blocked or muted, or from Spaces they muted. Settings ›
+Notifications (website and app) has a switch for each kind and "Pause all"; they're stored
+as the account's global row in `notification_prefs`. Signing out removes that device's token;
+a password reset or a suspension removes every device's.
 
 ## Moderation (no service connected)
 

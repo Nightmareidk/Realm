@@ -236,7 +236,7 @@ function VoiceNote({ file, mine }: { file: MediaRef; mine: boolean }) {
   );
 }
 
-/** The small map for a shared place (Mapbox), or none when maps aren't set up. */
+/** The small map image for a shared place from Google or Mapbox; null for the free maps. */
 export function staticMap(place: Place, width = 560, height = 260) {
   if (MAP_PROVIDER === "google") {
     const at = `${place.lat},${place.lng}`;
@@ -268,12 +268,46 @@ export function staticMap(place: Place, width = 560, height = 260) {
   return `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-l+f5f4f2(${at})/${at},14.5,0/${width}x${height}@2x?access_token=${MAPBOX_TOKEN}`;
 }
 
+/**
+ * The free maps' picture for a place: drawn in this browser once the card scrolls near, then kept
+ * as an image. Until then (or if it can't be drawn) the card shows without it.
+ */
+function useFreeMapPicture(place: Place, on: boolean) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!on || !el) return;
+    let live = true;
+    const seen = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        seen.disconnect();
+        void import("@/features/maps/map-view")
+          .then(({ placeSnapshot }) => placeSnapshot(place.lat, place.lng))
+          .then((url) => {
+            if (live && url) setSrc(url);
+          })
+          .catch(() => {});
+      },
+      { rootMargin: "200px" },
+    );
+    seen.observe(el);
+    return () => {
+      live = false;
+      seen.disconnect();
+    };
+  }, [on, place.lat, place.lng]);
+  return { ref, src };
+}
+
 /** A place someone shared once: a small map, its name, and a way to open it in a full map. */
 export function PlaceCard({ place, mine }: { place: Place; mine: boolean }) {
   const img = staticMap(place);
+  const free = useFreeMapPicture(place, MAP_PROVIDER === "osm");
   const osm = `https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lng}#map=16/${place.lat}/${place.lng}`;
   return (
-    <span className="flex w-[min(20rem,70vw)] flex-col gap-2">
+    <span ref={free.ref} className="flex w-[min(20rem,70vw)] flex-col gap-2">
       {img && (
         // biome-ignore lint/performance/noImgElement: a remote static map image.
         <img
@@ -282,6 +316,28 @@ export function PlaceCard({ place, mine }: { place: Place; mine: boolean }) {
           loading="lazy"
           className="aspect-[56/26] w-full rounded-[0.8rem] object-cover"
         />
+      )}
+      {MAP_PROVIDER === "osm" && (
+        <span className="relative block aspect-[56/26] w-full overflow-hidden rounded-[0.8rem] bg-[#16161c]">
+          {free.src && (
+            // biome-ignore lint/performance/noImgElement: a map drawn in this browser, as a data URL.
+            <img
+              src={free.src}
+              alt=""
+              className="size-full object-cover transition-opacity duration-200 ease-out motion-safe:starting:opacity-0"
+            />
+          )}
+          {/* The pin sits in the middle: the picture is centred on the place. */}
+          <MapPin
+            aria-hidden="true"
+            size={30}
+            weight="fill"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full text-[#f5f4f2] drop-shadow-[0_2px_4px_rgb(0_0_0/0.6)]"
+          />
+          <span className="absolute right-1 bottom-1 rounded-[0.3rem] bg-black/55 px-1 text-[0.62rem] leading-[1.4] text-white/85">
+            © OpenStreetMap
+          </span>
+        </span>
       )}
       <span className="flex items-start gap-2.5">
         <MapPin aria-hidden="true" size={20} weight="fill" className="mt-0.5 shrink-0" />

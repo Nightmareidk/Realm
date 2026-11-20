@@ -1,6 +1,7 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { Crosshair, MagnifyingGlass, MapPin } from "@phosphor-icons/react";
 import type { Place } from "@realm/contracts";
 import { useEffect, useId, useRef, useState } from "react";
@@ -22,24 +23,28 @@ export function PlacePicker({ onPick }: { onPick: (place: Place) => void }) {
   const [note, setNote] = useState("");
   const listId = useId();
 
-  // The map loads with the picker (Google's or Mapbox's, only fetched here). It's made once;
+  // The map loads with the picker (only fetched here: the free map, or Google's or Mapbox's). It's made once;
   // its tap handler only touches refs and state setters.
   // biome-ignore lint/correctness/useExhaustiveDependencies: rebuilding the map on every render would reset it.
   useEffect(() => {
-    let cancelled = false;
+    const closed = new AbortController();
     let made: MapHandle | null = null;
     void (async () => {
       if (!box.current) return;
-      made = await createMap(box.current, async (lat, lng) => {
-        place({ id: "tap", name: "Dropped pin", address: null, lat, lng }, false);
-        const named = await nameOf(lat, lng).catch(() => null);
-        if (named) setChosen({ ...named, lat, lng });
-      }).catch(() => null);
-      if (cancelled) made?.destroy();
+      made = await createMap(
+        box.current,
+        async (lat, lng) => {
+          place({ id: "tap", name: "Dropped pin", address: null, lat, lng }, false);
+          const named = await nameOf(lat, lng).catch(() => null);
+          if (named) setChosen({ ...named, lat, lng });
+        },
+        closed.signal,
+      ).catch(() => null);
+      if (closed.signal.aborted) made?.destroy();
       else map.current = made;
     })();
     return () => {
-      cancelled = true;
+      closed.abort();
       made?.destroy();
       map.current = null;
     };
