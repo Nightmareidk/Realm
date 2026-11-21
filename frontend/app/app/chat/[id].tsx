@@ -1403,7 +1403,9 @@ const make = (t: NativeTheme) =>
       color: t.colors.textSoft,
       textAlign: "center",
       padding: 24,
-      transform: [{ scaleY: -1 }],
+      // No transform of its own: the inverted list flips this text back itself, and on Android
+      // that flip is `scale: -1` (both ways). A `scaleY: -1` here replaced it and left the text
+      // mirrored on Android phones.
     },
     typing: {
       fontFamily: t.fonts.body,

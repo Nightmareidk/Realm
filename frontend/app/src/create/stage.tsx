@@ -113,17 +113,22 @@ export function Stage({
   };
   const lengthLabel = shownFor >= 60_000 ? "1m" : `${shownFor / 1000}s`;
 
+  // Sideways (landscape) photos and videos are shown whole, as they'll be posted, instead of
+  // being cut down to fill the tall screen.
+  const wide = Boolean(asset.width && asset.height && asset.width > asset.height * 0.8);
+  const fit = wide ? "contain" : "cover";
+
   return (
     <View style={s.root}>
       {isVideo ? (
         <VideoView
           player={player}
           style={StyleSheet.absoluteFill}
-          contentFit="cover"
+          contentFit={fit}
           nativeControls={false}
         />
       ) : (
-        <Image source={{ uri: asset.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <Image source={{ uri: asset.uri }} style={StyleSheet.absoluteFill} contentFit={fit} />
       )}
       <LinearGradient
         colors={["rgba(0,0,0,0.45)", "transparent"]}

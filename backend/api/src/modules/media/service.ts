@@ -111,6 +111,10 @@ export class MediaService {
       sizeBytes: body.sizeBytes,
       durationMs: body.durationMs ?? null,
       filename: body.kind === "file" ? (body.filename ?? "file") : null,
+      // Only a video's shape is taken from the phone (it's for framing, nothing else).
+      ...(body.kind === "video" && body.width && body.height
+        ? { width: body.width, height: body.height }
+        : {}),
     });
     const put = await this.deps.storage.presignPut(key, {
       contentType: declared,
@@ -172,8 +176,9 @@ export class MediaService {
       .set({
         status: "ready",
         mimeType: type ?? row.mimeType,
-        width: size?.width ?? null,
-        height: size?.height ?? null,
+        // Images: measured here. Videos: the shape announced with the upload.
+        width: row.kind === "image" ? (size?.width ?? null) : row.width,
+        height: row.kind === "image" ? (size?.height ?? null) : row.height,
       })
       .where(eq(media.id, row.id))
       .returning();

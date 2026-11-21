@@ -54,7 +54,7 @@ const PNG = Buffer.concat([
 /** Ask for a ticket, PUT the bytes the way a browser would, then finish. */
 async function upload(
   cookie: string,
-  kind: "image" | "audio" | "file",
+  kind: "image" | "video" | "audio" | "file",
   bytes: Buffer,
   mimeType: string,
   extra: Record<string, unknown> = {},
@@ -126,6 +126,38 @@ describe("uploads", () => {
       attachmentIds: [mediaId],
     });
     expect(again.json().error.code).toBe("UPLOAD_INVALID");
+  });
+
+  it("keeps a video's announced shape, but measures an image itself", async () => {
+    const noor = await person();
+    // The start of an MP4: an ftyp box, then some room.
+    const MP4 = Buffer.concat([
+      Buffer.from([0, 0, 0, 24]),
+      Buffer.from("ftypisom"),
+      Buffer.from([0, 0, 2, 0]),
+      Buffer.from("isommp41"),
+      Buffer.alloc(200),
+    ]);
+    const video = await upload(noor.cookie, "video", MP4, "video/mp4", {
+      width: 1920,
+      height: 1080,
+      durationMs: 4000,
+    });
+    expect(video.done.statusCode).toBe(200);
+    expect(video.done.json()).toMatchObject({ kind: "video", width: 1920, height: 1080 });
+
+    // An image's shape always comes from the file, whatever the phone says.
+    const image = await upload(noor.cookie, "image", PNG, "image/png", { width: 999, height: 9 });
+    expect(image.done.json()).toMatchObject({ width: 2, height: 3 });
+
+    const silly = await call(noor.cookie, "POST", "/media/uploads", {
+      kind: "video",
+      mimeType: "video/mp4",
+      sizeBytes: 100,
+      width: 0,
+      height: 99_999,
+    });
+    expect(silly.statusCode).toBe(400);
   });
 
   it("refuses a file that isn't what it claims, and programs", async () => {

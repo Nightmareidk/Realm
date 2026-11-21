@@ -40,6 +40,12 @@ export const CreateUploadBody = z.object({
     .optional(),
   /** A song for Realm's own music library (admins only): longer and bigger than a voice message. */
   purpose: z.enum(["track", "song"]).optional(),
+  /**
+   * Videos: their shape as shown (after the phone's rotation note), so a player can frame a
+   * sideways video before it loads. Images are measured by the server instead.
+   */
+  width: z.number().int().min(1).max(16_384).optional(),
+  height: z.number().int().min(1).max(16_384).optional(),
 });
 export type CreateUploadBody = z.infer<typeof CreateUploadBody>;
 

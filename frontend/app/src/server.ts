@@ -1,6 +1,7 @@
 import type { ApiErrorBody } from "@realm/contracts";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import { openPickedFile, type PickedFile } from "./upload-file";
 
 /**
  * Where Realm is. EXPO_PUBLIC_REALM_API_URL / EXPO_PUBLIC_REALM_WEB_URL when set; in development,
@@ -110,7 +111,7 @@ function toApiError(res: Response, data: unknown): ApiError {
  * browser preview stands in for the Android app.
  */
 export const CLIENT_PLATFORM = Platform.OS === "web" ? "android" : Platform.OS;
-export const CLIENT_VERSION = "0.1.0";
+export const CLIENT_VERSION = "0.1.1";
 const CLIENT = `${CLIENT_PLATFORM}/${CLIENT_VERSION}`;
 
 /**
@@ -220,39 +221,50 @@ export function mediaSource(url: string) {
  * Uploads a picked photo or video: ask for a ticket, send the bytes where it says, then finish.
  * Returns the upload's id, ready to attach to a post.
  */
-export async function upload(file: {
-  uri: string;
-  kind: "image" | "video" | "audio";
-  mimeType: string;
-  durationMs?: number;
-  /** A whole song someone is sharing: allowed to be bigger and longer than a voice message. */
-  purpose?: "song";
-}): Promise<string> {
-  const bytes = await (await fetch(file.uri)).blob();
+export async function upload(
+  file: {
+    uri: string;
+    kind: "image" | "video" | "audio";
+    mimeType: string;
+    durationMs?: number;
+    /** A whole song someone is sharing: allowed to be bigger and longer than a voice message. */
+    purpose?: "song";
+    /** Videos: the shape as shown, so sideways ones are framed right everywhere. */
+    width?: number;
+    height?: number;
+  },
+  /** 0 to 1 while the bytes are on their way. */
+  onProgress?: (fraction: number) => void,
+): Promise<string> {
+  let picked: PickedFile;
+  try {
+    picked = await openPickedFile(file.uri);
+  } catch {
+    throw new ApiError(0, "UPLOAD_INVALID", "That file can't be read. Pick it again.");
+  }
   const ticket = await api<{ mediaId: string; uploadUrl: string; headers: Record<string, string> }>(
     "/media/uploads",
     {
       body: {
         kind: file.kind,
         mimeType: file.mimeType,
-        sizeBytes: bytes.size,
+        sizeBytes: picked.size,
         ...(file.durationMs ? { durationMs: Math.round(file.durationMs) } : {}),
         ...(file.purpose ? { purpose: file.purpose } : {}),
+        ...(file.kind === "video" && file.width && file.height
+          ? { width: Math.round(file.width), height: Math.round(file.height) }
+          : {}),
       },
     },
   );
-  let res: Response;
+  let status: number;
   try {
-    res = await fetch(resolveUrl(ticket.uploadUrl), {
-      method: "PUT",
-      headers: ticket.headers,
-      body: bytes,
-    });
+    status = await picked.send(resolveUrl(ticket.uploadUrl), ticket.headers, onProgress);
   } catch {
     throw new ApiError(0, "OFFLINE", OFFLINE);
   }
-  if (!res.ok)
-    throw new ApiError(res.status, "UPLOAD_INVALID", "That upload didn't go through. Try again.");
+  if (status < 200 || status >= 300)
+    throw new ApiError(status, "UPLOAD_INVALID", "That upload didn't go through. Try again.");
   await api(`/media/${ticket.mediaId}/complete`, { method: "POST" });
   return ticket.mediaId;
 }

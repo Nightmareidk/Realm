@@ -253,19 +253,24 @@ export default function Create() {
     try {
       const ids: string[] = [];
       for (const [i, a] of picked.entries()) {
-        setStatus(picked.length > 1 ? `Uploading ${i + 1} of ${picked.length}` : "Uploading");
+        const which = picked.length > 1 ? `${i + 1} of ${picked.length}` : "";
+        setStatus(`Uploading ${which}`.trim());
         const isVideo = a.type === "video";
         // Photos are made smaller first, so they upload faster and storage lasts longer.
         const file = isVideo
           ? { uri: a.uri, mimeType: a.mimeType ?? "video/mp4" }
           : await shrinkPhoto(a);
         ids.push(
-          await upload({
-            uri: file.uri,
-            kind: isVideo ? "video" : "image",
-            mimeType: file.mimeType,
-            durationMs: a.duration ?? undefined,
-          }),
+          await upload(
+            {
+              uri: file.uri,
+              kind: isVideo ? "video" : "image",
+              mimeType: file.mimeType,
+              durationMs: a.duration ?? undefined,
+              ...(isVideo && a.width && a.height ? { width: a.width, height: a.height } : {}),
+            },
+            (p) => setStatus(`Uploading ${which} ${Math.round(p * 100)}%`.replace("  ", " ")),
+          ),
         );
       }
       setStatus("Sharing");

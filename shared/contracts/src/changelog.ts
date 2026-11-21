@@ -22,6 +22,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "0.1.1",
+    date: "2026-11-21",
+    title: "Faster, and photos and videos post again",
+    highlights: [
+      "Photos, videos, Stories and Clips upload again, with a progress count while they go.",
+      "Screens, buttons and chats answer much faster.",
+      "Sideways (landscape) videos show whole, with a button to watch them full screen.",
+      'The "No messages yet" line in a new chat is no longer back to front.',
+    ],
+    sections: [
+      {
+        heading: "Fixed",
+        items: [
+          "Uploads from the Android app were turned away, so nothing you picked could be posted. They work again.",
+          "The chat screen showed its empty-chat line mirrored on Android.",
+          "Landscape videos were cut down to fill the tall screen. Now they show whole in Clips, Stories and while you make a post, and you can turn your phone to watch them full screen.",
+          "The weekly music recap could fail to load.",
+        ],
+      },
+      {
+        heading: "Faster",
+        items: [
+          "Realm's database moved onto the same server as the app, so screens and buttons answer in a blink instead of almost a second.",
+          "A copy of everything is saved every night.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.1.0",
     date: "2026-11-20",
     title: "The first Realm beta",

@@ -186,6 +186,11 @@ function Viewer({
   next.current = onNext;
   const [held, setHeld] = useState(false);
   const isVideo = story.media.kind === "video";
+  // A sideways (landscape) photo or video is shown whole, with bars, not cut to the tall frame.
+  const storyFit =
+    story.media.width && story.media.height && story.media.width > story.media.height * 0.8
+      ? "contain"
+      : "cover";
   const player = useVideoPlayer(isVideo ? mediaSource(story.media.url) : null, (p) => {
     p.loop = false;
     // With music on it, the music plays instead of the video's own sound.
@@ -362,14 +367,14 @@ function Viewer({
           <VideoView
             player={player}
             style={StyleSheet.absoluteFill}
-            contentFit="cover"
+            contentFit={storyFit}
             nativeControls={false}
           />
         ) : (
           <Image
             source={mediaSource(story.media.url)}
             style={StyleSheet.absoluteFill}
-            contentFit="cover"
+            contentFit={storyFit}
             transition={120}
             accessibilityLabel={story.caption ?? `A Story from ${ring.author.displayName}`}
           />

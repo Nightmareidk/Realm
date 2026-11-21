@@ -10,6 +10,7 @@ import {
   Share,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ViewToken,
 } from "react-native";
@@ -130,6 +131,15 @@ function Clip({
   const player = useVideoPlayer(video ? mediaSource(video.url) : null, (p) => {
     p.loop = true;
   });
+  const view = useRef<VideoView>(null);
+  const { width } = useWindowDimensions();
+  // Width ÷ height of the video, as recorded at upload (after the phone's rotation note; the
+  // player's own track size on Android ignores that note, so upright phone videos would look
+  // sideways). Sideways (landscape) videos are shown whole, with bars, instead of being cut down
+  // to fill the tall screen, and get a button to watch them full screen.
+  const aspect = video?.width && video.height ? video.width / video.height : null;
+  const wide = aspect !== null && aspect > 0.8;
+  const shownHeight = wide && aspect ? Math.min(height, width / aspect) : height;
   const sound = post.sound;
   // With music on it, the music plays (its chosen part, looping) and the video's own sound is off.
   useEffect(() => {
@@ -167,16 +177,30 @@ function Clip({
         accessibilityLabel={muted ? "Turn sound on" : "Turn sound off"}
       >
         <VideoView
+          ref={view}
           player={player}
           style={StyleSheet.absoluteFill}
-          contentFit="cover"
+          contentFit={wide ? "contain" : "cover"}
           nativeControls={false}
+          fullscreenOptions={{ enable: true, orientation: "landscape", autoExitOnRotate: true }}
         />
       </Pressable>
       {muted ? (
         <View style={s.mute} pointerEvents="none">
           <Icon name="SpeakerSlashFill" size={18} color="#ffffff" />
         </View>
+      ) : null}
+      {wide ? (
+        <Pressable
+          onPress={() => view.current?.enterFullscreen().catch(() => {})}
+          accessibilityRole="button"
+          accessibilityLabel="Watch full screen"
+          hitSlop={8}
+          style={[s.full, { top: Math.min(height - 120, height / 2 + shownHeight / 2 + 14) }]}
+        >
+          <Icon name="ArrowsOut" size={16} color="#ffffff" />
+          <Text style={s.fullText}>Full screen</Text>
+        </Pressable>
       ) : null}
 
       <View style={s.side}>
@@ -302,6 +326,20 @@ const make = (t: NativeTheme) =>
       borderRadius: 999,
       backgroundColor: "rgba(11,11,14,0.6)",
     },
+    full: {
+      position: "absolute",
+      alignSelf: "center",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      minHeight: 40,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(255,255,255,0.35)",
+      backgroundColor: "rgba(11,11,14,0.55)",
+    },
+    fullText: { fontFamily: t.fonts.bold, fontSize: 13.5 * t.textScale, color: "#ffffff" },
     side: { position: "absolute", right: 8, bottom: 28, alignItems: "center", gap: 14 },
     sideBtn: { alignItems: "center", minWidth: 52, minHeight: 52, justifyContent: "center" },
     sideLabel: {
