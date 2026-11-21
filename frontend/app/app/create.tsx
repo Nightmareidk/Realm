@@ -667,13 +667,7 @@ export default function Create() {
           ) : null}
           <HScroll showsHorizontalScrollIndicator={false} contentContainerStyle={s.picked}>
             {picked.map((a, i) => (
-              <View
-                key={a.uri}
-                style={[
-                  s.thumb,
-                  mode === "post" && i === selected && { borderWidth: 2.5, borderColor: accent },
-                ]}
-              >
+              <View key={a.uri} style={s.thumb}>
                 {/* Choosing the photo and removing it are side by side, never nested. */}
                 <Pressable
                   onPress={() => setSelected(i)}
@@ -689,6 +683,11 @@ export default function Create() {
                     <Image source={{ uri: a.uri }} style={s.thumbFill} contentFit="cover" />
                   )}
                 </Pressable>
+                {/* The ring is its own layer: adding and taking a border off the tile itself made
+                    Android stop drawing what was inside it. */}
+                {mode === "post" && i === selected ? (
+                  <View style={[s.thumbRing, { borderColor: accent }]} pointerEvents="none" />
+                ) : null}
                 <Pressable
                   onPress={() => {
                     setPicked(picked.filter((_, j) => j !== i));
@@ -1313,6 +1312,15 @@ const make = (t: NativeTheme) =>
       backgroundColor: t.colors.surfaceSunken,
     },
     thumbFill: { width: "100%", height: "100%" },
+    thumbRing: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: 14,
+      borderWidth: 2.5,
+    },
     video: { alignItems: "center", justifyContent: "center", backgroundColor: "#06080c" },
     remove: {
       position: "absolute",
