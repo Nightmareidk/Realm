@@ -339,8 +339,10 @@ export function PhotoEditor({
           : "Drag to move it. Pinch or double-tap to zoom."}
       </Text>
 
+      {/* A sideways ScrollView grows to fill free space on a phone; keep it to one row of chips. */}
       <HScroll
         showsHorizontalScrollIndicator={false}
+        style={s.shapeRow}
         contentContainerStyle={s.shapes}
         accessibilityRole="radiogroup"
       >
@@ -432,7 +434,14 @@ const make = (t: NativeTheme) =>
       textAlign: "center",
       paddingHorizontal: 24,
     },
-    shapes: { gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
+    shapeRow: { flexGrow: 0, flexShrink: 0 },
+    shapes: {
+      gap: 8,
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingTop: 14,
+      paddingBottom: 6,
+    },
     shape: {
       minHeight: 36,
       paddingHorizontal: 16,

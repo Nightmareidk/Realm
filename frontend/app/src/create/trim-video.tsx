@@ -21,6 +21,12 @@ import { type TrimmedVideo, trimVideo } from "../video-trim";
 const MIN_MS = 1_000;
 const THUMBS = 8;
 const HANDLE = 20;
+/**
+ * How far the handles stay from the sides of the screen. On Android with swipe navigation, a swipe
+ * that starts near a side means Back (24dp normally, about 40dp at the most sensitive setting), so
+ * a handle closer than that closes the trimmer instead of moving.
+ */
+const EDGE = 44;
 
 function seconds(ms: number) {
   const s = ms / 1000;
@@ -402,7 +408,7 @@ const make = (t: NativeTheme) =>
       paddingVertical: 6,
     },
     stage: { flex: 1, marginVertical: 8, overflow: "hidden" },
-    bottom: { paddingHorizontal: 16 + HANDLE, gap: 10 },
+    bottom: { paddingHorizontal: EDGE + HANDLE, gap: 10 },
     times: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
     time: { fontFamily: t.fonts.bold, fontSize: 14 * t.textScale, color: "#ffffff" },
     length: {

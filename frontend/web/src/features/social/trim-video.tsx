@@ -407,7 +407,9 @@ export function VideoTrimmer({
         )}
       </div>
 
-      <div className="space-y-2.5 px-4 pt-3 pb-4">
+      {/* On a phone, a swipe that starts near the side of the screen means Back, so keep the
+          handles well away from it. */}
+      <div className="space-y-2.5 px-4 pt-3 pb-4 max-sm:px-8">
         {error && (
           <p role="alert" className="text-center text-[0.92rem] text-[#ff8a8a]">
             {error}
