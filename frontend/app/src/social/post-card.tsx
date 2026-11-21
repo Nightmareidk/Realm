@@ -172,10 +172,20 @@ export const PostCard = memo(function PostCard({
     </Pressable>
   ) : post.kind === "clip" ? (
     // In a feed the tile opens the post's own screen, and there the Clip plays.
+    // Sized and rounded like photos, inside the card's side gaps.
     standalone ? (
-      <ClipPlayer post={post} />
+      <ClipPlayer
+        post={post}
+        width={kind === "thread" ? width - 72 : width - 24}
+        radius={kind === "ticket" ? 0 : t.radius.media}
+      />
     ) : (
-      <ClipTile post={post} onPress={open} />
+      <ClipTile
+        post={post}
+        onPress={open}
+        width={kind === "thread" ? width - 72 : width - 24}
+        radius={kind === "ticket" ? 0 : t.radius.media}
+      />
     )
   ) : (
     <Photos
@@ -534,9 +544,18 @@ function Photos({
 }
 
 /** A Clip in a list: a dark frame with its length; it plays on its own screen and in Clips. */
-export function ClipTile({ post, onPress }: { post: Post; onPress: () => void }) {
+export function ClipTile({
+  post,
+  onPress,
+  width,
+  radius = 0,
+}: {
+  post: Post;
+  onPress: () => void;
+  width: number;
+  radius?: number;
+}) {
   const s = useStyles(make);
-  const width = useContentWidth(680);
   const ms = post.media[0]?.durationMs ?? 0;
   const length = ms
     ? `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, "0")}`
@@ -546,7 +565,7 @@ export function ClipTile({ post, onPress }: { post: Post; onPress: () => void })
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Play Clip${length ? `, ${length}` : ""}`}
-      style={[s.clip, { width, height: width * 1.1 }]}
+      style={[s.clip, { width, height: width * 1.1, borderRadius: radius, overflow: "hidden" }]}
     >
       <View style={s.play}>
         <Icon name="PlayFill" size={30} color="#ffffff" />
@@ -561,9 +580,8 @@ export function ClipTile({ post, onPress }: { post: Post; onPress: () => void })
  * (play, pause, seek, full screen). With music on it, the music plays instead of the video's own
  * sound, as in Clips. It pauses when you leave the screen.
  */
-function ClipPlayer({ post }: { post: Post }) {
+function ClipPlayer({ post, width, radius = 0 }: { post: Post; width: number; radius?: number }) {
   const s = useStyles(make);
-  const width = useContentWidth(680);
   const video = post.media[0];
   const player = useVideoPlayer(video ? mediaSource(video.url) : null, (p) => {
     p.loop = true;
@@ -581,7 +599,9 @@ function ClipPlayer({ post }: { post: Post }) {
     }, [player]),
   );
   return (
-    <View style={[s.clip, { width, height: width * 1.1 }]}>
+    <View
+      style={[s.clip, { width, height: width * 1.1, borderRadius: radius, overflow: "hidden" }]}
+    >
       <VideoView
         player={player}
         style={StyleSheet.absoluteFill}
