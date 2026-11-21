@@ -126,6 +126,8 @@ function PreviewVideo({ asset }: { asset: ImagePicker.ImagePickerAsset }) {
         style={StyleSheet.absoluteFill}
         contentFit={tall(asset) ? "cover" : "contain"}
         nativeControls={false}
+        // Android: the default surface stays black inside a rounded frame in a list.
+        surfaceType="textureView"
         accessibilityLabel="Your video"
       />
     </View>

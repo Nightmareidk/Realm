@@ -650,6 +650,8 @@ function FeedVideo({
           style={StyleSheet.absoluteFill}
           contentFit={isPortrait(media) ? "cover" : "contain"}
           nativeControls={false}
+          // Android: the default surface stays black inside a rounded frame in a list.
+          surfaceType="textureView"
           accessibilityLabel="Video"
         />
       ) : null}
