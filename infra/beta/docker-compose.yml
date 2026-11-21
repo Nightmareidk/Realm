@@ -3,8 +3,9 @@
 #   cd realm && docker compose -f infra/beta/docker-compose.yml --env-file infra/beta/.env up -d --build
 #
 # Everything uses the server's own network and listens on 127.0.0.1 only, except Caddy (80/443,
-# the https front door) and LiveKit's media ports. The database stays on Neon, uploads on
-# Cloudflare R2 and email on Resend; keys live in infra/beta/.env (never committed).
+# the https front door) and LiveKit's media ports. The database runs here too (since
+# 2026-11-21: Neon in Frankfurt was ~0.1 s away per lookup, which made every tap slow); uploads
+# are on Cloudflare R2 and email on Resend; keys live in infra/beta/.env (never committed).
 name: realm-beta
 
 # Logs (which can hold visitors' addresses) are capped and overwritten: 3 × 10 MB per service.
@@ -31,6 +32,8 @@ x-realm: &realm
     REDIS_URL: redis://:${VALKEY_PASSWORD:?set VALKEY_PASSWORD in .env}@127.0.0.1:6379
   depends_on:
     valkey:
+      condition: service_healthy
+    postgres:
       condition: service_healthy
 
 services:
@@ -66,6 +69,49 @@ services:
     working_dir: /repo/backend/db
     command: ["node", "node_modules/tsx/dist/cli.mjs", "src/migrate.ts"]
     profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # The database. Only this machine can reach it (127.0.0.1), with a password from .env.
+  # Copied nightly to ~/backups and to R2 by backup-db.sh (cron); restore steps in
+  # docs/BETA-SERVER.md.
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    logging: *logs
+    network_mode: host
+    shm_size: 256mb
+    environment:
+      POSTGRES_USER: realm
+      POSTGRES_DB: realm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    command:
+      - postgres
+      - -c
+      - listen_addresses=127.0.0.1
+      - -c
+      - port=5432
+      - -c
+      - password_encryption=scram-sha-256
+      # Sized for this 12 GB machine, which it shares with the rest of Realm.
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=2GB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - max_connections=100
+    volumes:
+      - pg-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U realm -d realm"]
+      interval: 5s
+      retries: 12
 
   web:
     build:
@@ -155,3 +201,4 @@ services:
 volumes:
   caddy-data:
   caddy-config:
+  pg-data:

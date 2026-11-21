@@ -1,5 +1,5 @@
 import type { ListeningFriend, WeekRecap } from "@realm/contracts";
-import { and, desc, eq, inArray, isNull, schema, sql } from "@realm/db";
+import { and, desc, eq, gt, inArray, isNull, schema, sql } from "@realm/db";
 import type { Deps } from "../../deps";
 import { notFound } from "../../lib/errors";
 import { mediaUrl } from "../../lib/serialize";
@@ -228,7 +228,9 @@ export class Recap {
     const [made] = await this.db
       .select({ n: sql<number>`count(*)::int` })
       .from(posts)
-      .where(and(live, sql`${posts.createdAt} > ${from}`));
+      // Typed comparisons: a raw `sql` template sends the Date as-is, which the real
+      // Postgres driver refuses (the in-memory test database accepted it).
+      .where(and(live, gt(posts.createdAt, from)));
     // Likes from other people this week, on any of your posts.
     const liked = await this.db
       .select({ postId: votes.targetId, n: sql<number>`count(*)::int` })
@@ -239,7 +241,7 @@ export class Recap {
           live,
           eq(votes.targetType, "post"),
           sql`${votes.userId} <> ${userId}`,
-          sql`${votes.createdAt} > ${from}`,
+          gt(votes.createdAt, from),
         ),
       )
       .groupBy(votes.targetId)
@@ -252,7 +254,7 @@ export class Recap {
         and(
           eq(follows.followeeId, userId),
           eq(follows.status, "active"),
-          sql`${follows.createdAt} > ${from}`,
+          gt(follows.createdAt, from),
         ),
       );
 

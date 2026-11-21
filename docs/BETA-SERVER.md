@@ -1,9 +1,13 @@
 # Realm's beta server
 
 One rented Linux server runs Realm for the closed beta (Google Play's 12+ testers, and the website
-at the same time). The database stays on **Neon**, uploads on **Cloudflare R2** and email on
-**Resend**, so the server only runs Realm itself, Valkey (online status, rate limits, the job queue),
-LiveKit (voice and video) and Caddy (https).
+at the same time). It runs Realm itself, the **database** (PostgreSQL 18), Valkey (online status,
+rate limits, the job queue), LiveKit (voice and video) and Caddy (https). Uploads are on
+**Cloudflare R2** and email on **Resend**.
+
+The database moved here from Neon on 2026-11-21 (the owner's yes): Neon is in Frankfurt and this
+server in Jeddah, so each lookup took ~0.1 s and one tap needed 8–30 of them. Here a lookup takes
+about a millisecond. The Neon copy is kept, untouched, as a spare (`NEON_DATABASE_URL` in `.env`).
 
 Files: `infra/beta/` (`Dockerfile`, `docker-compose.yml`, `Caddyfile`, `.env.example`).
 
@@ -154,8 +158,8 @@ In the bucket's **CORS policy**, add `https://tomyrealm.com` to `AllowedOrigins`
 
 ### 7. Database changes (0027 applied 2026-11-20, with the owner's yes)
 
-The new code needs the latest database changes on Neon. This step changes the live database, so it
-**only runs after you say yes to it on its own**:
+The new code needs the latest database changes (since 2026-11-21 on this server's own database).
+This step changes the live database, so it **only runs after you say yes to it on its own**:
 
 ```sh
 docker compose -f infra/beta/docker-compose.yml --profile tools run --rm migrate
@@ -187,15 +191,35 @@ start a voice call, and do the same from the phone app's release build.
 - **Restarts by themselves:** every service has `restart: unless-stopped`, and comes back after a
   server reboot.
 - **Alerts:** server errors and the storage warnings go to `REALM_ALERT_EMAIL`.
-- **Backups:** the data that matters is on Neon (its own history and restore points) and R2. The
-  server itself holds nothing that can't be rebuilt.
+- **Backups:** see below. Uploads live in R2; everything else on the server can be rebuilt.
 - **Costs:** the Oracle server is Always Free (keep the account un-upgraded, or upgraded with a
-  USD 1 budget alert); Neon, R2 and Resend stay on their free plans.
+  USD 1 budget alert); R2 and Resend stay on their free plans.
   `REALM_STORAGE_LIMIT_GB` stops uploads before R2's free amount is used up.
+
+### Database backups
+
+`infra/beta/backup-db.sh` runs every night at 03:30 UTC (the ubuntu user's crontab). It saves a
+compressed copy to `~/backups/realm-YYYY-MM-DD.dump` (7 days kept, readable only by ubuntu) and
+sends the same file to R2 as `backups/db/realm-<weekday>.dump` (private bucket, EU; 7 slots, so
+the last 7 days). Its log is `~/backups/backup.log`. Run it by hand any time:
+`~/realm/infra/beta/backup-db.sh`.
+
+**Restore** (replaces everything in the database with the copy; stop Realm first):
+
+```sh
+cd ~/realm && C="docker compose -f infra/beta/docker-compose.yml"
+$C stop api gateway worker
+$C exec -T postgres pg_restore -U realm -d realm --clean --if-exists --no-owner < ~/backups/realm-YYYY-MM-DD.dump
+$C start api gateway worker
+```
+
+An R2 copy is downloaded first (Cloudflare dashboard › R2 › realm-media (EU) › `backups/db/`).
+To go back to Neon instead: put `NEON_DATABASE_URL`'s value back as `DATABASE_URL` and restore
+the newest dump there with the same `pg_restore` line pointed at the Neon address.
 
 ## Before real users (after the beta)
 
 - Rotate every key once more and remove any test accounts.
-- Turn on Neon's daily backups if the plan allows, and test one restore.
+- Test one restore of a nightly backup into a scratch database.
 - Limit the Firebase web key to tomyrealm.com (Google Cloud › Credentials), and swap the
   Firebase admin service account for one that may only send notifications.
