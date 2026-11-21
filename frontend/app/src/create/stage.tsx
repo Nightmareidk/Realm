@@ -26,8 +26,9 @@ const LENGTHS = [5_000, 10_000, 15_000, 30_000, 60_000];
 
 /**
  * Making a Story or a Clip, full screen (Instagram's editor, Look B's Clip screen): the photo or
- * video fills the screen; the tools run down the right (Text, Music, how long it shows); the
- * song sits on it; at the bottom, who sees it and the button to share (or Next, for a Clip).
+ * video fills the screen; the tools run down the right (Text, Music, Edit or Trim, how long it
+ * shows); the song sits on it; at the bottom, who sees it and the button to share (or Next, for a
+ * Clip).
  */
 export function Stage({
   mode,
@@ -46,6 +47,8 @@ export function Stage({
   onDiscard,
   onShare,
   onShareClose,
+  onEdit,
+  onTrim,
 }: {
   mode: "story" | "clip";
   asset: ImagePicker.ImagePickerAsset;
@@ -65,6 +68,10 @@ export function Stage({
   onShare: () => void;
   /** A Story: share it to Close Friends only (a green ring), Instagram's second button. */
   onShareClose?: () => void;
+  /** A photo: crop, turn or mirror it. */
+  onEdit?: () => void;
+  /** A video: keep one part of it (only where this build can cut videos). */
+  onTrim?: () => void;
 }) {
   const { accent, onAccent } = useTheme();
   const s = useStyles(make);
@@ -167,6 +174,8 @@ export function Stage({
           Boolean(caption),
         )}
         {tool("MusicNotesFill", music ? "Change" : "Music", onMusic, Boolean(music))}
+        {!isVideo && onEdit ? tool("Crop", "Edit", onEdit) : null}
+        {isVideo && onTrim ? tool("Scissors", "Trim", onTrim) : null}
         {mode === "story" && !isVideo
           ? tool("Sparkle", "Length", nextLength, true, lengthLabel)
           : null}

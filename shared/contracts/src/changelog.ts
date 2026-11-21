@@ -22,6 +22,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "0.1.2",
+    date: "2026-11-21",
+    title: "Edit photos and trim videos",
+    highlights: [
+      "Edit a photo before you share it: cut it to a shape, turn it or mirror it.",
+      "Trim a video: drag the ends to keep just the part you want.",
+      "A video that's too long or too big now opens in the trimmer instead of being turned away.",
+    ],
+    sections: [
+      {
+        heading: "Photos",
+        items: [
+          "Tap Edit on a photo in a new post, or Edit on a photo Story.",
+          "Cut it to a shape: Original, Square, 4:5 (as posts show in the feed), 9:16 (a full Story) or 16:9. Drag to move it in the frame; pinch or double-tap to zoom.",
+          "Turn it a quarter at a time, or mirror it. Reset puts it back.",
+          "Your photo in the gallery is never changed: Realm saves an edited copy.",
+        ],
+      },
+      {
+        heading: "Videos",
+        items: [
+          "Tap Trim on a Clip or a video Story. Drag either end of the strip, or drag the chosen part along it; the video plays just that part.",
+          "Trimming happens on your phone and keeps the video's quality. It starts on the nearest whole picture, so it can begin a moment early.",
+          "Videos over 60 seconds or 100 MB open in the trimmer with the part that fits already chosen.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.1.1",
     date: "2026-11-21",
     title: "Faster, and photos and videos post again",

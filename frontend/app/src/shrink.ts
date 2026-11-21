@@ -11,6 +11,21 @@ const MAX_SIDE = 1600;
 export const CLIP_MAX_SECONDS = 60;
 
 /**
+ * How a photo is saved again after shrinking or editing: as a JPEG, but pictures with see-through
+ * parts stay see-through (WebP on Android, PNG on iPhone).
+ */
+export function saveFormatFor(mimeType: string | null | undefined): {
+  format: SaveFormat;
+  mimeType: string;
+} {
+  const clear = mimeType === "image/png" || mimeType === "image/webp";
+  if (!clear) return { format: SaveFormat.JPEG, mimeType: "image/jpeg" };
+  return Platform.OS === "android"
+    ? { format: SaveFormat.WEBP, mimeType: "image/webp" }
+    : { format: SaveFormat.PNG, mimeType: "image/png" };
+}
+
+/**
  * Makes a picked photo smaller before it uploads: shrinks it to fit MAX_SIDE and saves it again at
  * good quality. GIFs keep their animation, and pictures with see-through parts stay see-through
  * (WebP on Android, PNG on iPhone). If anything goes wrong, the original is used: shrinking must
@@ -24,12 +39,7 @@ export async function shrinkPhoto(photo: {
 }): Promise<{ uri: string; mimeType: string }> {
   const original = { uri: photo.uri, mimeType: photo.mimeType ?? "image/jpeg" };
   if (original.mimeType === "image/gif") return original;
-  const clear = original.mimeType === "image/png" || original.mimeType === "image/webp";
-  const format = !clear
-    ? SaveFormat.JPEG
-    : Platform.OS === "android"
-      ? SaveFormat.WEBP
-      : SaveFormat.PNG;
+  const { format, mimeType } = saveFormatFor(original.mimeType);
   try {
     const context = ImageManipulator.manipulate(photo.uri);
     if (Math.max(photo.width, photo.height) > MAX_SIDE) {
@@ -37,12 +47,7 @@ export async function shrinkPhoto(photo: {
     }
     const image = await context.renderAsync();
     const saved = await image.saveAsync({ compress: 0.82, format });
-    const mimeType =
-      format === SaveFormat.JPEG
-        ? "image/jpeg"
-        : format === SaveFormat.WEBP
-          ? "image/webp"
-          : "image/png";
+    image.release();
     return { uri: saved.uri, mimeType };
   } catch {
     return original;

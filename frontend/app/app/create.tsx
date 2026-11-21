@@ -1,4 +1,5 @@
 import {
+  MEDIA_RULES,
   POLL_HOURS,
   POLL_OPTION_MAX,
   type Post,
@@ -22,7 +23,9 @@ import {
   View,
 } from "react-native";
 import { alert } from "@/alert";
+import { PhotoEditor } from "@/create/edit-photo";
 import { Stage } from "@/create/stage";
+import { VideoTrimmer } from "@/create/trim-video";
 import { postsChanged, useApi } from "@/data";
 import { Icon } from "@/icon";
 import { leave } from "@/leave";
@@ -38,6 +41,7 @@ import { asQuoted, QuotedCard } from "@/social/quoted";
 import { AppScreen, TopBar } from "@/social/screen";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Pill } from "@/ui";
+import { canTrim } from "@/video-trim";
 
 type Mode = "post" | "story" | "clip";
 const MODES: [Mode, string][] = [
@@ -85,6 +89,24 @@ function capsuleDate(when: CapsuleWhen, now = new Date()): Date {
   d.setMinutes(0, 0, 0);
   d.setHours(d.getHours() + 1);
   return d;
+}
+
+const VIDEO_MAX_BYTES = MEDIA_RULES.video.maxBytes;
+
+/**
+ * The longest part of a video that can be kept: the Clip limit, and short enough to fit under the
+ * upload size (judged from the whole file's size per second, with a little room to spare).
+ */
+function keepAtMost(video: ImagePicker.ImagePickerAsset): number {
+  const ms = video.duration ?? 0;
+  const bytes = video.fileSize ?? 0;
+  const fits = ms > 0 && bytes > 0 ? Math.floor((VIDEO_MAX_BYTES * 0.92) / (bytes / ms)) : Infinity;
+  return Math.min(CLIP_MAX_SECONDS * 1000, fits);
+}
+
+/** A photo that can be edited here (a GIF would lose its movement). */
+function editable(a: ImagePicker.ImagePickerAsset | undefined) {
+  return Boolean(a && a.type !== "video" && a.mimeType !== "image/gif");
 }
 
 /** How long a photo Story shows. */
@@ -145,6 +167,10 @@ export default function Create() {
   const [details, setDetails] = useState(false);
   /** Which picked photo the big preview shows. */
   const [selected, setSelected] = useState(0);
+  /** The picked photo open in the editor. */
+  const [editing, setEditing] = useState<number | null>(null);
+  /** The picked video open in the trimmer; "must" when it's too long or too big as it is. */
+  const [trimming, setTrimming] = useState<{ note?: string; must: boolean } | null>(null);
   const [shareSound, setShareSound] = useState(false);
   const [soundName, setSoundName] = useState("");
   // Instagram's "advanced settings", in plain sight: tags, hidden likes, comments.
@@ -225,13 +251,28 @@ export default function Create() {
         ? await ImagePicker.launchCameraAsync(options)
         : await ImagePicker.launchImageLibraryAsync(options);
     if (res.canceled) return;
-    const long = res.assets.find(
-      (a) => a.type === "video" && (a.duration ?? 0) > CLIP_MAX_SECONDS * 1000 + 500,
-    );
-    if (long) {
+    const video = res.assets.find((a) => a.type === "video");
+    const long = video && (video.duration ?? 0) > CLIP_MAX_SECONDS * 1000 + 500;
+    const big = video && (video.fileSize ?? 0) > VIDEO_MAX_BYTES;
+    if (video && (long || big)) {
+      const mb = Math.round(VIDEO_MAX_BYTES / 1024 / 1024);
+      const maxMs = keepAtMost(video);
+      // This build can cut it here: open the trimmer with the part that fits already chosen.
+      if (canTrim && video.duration && maxMs >= 1000) {
+        setPicked([video]);
+        setTrimming({
+          must: true,
+          note: long
+            ? `Videos can be up to ${CLIP_MAX_SECONDS} seconds. Choose the part to keep.`
+            : `This video is over ${mb} MB, the most Realm takes. Choose a shorter part to keep.`,
+        });
+        return;
+      }
       alert(
-        "That video is too long",
-        `Clips can be up to ${CLIP_MAX_SECONDS} seconds. Trim it in your gallery first, then pick it again.`,
+        long ? "That video is too long" : "That video is too big",
+        long
+          ? `Videos can be up to ${CLIP_MAX_SECONDS} seconds. Trim it in your gallery first, then pick it again.`
+          : `Videos can be up to ${mb} MB. Trim it shorter in your gallery, or record at a lower quality.`,
       );
       return;
     }
@@ -354,6 +395,60 @@ export default function Create() {
       }}
     />
   );
+  // Editing a photo, or trimming a video: full screen, over everything else.
+  const editingAsset = editing !== null ? picked[editing] : undefined;
+  if (editing !== null && editingAsset) {
+    return (
+      <PhotoEditor
+        photo={editingAsset}
+        onCancel={() => setEditing(null)}
+        onDone={(edited) => {
+          setPicked((all) =>
+            all.map((a, i) =>
+              i === editing ? { ...a, ...edited, fileSize: undefined, fileName: undefined } : a,
+            ),
+          );
+          setEditing(null);
+        }}
+      />
+    );
+  }
+  if (trimming && asset?.type === "video") {
+    return (
+      <VideoTrimmer
+        video={{
+          uri: asset.uri,
+          durationMs: asset.duration ?? 0,
+          sizeBytes: asset.fileSize ?? undefined,
+        }}
+        limitMs={CLIP_MAX_SECONDS * 1000}
+        maxBytes={VIDEO_MAX_BYTES}
+        note={trimming.note}
+        must={trimming.must}
+        onCancel={() => {
+          // Too long or too big to share as it is: back to choosing one.
+          if (trimming.must) setPicked([]);
+          setTrimming(null);
+        }}
+        onDone={(cut) => {
+          setPicked([
+            {
+              ...asset,
+              uri: cut.uri,
+              duration: cut.durationMs,
+              width: cut.width || asset.width,
+              height: cut.height || asset.height,
+              fileSize: cut.sizeBytes || undefined,
+              mimeType: "video/mp4",
+              fileName: undefined,
+            },
+          ]);
+          setTrimming(null);
+        }}
+      />
+    );
+  }
+
   if ((mode === "story" || (mode === "clip" && !details)) && picked.length === 1 && asset) {
     return (
       <>
@@ -380,6 +475,8 @@ export default function Create() {
           }}
           onShare={mode === "story" ? () => void share() : () => setDetails(true)}
           onShareClose={mode === "story" ? () => void share(true) : undefined}
+          onEdit={editable(asset) ? () => setEditing(0) : undefined}
+          onTrim={canTrim && asset.duration ? () => setTrimming({ must: false }) : undefined}
         />
         {picker}
       </>
@@ -478,6 +575,17 @@ export default function Create() {
                 <Text style={s.bigCount}>
                   {Math.min(selected, picked.length - 1) + 1}/{picked.length}
                 </Text>
+              ) : null}
+              {editable(picked[Math.min(selected, picked.length - 1)]) ? (
+                <Pressable
+                  onPress={() => setEditing(Math.min(selected, picked.length - 1))}
+                  accessibilityRole="button"
+                  accessibilityLabel="Edit this photo: crop, turn or mirror"
+                  style={({ pressed }) => [s.bigEdit, pressed && s.pressed]}
+                >
+                  <Icon name="Crop" size={16} color="#ffffff" />
+                  <Text style={s.bigEditText}>Edit</Text>
+                </Pressable>
               ) : null}
             </View>
           ) : null}
@@ -1095,6 +1203,19 @@ const make = (t: NativeTheme) =>
       backgroundColor: t.colors.surfaceSunken,
     },
     bigPhoto: { width: "100%", aspectRatio: 4 / 5 },
+    bigEdit: {
+      position: "absolute",
+      left: 10,
+      bottom: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      minHeight: 40,
+      paddingHorizontal: 14,
+      borderRadius: 20,
+      backgroundColor: "rgba(0,0,0,0.6)",
+    },
+    bigEditText: { fontFamily: t.fonts.bold, fontSize: 13.5 * t.textScale, color: "#ffffff" },
     bigCount: {
       position: "absolute",
       top: 10,

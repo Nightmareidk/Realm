@@ -111,7 +111,7 @@ function toApiError(res: Response, data: unknown): ApiError {
  * browser preview stands in for the Android app.
  */
 export const CLIENT_PLATFORM = Platform.OS === "web" ? "android" : Platform.OS;
-export const CLIENT_VERSION = "0.1.1";
+export const CLIENT_VERSION = "0.1.2";
 const CLIENT = `${CLIENT_PLATFORM}/${CLIENT_VERSION}`;
 
 /**
