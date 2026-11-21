@@ -21,6 +21,7 @@ import { Avatar, fillFor } from "./avatar";
 import { untilOpen } from "./capsule";
 import { Highlights } from "./highlights";
 import { MentionText } from "./mention-text";
+import { firstPhoto } from "./post-card";
 import { useSafety } from "./safety";
 import { Empty, Loading, Problem } from "./screen";
 import { compact } from "./time";
@@ -643,6 +644,8 @@ function Tile({ post }: { post: Post }) {
   const width = useContentWidth(935);
   const size = (width - 4) / 3;
   const first = post.media[0];
+  // A post can start with a video: the tile shows its first photo, or a dark tile if it has none.
+  const cover = post.kind === "image" ? firstPhoto(post.media) : undefined;
   return (
     <Pressable
       onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })}
@@ -665,13 +668,13 @@ function Tile({ post }: { post: Post }) {
           <Text style={s.tileCapsuleN}>{untilOpen(post.capsule.opensAt).n}</Text>
           <Text style={s.tileCapsuleUnit}>{untilOpen(post.capsule.opensAt).unit}</Text>
         </View>
-      ) : post.kind === "image" && first ? (
+      ) : post.kind === "image" && cover ? (
         <Image
           transition={150}
-          source={mediaSource(first.url)}
+          source={mediaSource(cover.url)}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
-          recyclingKey={first.id}
+          recyclingKey={cover.id}
         />
       ) : post.kind === "text" ? (
         <Text style={s.tileText} numberOfLines={6}>
@@ -689,7 +692,7 @@ function Tile({ post }: { post: Post }) {
           <Icon name="PushPin" size={14} color="#ffffff" />
         </View>
       ) : null}
-      {post.kind === "clip" ? (
+      {post.kind === "clip" || (post.media.length === 1 && first?.kind === "video") ? (
         <View style={s.tileMark}>
           <Icon name="PlayFill" size={16} color="#ffffff" />
         </View>

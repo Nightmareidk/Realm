@@ -79,6 +79,35 @@ async function photo(cookie: string) {
   return ticket.mediaId as string;
 }
 
+const MP4 = Buffer.concat([
+  Buffer.from([0, 0, 0, 24]),
+  Buffer.from("ftypisom"),
+  Buffer.from([0, 0, 2, 0]),
+  Buffer.from("isommp41"),
+  Buffer.alloc(200),
+]);
+
+async function video(cookie: string) {
+  const ticket = (
+    await call(cookie, "POST", "/media/uploads", {
+      kind: "video",
+      mimeType: "video/mp4",
+      sizeBytes: MP4.length,
+      durationMs: 4000,
+      width: 1920,
+      height: 1080,
+    })
+  ).json();
+  await t.app.inject({
+    method: "PUT",
+    url: ticket.uploadUrl.replace(/^\/api/, ""),
+    headers: { "content-type": "video/mp4" },
+    payload: MP4,
+  });
+  await call(cookie, "POST", `/media/${ticket.mediaId}/complete`);
+  return ticket.mediaId as string;
+}
+
 describe("posts and the Home feed", () => {
   it("shows what people you follow post, and nothing from people you don't", async () => {
     const noor = await person();
@@ -119,6 +148,62 @@ describe("posts and the Home feed", () => {
       mediaIds: [mediaId],
     });
     expect(reused.statusCode).toBe(400);
+  });
+
+  it("takes photos and videos mixed in one post, in the order they were picked", async () => {
+    const noor = await person();
+    const first = await video(noor.cookie);
+    const second = await photo(noor.cookie);
+    const post = await call(noor.cookie, "POST", "/posts", {
+      kind: "image",
+      caption: "clutch and the photo after",
+      mediaIds: [first, second],
+    });
+    expect(post.statusCode).toBe(201);
+    expect(post.json()).toMatchObject({
+      kind: "image",
+      media: [
+        { id: first, kind: "video" },
+        { id: second, kind: "image" },
+      ],
+    });
+    // A Clip is still one video, and nothing else.
+    const clip = await call(noor.cookie, "POST", "/posts", {
+      kind: "clip",
+      mediaIds: [await photo(noor.cookie)],
+    });
+    expect(clip.statusCode).toBe(400);
+  });
+
+  it("keeps Clips out of Home; they stay in Clips and on the profile", async () => {
+    const noor = await person();
+    const kenji = await person();
+    await call(noor.cookie, "PUT", `/users/${kenji.username}/follow`);
+    await say(kenji, "a post");
+    const clip = await call(kenji.cookie, "POST", "/posts", {
+      kind: "clip",
+      caption: "a clip",
+      mediaIds: [await video(kenji.cookie)],
+    });
+    expect(clip.statusCode).toBe(201);
+    const clipId = clip.json().id as string;
+
+    expect(await feed(noor)).toEqual(["a post"]);
+    expect(await feed(kenji)).toEqual(["a post"]);
+    const clips = (await call(noor.cookie, "GET", "/clips")).json().items as { id: string }[];
+    expect(clips.map((c) => c.id)).toContain(clipId);
+    const onProfile = (
+      await call(noor.cookie, "GET", `/users/${kenji.username}/posts?kind=clip`)
+    ).json().items as { id: string }[];
+    expect(onProfile.map((c) => c.id)).toEqual([clipId]);
+
+    // A repost of a Clip stays out of Home too.
+    const sam = await person();
+    await call(sam.cookie, "PUT", `/users/${noor.username}/follow`);
+    expect((await call(noor.cookie, "PUT", `/posts/${clipId}/repost`)).statusCode).toBeLessThan(
+      300,
+    );
+    expect(await feed(sam)).toEqual([]);
   });
 });
 

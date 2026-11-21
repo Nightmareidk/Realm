@@ -18,7 +18,7 @@ import { api, mediaSource } from "@/server";
 import { useSession } from "@/session";
 import { useSheet } from "@/sheet";
 import { Avatar, fillFor } from "@/social/avatar";
-import { PostCard } from "@/social/post-card";
+import { firstPhoto, PostCard } from "@/social/post-card";
 import { AppScreen, Empty, Loading, Problem } from "@/social/screen";
 import { type NativeTheme, useStyles, useTheme } from "@/theme";
 import { Sticker } from "@/themes/art";
@@ -50,9 +50,16 @@ export default function Home() {
   // The photo on screen, whose colours light the room (Now Playing's glow).
   const lit = t.style.posts === "glow" && t.style.glow > 0;
   const [ambient, setAmbient] = useState<string | null>(null);
+  /** The post on screen with a video in it: that video plays by itself, as on Instagram. */
+  const [playing, setPlaying] = useState<string | null>(null);
   const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken<Post>[] }) => {
-    const photo = viewableItems.find((v) => v.item?.kind === "image")?.item?.media[0];
+    const photo = viewableItems
+      .map((v) => (v.item?.kind === "image" ? firstPhoto(v.item.media) : undefined))
+      .find(Boolean);
     if (photo) setAmbient(photo.url);
+    setPlaying(
+      viewableItems.find((v) => v.item?.media.some((m) => m.kind === "video"))?.item?.id ?? null,
+    );
     // Their likes and comments, live.
     live.watchPosts(
       "home",
@@ -170,8 +177,14 @@ export default function Home() {
         viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
         data={feed.items}
         keyExtractor={(p) => p.id}
+        extraData={playing}
         renderItem={({ item }) => (
-          <PostCard post={item} onChange={feed.update} onRemoved={feed.remove} />
+          <PostCard
+            post={item}
+            onChange={feed.update}
+            onRemoved={feed.remove}
+            active={item.id === playing}
+          />
         )}
         ListHeaderComponent={header}
         ListEmptyComponent={

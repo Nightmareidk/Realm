@@ -37,6 +37,8 @@ export function PostLinkCard({ id }: { id: string }) {
     );
   }
   const first = p.media[0];
+  // A post can start with a video: show its first photo.
+  const cover = p.media.find((m) => m.kind === "image");
   return (
     <Pressable
       onPress={() => router.push({ pathname: "/post/[id]", params: { id: p.id } })}
@@ -47,10 +49,10 @@ export function PostLinkCard({ id }: { id: string }) {
       <Text style={s.name} numberOfLines={1}>
         {p.author.displayName}
       </Text>
-      {first?.kind === "image" ? (
+      {cover ? (
         <Image
           transition={150}
-          source={mediaSource(first.url)}
+          source={mediaSource(cover.url)}
           style={s.photo}
           contentFit="cover"
         />

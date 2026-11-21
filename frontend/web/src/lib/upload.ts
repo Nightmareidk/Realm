@@ -29,6 +29,9 @@ export async function uploadFile(
     kind: MediaKind;
     filename?: string;
     durationMs?: number;
+    /** A video's size, so a sideways one is shown whole before it loads. */
+    width?: number;
+    height?: number;
     signal?: AbortSignal;
     /** A song for Realm's own library (admins). */
     purpose?: "track";
@@ -52,6 +55,7 @@ export async function uploadFile(
       sizeBytes: file.size,
       ...(opts.filename ? { filename: opts.filename } : {}),
       ...(opts.durationMs !== undefined ? { durationMs: Math.round(opts.durationMs) } : {}),
+      ...(opts.width && opts.height ? { width: opts.width, height: opts.height } : {}),
       ...(opts.purpose ? { purpose: opts.purpose } : {}),
     },
     signal: opts.signal,

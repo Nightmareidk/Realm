@@ -51,10 +51,10 @@ const WORDS: Record<
 > = {
   post: {
     label: "Post",
-    pick: "Pick a photo first.",
-    wrong: "Posts take photos.",
-    choose: "Choose a photo",
-    accept: "image/*",
+    pick: "Pick a photo or video first.",
+    wrong: "Posts take a photo or a video.",
+    choose: "Choose a photo or a video",
+    accept: "image/*,video/mp4,video/webm,video/quicktime",
     share: "Share the post",
   },
   story: {
@@ -75,22 +75,31 @@ const WORDS: Record<
   },
 };
 
-/** How long a video is, read in the browser before it uploads. */
-function videoLength(file: File): Promise<number | undefined> {
+/** How long a video is and its size, read in the browser before it uploads. */
+function videoMeta(file: File): Promise<{ ms?: number; width?: number; height?: number }> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const v = document.createElement("video");
     v.preload = "metadata";
     v.onloadedmetadata = () => {
       URL.revokeObjectURL(url);
-      resolve(Number.isFinite(v.duration) ? Math.round(v.duration * 1000) : undefined);
+      resolve({
+        ms: Number.isFinite(v.duration) ? Math.round(v.duration * 1000) : undefined,
+        width: v.videoWidth || undefined,
+        height: v.videoHeight || undefined,
+      });
     };
     v.onerror = () => {
       URL.revokeObjectURL(url);
-      resolve(undefined);
+      resolve({});
     };
     v.src = url;
   });
+}
+
+/** How long a video is, read in the browser before it uploads. */
+async function videoLength(file: File): Promise<number | undefined> {
+  return (await videoMeta(file)).ms;
 }
 
 /** The part of a song that plays: 30 seconds on a post, the Story's length on a Story. */
@@ -141,6 +150,8 @@ export function Composer() {
   // The photo editor and the video trimmer open over the maker, like in the app.
   const [editing, setEditing] = useState(false);
   const [trimming, setTrimming] = useState<{ must: boolean; note?: string } | null>(null);
+  /** The picked photo or video is wider than tall (or square): a post shows it whole, on black. */
+  const [wide, setWide] = useState(false);
   const editorOpen = useRef(false);
   editorOpen.current = editing || trimming !== null;
 
@@ -235,7 +246,7 @@ export function Composer() {
     const kind = kindOf(file);
     const fits =
       mode === "post"
-        ? kind === "image"
+        ? kind === "image" || kind === "video"
         : mode === "clip"
           ? kind === "video"
           : kind === "image" || kind === "video";
@@ -247,11 +258,16 @@ export function Composer() {
     setError("");
     setProgress(0);
     try {
-      // Videos say how long they are, so the player shows it before loading.
-      const durationMs = kind === "video" ? await videoLength(file) : undefined;
+      // Videos say how long and how big they are, so the player shows them before loading.
+      const meta = kind === "video" ? await videoMeta(file) : {};
       const media = await uploadFile(
         file,
-        { kind, filename: file.name, ...(durationMs ? { durationMs } : {}) },
+        {
+          kind,
+          filename: file.name,
+          ...(meta.ms ? { durationMs: meta.ms } : {}),
+          ...(meta.width && meta.height ? { width: meta.width, height: meta.height } : {}),
+        },
         setProgress,
       );
       const pick = sound ? { soundId: sound.id, startMs: 0, durationMs: PART_MS } : undefined;
@@ -352,14 +368,27 @@ export function Composer() {
                   muted
                   loop
                   playsInline
-                  className="absolute inset-0 size-full object-cover"
+                  onLoadedMetadata={(e) =>
+                    setWide(e.currentTarget.videoWidth >= e.currentTarget.videoHeight)
+                  }
+                  className={cx(
+                    "absolute inset-0 size-full",
+                    // A post shows a wide video whole, on black, as the feed will.
+                    mode === "post" && wide ? "object-contain" : "object-cover",
+                  )}
                 />
               ) : (
                 // biome-ignore lint/performance/noImgElement: a local preview (blob URL).
                 <img
                   src={preview}
                   alt="What you’ll share"
-                  className="absolute inset-0 size-full object-cover"
+                  onLoad={(e) =>
+                    setWide(e.currentTarget.naturalWidth >= e.currentTarget.naturalHeight)
+                  }
+                  className={cx(
+                    "absolute inset-0 size-full",
+                    mode === "post" && wide ? "object-contain" : "object-cover",
+                  )}
                 />
               )
             ) : (

@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { memo, useCallback, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -22,6 +22,7 @@ import { postsChanged } from "../data";
 import { Icon } from "../icon";
 import { useContentWidth } from "../layout";
 import { SoundChip } from "../music/chip";
+import { feedStop } from "../music/player";
 import { EdgeArrow, useFinePointer } from "../scroll-row";
 import { ApiError, api, mediaSource } from "../server";
 import { useSession } from "../session";
@@ -42,10 +43,35 @@ export const LIKED = "#ff5f7a";
 /** The repost colour: the green people know from sharing on other apps. */
 export const REPOSTED = "#2fbf71";
 
-/** Photos and Clips are framed between 4:5 (portrait) and 1.91:1 (landscape), as people expect. */
-export function frameRatio(m: MediaRef | undefined) {
-  if (!m?.width || !m.height) return 4 / 5;
-  return Math.min(1.91, Math.max(0.8, m.width / m.height));
+/** A post's photos and videos all sit in one tall frame, 4:5, the way Instagram shows them. */
+export const FRAME = 4 / 5;
+
+/** Taller than wide: it fills the frame. Anything else shows whole, with black above and below. */
+function isPortrait(m: MediaRef) {
+  return !m.width || !m.height || m.height > m.width;
+}
+
+/** The first photo in a post (a post can start with a video), for the colours around it. */
+export function firstPhoto(media: MediaRef[]) {
+  return media.find((m) => m.kind === "image");
+}
+
+/* Whether videos in the feed play with sound. Like Instagram: muted at first, and once you turn the
+   sound on it stays on for the next video, until you turn it off again. */
+let feedMuted = true;
+const muteListeners = new Set<() => void>();
+function setFeedMuted(muted: boolean) {
+  feedMuted = muted;
+  for (const l of muteListeners) l();
+}
+function useFeedMuted() {
+  return useSyncExternalStore(
+    (l) => {
+      muteListeners.add(l);
+      return () => muteListeners.delete(l);
+    },
+    () => feedMuted,
+  );
 }
 
 /**
@@ -58,6 +84,7 @@ export const PostCard = memo(function PostCard({
   onRemoved,
   standalone = false,
   noMedia = false,
+  active,
 }: {
   post: Post;
   onChange: (p: Post) => void;
@@ -66,6 +93,8 @@ export const PostCard = memo(function PostCard({
   standalone?: boolean;
   /** The photos are shown beside it (a post's page on a computer). */
   noMedia?: boolean;
+  /** The post the feed has on screen: its video plays by itself. A post's own screen always is. */
+  active?: boolean;
 }) {
   const { t } = useTheme();
   const s = useStyles(make);
@@ -193,9 +222,10 @@ export const PostCard = memo(function PostCard({
       onDoubleTap={() => setLike(true)}
       width={kind === "thread" ? width - 72 : width - 24}
       radius={kind === "ticket" ? 0 : t.radius.media}
+      active={active ?? standalone}
     />
   );
-  const glowSource = post.kind === "image" ? post.media[0] : undefined;
+  const glowSource = post.kind === "image" ? firstPhoto(post.media) : undefined;
   const soundOnPhoto = kind === "glow" && post.kind === "image";
   const from = `${post.author.displayName}'s post`;
   const reposts = post.repostCount ?? 0;
@@ -455,21 +485,34 @@ function IconButton({
   );
 }
 
-/** Photos, swiped sideways when there's more than one. A double-tap likes, with a heart. */
+/**
+ * A post's photos and videos, swiped sideways when there's more than one. A double-tap likes, with a
+ * heart. Each one sits in the same 4:5 frame: a tall one fills it, a wide or square one shows whole
+ * with black above and below. A video plays by itself, muted, while its post is on screen.
+ */
 function Photos({
   media,
   onDoubleTap,
   width,
   radius = 0,
+  active = false,
 }: {
   media: MediaRef[];
   onDoubleTap: () => void;
   width: number;
   radius?: number;
+  active?: boolean;
 }) {
-  const { t } = useTheme();
   const s = useStyles(make);
-  const height = width / frameRatio(media[0]);
+  const height = width / FRAME;
+  const videos = media.filter((m) => m.kind === "video").length;
+  const photos = media.length - videos;
+  const what = [
+    photos ? `${photos} ${photos === 1 ? "photo" : "photos"}` : "",
+    videos ? `${videos} ${videos === 1 ? "video" : "videos"}` : "",
+  ]
+    .filter(Boolean)
+    .join(" and ");
   const [index, setIndex] = useState(0);
   // With a mouse nothing can be swiped, so arrows step through the photos.
   const fine = useFinePointer();
@@ -500,9 +543,9 @@ function Photos({
   return (
     <GestureDetector gesture={tap}>
       <View
-        style={{ width, height, borderRadius: radius, overflow: "hidden" }}
-        accessible
-        accessibilityLabel={`${media.length === 1 ? "Photo" : `${media.length} photos`}. Double tap to like.`}
+        style={{ width, height, borderRadius: radius, overflow: "hidden", backgroundColor: "#000" }}
+        accessible={videos === 0}
+        accessibilityLabel={`${media.length === 1 && !videos ? "Photo" : what}. Double tap to like.`}
       >
         <FlatList
           ref={list}
@@ -512,15 +555,20 @@ function Photos({
           showsHorizontalScrollIndicator={false}
           keyExtractor={(m) => m.id}
           onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
-          renderItem={({ item }) => (
-            <Image
-              source={mediaSource(item.url)}
-              style={{ width, height, backgroundColor: t.colors.surfaceSunken }}
-              contentFit="cover"
-              recyclingKey={item.id}
-              transition={150}
-            />
-          )}
+          extraData={`${active}-${index}`}
+          renderItem={({ item, index: i }) =>
+            item.kind === "video" ? (
+              <FeedVideo media={item} width={width} height={height} play={active && i === index} />
+            ) : (
+              <Image
+                source={mediaSource(item.url)}
+                style={{ width, height, backgroundColor: "#000" }}
+                contentFit={isPortrait(item) ? "cover" : "contain"}
+                recyclingKey={item.id}
+                transition={150}
+              />
+            )
+          }
         />
         <Animated.View style={[s.burst, heart]} pointerEvents="none">
           <Icon name="HeartFill" size={96} color="#ffffff" />
@@ -540,6 +588,101 @@ function Photos({
         ) : null}
       </View>
     </GestureDetector>
+  );
+}
+
+/**
+ * A video in a post. It starts loading the first time its post is on screen, plays (muted, looping)
+ * while it is, and pauses when the post scrolls away, another screen opens or the app is left. The
+ * speaker button turns the sound on or off for every video in the feed, as on Instagram.
+ */
+function FeedVideo({
+  media,
+  width,
+  height,
+  play,
+}: {
+  media: MediaRef;
+  width: number;
+  height: number;
+  play: boolean;
+}) {
+  const s = useStyles(make);
+  const muted = useFeedMuted();
+  const [focused, setFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setFocused(true);
+      return () => setFocused(false);
+    }, []),
+  );
+  const on = play && focused;
+  // Nothing loads until it's first on screen, so a long feed doesn't download every video.
+  const [started, setStarted] = useState(on);
+  useEffect(() => {
+    if (on) setStarted(true);
+  }, [on]);
+  const player = useVideoPlayer(started ? mediaSource(media.url) : null, (p) => {
+    p.loop = true;
+    p.muted = feedMuted;
+  });
+  useEffect(() => {
+    try {
+      player.muted = muted;
+    } catch {
+      /* already gone */
+    }
+  }, [player, muted]);
+  useEffect(() => {
+    try {
+      if (on) player.play();
+      else player.pause();
+    } catch {
+      /* already gone */
+    }
+  }, [player, on]);
+  const secs = Math.round((media.durationMs ?? 0) / 1000);
+  return (
+    <View style={{ width, height, backgroundColor: "#000" }}>
+      {started ? (
+        <VideoView
+          player={player}
+          style={StyleSheet.absoluteFill}
+          contentFit={isPortrait(media) ? "cover" : "contain"}
+          nativeControls={false}
+          accessibilityLabel="Video"
+        />
+      ) : null}
+      {!on ? (
+        <View style={s.videoIdle} pointerEvents="none">
+          <View style={s.play}>
+            <Icon name="PlayFill" size={30} color="#ffffff" />
+          </View>
+        </View>
+      ) : null}
+      {secs > 0 && !on ? (
+        <Text style={[s.length, { right: undefined, left: 12 }]} pointerEvents="none">
+          {`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`}
+        </Text>
+      ) : null}
+      <Pressable
+        onPress={() => {
+          // Sound on: the post's song (if any) stops, so the two don't play over each other.
+          if (muted) feedStop();
+          setFeedMuted(!muted);
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={muted ? "Turn the sound on" : "Turn the sound off"}
+        hitSlop={10}
+        style={({ pressed }) => [s.mute, pressed && { opacity: 0.7 }]}
+      >
+        <Icon
+          name={muted ? "SpeakerSlashFill" : "SpeakerSimpleHighFill"}
+          size={16}
+          color="#ffffff"
+        />
+      </Pressable>
+    </View>
   );
 }
 
@@ -959,6 +1102,26 @@ const make = (t: NativeTheme) =>
     dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.45)" },
     dotOn: { backgroundColor: "#ffffff" },
     clip: { backgroundColor: "#06080c", alignItems: "center", justifyContent: "center" },
+    videoIdle: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    mute: {
+      position: "absolute",
+      right: 10,
+      bottom: 10,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(0,0,0,0.55)",
+    },
     play: {
       width: 64,
       height: 64,

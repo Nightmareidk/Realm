@@ -131,13 +131,18 @@ export class SocialService {
     if (body.kind === "text" && (!caption || ids.length)) {
       throw invalid("A text post needs words, and no photos.");
     }
-    if (body.kind === "image" && ids.length === 0) throw invalid("Add at least one photo.");
+    if (body.kind === "image" && ids.length === 0) {
+      throw invalid("Add at least one photo or video.");
+    }
     if (body.kind === "clip" && ids.length !== 1) throw invalid("A Clip is one video.");
 
     const files = await this.postable(authorId, ids);
-    const want = body.kind === "clip" ? "video" : "image";
-    if (files.some((f) => f.kind !== want)) {
-      throw invalid(body.kind === "clip" ? "A Clip has to be a video." : "Posts take photos.");
+    // A Clip is one video; a post is photos and videos, mixed in any order (as on Instagram).
+    const allowed = body.kind === "clip" ? ["video"] : ["image", "video"];
+    if (files.some((f) => !allowed.includes(f.kind))) {
+      throw invalid(
+        body.kind === "clip" ? "A Clip has to be a video." : "Posts take photos and videos.",
+      );
     }
 
     if (caption) await this.guard(authorId, caption);
@@ -661,7 +666,10 @@ export class SocialService {
 
   /* ── Feeds ─────────────────────────────────────────────────────────────── */
 
-  /** Home: your own posts, people you follow, and what's shared to your Spaces. Newest first. */
+  /**
+   * Home: your own posts, people you follow, and what's shared to your Spaces. Newest first.
+   * Clips stay in Clips (and on profiles): Home is for posts.
+   */
   async home(viewerId: bigint, before: bigint | null, limit: number): Promise<PostPage> {
     const following = sql`(select ${follows.followeeId} from ${follows} where ${follows.followerId} = ${viewerId} and ${follows.status} = 'active')`;
     // A repost that counts for this viewer: by someone they follow, and haven't blocked or muted.
@@ -677,6 +685,7 @@ export class SocialService {
           isNull(posts.archivedAt),
           // Time capsules come in below, at the moment they opened.
           isNull(posts.opensAt),
+          ne(posts.kind, "clip"),
           before ? lt(posts.id, before) : undefined,
           sql`${posts.authorId} not in ${blockedWith(viewerId)}`,
           sql`${posts.authorId} not in ${mutedBy(viewerId, "posts")}`,
@@ -710,6 +719,7 @@ export class SocialService {
           // Several people you follow reposted it: it shows once, for the newest of them.
           sql`${reposts.id} = (select max(rn.id) from ${reposts} as rn where rn.post_id = ${reposts.postId} and ${counts("rn")})`,
           eq(posts.visibility, "public"),
+          ne(posts.kind, "clip"),
           isNull(posts.communityId),
           isNull(posts.deletedAt),
           isNull(posts.removedAt),

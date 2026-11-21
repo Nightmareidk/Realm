@@ -11,6 +11,7 @@ import {
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -97,6 +98,40 @@ const VIDEO_MAX_BYTES = MEDIA_RULES.video.maxBytes;
  * The longest part of a video that can be kept: the Clip limit, and short enough to fit under the
  * upload size (judged from the whole file's size per second, with a little room to spare).
  */
+/** A video over the length or size Realm takes. */
+function overLimit(a: ImagePicker.ImagePickerAsset) {
+  return (
+    a.type === "video" &&
+    ((a.duration ?? 0) > CLIP_MAX_SECONDS * 1000 + 500 || (a.fileSize ?? 0) > VIDEO_MAX_BYTES)
+  );
+}
+
+/** Taller than wide (or not known): fills the 4:5 frame. Anything else shows whole, on black. */
+function tall(a: ImagePicker.ImagePickerAsset | undefined) {
+  return !a?.width || !a.height || a.height > a.width;
+}
+
+/** A picked video in the big preview: plays muted on a loop, as it will in the feed. */
+function PreviewVideo({ asset }: { asset: ImagePicker.ImagePickerAsset }) {
+  const s = useStyles(make);
+  const player = useVideoPlayer({ uri: asset.uri }, (p) => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
+  });
+  return (
+    <View style={[s.bigPhoto, { backgroundColor: "#000" }]}>
+      <VideoView
+        player={player}
+        style={StyleSheet.absoluteFill}
+        contentFit={tall(asset) ? "cover" : "contain"}
+        nativeControls={false}
+        accessibilityLabel="Your video"
+      />
+    </View>
+  );
+}
+
 function keepAtMost(video: ImagePicker.ImagePickerAsset): number {
   const ms = video.duration ?? 0;
   const bytes = video.fileSize ?? 0;
@@ -170,7 +205,11 @@ export default function Create() {
   /** The picked photo open in the editor. */
   const [editing, setEditing] = useState<number | null>(null);
   /** The picked video open in the trimmer; "must" when it's too long or too big as it is. */
-  const [trimming, setTrimming] = useState<{ note?: string; must: boolean } | null>(null);
+  const [trimming, setTrimming] = useState<{
+    index: number;
+    note?: string;
+    must: boolean;
+  } | null>(null);
   const [shareSound, setShareSound] = useState(false);
   const [soundName, setSoundName] = useState("");
   // Instagram's "advanced settings", in plain sight: tags, hidden likes, comments.
@@ -225,8 +264,8 @@ export default function Create() {
       return;
     }
     const options: ImagePicker.ImagePickerOptions = {
-      mediaTypes:
-        mode === "clip" ? ["videos"] : mode === "story" ? ["images", "videos"] : ["images"],
+      // A post takes photos and videos, mixed; a Clip is one video.
+      mediaTypes: mode === "clip" ? ["videos"] : ["images", "videos"],
       allowsMultipleSelection: mode === "post" && from === "library",
       selectionLimit: 10,
       orderedSelection: true,
@@ -251,32 +290,39 @@ export default function Create() {
         ? await ImagePicker.launchCameraAsync(options)
         : await ImagePicker.launchImageLibraryAsync(options);
     if (res.canceled) return;
-    const video = res.assets.find((a) => a.type === "video");
-    const long = video && (video.duration ?? 0) > CLIP_MAX_SECONDS * 1000 + 500;
-    const big = video && (video.fileSize ?? 0) > VIDEO_MAX_BYTES;
-    if (video && (long || big)) {
-      const mb = Math.round(VIDEO_MAX_BYTES / 1024 / 1024);
-      const maxMs = keepAtMost(video);
-      // This build can cut it here: open the trimmer with the part that fits already chosen.
-      if (canTrim && video.duration && maxMs >= 1000) {
-        setPicked([video]);
-        setTrimming({
-          must: true,
-          note: long
-            ? `Videos can be up to ${CLIP_MAX_SECONDS} seconds. Choose the part to keep.`
-            : `This video is over ${mb} MB, the most Realm takes. Choose a shorter part to keep.`,
-        });
-        return;
-      }
-      alert(
-        long ? "That video is too long" : "That video is too big",
-        long
-          ? `Videos can be up to ${CLIP_MAX_SECONDS} seconds. Trim it in your gallery first, then pick it again.`
-          : `Videos can be up to ${mb} MB. Trim it shorter in your gallery, or record at a lower quality.`,
-      );
-      return;
+    const list = single ? res.assets.slice(0, 1) : [...picked, ...res.assets].slice(0, 10);
+    setPicked(fitOrTrim(list));
+  }
+
+  /**
+   * The first video that's too long or too big opens in the trimmer, with the part that fits
+   * already chosen; the next one opens after it. Where this build can't cut, it's taken out and
+   * the person is told how to fix it.
+   */
+  function fitOrTrim(list: ImagePicker.ImagePickerAsset[]): ImagePicker.ImagePickerAsset[] {
+    const index = list.findIndex(overLimit);
+    const video = list[index];
+    if (!video) return list;
+    const long = (video.duration ?? 0) > CLIP_MAX_SECONDS * 1000 + 500;
+    const mb = Math.round(VIDEO_MAX_BYTES / 1024 / 1024);
+    // This build can cut it here: open the trimmer with the part that fits already chosen.
+    if (canTrim && video.duration && keepAtMost(video) >= 1000) {
+      setTrimming({
+        index,
+        must: true,
+        note: long
+          ? `Videos can be up to ${CLIP_MAX_SECONDS} seconds. Choose the part to keep.`
+          : `This video is over ${mb} MB, the most Realm takes. Choose a shorter part to keep.`,
+      });
+      return list;
     }
-    setPicked(single ? res.assets.slice(0, 1) : [...picked, ...res.assets].slice(0, 10));
+    alert(
+      long ? "That video is too long" : "That video is too big",
+      long
+        ? `Videos can be up to ${CLIP_MAX_SECONDS} seconds. Trim it in your gallery first, then pick it again.`
+        : `Videos can be up to ${mb} MB. Trim it shorter in your gallery, or record at a lower quality.`,
+    );
+    return fitOrTrim(list.filter((_, i) => i !== index));
   }
 
   function switchMode(m: Mode) {
@@ -384,6 +430,7 @@ export default function Create() {
   // A Story, or a Clip before its details: the full-screen editor.
   const everyone = isPrivate ? flip : !flip;
   const asset = picked[0];
+  const shown = picked[Math.min(selected, picked.length - 1)];
   const picker = (
     <MusicPicker
       visible={choosing}
@@ -413,37 +460,45 @@ export default function Create() {
       />
     );
   }
-  if (trimming && asset?.type === "video") {
+  const trimAsset = trimming ? picked[trimming.index] : undefined;
+  if (trimming && trimAsset?.type === "video") {
+    const at = trimming.index;
     return (
       <VideoTrimmer
         video={{
-          uri: asset.uri,
-          durationMs: asset.duration ?? 0,
-          sizeBytes: asset.fileSize ?? undefined,
+          uri: trimAsset.uri,
+          durationMs: trimAsset.duration ?? 0,
+          sizeBytes: trimAsset.fileSize ?? undefined,
         }}
         limitMs={CLIP_MAX_SECONDS * 1000}
         maxBytes={VIDEO_MAX_BYTES}
         note={trimming.note}
         must={trimming.must}
         onCancel={() => {
-          // Too long or too big to share as it is: back to choosing one.
-          if (trimming.must) setPicked([]);
           setTrimming(null);
+          // Too long or too big to share as it is: it's taken out, and the next one opens.
+          if (trimming.must) {
+            setSelected(0);
+            setPicked(fitOrTrim(picked.filter((_, i) => i !== at)));
+          }
         }}
         onDone={(cut) => {
-          setPicked([
-            {
-              ...asset,
-              uri: cut.uri,
-              duration: cut.durationMs,
-              width: cut.width || asset.width,
-              height: cut.height || asset.height,
-              fileSize: cut.sizeBytes || undefined,
-              mimeType: "video/mp4",
-              fileName: undefined,
-            },
-          ]);
           setTrimming(null);
+          const next = picked.map((a, i) =>
+            i === at
+              ? {
+                  ...a,
+                  uri: cut.uri,
+                  duration: cut.durationMs,
+                  width: cut.width || a.width,
+                  height: cut.height || a.height,
+                  fileSize: cut.sizeBytes || undefined,
+                  mimeType: "video/mp4",
+                  fileName: undefined,
+                }
+              : a,
+          );
+          setPicked(fitOrTrim(next));
         }}
       />
     );
@@ -476,7 +531,9 @@ export default function Create() {
           onShare={mode === "story" ? () => void share() : () => setDetails(true)}
           onShareClose={mode === "story" ? () => void share(true) : undefined}
           onEdit={editable(asset) ? () => setEditing(0) : undefined}
-          onTrim={canTrim && asset.duration ? () => setTrimming({ must: false }) : undefined}
+          onTrim={
+            canTrim && asset.duration ? () => setTrimming({ index: 0, must: false }) : undefined
+          }
         />
         {picker}
       </>
@@ -564,17 +621,34 @@ export default function Create() {
           )}
 
           {mode === "post" && picked.length ? (
-            // The photos big, as they'll look in the feed (4:5), before the details.
+            // The photos and videos big, as they'll look in the feed (4:5), before the details.
             <View style={s.big}>
-              <Image
-                source={{ uri: (picked[Math.min(selected, picked.length - 1)] ?? picked[0])?.uri }}
-                style={s.bigPhoto}
-                contentFit="cover"
-              />
+              {shown?.type === "video" ? (
+                <PreviewVideo key={shown.uri} asset={shown} />
+              ) : (
+                <Image
+                  source={{ uri: shown?.uri }}
+                  style={s.bigPhoto}
+                  contentFit={tall(shown) ? "cover" : "contain"}
+                />
+              )}
               {picked.length > 1 ? (
                 <Text style={s.bigCount}>
                   {Math.min(selected, picked.length - 1) + 1}/{picked.length}
                 </Text>
+              ) : null}
+              {shown?.type === "video" && canTrim && shown.duration ? (
+                <Pressable
+                  onPress={() =>
+                    setTrimming({ index: Math.min(selected, picked.length - 1), must: false })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel="Trim this video"
+                  style={({ pressed }) => [s.bigEdit, pressed && s.pressed]}
+                >
+                  <Icon name="Scissors" size={16} color="#ffffff" />
+                  <Text style={s.bigEditText}>Trim</Text>
+                </Pressable>
               ) : null}
               {editable(picked[Math.min(selected, picked.length - 1)]) ? (
                 <Pressable
@@ -602,7 +676,7 @@ export default function Create() {
                 <Pressable
                   onPress={() => setSelected(i)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Show photo ${i + 1}`}
+                  accessibilityLabel={`Show ${a.type === "video" ? "video" : "photo"} ${i + 1}`}
                   style={s.thumbFill}
                 >
                   {a.type === "video" ? (
@@ -619,7 +693,7 @@ export default function Create() {
                     setSelected(0);
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={`Remove photo ${i + 1}`}
+                  accessibilityLabel={`Remove ${a.type === "video" ? "video" : "photo"} ${i + 1}`}
                   style={s.remove}
                 >
                   <Icon name="X" size={16} color="#ffffff" />
@@ -643,7 +717,7 @@ export default function Create() {
                       ? "Pick a video"
                       : mode === "story"
                         ? "Photo or video"
-                        : "Pick photos"}
+                        : "Photos or videos"}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -1202,7 +1276,7 @@ const make = (t: NativeTheme) =>
       overflow: "hidden",
       backgroundColor: t.colors.surfaceSunken,
     },
-    bigPhoto: { width: "100%", aspectRatio: 4 / 5 },
+    bigPhoto: { width: "100%", aspectRatio: 4 / 5, backgroundColor: "#000" },
     bigEdit: {
       position: "absolute",
       left: 10,

@@ -22,6 +22,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "0.1.3",
+    date: "2026-11-22",
+    title: "Videos in posts",
+    highlights: [
+      "Put videos in a post, mixed with photos. In Home they play by themselves, with the sound off.",
+      "Tap the speaker on a video to hear it. The sound stays on for the next video until you turn it off.",
+      "Wide and square photos show whole, with black above and below, instead of being cut.",
+      "Home is for posts now. Clips have their own tab.",
+    ],
+    sections: [
+      {
+        heading: "Posts",
+        items: [
+          "A post takes up to 10 photos and videos, in any order. Videos can be up to 60 seconds; a longer one opens in the trimmer.",
+          "Every post sits in the same tall frame (4:5). A tall photo or video fills it; a wide or square one shows whole, with black above and below.",
+        ],
+      },
+      {
+        heading: "Home",
+        items: [
+          "The video in the post on your screen plays by itself, muted and on a loop, and stops when you scroll past it or leave.",
+          "Clips no longer show up in Home. They stay in the Clips tab and on profiles.",
+        ],
+      },
+    ],
+  },
+  {
     version: "0.1.2",
     date: "2026-11-21",
     title: "Edit photos and trim videos",

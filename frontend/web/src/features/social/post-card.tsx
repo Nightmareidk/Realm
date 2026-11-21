@@ -21,12 +21,14 @@ import {
   PencilSimple,
   PushPin,
   Repeat,
+  SpeakerHigh,
+  SpeakerSlash,
   Trash,
   UserMinus,
 } from "@phosphor-icons/react";
-import type { Post, QuotedPost } from "@realm/contracts";
+import type { MediaRef, Post, QuotedPost } from "@realm/contracts";
 import Link from "next/link";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Popover, row } from "@/features/app/menus";
 import { openReport, useRealm } from "@/features/realtime/store";
 import { Avatar } from "@/features/spaces/person";
@@ -65,7 +67,98 @@ export async function toggle(
   }
 }
 
-/** A post's pictures (or its Clip), with arrows and dots between photos. */
+/** Taller than wide (or not known): it fills the frame. Anything else shows whole, on black. */
+function isPortrait(m: MediaRef) {
+  return !m.width || !m.height || m.height > m.width;
+}
+
+/* Whether videos in posts play with sound. Like Instagram: muted at first, and once the sound is
+   on it stays on for the next video, until it's turned off again. */
+let feedMuted = true;
+const muteListeners = new Set<() => void>();
+function setFeedMuted(muted: boolean) {
+  feedMuted = muted;
+  for (const l of muteListeners) l();
+}
+const subscribeMuted = (l: () => void) => {
+  muteListeners.add(l);
+  return () => {
+    muteListeners.delete(l);
+  };
+};
+
+/**
+ * A video in a post: it plays by itself, muted and looping, while most of it is on screen, and
+ * pauses when it scrolls away or the tab is hidden. The speaker button turns the sound on or off.
+ */
+function PostVideo({ m, className, label }: { m: MediaRef; className: string; label: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const muted = useSyncExternalStore(
+    subscribeMuted,
+    () => feedMuted,
+    () => true,
+  );
+  const [inView, setInView] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([e]) => setInView(Boolean(e?.isIntersecting && e.intersectionRatio >= 0.6)),
+      { threshold: [0, 0.6, 1] },
+    );
+    io.observe(v);
+    const onVisibility = () => setHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    v.muted = muted;
+    // A browser may refuse sound without a click first: then it plays muted.
+    if (inView && !hidden) v.play().catch(() => setFeedMuted(true));
+    else v.pause();
+  }, [inView, hidden, muted]);
+  return (
+    <>
+      <video
+        ref={ref}
+        src={m.url}
+        className={className}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={label}
+      />
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setFeedMuted(!muted);
+        }}
+        className="absolute right-3 bottom-3 grid size-8 place-items-center rounded-full bg-black/60 text-white"
+      >
+        {muted ? (
+          <SpeakerSlash aria-hidden="true" size={16} weight="fill" />
+        ) : (
+          <SpeakerHigh aria-hidden="true" size={16} weight="fill" />
+        )}
+        <span className="sr-only">{muted ? "Turn the sound on" : "Turn the sound off"}</span>
+      </button>
+    </>
+  );
+}
+
+/**
+ * A post's photos and videos (or its Clip), with arrows and dots between them. In a feed each one
+ * sits in the 4:5 frame: a tall one fills it, a wide or square one shows whole with black above and
+ * below.
+ */
 export function PostMedia({
   post,
   rounded = "rounded-[28px]",
@@ -81,20 +174,19 @@ export function PostMedia({
   const m = post.media[at];
   if (!m) return null;
   const many = post.media.length > 1;
+  const fill = fit === "cover" && isPortrait(m) ? "object-cover" : "object-contain";
   const step = (by: number) => (e: React.SyntheticEvent) => {
     e.stopPropagation();
     setAt((a) => Math.min(post.media.length - 1, Math.max(0, a + by)));
   };
   return (
-    <div className={cx("relative overflow-hidden bg-surface-sunken", rounded, className)}>
+    <div className={cx("relative overflow-hidden bg-black", rounded, className)}>
       {m.kind === "video" ? (
-        <video
-          src={m.url}
-          className={cx("size-full", fit === "cover" ? "object-cover" : "object-contain")}
-          autoPlay
-          muted
-          loop
-          playsInline
+        <PostVideo
+          key={m.id}
+          m={m}
+          className={cx("size-full", fill)}
+          label={`Video by ${post.author.displayName}`}
         />
       ) : (
         // biome-ignore lint/performance/noImgElement: people's photos, behind an access check.
@@ -106,7 +198,7 @@ export function PostMedia({
               ? `Photo: ${post.caption.slice(0, 100)}`
               : `Photo by ${post.author.displayName}`
           }
-          className={cx("size-full", fit === "cover" ? "object-cover" : "object-contain")}
+          className={cx("size-full", fill)}
           loading="lazy"
           decoding="async"
         />
@@ -149,7 +241,7 @@ export function PostMedia({
             ))}
           </span>
           <span className="sr-only" aria-live="polite">
-            Photo {at + 1} of {post.media.length}
+            {m.kind === "video" ? "Video" : "Photo"} {at + 1} of {post.media.length}
           </span>
         </>
       )}
