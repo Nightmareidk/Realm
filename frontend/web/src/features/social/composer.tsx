@@ -1,12 +1,22 @@
 "use client";
 
-import { ImageSquare, MagnifyingGlass, MusicNotes, Star, X } from "@phosphor-icons/react";
-import type { Post, Sound, SoundList, Story } from "@realm/contracts";
+import {
+  Crop,
+  ImageSquare,
+  MagnifyingGlass,
+  MusicNotes,
+  Scissors,
+  Star,
+  X,
+} from "@phosphor-icons/react";
+import { MEDIA_RULES, type Post, type Sound, type SoundList, type Story } from "@realm/contracts";
 import { type FormEvent, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { player } from "@/features/music/player";
 import { ApiError, api } from "@/lib/api";
 import { cx } from "@/lib/cx";
 import { kindOf, uploadFile } from "@/lib/upload";
+import { canEditPhoto, PhotoEditor } from "./edit-photo";
+import { VideoTrimmer } from "./trim-video";
 
 type Mode = "post" | "story" | "clip";
 interface Open {
@@ -86,6 +96,22 @@ function videoLength(file: File): Promise<number | undefined> {
 /** The part of a song that plays: 30 seconds on a post, the Story's length on a Story. */
 const PART_MS = 30_000;
 
+/** Videos can be up to a minute and 100 MB, like in the app; longer or bigger ones get trimmed. */
+const VIDEO_LIMIT_MS = 60_000;
+const VIDEO_MAX_BYTES = MEDIA_RULES.video.maxBytes;
+
+/** Why a video has to be trimmed first, or nothing when it fits. */
+async function tooMuch(file: File): Promise<string | null> {
+  const ms = await videoLength(file);
+  if (ms !== undefined && ms > VIDEO_LIMIT_MS + 500) {
+    return `Videos can be up to ${VIDEO_LIMIT_MS / 1000} seconds. Choose the part to keep.`;
+  }
+  if (file.size > VIDEO_MAX_BYTES) {
+    return `Videos can be up to ${VIDEO_MAX_BYTES / 1024 / 1024} MB. Choose a shorter part to keep.`;
+  }
+  return null;
+}
+
 /**
  * Making a post or a Story on the website: a photo (or a short video for a Story), words, and a
  * song from Realm's free library. The photo shows large before it's shared.
@@ -112,6 +138,11 @@ export function Composer() {
   const [hideLikes, setHideLikes] = useState(false);
   const [commentsOff, setCommentsOff] = useState(false);
   const [closeOnly, setCloseOnly] = useState(false);
+  // The photo editor and the video trimmer open over the maker, like in the app.
+  const [editing, setEditing] = useState(false);
+  const [trimming, setTrimming] = useState<{ must: boolean; note?: string } | null>(null);
+  const editorOpen = useRef(false);
+  editorOpen.current = editing || trimming !== null;
 
   useEffect(() => {
     const d = ref.current;
@@ -167,6 +198,24 @@ export function Composer() {
     setHideLikes(false);
     setCommentsOff(false);
     setCloseOnly(false);
+    setEditing(false);
+    setTrimming(null);
+  };
+  /** A picked file: a video that's too long or too big opens the trimmer straight away. */
+  const pick = async (picked: File | null) => {
+    setError("");
+    setEditing(false);
+    setTrimming(null);
+    setFile(picked);
+    if (picked && kindOf(picked) === "video") {
+      const why = await tooMuch(picked);
+      if (why) setTrimming({ must: true, note: why });
+    }
+  };
+  const closeTrimmer = () => {
+    // Leaving the trimmer without cutting a video that's too long takes the video away again.
+    if (trimming?.must) setFile(null);
+    setTrimming(null);
   };
   const addTag = () => {
     const name = tagDraft.trim().replace(/^@/, "").toLowerCase();
@@ -191,6 +240,10 @@ export function Composer() {
           ? kind === "video"
           : kind === "image" || kind === "video";
     if (!fits) return setError(WORDS[mode].wrong);
+    if (kind === "video") {
+      const why = await tooMuch(file);
+      if (why) return setTrimming({ must: true, note: why });
+    }
     setError("");
     setProgress(0);
     try {
@@ -238,9 +291,14 @@ export function Composer() {
     <dialog
       ref={ref}
       onClose={close}
-      onClick={(e) => e.target === ref.current && close()}
+      // Escape inside the photo editor or the trimmer closes only that, not the whole maker.
+      onCancel={(e) => editorOpen.current && e.preventDefault()}
+      onClick={(e) => e.target === ref.current && !editorOpen.current && close()}
       aria-label={`New ${WORDS[mode].label}`}
-      className="m-auto max-h-[92vh] w-[min(56rem,calc(100vw-1.5rem))] overflow-hidden rounded-[22px] bg-surface p-0 text-fg backdrop:bg-[rgb(5_5_7/0.8)]"
+      className={cx(
+        "m-auto max-h-[92vh] w-[min(56rem,calc(100vw-1.5rem))] overflow-hidden rounded-[22px] bg-surface p-0 text-fg backdrop:bg-[rgb(5_5_7/0.8)]",
+        (editing || trimming) && "h-[min(92vh,52rem)]",
+      )}
     >
       <form onSubmit={share} className="flex max-h-[92vh] flex-col">
         <header className="flex items-center gap-3 border-b border-line px-4 py-3">
@@ -280,7 +338,11 @@ export function Composer() {
               type="file"
               accept={WORDS[mode].accept}
               className="sr-only"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                pick(e.target.files?.[0] ?? null);
+                // So picking the same file again still counts.
+                e.target.value = "";
+              }}
             />
             {preview && file ? (
               file.type.startsWith("video") ? (
@@ -306,6 +368,26 @@ export function Composer() {
                 <span className="font-bold text-fg">{WORDS[mode].choose}</span>
                 <span className="text-[0.9rem]">It shows here, big, before you share it.</span>
               </span>
+            )}
+            {preview && file && (canEditPhoto(file) || kindOf(file) === "video") && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  // Inside the picker's label: only this button, not the file picker.
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (kindOf(file) === "video") setTrimming({ must: false });
+                  else setEditing(true);
+                }}
+                className="absolute top-3 right-3 flex h-10 items-center gap-2 rounded-full bg-[rgb(9_9_12/0.78)] px-4 text-[0.9rem] font-bold text-white hover:bg-[rgb(9_9_12/0.92)]"
+              >
+                {kindOf(file) === "video" ? (
+                  <Scissors aria-hidden="true" size={18} />
+                ) : (
+                  <Crop aria-hidden="true" size={18} />
+                )}
+                {kindOf(file) === "video" ? "Trim" : "Edit"}
+              </button>
             )}
             {preview && sound && (
               <span className="absolute bottom-3 left-3 flex h-10 items-center gap-2 rounded-full bg-[rgb(9_9_12/0.78)] pr-3.5 pl-[5px] text-[0.82rem]">
@@ -508,6 +590,30 @@ export function Composer() {
           </div>
         </div>
       </form>
+      {editing && file && (
+        <PhotoEditor
+          file={file}
+          onCancel={() => setEditing(false)}
+          onDone={(edited) => {
+            setFile(edited);
+            setEditing(false);
+          }}
+        />
+      )}
+      {trimming && file && (
+        <VideoTrimmer
+          file={file}
+          limitMs={VIDEO_LIMIT_MS}
+          maxBytes={VIDEO_MAX_BYTES}
+          note={trimming.note}
+          must={trimming.must}
+          onCancel={closeTrimmer}
+          onDone={(trimmed) => {
+            setFile(trimmed);
+            setTrimming(null);
+          }}
+        />
+      )}
     </dialog>
   );
 }
