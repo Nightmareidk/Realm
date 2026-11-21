@@ -650,8 +650,11 @@ function FeedVideo({
           style={StyleSheet.absoluteFill}
           contentFit={isPortrait(media) ? "cover" : "contain"}
           nativeControls={false}
-          // Android: the default surface stays black inside a rounded frame in a list.
+          // Android: a texture view clips to the rounded frame in a list, and the player's own black
+          // cover lifts at the first frame. Without it, a video that starts while the screen is
+          // still being laid out can stay hidden for good (the player plays, the picture is black).
           surfaceType="textureView"
+          useExoShutter
           accessibilityLabel="Video"
         />
       ) : null}

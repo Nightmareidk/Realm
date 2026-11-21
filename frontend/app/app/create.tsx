@@ -126,8 +126,11 @@ function PreviewVideo({ asset }: { asset: ImagePicker.ImagePickerAsset }) {
         style={StyleSheet.absoluteFill}
         contentFit={tall(asset) ? "cover" : "contain"}
         nativeControls={false}
-        // Android: the default surface stays black inside a rounded frame in a list.
+        // Android: a texture view clips to the rounded frame, and the player's own black cover lifts
+        // at the first frame. Without it, the video shown just as the trimmer closes stayed hidden
+        // for good (the player played, the picture stayed black).
         surfaceType="textureView"
+        useExoShutter
         accessibilityLabel="Your video"
       />
     </View>
