@@ -48,6 +48,12 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
           "Videos over 60 seconds or 100 MB open in the trimmer with the part that fits already chosen.",
         ],
       },
+      {
+        heading: "Fixes",
+        items: [
+          "A Clip in Home now plays when you open it, with the usual play, pause and full screen controls.",
+        ],
+      },
     ],
   },
   {

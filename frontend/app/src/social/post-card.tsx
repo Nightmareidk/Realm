@@ -2,8 +2,9 @@ import type { MediaRef, Post } from "@realm/contracts";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import { memo, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
+import { memo, useCallback, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -170,7 +171,12 @@ export const PostCard = memo(function PostCard({
       </Text>
     </Pressable>
   ) : post.kind === "clip" ? (
-    <ClipTile post={post} onPress={open} />
+    // In a feed the tile opens the post's own screen, and there the Clip plays.
+    standalone ? (
+      <ClipPlayer post={post} />
+    ) : (
+      <ClipTile post={post} onPress={open} />
+    )
   ) : (
     <Photos
       media={post.media}
@@ -547,6 +553,44 @@ export function ClipTile({ post, onPress }: { post: Post; onPress: () => void })
       </View>
       {length ? <Text style={s.length}>{length}</Text> : null}
     </Pressable>
+  );
+}
+
+/**
+ * A Clip on its own post screen: it plays right there, with the phone's usual video controls
+ * (play, pause, seek, full screen). With music on it, the music plays instead of the video's own
+ * sound, as in Clips. It pauses when you leave the screen.
+ */
+function ClipPlayer({ post }: { post: Post }) {
+  const s = useStyles(make);
+  const width = useContentWidth(680);
+  const video = post.media[0];
+  const player = useVideoPlayer(video ? mediaSource(video.url) : null, (p) => {
+    p.loop = true;
+    p.muted = Boolean(post.sound);
+  });
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        try {
+          player.pause();
+        } catch {
+          // The player is already gone with the screen.
+        }
+      };
+    }, [player]),
+  );
+  return (
+    <View style={[s.clip, { width, height: width * 1.1 }]}>
+      <VideoView
+        player={player}
+        style={StyleSheet.absoluteFill}
+        contentFit="contain"
+        nativeControls
+        accessibilityLabel={`Clip by ${post.author.displayName}`}
+        fullscreenOptions={{ enable: true, orientation: "default" }}
+      />
+    </View>
   );
 }
 
