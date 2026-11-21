@@ -17,7 +17,7 @@ export default function PrivacyPage() {
   return (
     <DocPage
       title="Privacy policy"
-      lead="What Realm collects, why, who can see it and how to delete it. Written to be read, not skimmed past. Last updated 20 November 2026."
+      lead="What Realm collects, why, who can see it and how to delete it. Written to be read, not skimmed past. Last updated 21 November 2026."
     >
       <h2>Who we are</h2>
       <p>
@@ -156,6 +156,31 @@ export default function PrivacyPage() {
           To name a spot you picked on the map, Realm sends it just that point.
         </li>
       </ul>
+
+      <h2 id="message-helper">The message helper</h2>
+      <p>Realm has a message helper that writes or rewords a message for you.</p>
+      <ul>
+        <li>
+          <strong>What goes to the AI service:</strong> only the text that you type into the message
+          helper. The Realm server sends this text to the API of Groq, the provider of the helper
+          (model llama-3.3-70b-versatile), and shows you the answer with the label &quot;AI
+          answer&quot;.
+        </li>
+        <li>
+          <strong>What does not go to Groq:</strong> your private messages, your Space chats, your
+          email address, your username and your contacts. The helper never reads your chats.
+        </li>
+      </ul>
+      <p>
+        Only the Realm server talks to Groq. The app never does, and the key of the API is only on
+        the server.
+      </p>
+      <p>
+        Please do not type passwords, bank details or other secrets into the helper, because the
+        text leaves Realm and goes to Groq. Groq handles the text under its own terms and privacy
+        policy.
+      </p>
+      <p>You can send at most 20 messages a day to the helper.</p>
 
       <h2 id="location">Location</h2>
       <p>
