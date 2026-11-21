@@ -101,7 +101,7 @@ export async function createDeps(config: Config): Promise<Deps> {
   }
 
   const sender: Mailer = config.RESEND_API_KEY
-    ? new ResendMailer(config.SMTP_FROM, config.RESEND_API_KEY)
+    ? new ResendMailer(config.SMTP_FROM, config.RESEND_API_KEY, logger)
     : config.SMTP_HOST
       ? new SmtpMailer(config.SMTP_FROM, {
           host: config.SMTP_HOST,

@@ -30,26 +30,59 @@ export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
 
-/** Resend's HTTP API (https://resend.com/docs/api-reference/emails/send-email). */
+/** Waits between tries when Resend is busy (429) or down (5xx). */
+const RESEND_RETRY_WAITS_MS = [1_000, 3_000];
+
+/**
+ * Resend's HTTP API (https://resend.com/docs/api-reference/emails/send-email). Each email that
+ * Resend accepts is logged with Resend's id, how long it took and only the domain it went to, so a
+ * late code can be traced in Resend's dashboard (Emails › that id) without logging the address.
+ */
 export class ResendMailer implements Mailer {
   constructor(
     private readonly from: string,
     private readonly apiKey: string,
+    private readonly logger?: Logger,
+    private readonly retryWaitsMs: readonly number[] = RESEND_RETRY_WAITS_MS,
   ) {}
 
   async send(mail: Mail) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { authorization: `Bearer ${this.apiKey}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        from: this.from,
-        to: [mail.to],
-        subject: mail.subject,
-        text: mail.text,
-        ...(mail.html ? { html: mail.html } : {}),
-      }),
+    const started = Date.now();
+    const body = JSON.stringify({
+      from: this.from,
+      to: [mail.to],
+      subject: mail.subject,
+      text: mail.text,
+      ...(mail.html ? { html: mail.html } : {}),
     });
-    if (!res.ok) throw new Error(`Resend refused the email: ${res.status}`);
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { authorization: `Bearer ${this.apiKey}`, "content-type": "application/json" },
+        body,
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (res.ok) {
+        const sent = (await res.json().catch(() => null)) as { id?: unknown } | null;
+        this.logger?.info(
+          {
+            resendId: typeof sent?.id === "string" ? sent.id : undefined,
+            ms: Date.now() - started,
+            tries: attempt + 1,
+            toDomain: mail.to.split("@").pop()?.toLowerCase(),
+            subject: mail.subject,
+          },
+          "mail sent",
+        );
+        return;
+      }
+      const wait = this.retryWaitsMs[attempt];
+      const busy = res.status === 429 || res.status >= 500;
+      if (!busy || wait === undefined) {
+        throw new Error(`Resend refused the email: ${res.status}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, wait));
+    }
   }
 }
 
